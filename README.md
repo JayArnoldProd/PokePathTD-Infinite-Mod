@@ -73,7 +73,7 @@ A graphical save editor with full control over your game:
 
 ---
 
-## 📦 Installation
+## 📦 Installation (WINDOWS ONLY)
 
 **WARNING** BACK UP YOUR SAVE PRIOR TO INSTALLATION
 
