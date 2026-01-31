@@ -167,11 +167,18 @@ export class DefeatScene extends GameScene {
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		// ENDLESS MODE: Reset endless mode on restart so popup shows again at wave 100
 		this.main.area.endlessMode = false;
+		
+		// BUGFIX: Force complete wave state reset before loading
+		this.main.area.waveActive = false;
+		this.main.area.autoWave = false;
+		this.main.area.enemies = [];
+		
 		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(14);
 		this.close();
 
-		if (autoReset.autoWave) this.main.area.switchAutoWave();
+		// BUGFIX: Don't auto-start wave on restart - let player manually start
+		// if (autoReset.autoWave) this.main.area.switchAutoWave();
 	}
 
 	retry(autoReset = {}) {
@@ -185,15 +192,18 @@ export class DefeatScene extends GameScene {
 		// ENDLESS MODE: Reset endless mode on retry so popup shows again at wave 100
 		this.main.area.endlessMode = false;
 		
-		// Ensure wave state is clean before loading
+		// BUGFIX: Force complete wave state reset before loading
 		this.main.area.waveActive = false;
+		this.main.area.autoWave = false;
 		this.main.area.enemies = [];
 		
 		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(lives);
 		this.close();
 
-		if (autoReset.autoWave) this.main.area.switchAutoWave();
+		// BUGFIX: Don't auto-start wave on retry - let player manually start
+		// This prevents soft-lock if wave spawning fails
+		// if (autoReset.autoWave) this.main.area.switchAutoWave();
 	}
 
 	close() {

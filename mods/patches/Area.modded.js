@@ -68,7 +68,22 @@ export class Area {
 		this.main.UI.displayWeather();
 	}
 
+	// BUGFIX: Force reset wave state - call this if game gets stuck
+	forceResetWaveState() {
+		console.log('forceResetWaveState() called - resetting all wave state');
+		this.waveActive = false;
+		this.autoWave = false;
+		this.enemies = [];
+		this.main.UI.autoWave.style.background = 'revert-layer';
+		this.main.UI.update();
+		this.main.UI.revertUI();
+	}
+
 	loadArea(routeNumber, wave, keepTowers = false, challenge = false) {
+		// BUGFIX: Always force reset wave state at start of loadArea
+		this.waveActive = false;
+		this.enemies = [];
+		
 		this.repeat = false;
 		this.main.UI.waveSelectorBlock.style.background = 'revert-layer';
 		this.imposedWeather = false;
@@ -153,7 +168,10 @@ export class Area {
 	}
 
 	newWave() {
-		if (this.main.area.waveActive) return;
+		if (this.main.area.waveActive) {
+			console.warn('newWave() called but waveActive is already true - ignoring');
+			return;
+		}
 		this.goldWave = 0;
 		playSound('select', 'ui');
 		
@@ -167,18 +185,24 @@ export class Area {
     	this.waveElapsedTime = 0;
 
 		this.waveActive = true;
-		this.spawnEnemies();
+		
+		// BUGFIX: Wrap spawn in try-catch to prevent soft-lock on errors
+		try {
+			this.spawnEnemies();
+		} catch (err) {
+			console.error('spawnEnemies() threw an error:', err);
+			this.waveActive = false;
+			this.enemies = [];
+			return;
+		}
 		
 		// FAILSAFE: If no enemies spawned, prevent soft-lock
 		if (this.enemies.length === 0) {
-			console.error(`Wave ${this.waveNumber}: No enemies spawned! Ending wave to prevent soft-lock.`);
+			console.error(`Wave ${this.waveNumber}: No enemies spawned! Resetting wave state.`);
 			this.waveActive = false;
-			// Give a small delay then trigger wave end
-			setTimeout(() => {
-				if (this.enemies.length === 0 && this.main.player.health[this.routeNumber] > 0) {
-					this.endWave();
-				}
-			}, 100);
+			this.autoWave = false;
+			this.main.UI.autoWave.style.background = 'revert-layer';
+			this.main.UI.update();
 			return;
 		}
 		
