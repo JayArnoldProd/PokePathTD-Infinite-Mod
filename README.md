@@ -89,10 +89,6 @@ A graphical save editor with full control over your game:
 
 ---
 
-## 📦 Installation
-
-**⚠️ WARNING:** Back up your save prior to installation!
-
 ### ⚠️ Requirements (Install BOTH before proceeding!)
 
 | Requirement | Download | Why It's Needed |
@@ -108,6 +104,10 @@ A graphical save editor with full control over your game:
 > node --version
 > ```
 > Both should show version numbers. If either says "not found", reinstall and make sure to add to PATH.
+>
+## 📦 Installation
+
+**⚠️ WARNING:** Back up your save prior to installation!
 
 ### Steps
 1. **Download** — Click the green **Code** button → **Download ZIP**, or download from [Releases](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases)
