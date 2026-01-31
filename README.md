@@ -169,7 +169,6 @@ A graphical save editor with full control over your game:
 - **Close the game** before using the save editor
 - **First run extracts game files** (takes a moment)
 - **Mods are applied to extracted files** then repacked
-- **Restore Vanilla** option available if anything breaks
 - **Your save data is NOT in the mods folder** - it's safe in AppData
 
 ---
