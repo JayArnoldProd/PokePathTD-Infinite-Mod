@@ -73,6 +73,8 @@ A graphical save editor with full control over your game:
 
 ## 📦 Installation
 
+**WARNING** BACK UP YOUR SAVE PRIOR TO INSTALLATION
+
 ### Requirements
 - **Node.js** — [nodejs.org](https://nodejs.org) (for game extraction)
 - **Python 3** — [python.org](https://python.org) (for save editor only)
