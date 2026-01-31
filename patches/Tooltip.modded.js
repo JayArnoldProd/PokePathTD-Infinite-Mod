@@ -100,13 +100,11 @@ export class Tooltip {
 
     showText(text) {
         this.tooltip.innerHTML = `
-            <div class="tooltip-content" style="width: auto; min-width: 0; padding: 4px 12px;">
-                <span class="tooltip-name" style="white-space: nowrap;">${text.toUpperCase()}</span>  
+            <div class="tooltip-content" style="width: fit-content !important; min-width: unset !important; max-width: fit-content !important; padding: 4px 10px !important;">
+                <span class="tooltip-name" style="white-space: nowrap; display: inline-block;">${text.toUpperCase()}</span>  
             </div>
         `;
-        this.tooltip.style.display = "block";
-        this.tooltip.style.width = "auto";
-        this.tooltip.style.minWidth = "0";
+        this.tooltip.style.cssText = "position: absolute; pointer-events: none; display: block; width: fit-content !important; min-width: unset !important; max-width: fit-content !important;";
         this._ensurePositionOnce();
     }
 

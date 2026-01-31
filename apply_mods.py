@@ -645,6 +645,41 @@ def apply_projectile_scaling():
     return False
 
 # ============================================================================
+# BOXSCENE.JS - Expand box storage to 200 slots
+# ============================================================================
+def apply_box_expansion():
+    """Expand Pokemon box storage from 103 to 200 slots."""
+    path = JS_ROOT / "game" / "scenes" / "BoxScene.js"
+    
+    if not path.exists():
+        log_fail("BoxScene.js: File not found")
+        return False
+    
+    content = read_file(path)
+    
+    # Check if already expanded
+    if "< 200" in content:
+        log_skip("BoxScene.js: Box expansion (already 200 slots)")
+        return True
+    
+    # Use modded file directly
+    modded_file = SCRIPT_DIR / "patches" / "BoxScene.modded.js"
+    if modded_file.exists():
+        shutil.copy(modded_file, path)
+        log_success("BoxScene.js: Box expanded to 200 slots")
+        return True
+    
+    # Fallback: direct replacement
+    if "< 103" in content:
+        content = content.replace("< 103", "< 200")
+        write_file(path, content)
+        log_success("BoxScene.js: Box expanded to 200 slots (inline)")
+        return True
+    
+    log_fail("BoxScene.js: Box expansion pattern not found")
+    return False
+
+# ============================================================================
 # MAIN
 # ============================================================================
 def main():
@@ -687,6 +722,7 @@ def main():
     apply_enemy_scaling()
     apply_tower_deltatime()
     apply_projectile_scaling()
+    apply_box_expansion()
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
