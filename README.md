@@ -1,6 +1,6 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.1.0
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.1
 
 **Compatible with PokePath TD v1.4.1** ✅
 
