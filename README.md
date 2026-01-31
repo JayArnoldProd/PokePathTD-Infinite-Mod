@@ -92,9 +92,21 @@ A graphical save editor with full control over your game:
 
 **⚠️ WARNING:** Back up your save prior to installation!
 
-### Requirements
-- **Node.js** — [nodejs.org](https://nodejs.org) (for game extraction)
-- **Python 3** — [python.org](https://python.org) (for save editor only)
+### ⚠️ Requirements (Install BOTH before proceeding!)
+
+| Requirement | Download | Why It's Needed |
+|-------------|----------|-----------------|
+| **Python 3.7+** | [python.org](https://python.org/downloads/) | Runs the mod installer & save editor |
+| **Node.js** | [nodejs.org](https://nodejs.org) | Extracts and repacks game files |
+
+> **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — this is required!
+>
+> To verify installation, open Command Prompt and run:
+> ```
+> python --version
+> node --version
+> ```
+> Both should show version numbers. If either says "not found", reinstall and make sure to add to PATH.
 
 ### Steps
 1. **Download** — Click the green **Code** button → **Download ZIP**, or download from [Releases](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases)
@@ -164,15 +176,36 @@ A graphical save editor with full control over your game:
 
 ## 🐛 Troubleshooting
 
+**Installer shows "Not Responding" or does nothing**
+- Make sure **Python** is installed: [python.org/downloads](https://python.org/downloads/)
+- When installing Python, **check "Add Python to PATH"**
+- Restart your computer after installing Python
+- Make sure you **extracted the zip** before running (don't run from inside the zip)
+
+**"File not found" or "Directory not found" error**
+- Verify the `mods` folder is inside your game folder:
+  ```
+  pokePathTD_Electron\
+  ├── mods\        ← Should be here!
+  ├── resources\
+  └── PokéPath TD.exe
+  ```
+- Make sure **Node.js** is installed: [nodejs.org](https://nodejs.org)
+- Open Command Prompt and verify: `node --version` and `python --version`
+
 **"Node.js NOT FOUND"**
 - Install from [nodejs.org](https://nodejs.org)
+- Restart your computer after installation
 
-**"Python NOT FOUND"**
-- Install from [python.org](https://python.org)
+**"Python NOT FOUND" / Nothing happens when clicking installer**
+- Install from [python.org/downloads](https://python.org/downloads/)
+- **⚠️ Check "Add Python to PATH" during installation!**
+- Restart your computer after installation
 
 **Save editor won't load**
 - Make sure the game is completely closed
 - Check that game folder path is correct
+- Verify Python is installed and in PATH
 
 **Shinies not appearing**
 - Run "Generate Shiny Sprites" from menu
