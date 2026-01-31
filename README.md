@@ -9,12 +9,12 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### ⚡ Speed Options
 - **2x / 3x / 5x / 10x** speed (vanilla: 1x, 1.5x, 1.75x)
 - Speed button shows current multiplier text
-- Rocket emoji (🚀) at 1x speed
 
 ### 📈 Removed Caps
 - **Level Cap Removed** — Pokemon can level past 100 (to 9999+)
-- **No Star Cap** — Complete all stages for 1200 stars
+- **No Star Cap** — Earn as many stars as you physically can
 - **Asymptotic Attack Speed** — Speed approaches but never reaches zero at high levels (no negative rates)
+                              — with improved delta time accuracy, we can handle a going on at high speeds.
 
 ### 🌊 Endless Mode
 - **Continue Button** — After beating wave 100, choose to continue to wave 101+
@@ -23,17 +23,17 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Checkpoints Every 50 Waves** — Die on wave 175? Retry from 150
 
 ### ⚖️ Balanced Endless Scaling
-- **Upgrade Costs** — Cost = (previous × 1.02) + 8000 past level 100
+- **Upgrade Costs** — Cost = (previous × 1.02) + 8000 past level 100 (caps at 1 Billion)
 - **Enemy HP/Armor** — Scales smoothly with power budget system
 - **Pokemon Stats** — Asymptotic curves prevent stats from breaking
 - **Delta Time Accuracy** — High-speed attacks process correctly
 
-### ✨ Shiny System
+### ✨ Shiny System Improvements
 - **Shiny Eggs** — 1 in 30 chance when opening eggs (~3.3%)
 - **Shiny Starters** — 1 in 30 chance when selecting starter
 - **Pre-Packaged Shiny Sprites** — 212 custom shinies for all non-max-evolution Pokemon
 - **Shiny Reveal** — ⭐ SHINY! ⭐ prompt with sparkle animation
-- **Shinies Have No Level Cap** — Can level to infinity like unlike normal Pokemon
+- **Shinies Have No Level Cap** — Can level to infinity unlike regular Pokemon
 
 ### 🔧 Quality of Life
 - **Item Tooltips** — Hover over items in the selection panel to see descriptions
