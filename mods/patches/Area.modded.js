@@ -80,6 +80,8 @@ export class Area {
 	}
 
 	loadArea(routeNumber, wave, keepTowers = false, challenge = false) {
+		console.log(`loadArea called: route=${routeNumber}, wave=${wave}, keepTowers=${keepTowers}`);
+		
 		// BUGFIX: Always force reset wave state at start of loadArea
 		this.waveActive = false;
 		this.enemies = [];
@@ -102,7 +104,6 @@ export class Area {
 				if (pokemon.isDeployed) {
 					pokemon.isDeployed = false;
 					pokemon.tilePosition = -1;
-					// retirar torre
 					const index = this.main.area.towers.findIndex(tower => tower.pokemon === pokemon);
 					if (index !== -1) {
 						this.main.area.towers[index].tile.tower = false;
@@ -122,14 +123,18 @@ export class Area {
 		// ENDLESS MODE: Set flag based on loaded wave
 		if (this.waveNumber > 100) {
 			this.endlessMode = true;
+		} else {
+			this.endlessMode = false;  // BUGFIX: Also reset to false when <= 100
 		}
+
+		// BUGFIX: ALWAYS refresh waves and waypoints from map data, even with keepTowers
+		// This fixes corruption issues when returning from endless mode
+		this.waves = this.map.waves;
+		this.waypoints = this.map.waypoints;
 
 		if (!keepTowers) {
 			this.placementTiles = [];
 			this.placementTile2D = [];
-
-			this.waves = this.map.waves;
-			this.waypoints = this.map.waypoints;
 
 			for (let i = 0; i < this.map.placementTile.length; i += 30) {
 			    this.placementTile2D.push(this.map.placementTile.slice(i, i + 30))
@@ -150,6 +155,8 @@ export class Area {
 		
 		this.enemies = [];
 		this.main.game.canvasBackground.src = this.map.background;
+		
+		console.log(`loadArea complete: waveNumber=${this.waveNumber}, waveActive=${this.waveActive}, endlessMode=${this.endlessMode}, waves.length=${this.waves?.length}`);
 
 		if (this.map.effect != null) {
 			this.main.game.canvasEffect.src = this.map.effect;

@@ -164,24 +164,26 @@ export class DefeatScene extends GameScene {
 	}
 
 	restart(autoReset = {}) {
+		console.log('DefeatScene.restart() called');
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
-		// ENDLESS MODE: Reset endless mode on restart so popup shows again at wave 100
-		this.main.area.endlessMode = false;
 		
 		// BUGFIX: Force complete wave state reset before loading
+		this.main.area.endlessMode = false;
 		this.main.area.waveActive = false;
 		this.main.area.autoWave = false;
 		this.main.area.enemies = [];
 		
-		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true);
+		console.log('restart: calling loadArea with wave=1');
+		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge);
 		this.main.player.getHealed(14);
+		
+		console.log('restart: calling close()');
 		this.close();
-
-		// BUGFIX: Don't auto-start wave on restart - let player manually start
-		// if (autoReset.autoWave) this.main.area.switchAutoWave();
+		console.log(`restart complete: waveActive=${this.main.area.waveActive}`);
 	}
 
 	retry(autoReset = {}) {
+		console.log(`DefeatScene.retry() called, savedWave=${this.savedWave}`);
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		let lives = 7;
 		if (this.main.player.stars >= 150) lives++;
@@ -189,41 +191,47 @@ export class DefeatScene extends GameScene {
 		if (this.main.player.stars >= 450) lives++;
 		if (this.main.area.waveNumber == 100) lives = 1;
 		
-		// ENDLESS MODE: Reset endless mode on retry so popup shows again at wave 100
-		this.main.area.endlessMode = false;
-		
 		// BUGFIX: Force complete wave state reset before loading
+		this.main.area.endlessMode = false;
 		this.main.area.waveActive = false;
 		this.main.area.autoWave = false;
 		this.main.area.enemies = [];
 		
-		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
+		console.log(`retry: calling loadArea with wave=${this.savedWave}`);
+		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge);
 		this.main.player.getHealed(lives);
+		
+		console.log('retry: calling close()');
 		this.close();
-
-		// BUGFIX: Don't auto-start wave on retry - let player manually start
-		// This prevents soft-lock if wave spawning fails
-		// if (autoReset.autoWave) this.main.area.switchAutoWave();
+		console.log(`retry complete: waveActive=${this.main.area.waveActive}`);
 	}
 
 	close() {
+		console.log('DefeatScene.close() called');
 		super.close();
 		this.savedWave = 0;
 
 		this.main.UI.nextWave.style.filter = `revert-layer`;
 		this.main.UI.nextWave.style.pointerEvents = 'all';
 
+		// BUGFIX: Force reset wave state again in close
+		this.main.area.waveActive = false;
 		this.main.area.autoWave = false;
 		this.main.UI.autoWave.style.background = '#2c70e3';
 
 		this.main.UI.update();
 		this.main.UI.revertUI();
+		
+		console.log('DefeatScene.close: calling game.resume()');
 		this.main.game.resume();
+		
 		this.main.player.stats.resets++;
 		if (this.main.player.stats.resets == 100) this.main.player.unlockAchievement(11);
 		
 		playSound('button2', 'ui');
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		
+		console.log(`DefeatScene.close complete: waveActive=${this.main.area.waveActive}, game should be resumed`);
 	}
 
 	getRetryWave() {
