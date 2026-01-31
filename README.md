@@ -1,4 +1,5 @@
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.4 - made by @JayArnoldProduces (Instagram)
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.4
+# - made by @JayArnoldProduces (Instagram)
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
