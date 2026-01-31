@@ -9,12 +9,23 @@ from tkinter import ttk, messagebox
 import subprocess
 import sys
 import os
+import json
 from pathlib import Path
 
 # Get script directory
 SCRIPT_DIR = Path(__file__).parent.resolve()
 GAME_ROOT = SCRIPT_DIR.parent
 RESOURCES = GAME_ROOT / "resources"
+
+# Load version from version.json
+def get_version():
+    version_file = SCRIPT_DIR / "version.json"
+    if version_file.exists():
+        with open(version_file, 'r') as f:
+            return json.load(f).get('version', '1.4.1')
+    return '1.4.1'
+
+MOD_VERSION = get_version()
 
 class ModInstaller(tk.Tk):
     def __init__(self):
@@ -47,7 +58,7 @@ class ModInstaller(tk.Tk):
         
         subtitle = tk.Label(
             self,
-            text="Mod Installer v1.4",
+            text=f"Mod Installer v{MOD_VERSION}",
             font=('Segoe UI', 12),
             fg='#888888',
             bg='#1a1a2e'

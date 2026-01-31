@@ -1,0 +1,11 @@
+{
+  "version": "1.4.1",
+  "game_version": "1.4.1",
+  "release_date": "2026-01-31",
+  "changelog": [
+    "Updated for PokePath TD v1.4.1",
+    "Centralized version management",
+    "Fixed save editor sprite loading",
+    "Auto npm install on first launch"
+  ]
+}

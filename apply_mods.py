@@ -22,8 +22,19 @@ Comprehensive mod that handles ALL game modifications:
 from pathlib import Path
 import re
 import shutil
+import json
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
+
+# Load version from version.json
+def get_version():
+    version_file = SCRIPT_DIR / "version.json"
+    if version_file.exists():
+        with open(version_file, 'r') as f:
+            return json.load(f).get('version', '1.4.1')
+    return '1.4.1'
+
+MOD_VERSION = get_version()
 GAME_ROOT = SCRIPT_DIR.parent
 APP_EXTRACTED = GAME_ROOT / "resources" / "app_extracted"
 JS_ROOT = APP_EXTRACTED / "src" / "js"
@@ -684,7 +695,7 @@ def apply_box_expansion():
 # ============================================================================
 def main():
     print("\n" + "=" * 50)
-    print("    PokePath TD Mod Applier v4.0")
+    print(f"    PokePath TD Mod Applier v{MOD_VERSION}")
     print("=" * 50 + "\n")
     
     if not APP_EXTRACTED.exists():
