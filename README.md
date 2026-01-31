@@ -104,7 +104,7 @@ A graphical save editor with full control over your game:
 2. **Create a `mods` folder** into the game directory:
    ```
    pokePathTD_Electron\
-   ├── mods\                 <-- Put all of the contents of this repo HERE
+   ├── mods\                 <-- Put all of the contents of this repo HERE. name it exactly "mods"
    │   └── PokePath_ModManager.bat
    ├── resources\
    └── pokePathTD.exe
