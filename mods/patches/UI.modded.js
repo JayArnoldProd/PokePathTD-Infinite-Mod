@@ -18,6 +18,9 @@ export class UI {
 		this.damageDealtDisplay = false;
 		this.enemyPositionDisplay = 0;
 		this.tileTerrainHover = null;
+		
+		// ENDLESS MOD: Wave Info Panel (bottom-left) - default off
+		this.waveInfoDisplay = false;
 
 		this.fastScene = new FastScene(this.main, this);
 	}
@@ -89,6 +92,30 @@ export class UI {
 		this.waveSelectorOneMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorTenMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorBlock.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+
+		// ENDLESS MOD: Wave Info Panel (bottom-left corner)
+		this.waveInfoPanel = new Element(this.main.scene, { className: 'ui-wave-info-panel' }).element;
+		this.waveInfoPanel.style.cssText = `
+			position: absolute;
+			bottom: 8px;
+			left: 8px;
+			background: rgba(0, 0, 0, 0.75);
+			border: 2px solid #444;
+			border-radius: 6px;
+			padding: 8px 12px;
+			font-family: 'Pokemon', monospace;
+			font-size: 11px;
+			color: #fff;
+			min-width: 140px;
+			display: none;
+			z-index: 100;
+		`;
+		this.waveInfoWave = new Element(this.waveInfoPanel, { className: 'ui-wave-info-row' }).element;
+		this.waveInfoWave.style.cssText = 'margin-bottom: 4px; color: #4ecca3; font-weight: bold;';
+		this.waveInfoEnemies = new Element(this.waveInfoPanel, { className: 'ui-wave-info-row' }).element;
+		this.waveInfoEnemies.style.cssText = 'margin-bottom: 4px;';
+		this.waveInfoTime = new Element(this.waveInfoPanel, { className: 'ui-wave-info-row' }).element;
+		this.waveInfoTime.style.cssText = 'color: #888;';
 
 		this.tilesCountContainer = new Element(this.bottomBar, { className: 'ui-tiles-count-container' }).element;
 		this.tilesCount = [];
@@ -404,7 +431,50 @@ export class UI {
 			this.secretGreavard.style.pointerEvents = 'none';
 		}
 
+		// ENDLESS MOD: Update wave info panel
+		this.updateWaveInfo();
+
 		this.displayWeather();
+	}
+
+	// ENDLESS MOD: Update wave info panel display
+	updateWaveInfo() {
+		if (!this.waveInfoDisplay) {
+			this.waveInfoPanel.style.display = 'none';
+			return;
+		}
+		
+		this.waveInfoPanel.style.display = 'block';
+		
+		// Wave number
+		const waveNum = this.main.area.waveNumber;
+		const isEndless = waveNum > 100;
+		this.waveInfoWave.innerHTML = `WAVE ${waveNum}${isEndless ? ' <span style="color:#e94560;">(∞)</span>' : ''}`;
+		
+		// Enemies remaining
+		const enemiesRemaining = this.main.area.enemies?.length || 0;
+		const waveActive = this.main.area.waveActive;
+		if (waveActive) {
+			this.waveInfoEnemies.innerHTML = `Enemies: <span style="color:#ff6b6b;">${enemiesRemaining}</span>`;
+		} else {
+			this.waveInfoEnemies.innerHTML = `<span style="color:#666;">Wave Complete</span>`;
+		}
+		
+		// Time elapsed (if wave is active)
+		if (waveActive && this.main.area.waveStartTime) {
+			const elapsed = Math.floor((Date.now() - this.main.area.waveStartTime) / 1000);
+			const mins = Math.floor(elapsed / 60);
+			const secs = elapsed % 60;
+			this.waveInfoTime.innerHTML = `Time: ${mins}:${secs.toString().padStart(2, '0')}`;
+		} else {
+			this.waveInfoTime.innerHTML = '';
+		}
+	}
+
+	// ENDLESS MOD: Toggle wave info panel
+	toggleWaveInfo() {
+		this.waveInfoDisplay = !this.waveInfoDisplay;
+		this.updateWaveInfo();
 	}
 
 	displayWeather() {

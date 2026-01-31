@@ -374,6 +374,18 @@ export class MenuScene extends GameScene {
 		this.mapEffectsRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 		this.mapEffectsRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 
+		// ENDLESS MOD: Wave Info Panel setting
+		this.waveInfoRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
+		this.waveInfoRow.label = new Element(this.waveInfoRow, { className: 'menu-scene-label' }).element;
+		this.waveInfoRow.prev = new Element(this.waveInfoRow, { className: 'menu-scene-arrow', text: '<' }).element;
+		this.waveInfoRow.value = new Element(this.waveInfoRow, { className: 'menu-scene-value' }).element;
+		this.waveInfoRow.next = new Element(this.waveInfoRow, { className: 'menu-scene-arrow', text: '>' }).element;
+
+		this.waveInfoRow.prev.addEventListener('click', () => { this.updateWaveInfo() })
+		this.waveInfoRow.next.addEventListener('click', () => { this.updateWaveInfo() })
+		this.waveInfoRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+		this.waveInfoRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+
 		this.sectionAudio = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
 		this.titleAudio = new Element(this.sectionAudio, { className: 'menu-scene-section-title' }).element;
 		this.contentAudio = new Element(this.sectionAudio, { className: 'menu-scene-section-content' }).element;
@@ -566,6 +578,10 @@ export class MenuScene extends GameScene {
   		else if (data.config.mapEffects == 2) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[2][this.main.lang].toUpperCase();
   		else this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[0][this.main.lang].toUpperCase(); 
 
+  		// ENDLESS MOD: Wave Info Panel setting
+  		this.waveInfoRow.label.innerText = 'WAVE INFO PANEL'; // text.menu.settings.waveInfo
+  		this.waveInfoRow.value.innerText = (this.main.UI.waveInfoDisplay) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+
   		//SHORTCUTS
   		for (let i = 0; i < 13; i++) {
   			this.shortcutRow[i].label.innerHTML = SHORTCUTS.key[i][this.main.lang].toUpperCase();
@@ -707,6 +723,13 @@ export class MenuScene extends GameScene {
         data.config.autoStopBoss = this.main.autoStopBoss;
         window.localStorage.setItem("data", JSON.stringify(data));
 
+        this.update();
+        playSound('option', 'ui');
+    }
+
+    // ENDLESS MOD: Toggle wave info panel
+    updateWaveInfo = () => {
+    	this.main.UI.toggleWaveInfo();
         this.update();
         playSound('option', 'ui');
     }	
