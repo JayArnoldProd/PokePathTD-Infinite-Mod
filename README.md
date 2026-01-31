@@ -77,9 +77,20 @@ A graphical save editor with full control over your game:
 
 ---
 
-## 📦 Installation (WINDOWS ONLY)
+## 📥 Downloads (Windows Only)
 
-**WARNING** BACK UP YOUR SAVE PRIOR TO INSTALLATION
+| Version | Game Compatibility | Download |
+|---------|-------------------|----------|
+| **v1.4.1** (Latest) | PokePath TD 1.4.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.1) |
+| v1.4 | PokePath TD 1.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4) |
+
+> 💡 **Match your game version!** Check your game's title screen for the version number.
+
+---
+
+## 📦 Installation (Windows Only)
+
+**⚠️ WARNING:** Back up your save prior to installation!
 
 ### Requirements
 - **Node.js** — [nodejs.org](https://nodejs.org) (for game extraction)
