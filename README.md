@@ -120,20 +120,6 @@ A graphical save editor with full control over your game:
 
 ---
 
-## 🔧 Mod Manager Menu
-
-```
-1. FRESH INSTALL (All mods + Shinies)
-2. Apply Game Mods (speed, level, endless)
-3. Generate Shiny Sprites (non-evolved Pokemon)
-4. Open Save Editor
-5. Repack Game Only
-6. Restore Vanilla (from backup)
-0. Exit
-```
-
----
-
 ## 📋 Full Changelog
 
 ### Game Modifications
