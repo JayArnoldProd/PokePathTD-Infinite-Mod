@@ -87,7 +87,7 @@ A graphical save editor with full control over your game:
 > 💡 **Match your game version!**
 ---
 
-## 📦 Installation (Windows Only)
+## 📦 Installation
 
 **⚠️ WARNING:** Back up your save prior to installation!
 
