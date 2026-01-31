@@ -161,8 +161,46 @@ def apply_menu_autoreset_range():
     
     if old_pattern in content:
         content = content.replace(old_pattern, new_pattern)
+        
+        # Also fix the display code to show option 3 (Continue)
+        display_old = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
+        
+        display_new = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+  		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
+  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
+        
+        if display_old in content:
+            content = content.replace(display_old, display_new)
+        
         write_file(path, content)
         log_success("MenuScene.js: Auto-reset range 0-3")
+        return True
+    
+    # Check if cycle is already fixed but display isn't
+    if 'pos == 4' in content and 'pos = 3' in content:
+        display_old = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
+        
+        display_new = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+  		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
+  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
+        
+        if display_old in content:
+            content = content.replace(display_old, display_new)
+            write_file(path, content)
+            log_success("MenuScene.js: Auto-reset display fix")
+            return True
+        
+        log_skip("MenuScene.js: Auto-reset range")
         return True
     
     log_fail("MenuScene.js: Auto-reset range")
