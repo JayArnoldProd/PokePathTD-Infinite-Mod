@@ -197,7 +197,7 @@ A graphical save editor with full control over your game:
 
 ## 📜 Credits
 
-- **Mod Development** — @JayArnoldProduces (Instagram)
+- **Mod Development** — [Jay Arnold](https://instagram.com/jayarnoldproduces) | [itch.io](https://jay-arnold.itch.io) | [YouTube](https://www.youtube.com/@jayarnoldproduces)
 - **Original Game** — [PokePath TD](https://khydra98.itch.io/pokepath) by [Khydra](https://khydra98.itch.io)
 - **Pokemon** — © Nintendo, Game Freak, Creatures Inc.
 
