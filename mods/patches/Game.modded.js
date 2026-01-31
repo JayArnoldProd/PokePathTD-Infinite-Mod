@@ -141,12 +141,14 @@ export class Game {
 	    
 	    this.main.UI.updateDamageDealt();
 	    // dibujar textos de daño
-	    this.main.area.damageText.forEach((damageText, index) => {
-	      	damageText.update();
-	      	if (damageText.opacity <= 0.1) {
-	        	this.main.area.damageText.splice(index, 1);
-	      	}
-	    });
+	    if (this.main.area.damageText) {
+	      	this.main.area.damageText.forEach((damageText, index) => {
+	        	damageText.update();
+	        	if (damageText.opacity <= 0.1) {
+	          		this.main.area.damageText.splice(index, 1);
+	        	}
+	      	});
+	    }
 
 	    // EFECTO MAPA
 	    if (this.effectEnabled && this.ctx) {
@@ -163,6 +165,14 @@ export class Game {
     	if (this.loopId) clearInterval(this.loopId);
     	this.loopId = null;
     	this.chrono.stop()
+  	}
+
+  	resume() {
+    	if (!this.stopped) return;
+    	this.stopped = false;
+    	this.lastTime = performance.now();
+    	if (this.loopId) clearInterval(this.loopId);
+    	this.loopId = setInterval(() => this.animate(performance.now()), this.frameDuration);
   	}
 
   	cancelDeployUnit() {
