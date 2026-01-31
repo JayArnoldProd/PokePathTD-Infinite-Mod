@@ -326,8 +326,13 @@ export class Area {
 		if (this.endlessMode && this.waveNumber > 100) {
 			return this.spawnEndlessWave();
 		}
+		
+		// ENDLESS MODE: Wave 100 spawns 1 boss using the boss system (not original multi-boss wave)
+		if (this.waveNumber === 100) {
+			return this.spawnWave100Boss();
+		}
 
-		// Original logic for waves 1-100
+		// Original logic for waves 1-99
 		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;
 
 		const wave = this.waves[falseWaveNumber].wave;
@@ -595,6 +600,31 @@ export class Area {
 				);
 			}
 		}
+	}
+
+	// WAVE 100: Spawn single boss (original wave 100 had multiple bosses stacked)
+	spawnWave100Boss() {
+		const bossKey = BOSS_KEYS[this.routeNumber] || 'shaymin';
+		const boss = e[bossKey];
+		
+		if (!boss) {
+			console.warn('Boss not found:', bossKey);
+			return;
+		}
+		
+		const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+		
+		// Single boss at wave 100
+		this.enemies.push(
+			new Enemy(
+				waypointEnemy[0].x - 150,
+				waypointEnemy[0].y,
+				boss,
+				waypointEnemy,
+				this.main,
+				this.main.game.ctx,
+			)
+		);
 	}
 
 	// ENDLESS MODE: Get wave preview for endless waves

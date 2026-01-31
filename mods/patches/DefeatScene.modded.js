@@ -184,6 +184,11 @@ export class DefeatScene extends GameScene {
 		
 		// ENDLESS MODE: Reset endless mode on retry so popup shows again at wave 100
 		this.main.area.endlessMode = false;
+		
+		// Ensure wave state is clean before loading
+		this.main.area.waveActive = false;
+		this.main.area.enemies = [];
+		
 		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(lives);
 		this.close();
