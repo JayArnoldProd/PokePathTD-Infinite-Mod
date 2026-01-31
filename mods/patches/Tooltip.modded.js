@@ -89,12 +89,12 @@ export class Tooltip {
         if (item.name.length <= lang) lang = 0;
 
         this.tooltip.innerHTML = `
-            <div class="tooltip-content">
-                <span class="tooltip-name">${item.name[lang].toUpperCase()}</span>  
-                <span class="tooltip-description">${item.description[lang].toUpperCase()}</span>  
+            <div class="tooltip-content" style="max-width: 280px; width: auto;">
+                <span class="tooltip-name" style="display: block; margin-bottom: 4px;">${item.name[lang].toUpperCase()}</span>  
+                <span class="tooltip-description" style="display: block; white-space: normal; word-wrap: break-word;">${item.description[lang].toUpperCase()}</span>  
             </div>
         `;
-        this.tooltip.style.display = "block";
+        this.tooltip.style.cssText = "position: absolute; pointer-events: none; display: block; max-width: 280px;";
         this._ensurePositionOnce();
     }
 
