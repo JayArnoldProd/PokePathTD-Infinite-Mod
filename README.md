@@ -1,3 +1,5 @@
+<img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
+
 # PokePath TD: INFINITE - Enhanced Mod Pack v1.4
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
