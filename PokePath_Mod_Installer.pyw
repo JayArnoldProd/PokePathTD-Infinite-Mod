@@ -47,7 +47,7 @@ class ModInstaller(tk.Tk):
         
         subtitle = tk.Label(
             self,
-            text="Mod Installer v1.0",
+            text="Mod Installer v1.4",
             font=('Segoe UI', 12),
             fg='#888888',
             bg='#1a1a2e'
@@ -118,7 +118,20 @@ class ModInstaller(tk.Tk):
         self.status.pack(side='bottom', pady=15)
     
     def check_requirements(self):
-        """Check if game folder is correct."""
+        """Check if game folder is correct and install dependencies."""
+        # Install npm dependencies if needed (for save editor)
+        node_modules = SCRIPT_DIR / "node_modules"
+        if not node_modules.exists():
+            self.status.config(text="Installing dependencies...", fg='#4ecca3')
+            self.update()
+            subprocess.run(
+                ['npm', 'install'],
+                cwd=str(SCRIPT_DIR),
+                capture_output=True,
+                shell=True
+            )
+            self.status.config(text="Ready", fg='#666666')
+        
         if not RESOURCES.exists():
             self.status.config(text="⚠️ Game folder not detected", fg='#e94560')
             self.mod_btn.config(state='disabled', bg='#666666')

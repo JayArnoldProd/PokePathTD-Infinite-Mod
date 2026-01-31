@@ -33,15 +33,26 @@ CELL_SIZE = 58  # Fixed cell size
 # ============================================================================
 
 def find_paths():
+    import os
     script_dir = Path(__file__).parent.resolve()
-    for check_dir in [script_dir, script_dir.parent]:
-        if (check_dir / 'resources').exists():
+    
+    # Check locations in order: script dir, parent, standard install path
+    check_dirs = [
+        script_dir,
+        script_dir.parent,
+        Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'pokePathTD_Electron',
+        Path.home() / 'AppData' / 'Local' / 'Programs' / 'pokePathTD_Electron',
+    ]
+    
+    for check_dir in check_dirs:
+        if check_dir and (check_dir / 'resources').exists():
             pokemon_base = check_dir / 'resources' / 'app_extracted' / 'src' / 'assets' / 'images' / 'pokemon'
-            return {
-                'game_root': check_dir,
-                'sprites': pokemon_base / 'normal',
-                'sprites_shiny': pokemon_base / 'shiny',
-            }
+            if pokemon_base.exists():
+                return {
+                    'game_root': check_dir,
+                    'sprites': pokemon_base / 'normal',
+                    'sprites_shiny': pokemon_base / 'shiny',
+                }
     return {'game_root': None, 'sprites': None, 'sprites_shiny': None}
 
 PATHS = find_paths()
