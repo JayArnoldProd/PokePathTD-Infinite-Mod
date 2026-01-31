@@ -191,7 +191,16 @@ A graphical save editor with full control over your game:
   └── PokéPath TD.exe
   ```
 - Make sure **Node.js** is installed: [nodejs.org](https://nodejs.org)
-- Open Command Prompt and verify: `node --version` and `python --version`
+- Open **Command Prompt** (not PowerShell) and verify: `node --version` and `python --version`
+
+**PowerShell "scripts disabled" error (npx.ps1 cannot be loaded)**
+- This happens because Windows blocks PowerShell scripts by default
+- **The installer handles this automatically** by using Command Prompt instead
+- If you still have issues, open **Command Prompt (cmd.exe)** instead of PowerShell
+- Or fix PowerShell permanently (run as Admin):
+  ```powershell
+  Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+  ```
 
 **"Node.js NOT FOUND"**
 - Install from [nodejs.org](https://nodejs.org)

@@ -3,11 +3,11 @@
 PokePath TD Mod Installer - User-Friendly GUI
 Simple 3-button interface for installing mods and accessing save editor.
 
-v1.4.1b - Fixed hanging issues:
+v1.4.1c - Fixed PowerShell execution policy issue:
+- Uses cmd.exe explicitly for npx commands (bypasses PowerShell .ps1 blocking)
 - Added threading for long operations (prevents "Not Responding")
 - Added timeouts to prevent infinite hangs
-- Better error handling for missing Node.js
-- Progress updates during installation
+- Better error handling and detection
 """
 
 import tkinter as tk
@@ -38,21 +38,93 @@ MOD_VERSION = get_version()
 def check_node_installed():
     """Check if Node.js is installed and accessible."""
     try:
-        result = subprocess.run(
-            ['node', '--version'],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
-        )
+        # Use cmd.exe explicitly on Windows to avoid PowerShell execution policy issues
+        if sys.platform == 'win32':
+            result = subprocess.run(
+                ['cmd', '/c', 'node', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+        else:
+            result = subprocess.run(
+                ['node', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
         return False
 
-def run_command(cmd, cwd=None, timeout=300):
-    """Run a command with timeout and proper flags to prevent hanging."""
+def check_npx_works():
+    """Check if npx works (might be blocked by PowerShell execution policy)."""
     try:
-        # Use CREATE_NO_WINDOW on Windows to prevent console popups
+        if sys.platform == 'win32':
+            # Use cmd.exe to bypass PowerShell .ps1 script blocking
+            result = subprocess.run(
+                ['cmd', '/c', 'npx', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+        else:
+            result = subprocess.run(
+                ['npx', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+        
+        # Check for PowerShell execution policy error in stderr
+        if 'cannot be loaded because running scripts is disabled' in result.stderr:
+            return False, 'powershell_blocked'
+        
+        return result.returncode == 0, None
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+        return False, str(e)
+
+def run_npx_command(args, cwd=None, timeout=300):
+    """Run an npx command, using cmd.exe on Windows to bypass PowerShell issues."""
+    try:
+        if sys.platform == 'win32':
+            # Use cmd.exe /c to run npx - this bypasses PowerShell execution policy
+            cmd = ['cmd', '/c', 'npx'] + args
+            result = subprocess.run(
+                cmd,
+                cwd=str(cwd) if cwd else None,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+        else:
+            cmd = ['npx'] + args
+            result = subprocess.run(
+                cmd,
+                cwd=str(cwd) if cwd else None,
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+        
+        # Check for PowerShell execution policy error
+        if 'cannot be loaded because running scripts is disabled' in result.stderr:
+            return False, "", "PowerShell is blocking scripts. This is handled automatically."
+        
+        return result.returncode == 0, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return False, "", "Operation timed out"
+    except FileNotFoundError as e:
+        return False, "", f"Command not found: {e}"
+    except Exception as e:
+        return False, "", str(e)
+
+def run_command(cmd, cwd=None, timeout=300):
+    """Run a command with timeout and proper flags."""
+    try:
         creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
         
         result = subprocess.run(
@@ -181,20 +253,27 @@ class ModInstaller(tk.Tk):
         def check():
             has_node = check_node_installed()
             has_resources = RESOURCES.exists()
+            npx_works, npx_error = check_npx_works()
             
             # Update UI from main thread
-            self.after(0, lambda: self.on_requirements_checked(has_node, has_resources))
+            self.after(0, lambda: self.on_requirements_checked(has_node, has_resources, npx_works, npx_error))
         
         thread = threading.Thread(target=check, daemon=True)
         thread.start()
     
-    def on_requirements_checked(self, has_node, has_resources):
+    def on_requirements_checked(self, has_node, has_resources, npx_works, npx_error):
         """Handle requirements check result."""
         if not has_resources:
             self.set_status("⚠️ Game folder not detected!\nMake sure mods folder is inside the game directory.", '#e94560')
             self.mod_btn.config(state='disabled', bg='#666666')
         elif not has_node:
             self.set_status("⚠️ Node.js not found!\nInstall from nodejs.org", '#e94560')
+            self.mod_btn.config(state='disabled', bg='#666666')
+        elif not npx_works and npx_error == 'powershell_blocked':
+            # npx is blocked by PowerShell, but we handle this with cmd.exe
+            self.set_status("✓ Ready (using cmd.exe for npx)", '#4ecca3')
+        elif not npx_works:
+            self.set_status(f"⚠️ npx not working: {npx_error}", '#e94560')
             self.mod_btn.config(state='disabled', bg='#666666')
         else:
             self.set_status("✓ Ready to install mods", '#4ecca3')
@@ -233,8 +312,9 @@ class ModInstaller(tk.Tk):
             if not app_extracted.exists():
                 self.after(0, lambda: self.set_status("Extracting game files (this may take a minute)...", '#4ecca3'))
                 
-                success, stdout, stderr = run_command(
-                    ['npx', 'asar', 'extract', 'app.asar', 'app_extracted'],
+                # Use our npx wrapper that handles PowerShell issues
+                success, stdout, stderr = run_npx_command(
+                    ['asar', 'extract', 'app.asar', 'app_extracted'],
                     cwd=RESOURCES,
                     timeout=300  # 5 minute timeout for extraction
                 )
@@ -289,6 +369,7 @@ class ModInstaller(tk.Tk):
             "Installation Failed", 
             f"Error during installation:\n\n{error_msg}\n\nMake sure:\n"
             "• Node.js is installed (nodejs.org)\n"
+            "• Python is installed (python.org)\n"
             "• The game is closed\n"
             "• Mods folder is in the game directory"
         )
@@ -303,7 +384,6 @@ class ModInstaller(tk.Tk):
         editor_script = SCRIPT_DIR / "save_editor.py"
         if editor_script.exists():
             try:
-                # Use CREATE_NO_WINDOW to prevent console popup
                 creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
                 subprocess.Popen(
                     [sys.executable, str(editor_script)],

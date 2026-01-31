@@ -849,16 +849,28 @@ def main():
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
     
     try:
+        # Use cmd.exe on Windows to bypass PowerShell execution policy issues
+        if sys.platform == 'win32':
+            cmd = ['cmd', '/c', 'npx', 'asar', 'pack', 
+                   str(APP_EXTRACTED), 
+                   str(GAME_ROOT / 'resources' / 'app.asar')]
+        else:
+            cmd = ['npx', 'asar', 'pack', 
+                   str(APP_EXTRACTED), 
+                   str(GAME_ROOT / 'resources' / 'app.asar')]
+        
         result = subprocess.run(
-            ['npx', 'asar', 'pack', 
-             str(APP_EXTRACTED), 
-             str(GAME_ROOT / 'resources' / 'app.asar')],
+            cmd,
             capture_output=True, 
             text=True,
             timeout=300,  # 5 minute timeout
             creationflags=creationflags
         )
-        if result.returncode == 0:
+        
+        # Check for PowerShell execution policy error
+        if 'cannot be loaded because running scripts is disabled' in result.stderr:
+            print("  [ERROR] PowerShell is blocking scripts. Try running from Command Prompt (cmd.exe)")
+        elif result.returncode == 0:
             print("  [OK] Game repacked successfully!")
         else:
             print(f"  [ERROR] Repack failed: {result.stderr}")
