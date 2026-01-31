@@ -752,6 +752,34 @@ def apply_box_expansion():
     return False
 
 # ============================================================================
+# PROFILESCENE.JS - Endless mode stats display
+# ============================================================================
+def apply_profile_endless_stats():
+    """Update profile stats for endless mode (no caps, unique species count)."""
+    path = JS_ROOT / "game" / "scenes" / "ProfileScene.js"
+    
+    if not path.exists():
+        log_fail("ProfileScene.js: File not found")
+        return False
+    
+    content = read_file(path)
+    
+    # Check if already applied
+    if "countUniqueSpecies" in content:
+        log_skip("ProfileScene.js: Endless stats")
+        return True
+    
+    # Use modded file directly
+    modded_file = SCRIPT_DIR / "patches" / "ProfileScene.modded.js"
+    if modded_file.exists():
+        shutil.copy(modded_file, path)
+        log_success("ProfileScene.js: Endless stats (full file replacement)")
+        return True
+    
+    log_fail("ProfileScene.js: modded file not found")
+    return False
+
+# ============================================================================
 # MAIN
 # ============================================================================
 def main():
@@ -796,6 +824,7 @@ def main():
     apply_tower_deltatime()
     apply_projectile_scaling()
     apply_box_expansion()
+    apply_profile_endless_stats()
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
