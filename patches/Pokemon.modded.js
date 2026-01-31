@@ -404,7 +404,7 @@ export class Pokemon {
 		if (item?.equipedBy != undefined && this.ability.id != 'magician') {
 			const pokes = [...this.main.team.pokemon, ...this.main.box.pokemon];
 			const pokeWhitItem = pokes.find(poke => poke.id === item.equipedBy);
-			if (pokeWhitItem.isDeployed && (item?.id == 'airBalloon' || item?.id == 'heavyDutyBoots' || item?.id == 'dampMulch' || item?.id == 'assaultVest')) {
+			if (pokeWhitItem.isDeployed && (item?.id == 'silphScope' || item?.id == 'airBalloon' || item?.id == 'heavyDutyBoots' || item?.id == 'dampMulch' || item?.id == 'assaultVest')) {
 				playSound('pop0', 'ui')
 				return;
 			}

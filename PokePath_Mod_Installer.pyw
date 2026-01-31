@@ -183,7 +183,7 @@ class ModInstaller(tk.Tk):
                 text=True
             )
             
-            if result.returncode == 0 and "Failed:" not in result.stdout or "Failed:  0" in result.stdout:
+            if result.returncode == 0 and ("Failed:" not in result.stdout or "Failed:  0" in result.stdout):
                 # Note: Shiny sprites are now pre-packaged in patches/shiny_sprites/
                 # and installed automatically by apply_mods.py
                 

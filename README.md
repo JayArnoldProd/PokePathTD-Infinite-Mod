@@ -1,8 +1,12 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.1
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.1.0
+
+**Compatible with PokePath TD v1.4.1** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
+
+> **v1.1.0 Update:** Merged 1.4.1's improved drag-and-drop system with pointer events, plus Silph Scope unequip fix.
 
 ---
 

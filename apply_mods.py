@@ -246,8 +246,8 @@ def apply_shiny_starters():
     path = JS_ROOT / "game" / "scenes" / "NewGameScene.js"
     content = read_file(path)
     
-    # Check if already applied
-    if 'isShiny' in content and '1/30' in content:
+    # Check if already applied (handle both "1/30" and "1 / 30" spacing)
+    if 'isShiny' in content and ('1/30' in content or '1 / 30' in content):
         log_skip("NewGameScene.js: Shiny starters")
         return True
     

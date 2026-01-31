@@ -26,6 +26,7 @@ export class Game {
 	    this.ranges = false;
 	    this.speedFactor = 1;
 	    this.chrono;
+	    this.mapDragging = false; // 1.4.1: Track drag state to prevent click after drag
 
 	    this.canvasShake  = {
 		  	active: false,
@@ -140,76 +141,33 @@ export class Game {
 	    
 	    this.main.UI.updateDamageDealt();
 	    // dibujar textos de daño
-	    if (this.main.showDamage) {
-	      this.main.area.enemies.forEach(enemy => {
-	        enemy.drawFloatingTexts();
-	      });
+	    this.main.area.damageText.forEach((damageText, index) => {
+	      	damageText.update();
+	      	if (damageText.opacity <= 0.1) {
+	        	this.main.area.damageText.splice(index, 1);
+	      	}
+	    });
+
+	    // EFECTO MAPA
+	    if (this.effectEnabled && this.ctx) {
+	        this.effectTime += 0.03; 
+	        let opacity = (Math.sin(this.effectTime * 1) + 1) / 2 * 0.6;
+	        this.ctx.globalAlpha = opacity;
+	        this.ctx.drawImage(this.canvasEffect, 0, 0, this.canvas.width, this.canvas.height);
+	        this.ctx.globalAlpha = 1;
 	    }
-	    if (this.ranges) {
-	      this.main.area.placementTiles.forEach(tile => {
-	        if (tile.tower) {
-	          tile.drawRange(tile.tower.range, tile.tower.rangeType, tile.tower.innerRange, tile.tower.ability, tile.tower.item, true);
-	        }
-	      })
-	    }
-
-	    if (this.main.mapEffects != 2) {
-	    	if (this.effectEnabled) {
-			    this.effectTime += scaledDelta;
-
-			    const targetAlpha = (this.main.mapEffects == 1) ? 1 : 0.65 + 0.1 * Math.sin(this.effectTime * 0.001);
-			    const targetGlobalAlpha = (this.main.mapEffects == 1) ? 1 : 0.65 + 0.01 * Math.sin(this.effectTime * 0.001);
-
-			    this.currentAlpha = this.currentAlpha ?? targetAlpha;
-			    this.currentGlobalAlpha = this.currentGlobalAlpha ?? targetGlobalAlpha;
-
-			    const lerpFactor = 0.05; 
-			    this.currentAlpha += (targetAlpha - this.currentAlpha) * lerpFactor;
-			    this.currentGlobalAlpha += (targetGlobalAlpha - this.currentGlobalAlpha) * lerpFactor;
-
-			    this.ctx.save();
-			    this.ctx.globalAlpha = this.currentGlobalAlpha;
-			    this.ctx.drawImage(this.canvasEffect, 0, 0, this.canvas.width, this.canvas.height);
-			    this.ctx.restore();
-			}
-	    }
-
-	    this.ctx.restore();
   	}
 
-	stop() {
-	    this.stopped = true;
-	    if (this.loopId) {
-	      	clearInterval(this.loopId);
-	      	this.loopId = null;
-	    }
-	}
-
-  	resume() {
-	    if (!this.stopped) return;
-	    this.stopped = false;
-	    this.lastTime = performance.now();
-	    if (this.loopId) clearInterval(this.loopId);
-	    this.loopId = setInterval(() => this.animate(performance.now()), this.frameDuration);
-  	}
-
-  	tryDeployUnit(pos, ui) {
-	    if (this.deployingUnit != undefined) return this.cancelDeployUnit();
-	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-	    this.deployingUnit = this.main.team.pokemon[pos];
-	    if (this.main.team.pokemon[pos].isDeployed && ui) {
-	      	this.retireUnit();
-	      	return;
-	    }
-	    playSound('click1', 'ui');
-	    this.main.UI.nextWave.style.filter = 'brightness(0.8)';
-	    this.main.UI.nextWave.style.pointerEvents = 'none';
+  	stop() {
+    	this.stopped = true;
+    	if (this.loopId) clearInterval(this.loopId);
+    	this.loopId = null;
+    	this.chrono.stop()
   	}
 
   	cancelDeployUnit() {
 	    playSound('pop0', 'ui');
 	    this.deployingUnit = undefined;
-	    this.main.UI.updatePokemon();
 	    if (!this.main.area.waveActive) {
 	      	this.main.UI.revertUI();
 	      	this.main.UI.nextWave.style.filter = 'revert-layer';
@@ -217,7 +175,16 @@ export class Game {
 	    }
   	}
 
-  	moveUnitToTile(newTile) {
+  	tryDeployUnit(index) {
+    	if (this.main.team.pokemon.length-1 < index) return;
+	    this.deployingUnit = this.main.team.pokemon[index];
+	    this.main.UI.fastScene.open(index);
+	    this.main.UI.nextWave.style.filter = 'saturate(0)';
+	    this.main.UI.nextWave.style.pointerEvents = 'none';
+  	}
+
+  	// 1.4.1: Added mute parameter for drag operations
+  	moveUnitToTile(newTile, mute = false) {
 	    if (!this.deployingUnit || !newTile) return;
 	    if (
 	      	!this.deployingUnit.tiles.includes(newTile.land) &&
@@ -227,18 +194,22 @@ export class Game {
 	      	!(this.deployingUnit?.item?.id == 'dampMulch' && newTile.land == 1)
 	    ) return;
 	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-	    playSound('equip', 'ui');
+	    
 	    if (this.deployingUnit.isDeployed) {
 	      	const oldTile = this.main.area.placementTiles.find(tile => tile.tower === this.deployingUnit);
 	      	if (oldTile) {
-	        oldTile.tower = false;
-	        const index = this.main.area.towers.findIndex(tower => tower.pokemon === this.deployingUnit);
-	        if (index !== -1) {
-	          	this.main.area.towers.splice(index, 1);
-	        }
-	        this.main.UI.tilesCountNum[oldTile.land - 1]--;
+		        oldTile.tower = false;
+		        const index = this.main.area.towers.findIndex(tower => tower.pokemon === this.deployingUnit);
+		        if (index !== -1) {
+		          	this.main.area.towers.splice(index, 1);
+		        }
+		        this.main.UI.tilesCountNum[oldTile.land - 1]--;
 	      	}
 	    }
+	    
+	    // 1.4.1: Respect mute parameter for drag operations
+	    if (!mute) playSound('equip', 'ui');
+	    
 	    newTile.tower = this.deployingUnit;
 	    this.main.area.towers.push(
 	      	new Tower(this.main, newTile.position.x, newTile.position.y, this.ctx, this.deployingUnit, newTile)
@@ -333,6 +304,17 @@ export class Game {
 	}
 
   	setEvents() {
+	    // 1.4.1: Helper function for placement validation
+	    const canPlaceOn = (pokemon, tile) => {
+	        if (!pokemon || !tile) return false;
+	        if (pokemon.tiles && pokemon.tiles.includes(tile.land)) return true;
+	        if (pokemon?.item?.id == 'airBalloon' && tile.land == 4) return true;
+	        if (pokemon?.item?.id == 'heavyDutyBoots' && tile.land == 2) return true;
+	        if (pokemon?.item?.id == 'assaultVest' && tile.land == 2) return true;
+	        if (pokemon?.item?.id == 'dampMulch' && tile.land == 1) return true;
+	        return false;
+	    };
+
     	this.canvas.addEventListener('mousemove', (event) => {
 	      	this.mouse.x = event.offsetX;
 	      	this.mouse.y = event.offsetY;
@@ -352,6 +334,12 @@ export class Game {
 	    });
 
 	    this.canvas.addEventListener('click', (event) => {
+	        // 1.4.1: Prevent click handler after drag
+	        if (this.mapDragging) { 
+	            this.mapDragging = false;
+	            return;
+	        }
+
 	      	if (!this.activeTile) return;
 	      	const clickedPokemon = this.activeTile.tower || null;
 	      	if (this.deployingUnit) {
@@ -359,39 +347,27 @@ export class Game {
 		          	this.cancelDeployUnit();
 		          	return;
 		        }
-		        const canPlace = this.deployingUnit.tiles.includes(this.activeTile.land) ||
-		          	(this.deployingUnit?.item?.id == 'airBalloon' && this.activeTile.land == 4) ||
-		          	(this.deployingUnit?.item?.id == 'heavyDutyBoots' && this.activeTile.land == 2) ||
-		          	(this.deployingUnit?.item?.id == 'assaultVest' && this.activeTile.land == 2) ||
-		          	(this.deployingUnit?.item?.id == 'dampMulch' && this.activeTile.land == 1);
-		        if (!canPlace) return;
+		        
+		        // 1.4.1: Use helper function
+		        const canPlaceDragged = canPlaceOn(this.deployingUnit, this.activeTile);
+		        if (!canPlaceDragged) return;
+		        
 		        if (!clickedPokemon) {
 		          	this.moveUnitToTile(this.activeTile);
+		          	this.cancelDeployUnit();
 		        } else {
-		          	if (this.deployingUnit.isDeployed) {
-			            const sourceTile = this.main.area.placementTiles.find(tile => tile.tower === this.deployingUnit);
-			            const canPlaceTarget = clickedPokemon.tiles.includes(sourceTile.land) ||
-			              	(clickedPokemon?.item?.id == 'airBalloon' && sourceTile.land == 4) ||
-			              	(clickedPokemon?.item?.id == 'heavyDutyBoots' && sourceTile.land == 2) ||
-			              	(clickedPokemon?.item?.id == 'assaultVest' && sourceTile.land == 2) ||
-			              	(clickedPokemon?.item?.id == 'dampMulch' && sourceTile.land == 1);
-			            if (!canPlaceTarget) return;
-			            this.swapUnits(sourceTile, this.deployingUnit, this.activeTile, clickedPokemon);
-			            this.deployingUnit = undefined;
-			            playSound('equip', 'ui');
-			            if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-			            if (!this.main.area.waveActive) {
-			              	this.main.UI.revertUI();
-			              	this.main.UI.nextWave.style.filter = 'revert-layer';
-			              	this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
-			            }
-			        } else {
-			            const tempDeploying = this.deployingUnit;
-			            this.deployingUnit = clickedPokemon;
-			            this.retireUnit();
-			            this.deployingUnit = tempDeploying;
-			            this.moveUnitToTile(this.activeTile);
-			        }
+		          	const sourceTile = this.main.area.placementTiles.find(tile => tile.tower === this.deployingUnit);
+		          	if (!sourceTile) return;
+		          	
+		          	const canPlaceTargetToSource = canPlaceOn(clickedPokemon, sourceTile);
+		          	if (!canPlaceTargetToSource) {
+		          	    playSound('pop0', 'ui');
+		          	    return;
+		          	}
+		          	
+		          	this.swapUnits(sourceTile, this.deployingUnit, this.activeTile, clickedPokemon);
+		          	this.cancelDeployUnit();
+		          	if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
 		        }
 		    } else {
 		        if (clickedPokemon) {
@@ -407,8 +383,198 @@ export class Game {
 		        this.main.pokemonScene.open(this.activeTile.tower, index);
 		      }
 	    });
+
+	    // === 1.4.1: NEW DRAG AND DROP SYSTEM ===
+	    let mapDrag = {
+	        active: false,
+	        originTile: null,
+	        pokemon: null,
+	        clone: null,
+	        rect: null,
+	        scaleX: 1,
+	        scaleY: 1,
+	        startX: 0,
+	        startY: 0
+	    };
+
+	    this.canvas.addEventListener('pointerdown', (e) => {
+	        if (!e.isPrimary) return; 
+
+	        const rect = this.canvas.getBoundingClientRect();
+	        const scaleX = this.canvas.width / rect.width;
+	        const scaleY = this.canvas.height / rect.height;
+	        const canvasX = (e.clientX - rect.left) * scaleX;
+	        const canvasY = (e.clientY - rect.top) * scaleY;
+
+	        const tile = this.main.area.placementTiles.find(t =>
+	            canvasX > t.position.x &&
+	            canvasX < t.position.x + t.size &&
+	            canvasY > t.position.y &&
+	            canvasY < t.position.y + t.size
+	        );
+
+	        if (!tile || !tile.tower) return;
+
+	        mapDrag.rect = rect;
+	        mapDrag.scaleX = scaleX;
+	        mapDrag.scaleY = scaleY;
+	        mapDrag.originTile = tile;
+	        mapDrag.pokemon = tile.tower;
+	        mapDrag.startX = e.clientX;
+	        mapDrag.startY = e.clientY;
+	        mapDrag.active = false;
+
+	        const MOVETHRESHOLD = 5;
+	        let shouldEndDeploy = false;
+
+	        const onMoveCheck = (ev) => {
+	            const dx = ev.clientX - mapDrag.startX;
+	            const dy = ev.clientY - mapDrag.startY;
+	            if (Math.hypot(dx, dy) > MOVETHRESHOLD) {
+	                window.removeEventListener('pointermove', onMoveCheck);
+	                window.removeEventListener('pointerup', onCancelStart);
+
+	                mapDrag.active = true;
+	                this.mapDragging = true;
+
+	                this.deployingUnit = mapDrag.pokemon;
+
+	                const pokemon = mapDrag.pokemon;
+	                mapDrag.clone = document.createElement('div');
+	                mapDrag.clone.className = 'map-drag-clone';
+	                mapDrag.clone.style.position = 'absolute';
+	                mapDrag.clone.style.pointerEvents = 'none';
+	                mapDrag.clone.style.zIndex = 10000;
+	                mapDrag.clone.style.width = '40px';
+	                mapDrag.clone.style.height = '40px';
+	                mapDrag.clone.style.backgroundImage = `url("${pokemon.sprite?.base || pokemon.sprite || ''}")`;
+	                mapDrag.clone.style.backgroundSize = 'contain';
+	                mapDrag.clone.style.backgroundRepeat = 'no-repeat';
+	                mapDrag.clone.style.transform = 'translate(-50%, -50%)';
+	                document.body.appendChild(mapDrag.clone);
+
+	                window.addEventListener('pointermove', onDraggingMove);
+	                window.addEventListener('pointerup', onDraggingUp);
+	            }
+	        };
+
+	        const onCancelStart = () => {
+	            window.removeEventListener('pointermove', onMoveCheck);
+	            window.removeEventListener('pointerup', onCancelStart);
+	            mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
+	        };
+
+	        window.addEventListener('pointermove', onMoveCheck);
+	        window.addEventListener('pointerup', onCancelStart);
+
+	        const onDraggingMove = (ev) => {
+	            if (!mapDrag.active) return;
+	            if (mapDrag.clone) {
+	                mapDrag.clone.style.left = `${ev.pageX}px`;
+	                mapDrag.clone.style.top = `${ev.pageY}px`;
+	            }
+
+	            const canvasX = (ev.clientX - mapDrag.rect.left) * mapDrag.scaleX;
+	            const canvasY = (ev.clientY - mapDrag.rect.top) * mapDrag.scaleY;
+	            this.mouse.x = canvasX;
+	            this.mouse.y = canvasY;
+	        };
+
+	        const onDraggingUp = (ev) => {
+	            if (mapDrag.clone) mapDrag.clone.remove();
+	            window.removeEventListener('pointermove', onDraggingMove);
+	            window.removeEventListener('pointerup', onDraggingUp);
+
+	            const canvasX = (ev.clientX - mapDrag.rect.left) * mapDrag.scaleX;
+	            const canvasY = (ev.clientY - mapDrag.rect.top) * mapDrag.scaleY;
+
+	            const targetTile = this.main.area.placementTiles.find(t =>
+	                canvasX > t.position.x &&
+	                canvasX < t.position.x + t.size &&
+	                canvasY > t.position.y &&
+	                canvasY < t.position.y + t.size
+	            );
+
+	            const pokemon = mapDrag.pokemon;
+
+	            // Detect drop on UI panel (retire from map)
+	            const domTarget = document.elementFromPoint(ev.clientX, ev.clientY);
+	            const droppedOnUI = domTarget && domTarget.closest('.ui-player-panel, .ui-pokemon-container, .ui-pokemon');
+
+	            if (droppedOnUI) {
+	                this.deployingUnit = pokemon;
+	                this.retireUnit();
+	                shouldEndDeploy = true;
+	            } else if (!targetTile) {
+	                // Return to origin
+	                this.deployingUnit = pokemon;
+	                this.moveUnitToTile(mapDrag.originTile, true);
+	                shouldEndDeploy = true;
+	            } else {
+	                const clickedPokemon = targetTile.tower || null;
+
+	                if (clickedPokemon === pokemon) {
+	                    shouldEndDeploy = true;
+	                } else {
+	                    const canPlaceDraggedToTarget = canPlaceOn(pokemon, targetTile);
+
+	                    if (!canPlaceDraggedToTarget) {
+	                        playSound('pop0', 'ui');
+	                        this.deployingUnit = pokemon;
+	                        this.moveUnitToTile(mapDrag.originTile);
+	                        shouldEndDeploy = true;
+	                    } else {
+	                        if (!clickedPokemon) {
+	                            this.deployingUnit = pokemon;
+	                            this.moveUnitToTile(targetTile);
+	                            shouldEndDeploy = true;
+	                        } else {
+	                            const canPlaceTargetToSource = canPlaceOn(clickedPokemon, mapDrag.originTile);
+
+	                            if (!canPlaceTargetToSource) {
+	                                playSound('pop0', 'ui');
+	                                this.deployingUnit = pokemon;
+	                                this.moveUnitToTile(mapDrag.originTile);
+	                                shouldEndDeploy = true;
+	                            } else {
+	                                playSound('equip', 'ui');
+	                                const sourceTile = mapDrag.originTile;
+	                                this.swapUnits(sourceTile, pokemon, targetTile, clickedPokemon);
+	                                shouldEndDeploy = true;
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+
+	            mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
+
+	            if (shouldEndDeploy && this.deployingUnit) {
+	                this.cancelDeployUnit();
+	            } else if (this.deployingUnit) this.cancelDeployUnit();
+
+	            this.activeTile = null;
+	            this.mouse.x = undefined;
+	            this.mouse.y = undefined;
+	            this.mapDragging = false;
+
+	            try {
+	                const bounding = this.canvas.getBoundingClientRect();
+	                this.mouse.x = Math.max(0, Math.min(this.canvas.width, (ev.clientX - bounding.left) * (this.canvas.width / bounding.width)));
+	                this.mouse.y = Math.max(0, Math.min(this.canvas.height, (ev.clientY - bounding.top) * (this.canvas.height / bounding.height)));
+	            } catch (err) {
+	                // noop
+	            }
+
+	            if (this.main && this.main.UI) this.main.UI.update();
+	            this.lastTime = 0;
+	            this.animate(performance.now());
+	        };
+	    });
+	    // === END 1.4.1 DRAG AND DROP ===
   	}
 
+	// MOD: Extended speed options (5x, 10x) for endless mode
 	toggleSpeed() {
 	    playSound('option', 'ui');
 	    if (this.speedFactor === 1) {
