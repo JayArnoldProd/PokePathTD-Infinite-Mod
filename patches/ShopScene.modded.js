@@ -97,7 +97,7 @@ export class ShopScene extends GameScene {
 
 class DisplayPokemon extends GameScene {
 	constructor(main) {
-		super(280, 320);
+		super(220, 240);
 		this.main = main;
 		this.pokemon;
 		this.isShinyReveal = false;
@@ -111,8 +111,8 @@ class DisplayPokemon extends GameScene {
 		this.prompt = new Element(this.container, { className: 'dp-scene-prompt' }).element;
 		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
-		// Scale up the Pokemon sprite 6x for better visibility (240px = 40px * 6)
-		this.image.style.cssText = 'width:240px;height:240px;background-size:contain;image-rendering:pixelated;';
+		// Scale up the Pokemon sprite 3.33x for better visibility (133px = 40px * 3.33), 5px lower
+		this.image.style.cssText = 'width:133px;height:133px;background-size:contain;image-rendering:pixelated;margin-top:5px;';
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
