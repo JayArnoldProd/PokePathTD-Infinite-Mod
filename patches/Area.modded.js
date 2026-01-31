@@ -352,6 +352,7 @@ export class Area {
 	}
 
 	// ENDLESS MODE: POWER BUDGET SYSTEM - Generate waves 101+
+	// Targets: Wave 700 = ~75k HP avg, Wave 1600 = ~1M HP avg
 	spawnEndlessWave() {
 		const wave = this.waveNumber;
 		
@@ -361,7 +362,6 @@ export class Area {
 		}
 		
 		// === GET WAVE PREVIEW ENEMIES ===
-		// Use the template wave's preview enemies (what's shown in UI)
 		const templateWaveNum = ((wave - 1) % 99) + 1;
 		const waveData = this.waves[templateWaveNum] || this.waves[1];
 		const wavePreview = waveData?.preview || [];
@@ -371,27 +371,13 @@ export class Area {
 			return;
 		}
 		
-		// === POWER BUDGET CALCULATION ===
-		// Base budget doubled to compensate for removing duplicate Enemy.js HP scaling
+		// === EXPONENTIAL HP SCALING ===
+		// Growth rate: 1.0095^waves gives ~75k at 700, ~1M at 1600
 		const wavesPast100 = wave - 100;
-		const baseBudget = 160000;
-		let hpMult;
-		if (wave < 200) {
-			hpMult = 1 + wavesPast100 * 0.115;
-		} else {
-			hpMult = wave / 16;
-		}
-		const powerBudget = Math.floor(baseBudget * hpMult);
+		const hpMult = Math.pow(1.0095, wavesPast100);
 		
-		// === ENEMY COUNT ===
-		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
-		
-		// === INVERSE HP DISTRIBUTION ===
-		// More weak enemies, fewer strong ones
-		const hpValues = wavePreview.map(p => p.hp || 100);
-		const inverseHp = hpValues.map(hp => 1 / hp);
-		const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
-		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+		// === ENEMY COUNT (scales slower to maintain individual threat) ===
+		const totalEnemyCount = Math.floor(18 + Math.sqrt(wavesPast100) * 3);
 		
 		// === SEEDED RANDOM FOR CONSISTENT WAVES ===
 		const seed = wave * 12345;
@@ -401,14 +387,39 @@ export class Area {
 		};
 		let rngCounter = 0;
 		
-		// === BUILD ENEMY LIST ===
+		// === BUILD ENEMY LIST WITH ELITE INJECTION ===
 		const enemies = [];
+		
+		// Base enemies from preview (weighted toward weaker types)
+		const hpValues = wavePreview.map(p => p.hp || 100);
+		const inverseHp = hpValues.map(hp => 1 / hp);
+		const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
+		const baseCount = Math.floor(totalEnemyCount * 0.7); // 70% base enemies
+		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(baseCount * (inv / totalInverse))));
+		
 		wavePreview.forEach((template, typeIdx) => {
 			const count = enemyCounts[typeIdx];
 			for (let i = 0; i < count; i++) {
-				enemies.push({ template, typeIdx });
+				enemies.push({ template, isChampion: false });
 			}
 		});
+		
+		// === ELITE/CHAMPION INJECTION ===
+		// 20% of wave = elite enemies (tankiest from preview, 2x HP)
+		// 10% of wave = champions (3x HP, armored)
+		const eliteCount = Math.floor(totalEnemyCount * 0.2);
+		const championCount = Math.floor(totalEnemyCount * 0.1);
+		
+		// Find tankiest preview enemy for elites
+		const tankiest = wavePreview.reduce((a, b) => ((a.hp || 0) + (a.armor || 0) > (b.hp || 0) + (b.armor || 0)) ? a : b);
+		
+		for (let i = 0; i < eliteCount; i++) {
+			enemies.push({ template: tankiest, isElite: true });
+		}
+		
+		for (let i = 0; i < championCount; i++) {
+			enemies.push({ template: tankiest, isChampion: true });
+		}
 		
 		// Shuffle enemies for variety
 		for (let i = enemies.length - 1; i > 0; i--) {
@@ -416,32 +427,38 @@ export class Area {
 			[enemies[i], enemies[j]] = [enemies[j], enemies[i]];
 		}
 		
-		// === HP SCALING ===
-		// Scale HP based on power budget, weighted by base HP
-		const totalBaseHp = enemies.reduce((sum, e) => sum + (e.template.hp || 100), 0);
-		const hpScaleFactor = powerBudget / totalBaseHp;
-		
 		// === SPACING ===
 		const baseOffset = 30;
-		const waveOffset = Math.max(8, baseOffset - Math.floor(wavesPast100 / 15));
-		const clusterSize = Math.min(25, 6 + Math.floor(wavesPast100 / 20));
-		const clusterGap = Math.max(10, waveOffset);
+		const waveOffset = Math.max(8, baseOffset - Math.floor(wavesPast100 / 20));
+		const clusterSize = Math.min(20, 5 + Math.floor(wavesPast100 / 30));
+		const clusterGap = Math.max(15, waveOffset);
 		
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
 		
 		enemies.forEach((entry, i) => {
 			if (!entry || !entry.template) return;
 			
-			const { template } = entry;
+			const { template, isElite, isChampion } = entry;
 			
-			// Scale HP proportionally
-			const scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor));
+			// Scale HP with exponential growth + elite/champion multipliers
+			let scaledHp = Math.floor(template.hp * hpMult);
+			let scaledArmor = template.armor || 0;
+			
+			if (isElite) {
+				scaledHp = Math.floor(scaledHp * 2);
+				scaledArmor = Math.floor(scaledArmor * 1.5) || Math.floor(scaledHp * 0.1);
+			}
+			if (isChampion) {
+				scaledHp = Math.floor(scaledHp * 3);
+				scaledArmor = Math.floor(scaledArmor * 2) || Math.floor(scaledHp * 0.2);
+			}
 			
 			// Create scaled enemy object
 			const scaledEnemy = {
 				...template,
 				hp: scaledHp,
-				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
+				armor: scaledArmor,
+				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.08))
 			};
 			
 			// Calculate offset with clustering
@@ -518,6 +535,17 @@ export class Area {
 			return;
 		}
 		
+		// === EXPONENTIAL BOSS SCALING ===
+		const wavesPast100 = wave - 100;
+		const hpMult = Math.pow(1.0095, wavesPast100);
+		
+		const scaledBoss = {
+			...boss,
+			hp: Math.floor(boss.hp * hpMult * 2), // Bosses get 2x the scaling
+			armor: Math.floor((boss.armor || 0) * hpMult) || Math.floor(boss.hp * hpMult * 0.3),
+			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.1))
+		};
+		
 		const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
 		
 		// Spawn bosses with tighter spacing at higher waves
@@ -530,7 +558,7 @@ export class Area {
 				new Enemy(
 					waypointEnemy[0].x - xOffset,
 					waypointEnemy[0].y,
-					boss,
+					scaledBoss,
 					waypointEnemy,
 					this.main,
 					this.main.game.ctx,
@@ -538,21 +566,28 @@ export class Area {
 			);
 		}
 		
-		// Add escort enemies at wave 300+ (strong non-boss enemies)
+		// Add scaled escort enemies at wave 300+
 		if (wave >= 300) {
-			const escortCount = Math.floor((wave - 200) / 50) * 5; // 5 escorts per 50 waves past 200
+			const escortCount = Math.floor((wave - 200) / 50) * 5;
 			const pool = this.getEndlessEnemyPool(wave);
 			const escorts = pool.elite;
 			
 			for (let i = 0; i < escortCount && escorts.length > 0; i++) {
-				const escort = escorts[Math.floor(Math.random() * escorts.length)];
+				const escortTemplate = escorts[Math.floor(Math.random() * escorts.length)];
+				const scaledEscort = {
+					...escortTemplate,
+					hp: Math.floor(escortTemplate.hp * hpMult * 1.5), // Escorts get 1.5x
+					armor: Math.floor((escortTemplate.armor || 0) * hpMult) || Math.floor(escortTemplate.hp * hpMult * 0.15),
+					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.08))
+				};
+				
 				const xOffset = (bossCount + 1) * bossSpacing + (i + 1) * 25;
 				
 				this.enemies.push(
 					new Enemy(
 						waypointEnemy[0].x - xOffset,
 						waypointEnemy[0].y,
-						escort,
+						scaledEscort,
 						waypointEnemy,
 						this.main,
 						this.main.game.ctx,

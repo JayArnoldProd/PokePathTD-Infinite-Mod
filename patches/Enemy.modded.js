@@ -77,40 +77,32 @@ export class Enemy extends Sprite {
 		    this.curseIcon = new Image();
 		    this.curseIcon.src = './src/assets/images/icons/curse.png';
 		}
-		// Wave scaling for difficulty
-		const bonusSteps = Math.floor((wave - 1) / 5);
-		if (bonusSteps > 0) {
-			// Base scaling (waves 1-100): +2% HP, +1% armor per 5 waves
-			let hpMult = 1 + 0.02 * bonusSteps;
-			let armorMult = 1 + 0.01 * bonusSteps;
-			let goldMult = 1 + 0.15 * bonusSteps;
-			
-			// ENDLESS MODE (wave > 100): HP scaling handled by spawnEndlessWave power budget
-			// Only apply armor and gold scaling here, NOT HP
-			if (wave > 100) {
-				const endlessWaves = wave - 100;
-				// HP: NO extra multiplier here - handled by Area.js power budget
-				hpMult = 1; // Reset HP mult for endless - Area.js handles it
-				// Armor: +5% per wave past 100
-				armorMult *= (1 + 0.05 * endlessWaves);
-				// Gold: +2% per wave past 100
-				goldMult *= (1 + 0.02 * endlessWaves);
-			}
-			
-			this.hp = Math.floor(this.hp * hpMult);
-			this.hpMax = Math.floor(this.hpMax * hpMult);
-			this.armor = Math.floor(this.armor * armorMult);
-			this.armorMax = Math.floor(this.armorMax * armorMult);
-			this.gold = Math.floor(this.gold * goldMult);
-			
-			// ENDLESS MODE: Boss waves (100, 200, 300...) get +100% stats
-			if (wave % 100 === 0) {
-				this.hp = Math.floor(this.hp * 2);
-				this.hpMax = Math.floor(this.hpMax * 2);
-				this.armor = Math.floor(this.armor * 2);
-				this.armorMax = Math.floor(this.armorMax * 2);
+		// Wave scaling for difficulty (waves 1-100 only)
+		// ENDLESS MODE (wave > 100): All scaling handled by Area.js spawnEndlessWave
+		if (wave <= 100) {
+			const bonusSteps = Math.floor((wave - 1) / 5);
+			if (bonusSteps > 0) {
+				// Base scaling (waves 1-100): +2% HP, +1% armor per 5 waves
+				let hpMult = 1 + 0.02 * bonusSteps;
+				let armorMult = 1 + 0.01 * bonusSteps;
+				let goldMult = 1 + 0.15 * bonusSteps;
+				
+				this.hp = Math.floor(this.hp * hpMult);
+				this.hpMax = Math.floor(this.hpMax * hpMult);
+				this.armor = Math.floor(this.armor * armorMult);
+				this.armorMax = Math.floor(this.armorMax * armorMult);
+				this.gold = Math.floor(this.gold * goldMult);
+				
+				// Boss wave 100 gets +100% stats
+				if (wave === 100) {
+					this.hp = Math.floor(this.hp * 2);
+					this.hpMax = Math.floor(this.hpMax * 2);
+					this.armor = Math.floor(this.armor * 2);
+					this.armorMax = Math.floor(this.armorMax * 2);
+				}
 			}
 		}
+		// Wave > 100: Enemy receives pre-scaled stats from Area.js, no additional scaling here
 
 		if (typeof this.main.area.inChallenge.toughEnemies == 'number') {
 			this.hp += Math.floor(this.hp * (this.main.area.inChallenge.toughEnemies / 100));
