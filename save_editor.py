@@ -47,7 +47,7 @@ def find_paths():
 PATHS = find_paths()
 SCRIPT_DIR = Path(__file__).parent
 TEMP_SAVE = SCRIPT_DIR / 'current_save.json'
-POKEMON_DATA_FILE = SCRIPT_DIR / 'pokemon_data.json'
+POKEMON_DATA_FILE = SCRIPT_DIR / 'dev' / 'pokemon_data.json'
 SAVE_HELPER = SCRIPT_DIR / 'save_helper.js'
 
 # ============================================================================
