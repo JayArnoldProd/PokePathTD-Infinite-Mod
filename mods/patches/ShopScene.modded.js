@@ -143,7 +143,18 @@ class DisplayPokemon extends GameScene {
 		this.prompt.innerText = this.isShinyReveal ? '⭐ SHINY! ⭐' : text.shop.new[this.main.lang].toUpperCase();
 		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
 		this.pokemonName.style.color = this.pokemon.specie.color;
-		this.image.style.backgroundImage = `url("${this.pokemon.sprite.base}")`;
+		
+		// FIX: Explicitly determine sprite URL based on isShinyReveal flag, not Pokemon's current state
+		// This ensures shiny/normal displays correctly regardless of player's inventory
+		let spriteUrl = this.pokemon.specie.sprite.base;
+		if (this.isShinyReveal) {
+			// Force shiny sprite path
+			spriteUrl = spriteUrl.replace(/\/normal\//g, '/shiny/');
+		} else {
+			// Force normal sprite path
+			spriteUrl = spriteUrl.replace(/\/shiny\//g, '/normal/');
+		}
+		this.image.style.backgroundImage = `url("${spriteUrl}")`;
 		this.closeButton.innerHTML = 'OK';
 		
 		// Show shiny symbol if it's a shiny reveal
