@@ -17,34 +17,34 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - Speed button shows current multiplier text
 
 ### 📈 Removed Caps
-- **Level Cap Removed** — Pokemon can level past 100 (to 9999+)
-- **No Star Cap** — Earn as many stars as you physically can
-- **Asymptotic Attack Speed** — Speed approaches but never reaches zero at high levels (no negative rates)
-                              — with improved delta time accuracy, we can handle a going on at high speeds.
+- **Level Cap Removed** - Pokemon can level past 100 (to 9999+)
+- **No Star Cap** - Earn as many stars as you physically can
+- **Asymptotic Attack Speed** - Speed approaches but never reaches zero at high levels (no negative rates)
+                              - with improved delta time accuracy, we can handle a going on at high speeds.
 
 ### 🌊 Endless Mode
-- **Continue Button** — After beating wave 100, choose to continue to wave 101+
-- **Restart Button** — Go back to wave 1 (original behavior)
-- **Auto-Continue Option** — New auto-reset setting: `Off | Restart | Retry | Continue`
-- **Checkpoints Every 50 Waves** — Die on wave 175? Retry from 150
+- **Continue Button** - After beating wave 100, choose to continue to wave 101+
+- **Restart Button** - Go back to wave 1 (original behavior)
+- **Auto-Continue Option** - New auto-reset setting: `Off | Restart | Retry | Continue`
+- **Checkpoints Every 50 Waves** - Die on wave 175? Retry from 150
 
 ### ⚖️ Balanced Endless Scaling
-- **Upgrade Costs** — Cost = (previous × 1.02) + 8000 past level 100 (caps at 1 Billion)
-- **Enemy HP/Armor** — Scales smoothly with power budget system
-- **Pokemon Stats** — Asymptotic curves prevent stats from breaking
-- **Delta Time Accuracy** — High-speed attacks process correctly
+- **Upgrade Costs** - Cost = (previous × 1.02) + 8000 past level 100 (caps at 1 Billion)
+- **Enemy HP/Armor** - Scales smoothly with power budget system
+- **Pokemon Stats** - Asymptotic curves prevent stats from breaking
+- **Delta Time Accuracy** - High-speed attacks process correctly
 
 ### ✨ Shiny System Improvements
-- **Shiny Eggs** — 1 in 30 chance when opening eggs (~3.3%)
-- **Shiny Starters** — 1 in 30 chance when selecting starter
-- **Pre-Packaged Shiny Sprites** — 212 custom shinies for all non-max-evolution Pokemon
-- **Shiny Reveal** — ⭐ SHINY! ⭐ prompt with sparkle animation
-- **Shinies Have No Level Cap** — Can level to infinity unlike regular Pokemon
+- **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
+- **Shiny Starters** - 1 in 30 chance when selecting starter
+- **Pre-Packaged Shiny Sprites** - 212 custom shinies for all non-max-evolution Pokemon
+- **Shiny Reveal** - ⭐ SHINY! ⭐ prompt with sparkle animation
+- **Shinies Have No Level Cap** - Can level to infinity unlike regular Pokemon
 
 ### 🔧 Quality of Life
-- **Item Tooltips** — Hover over items in the selection panel to see descriptions
-- **Save/Load Tooltips** — Hover over team save/load buttons for labels
-- **Improved UI** — Level-up buttons work at any level
+- **Item Tooltips** - Hover over items in the selection panel to see descriptions
+- **Save/Load Tooltips** - Hover over team save/load buttons for labels
+- **Improved UI** - Level-up buttons work at any level
 
 ---
 
@@ -53,19 +53,19 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 A graphical save editor with full control over your game:
 
 ### Global Actions
-- **Unlock All Pokemon** — Adds all base forms (Lv1)
-- **Max All Levels** — Evolves all and sets to Lv100
-- **Complete All Stages** — Grants 1200 stars
-- **Max Gold** — Sets gold to 99,999,999
-- **Reset Egg Shop** — Restocks all eggs
-- **Delete All Pokemon** — Clears team and box
+- **Unlock All Pokemon** - Adds all base forms (Lv1)
+- **Max All Levels** - Evolves all and sets to Lv100
+- **Complete All Stages** - Grants 1200 stars
+- **Max Gold** - Sets gold to 99,999,999
+- **Reset Egg Shop** - Restocks all eggs
+- **Delete All Pokemon** - Clears team and box
 
 ### Individual Pokemon
-- **Edit Level** — Set any level (1-9999+)
-- **Change Species** — Swap to any Pokemon
-- **Evolve / Devolve** — Advance or revert evolution
-- **Toggle Shiny** — Make any Pokemon shiny
-- **Add / Delete** — Manage roster
+- **Edit Level** - Set any level (1-9999+)
+- **Change Species** - Swap to any Pokemon
+- **Evolve / Devolve** - Advance or revert evolution
+- **Toggle Shiny** - Make any Pokemon shiny
+- **Add / Delete** - Manage roster
 
 ### Usage
 1. **Close the game first!**
@@ -92,8 +92,8 @@ A graphical save editor with full control over your game:
 **⚠️ WARNING:** Back up your save prior to installation!
 
 ### Requirements
-- **Node.js** — [nodejs.org](https://nodejs.org) (for game extraction)
-- **Python 3** — [python.org](https://python.org) (for save editor only)
+- **Node.js** - [nodejs.org](https://nodejs.org) (for game extraction)
+- **Python 3** - [python.org](https://python.org) (for save editor only)
 
 ### Steps
 1. **Locate your game folder:**
@@ -169,7 +169,7 @@ A graphical save editor with full control over your game:
 - **First run extracts game files** (takes a moment)
 - **Mods are applied to extracted files** then repacked
 - **Restore Vanilla** option available if anything breaks
-- **Your save data is NOT in the mods folder** — it's safe in AppData
+- **Your save data is NOT in the mods folder** - it's safe in AppData
 
 ---
 
@@ -198,7 +198,7 @@ A graphical save editor with full control over your game:
 ## 📜 Credits
 
 - **Mod Development** — @JayArnoldProduces (Instagram)
-- **Original Game** — PokePath TD by Khydra: https://khydra98.itch.io/pokepath
+- **Original Game** — [PokePath TD](https://khydra98.itch.io/pokepath) by [Khydra](https://khydra98.itch.io)
 - **Pokemon** — © Nintendo, Game Freak, Creatures Inc.
 
 *This is a fan modification. Not affiliated with Nintendo or the original developers.*
