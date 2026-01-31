@@ -814,16 +814,29 @@ def main():
     # Repack
     print("\n[*] Repacking game...")
     import subprocess
-    result = subprocess.run(
-        ['npx', 'asar', 'pack', 
-         str(APP_EXTRACTED), 
-         str(GAME_ROOT / 'resources' / 'app.asar')],
-        capture_output=True, text=True, shell=True
-    )
-    if result.returncode == 0:
-        print("  [OK] Game repacked successfully!")
-    else:
-        print(f"  [ERROR] Repack failed: {result.stderr}")
+    import sys
+    
+    # Use proper flags to prevent hanging on Windows
+    creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+    
+    try:
+        result = subprocess.run(
+            ['npx', 'asar', 'pack', 
+             str(APP_EXTRACTED), 
+             str(GAME_ROOT / 'resources' / 'app.asar')],
+            capture_output=True, 
+            text=True,
+            timeout=300,  # 5 minute timeout
+            creationflags=creationflags
+        )
+        if result.returncode == 0:
+            print("  [OK] Game repacked successfully!")
+        else:
+            print(f"  [ERROR] Repack failed: {result.stderr}")
+    except subprocess.TimeoutExpired:
+        print("  [ERROR] Repack timed out after 5 minutes")
+    except FileNotFoundError:
+        print("  [ERROR] npx/asar not found - make sure Node.js is installed")
     
     print("\n=== All done! Launch the game. ===")
 

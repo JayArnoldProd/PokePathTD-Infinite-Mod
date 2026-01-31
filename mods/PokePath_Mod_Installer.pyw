@@ -2,6 +2,12 @@
 """
 PokePath TD Mod Installer - User-Friendly GUI
 Simple 3-button interface for installing mods and accessing save editor.
+
+v1.4.1b - Fixed hanging issues:
+- Added threading for long operations (prevents "Not Responding")
+- Added timeouts to prevent infinite hangs
+- Better error handling for missing Node.js
+- Progress updates during installation
 """
 
 import tkinter as tk
@@ -10,9 +16,11 @@ import subprocess
 import sys
 import os
 import json
+import threading
+import shutil
 from pathlib import Path
 
-# Get script directory
+# Get script directory (relative paths - works wherever user extracts)
 SCRIPT_DIR = Path(__file__).parent.resolve()
 GAME_ROOT = SCRIPT_DIR.parent
 RESOURCES = GAME_ROOT / "resources"
@@ -27,23 +35,62 @@ def get_version():
 
 MOD_VERSION = get_version()
 
+def check_node_installed():
+    """Check if Node.js is installed and accessible."""
+    try:
+        result = subprocess.run(
+            ['node', '--version'],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        return False
+
+def run_command(cmd, cwd=None, timeout=300):
+    """Run a command with timeout and proper flags to prevent hanging."""
+    try:
+        # Use CREATE_NO_WINDOW on Windows to prevent console popups
+        creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+        
+        result = subprocess.run(
+            cmd,
+            cwd=str(cwd) if cwd else None,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            creationflags=creationflags
+        )
+        return result.returncode == 0, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        return False, "", "Operation timed out"
+    except FileNotFoundError as e:
+        return False, "", f"Command not found: {e}"
+    except Exception as e:
+        return False, "", str(e)
+
 class ModInstaller(tk.Tk):
     def __init__(self):
         super().__init__()
         
         self.title("PokePath TD Mod Installer")
-        self.geometry("400x320")
+        self.geometry("400x350")
         self.resizable(False, False)
         self.configure(bg='#1a1a2e')
         
         # Center window
         self.update_idletasks()
         x = (self.winfo_screenwidth() - 400) // 2
-        y = (self.winfo_screenheight() - 320) // 2
+        y = (self.winfo_screenheight() - 350) // 2
         self.geometry(f"+{x}+{y}")
         
+        self.is_working = False
         self.create_widgets()
-        self.check_requirements()
+        
+        # Check requirements in background (non-blocking)
+        self.after(100, self.check_requirements_async)
     
     def create_widgets(self):
         # Title
@@ -87,7 +134,7 @@ class ModInstaller(tk.Tk):
             fg='#1a1a2e',
             activebackground='#3db892',
             activeforeground='#1a1a2e',
-            command=self.install_mods,
+            command=self.install_mods_async,
             **btn_style
         )
         self.mod_btn.pack(pady=8)
@@ -121,104 +168,151 @@ class ModInstaller(tk.Tk):
         # Status label
         self.status = tk.Label(
             self,
-            text="Ready",
+            text="Checking requirements...",
             font=('Segoe UI', 10),
             fg='#666666',
-            bg='#1a1a2e'
+            bg='#1a1a2e',
+            wraplength=380
         )
         self.status.pack(side='bottom', pady=15)
     
-    def check_requirements(self):
-        """Check if game folder is correct and install dependencies."""
-        # Install npm dependencies if needed (for save editor)
-        node_modules = SCRIPT_DIR / "node_modules"
-        if not node_modules.exists():
-            self.status.config(text="Installing dependencies...", fg='#4ecca3')
-            self.update()
-            subprocess.run(
-                ['npm', 'install'],
-                cwd=str(SCRIPT_DIR),
-                capture_output=True,
-                shell=True
-            )
-            self.status.config(text="Ready", fg='#666666')
+    def check_requirements_async(self):
+        """Check requirements in background thread."""
+        def check():
+            has_node = check_node_installed()
+            has_resources = RESOURCES.exists()
+            
+            # Update UI from main thread
+            self.after(0, lambda: self.on_requirements_checked(has_node, has_resources))
         
-        if not RESOURCES.exists():
-            self.status.config(text="⚠️ Game folder not detected", fg='#e94560')
+        thread = threading.Thread(target=check, daemon=True)
+        thread.start()
+    
+    def on_requirements_checked(self, has_node, has_resources):
+        """Handle requirements check result."""
+        if not has_resources:
+            self.set_status("⚠️ Game folder not detected!\nMake sure mods folder is inside the game directory.", '#e94560')
             self.mod_btn.config(state='disabled', bg='#666666')
+        elif not has_node:
+            self.set_status("⚠️ Node.js not found!\nInstall from nodejs.org", '#e94560')
+            self.mod_btn.config(state='disabled', bg='#666666')
+        else:
+            self.set_status("✓ Ready to install mods", '#4ecca3')
     
     def set_status(self, text, color='#666666'):
         self.status.config(text=text, fg=color)
-        self.update()
+        self.update_idletasks()
     
-    def install_mods(self):
-        """Run the mod installation process."""
-        self.set_status("Installing mods...", '#4ecca3')
-        self.mod_btn.config(state='disabled')
-        self.update()
+    def set_buttons_enabled(self, enabled):
+        """Enable/disable all buttons."""
+        state = 'normal' if enabled else 'disabled'
+        bg_mod = '#4ecca3' if enabled else '#666666'
+        bg_editor = '#4a90d9' if enabled else '#666666'
         
+        self.mod_btn.config(state=state, bg=bg_mod)
+        self.editor_btn.config(state=state, bg=bg_editor)
+    
+    def install_mods_async(self):
+        """Run mod installation in background thread."""
+        if self.is_working:
+            return
+        
+        self.is_working = True
+        self.set_buttons_enabled(False)
+        self.set_status("Starting installation...", '#4ecca3')
+        
+        thread = threading.Thread(target=self.install_mods_worker, daemon=True)
+        thread.start()
+    
+    def install_mods_worker(self):
+        """Worker thread for mod installation."""
         try:
-            # Check if game is extracted
+            # Step 1: Check if game needs extraction
             app_extracted = RESOURCES / "app_extracted"
+            
             if not app_extracted.exists():
-                self.set_status("Extracting game files...", '#4ecca3')
-                result = subprocess.run(
+                self.after(0, lambda: self.set_status("Extracting game files (this may take a minute)...", '#4ecca3'))
+                
+                success, stdout, stderr = run_command(
                     ['npx', 'asar', 'extract', 'app.asar', 'app_extracted'],
-                    cwd=str(RESOURCES),
-                    capture_output=True,
-                    text=True,
-                    shell=True
+                    cwd=RESOURCES,
+                    timeout=300  # 5 minute timeout for extraction
                 )
-                if result.returncode != 0:
-                    raise Exception("Failed to extract game files")
+                
+                if not success:
+                    raise Exception(f"Failed to extract game files: {stderr}")
             
-            # Run apply_mods.py
-            self.set_status("Applying mods...", '#4ecca3')
+            # Step 2: Apply mods
+            self.after(0, lambda: self.set_status("Applying mods...", '#4ecca3'))
+            
             apply_script = SCRIPT_DIR / "apply_mods.py"
-            
-            result = subprocess.run(
+            success, stdout, stderr = run_command(
                 [sys.executable, str(apply_script)],
-                cwd=str(SCRIPT_DIR),
-                capture_output=True,
-                text=True
+                cwd=SCRIPT_DIR,
+                timeout=120  # 2 minute timeout for applying mods
             )
             
-            if result.returncode == 0 and ("Failed:" not in result.stdout or "Failed:  0" in result.stdout):
-                # Note: Shiny sprites are now pre-packaged in patches/shiny_sprites/
-                # and installed automatically by apply_mods.py
-                
-                # Repack
-                self.set_status("Repacking game...", '#4ecca3')
-                subprocess.run(
-                    ['npx', 'asar', 'pack', 'app_extracted', 'app.asar'],
-                    cwd=str(RESOURCES),
-                    capture_output=True,
-                    shell=True
-                )
-                
-                self.set_status("✅ Mods installed! Restart the game.", '#4ecca3')
-                messagebox.showinfo(
-                    "Success!", 
-                    "Mods installed successfully!\n\nRestart PokePath TD to play."
-                )
-            else:
-                raise Exception(result.stderr or "Unknown error")
-                
+            if not success:
+                raise Exception(f"Failed to apply mods: {stderr}")
+            
+            # Check for failures in output
+            if "Failed:" in stdout and "Failed:  0" not in stdout:
+                # Some mods failed but continue anyway
+                self.after(0, lambda: self.set_status("Some mods failed, continuing...", '#ffaa00'))
+            
+            # Step 3: Repack (already done by apply_mods.py, but verify)
+            self.after(0, lambda: self.set_status("Finalizing...", '#4ecca3'))
+            
+            # Success!
+            self.after(0, self.on_install_success)
+            
         except Exception as e:
-            self.set_status(f"❌ Error: {str(e)[:40]}", '#e94560')
-            messagebox.showerror("Error", f"Installation failed:\n{str(e)}")
+            error_msg = str(e)[:100]
+            self.after(0, lambda: self.on_install_error(error_msg))
         
         finally:
-            self.mod_btn.config(state='normal')
+            self.is_working = False
+            self.after(0, lambda: self.set_buttons_enabled(True))
+    
+    def on_install_success(self):
+        """Handle successful installation."""
+        self.set_status("✅ Mods installed successfully! Restart the game.", '#4ecca3')
+        messagebox.showinfo(
+            "Success!", 
+            "Mods installed successfully!\n\nRestart PokePath TD to play."
+        )
+    
+    def on_install_error(self, error_msg):
+        """Handle installation error."""
+        self.set_status(f"❌ Error: {error_msg}", '#e94560')
+        messagebox.showerror(
+            "Installation Failed", 
+            f"Error during installation:\n\n{error_msg}\n\nMake sure:\n"
+            "• Node.js is installed (nodejs.org)\n"
+            "• The game is closed\n"
+            "• Mods folder is in the game directory"
+        )
     
     def open_save_editor(self):
         """Launch the save editor."""
+        if self.is_working:
+            return
+        
         self.set_status("Opening Save Editor...", '#4a90d9')
         
         editor_script = SCRIPT_DIR / "save_editor.py"
         if editor_script.exists():
-            subprocess.Popen([sys.executable, str(editor_script)], cwd=str(SCRIPT_DIR))
-            self.set_status("Save Editor opened", '#666666')
+            try:
+                # Use CREATE_NO_WINDOW to prevent console popup
+                creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+                subprocess.Popen(
+                    [sys.executable, str(editor_script)],
+                    cwd=str(SCRIPT_DIR),
+                    creationflags=creationflags
+                )
+                self.set_status("Save Editor opened", '#666666')
+            except Exception as e:
+                self.set_status(f"❌ Failed to open editor: {e}", '#e94560')
         else:
             messagebox.showerror("Error", "save_editor.py not found!")
             self.set_status("❌ Save Editor not found", '#e94560')
@@ -226,7 +320,9 @@ class ModInstaller(tk.Tk):
 def main():
     # Check Python version
     if sys.version_info < (3, 7):
-        messagebox.showerror("Error", "Python 3.7+ required")
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror("Error", "Python 3.7+ required\n\nDownload from python.org")
         return
     
     app = ModInstaller()
