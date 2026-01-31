@@ -85,7 +85,7 @@ A graphical save editor with full control over your game:
    C:\Users\YOUR_NAME\AppData\Local\Programs\pokePathTD_Electron\
    ```
 
-2. **Copy the `mods` folder** into the game directory:
+2. **Create a `mods` folder** into the game directory:
    ```
    pokePathTD_Electron\
    ├── mods\                 <-- Put it here
