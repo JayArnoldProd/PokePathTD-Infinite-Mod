@@ -84,7 +84,8 @@ A graphical save editor with full control over your game:
 | **v1.4.1** (Latest) | PokePath TD 1.4.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.1) |
 | v1.4 | PokePath TD 1.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4) |
 
-> 💡 **Match your game version!**
+> 💡 **Match your game version!** Check your game's title screen for the version number.
+
 ---
 
 ## 📦 Installation
@@ -92,31 +93,33 @@ A graphical save editor with full control over your game:
 **⚠️ WARNING:** Back up your save prior to installation!
 
 ### Requirements
-- **Node.js** - [nodejs.org](https://nodejs.org) (for game extraction)
-- **Python 3** - [python.org](https://python.org) (for save editor only)
+- **Node.js** — [nodejs.org](https://nodejs.org) (for game extraction)
+- **Python 3** — [python.org](https://python.org) (for save editor only)
 
 ### Steps
-1. **Locate your game folder:**
+1. **Download** the `.zip` file from the [Releases](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases) page (click "Assets" → download the zip)
+
+2. **Locate your game folder:**
    ```
    C:\Users\YOUR_NAME\AppData\Local\Programs\pokePathTD_Electron\
    ```
 
-2. **Create a `mods` folder** into the game directory:
+3. **Extract the zip** directly into the game folder. The zip already contains a `mods` folder — your structure should look like:
    ```
    pokePathTD_Electron\
-   ├── mods\                 <-- Put all of the contents of this repo HERE. name it exactly "mods"
-   │   └── PokePath_ModManager.bat
+   ├── mods\                 ← This comes from the zip!
+   │   ├── PokePath_Mod_Installer.pyw
+   │   ├── apply_mods.py
+   │   └── ...
    ├── resources\
-   └── pokePathTD.exe
+   └── PokéPath TD.exe
    ```
 
-3. **Run `PokePath_ModManager.bat`**
+4. **Run `PokePath_Mod_Installer.pyw`** (double-click it)
 
-4. **Select option 1** for fresh install (applies all mods)
+5. **Click "Install Mods"**
 
-5. **Restart the game**
-
-6. **Run the ModManager again to access the Save Editor**
+6. **Restart the game** — enjoy!
 
 ---
 

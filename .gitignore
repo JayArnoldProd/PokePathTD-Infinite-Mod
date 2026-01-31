@@ -1,3 +1,5 @@
 node_modules/
 current_save.json
 package-lock.json
+
+release_build/
