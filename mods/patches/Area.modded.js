@@ -168,6 +168,20 @@ export class Area {
 
 		this.waveActive = true;
 		this.spawnEnemies();
+		
+		// FAILSAFE: If no enemies spawned, prevent soft-lock
+		if (this.enemies.length === 0) {
+			console.error(`Wave ${this.waveNumber}: No enemies spawned! Ending wave to prevent soft-lock.`);
+			this.waveActive = false;
+			// Give a small delay then trigger wave end
+			setTimeout(() => {
+				if (this.enemies.length === 0 && this.main.player.health[this.routeNumber] > 0) {
+					this.endWave();
+				}
+			}, 100);
+			return;
+		}
+		
 		this.main.UI.update();
 
 		this.towers.forEach(t => { 
@@ -605,10 +619,54 @@ export class Area {
 	// WAVE 100: Spawn single boss (original wave 100 had multiple bosses stacked)
 	spawnWave100Boss() {
 		const bossKey = BOSS_KEYS[this.routeNumber] || 'shaymin';
-		const boss = e[bossKey];
+		let boss = e[bossKey];
+		
+		// Fallback chain if boss not found
+		if (!boss) {
+			console.warn('Boss not found:', bossKey, '- trying fallbacks');
+			// Try each boss in order until one exists
+			for (const fallbackKey of BOSS_KEYS) {
+				if (e[fallbackKey]) {
+					boss = e[fallbackKey];
+					console.log('Using fallback boss:', fallbackKey);
+					break;
+				}
+			}
+		}
+		
+		// Ultimate fallback: use vanilla wave 100 data
+		if (!boss) {
+			console.error('No boss found in BOSS_KEYS! Using vanilla wave 100');
+			const vanillaWave = this.waves[100];
+			if (vanillaWave && vanillaWave.wave) {
+				// Fall back to vanilla spawnEnemies logic for wave 100
+				const wave = vanillaWave.wave;
+				const waveOffset = vanillaWave.offSet || 50;
+				wave.forEach((enemy, i) => {
+					if (!enemy) return;
+					const xOffset = (i + 1) * waveOffset;
+					const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+					this.enemies.push(
+						new Enemy(
+							waypointEnemy[0].x - xOffset,
+							waypointEnemy[0].y,
+							enemy,
+							waypointEnemy,
+							this.main,
+							this.main.game.ctx,
+						)
+					);
+				});
+				return;
+			}
+			// Absolute last resort: spawn a basic enemy so game doesn't freeze
+			console.error('Spawning emergency fallback enemy');
+			boss = e.rattata || Object.values(e)[0];
+		}
 		
 		if (!boss) {
-			console.warn('Boss not found:', bossKey);
+			console.error('CRITICAL: No enemies available at all!');
+			this.waveActive = false; // Prevent soft-lock
 			return;
 		}
 		

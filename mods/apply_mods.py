@@ -694,6 +694,29 @@ def apply_projectile_scaling():
     return False
 
 # ============================================================================
+# MAIN.JS - Enable DevTools with F12
+# ============================================================================
+def apply_devtools():
+    """Enable F12 and Ctrl+Shift+I to open DevTools."""
+    path = APP_EXTRACTED / "main.js"
+    content = read_file(path)
+    
+    # Check if already applied
+    if 'before-input-event' in content and 'toggleDevTools' in content:
+        log_skip("main.js: DevTools enabled")
+        return True
+    
+    # Use modded file directly
+    modded_file = SCRIPT_DIR / "patches" / "main.modded.js"
+    if modded_file.exists():
+        shutil.copy(modded_file, path)
+        log_success("main.js: DevTools enabled (F12 / Ctrl+Shift+I)")
+        return True
+    
+    log_fail("main.js: DevTools - modded file not found")
+    return False
+
+# ============================================================================
 # BOXSCENE.JS - Expand box storage to 200 slots
 # ============================================================================
 def apply_box_expansion():
@@ -754,6 +777,7 @@ def main():
     print("[*] Applying all mods...\n")
     
     # Apply all mods in order
+    apply_devtools()  # Enable F12/Ctrl+Shift+I for debugging
     apply_text_continue_option()
     apply_menu_autoreset_range()
     apply_map_record_uncap()
