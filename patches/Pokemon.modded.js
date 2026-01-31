@@ -16,7 +16,7 @@ export class Pokemon {
 		this.isShiny = isShiny;
 		this.isMega = isMega;
 
-		this.sprite = specie.sprite;
+		this.sprite = JSON.parse(JSON.stringify(specie.sprite));  // Deep copy to prevent shared sprite mutation
 		this.name = specie.name;
 		this.alias = alias;
 		this.ability = specie.ability;
