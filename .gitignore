@@ -1,5 +1,7 @@
 node_modules/
+mods/node_modules/
 current_save.json
+mods/current_save.json
 package-lock.json
-
+mods/package-lock.json
 release_build/
