@@ -164,7 +164,7 @@ export class DefeatScene extends GameScene {
 	}
 
 	restart(autoReset = {}) {
-		console.log('DefeatScene.restart() called');
+		console.log('DefeatScene.restart() called, autoReset:', autoReset);
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		
 		// BUGFIX: Force complete wave state reset before loading
@@ -173,17 +173,31 @@ export class DefeatScene extends GameScene {
 		this.main.area.autoWave = false;
 		this.main.area.enemies = [];
 		
+		// Store speed to restore after close
+		const restoreSpeed = autoReset.speedBuff || 1;
+		const restoreAutoWave = autoReset.autoWave || false;
+		
 		console.log('restart: calling loadArea with wave=1');
 		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge);
 		this.main.player.getHealed(14);
 		
 		console.log('restart: calling close()');
 		this.close();
+		
+		// BUGFIX: Restore speed and auto-wave settings after close
+		if (restoreSpeed > 1) {
+			this.main.game.speedFactor = restoreSpeed;
+			this.main.UI.speedWave.innerHTML = restoreSpeed + 'x';
+		}
+		if (restoreAutoWave) {
+			this.main.area.switchAutoWave();
+		}
+		
 		console.log(`restart complete: waveActive=${this.main.area.waveActive}`);
 	}
 
 	retry(autoReset = {}) {
-		console.log(`DefeatScene.retry() called, savedWave=${this.savedWave}`);
+		console.log(`DefeatScene.retry() called, savedWave=${this.savedWave}, autoReset:`, autoReset);
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		let lives = 7;
 		if (this.main.player.stars >= 150) lives++;
@@ -197,12 +211,26 @@ export class DefeatScene extends GameScene {
 		this.main.area.autoWave = false;
 		this.main.area.enemies = [];
 		
+		// Store speed to restore after close
+		const restoreSpeed = autoReset.speedBuff || 1;
+		const restoreAutoWave = autoReset.autoWave || false;
+		
 		console.log(`retry: calling loadArea with wave=${this.savedWave}`);
 		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge);
 		this.main.player.getHealed(lives);
 		
 		console.log('retry: calling close()');
 		this.close();
+		
+		// BUGFIX: Restore speed and auto-wave settings after close
+		if (restoreSpeed > 1) {
+			this.main.game.speedFactor = restoreSpeed;
+			this.main.UI.speedWave.innerHTML = restoreSpeed + 'x';
+		}
+		if (restoreAutoWave) {
+			this.main.area.switchAutoWave();
+		}
+		
 		console.log(`retry complete: waveActive=${this.main.area.waveActive}`);
 	}
 
@@ -223,7 +251,21 @@ export class DefeatScene extends GameScene {
 		this.main.UI.revertUI();
 		
 		console.log('DefeatScene.close: calling game.resume()');
+		
+		// BUGFIX: Force game loop restart - don't rely on resume() alone
+		this.main.game.stopped = true; // Ensure stopped is true so resume() actually runs
 		this.main.game.resume();
+		
+		// FAILSAFE: If game loop still not running after 100ms, force restart it
+		setTimeout(() => {
+			if (this.main.game.stopped || !this.main.game.loopId) {
+				console.warn('FAILSAFE: Game loop not running, forcing restart');
+				this.main.game.stopped = false;
+				this.main.game.lastTime = performance.now();
+				if (this.main.game.loopId) clearInterval(this.main.game.loopId);
+				this.main.game.loopId = setInterval(() => this.main.game.animate(performance.now()), this.main.game.frameDuration);
+			}
+		}, 100);
 		
 		this.main.player.stats.resets++;
 		if (this.main.player.stats.resets == 100) this.main.player.unlockAchievement(11);
@@ -231,7 +273,7 @@ export class DefeatScene extends GameScene {
 		playSound('button2', 'ui');
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 		
-		console.log(`DefeatScene.close complete: waveActive=${this.main.area.waveActive}, game should be resumed`);
+		console.log(`DefeatScene.close complete: waveActive=${this.main.area.waveActive}, stopped=${this.main.game.stopped}`);
 	}
 
 	getRetryWave() {
