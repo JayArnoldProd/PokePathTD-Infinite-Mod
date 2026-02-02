@@ -308,9 +308,14 @@ class ModInstaller(tk.Tk):
         try:
             # Step 1: Check if game needs extraction
             app_extracted = RESOURCES / "app_extracted"
+            app_asar = RESOURCES / "app.asar"
             
             if not app_extracted.exists():
                 self.after(0, lambda: self.set_status("Extracting game files (this may take a minute)...", '#4ecca3'))
+                
+                # Verify app.asar exists first
+                if not app_asar.exists():
+                    raise Exception(f"app.asar not found!\n\nExpected at: {app_asar}\n\nMake sure the mods folder is inside the game directory.")
                 
                 # Use our npx wrapper that handles PowerShell issues
                 success, stdout, stderr = run_npx_command(
@@ -320,7 +325,15 @@ class ModInstaller(tk.Tk):
                 )
                 
                 if not success:
-                    raise Exception(f"Failed to extract game files: {stderr}")
+                    # Provide more helpful error messages
+                    if 'ENOENT' in stderr or 'not found' in stderr.lower():
+                        raise Exception(f"Extraction failed - file not found.\n\nMake sure:\n• The game is installed\n• Mods folder is in the game directory\n\nDetails: {stderr[:200]}")
+                    elif 'permission' in stderr.lower() or 'access' in stderr.lower():
+                        raise Exception(f"Extraction failed - permission denied.\n\nTry:\n• Close the game completely\n• Run as Administrator\n\nDetails: {stderr[:200]}")
+                    elif 'timeout' in stderr.lower():
+                        raise Exception("Extraction timed out after 5 minutes.\n\nTry running the installer again.")
+                    else:
+                        raise Exception(f"Failed to extract game files.\n\nError: {stderr[:300]}")
             
             # Step 2: Apply mods
             self.after(0, lambda: self.set_status("Applying mods...", '#4ecca3'))
@@ -347,7 +360,20 @@ class ModInstaller(tk.Tk):
             self.after(0, self.on_install_success)
             
         except Exception as e:
-            error_msg = str(e)[:100]
+            error_msg = str(e)
+            # Log error to file for debugging
+            try:
+                log_file = SCRIPT_DIR / "install_error.log"
+                with open(log_file, 'w') as f:
+                    f.write(f"Installation Error:\n{error_msg}\n\n")
+                    f.write(f"SCRIPT_DIR: {SCRIPT_DIR}\n")
+                    f.write(f"GAME_ROOT: {GAME_ROOT}\n")
+                    f.write(f"RESOURCES: {RESOURCES}\n")
+                    f.write(f"RESOURCES exists: {RESOURCES.exists()}\n")
+                    if RESOURCES.exists():
+                        f.write(f"app.asar exists: {(RESOURCES / 'app.asar').exists()}\n")
+            except:
+                pass
             self.after(0, lambda: self.on_install_error(error_msg))
         
         finally:
@@ -364,15 +390,21 @@ class ModInstaller(tk.Tk):
     
     def on_install_error(self, error_msg):
         """Handle installation error."""
-        self.set_status(f"❌ Error: {error_msg}", '#e94560')
-        messagebox.showerror(
-            "Installation Failed", 
-            f"Error during installation:\n\n{error_msg}\n\nMake sure:\n"
-            "• Node.js is installed (nodejs.org)\n"
-            "• Python is installed (python.org)\n"
-            "• The game is closed\n"
-            "• Mods folder is in the game directory"
+        short_msg = error_msg[:80] + "..." if len(error_msg) > 80 else error_msg
+        self.set_status(f"❌ Error: {short_msg}", '#e94560')
+        
+        # Build helpful message
+        help_text = (
+            f"Error during installation:\n\n{error_msg}\n\n"
+            "Common fixes:\n"
+            "• Run 'diagnose.py' to check your setup\n"
+            "• Make sure Node.js is installed (nodejs.org)\n"
+            "• Make sure the game is completely closed\n"
+            "• Try running as Administrator\n\n"
+            "Error details saved to: install_error.log"
         )
+        
+        messagebox.showerror("Installation Failed", help_text)
     
     def open_save_editor(self):
         """Launch the save editor."""
