@@ -34,6 +34,8 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 - **Delta Time Accuracy** - High-speed attacks process correctly
 
+
+
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
 - **Shiny Starters** - 1 in 30 chance when selecting starter
