@@ -36,7 +36,7 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 
 ### 🐱New Pokémon & Evolutions
 
-- 17 Previously Hidden Pokemon added to the Egg Shop
+- 17 Previously Hidden Pokemon added to the Egg Shop:
 - bidoof, cacnea, greavard, stakataka, luvdisc, chatot
 - munna, hoothoot, wingull, archen, inkay, vulpix
 - tarountula, carbink, totodile, fennekin, turtwig
