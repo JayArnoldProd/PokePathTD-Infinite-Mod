@@ -34,7 +34,12 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 - **Delta Time Accuracy** - High-speed attacks process correctly
 
+### 🐱New Pokémon & Evolutions
 
+- 17 Previously Hidden Pokemon added to the Egg Shop
+- bidoof, cacnea, greavard, stakataka, luvdisc, chatot
+- munna, hoothoot, wingull, archen, inkay, vulpix
+- tarountula, carbink, totodile, fennekin, turtwig
 
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
