@@ -605,6 +605,7 @@ class App(tk.Tk):
         
         if self.save.load_from_game():
             self.source_label.config(text="Game Save")
+            self._inject_missing_eggs()
             self.refresh_grid()
             self.status.config(text="Loaded!")
         else:
@@ -615,6 +616,7 @@ class App(tk.Tk):
         path = filedialog.askopenfilename(filetypes=[("Save files", "*.json *.txt")])
         if path and self.save.load_from_file(Path(path)):
             self.source_label.config(text=f"File: {Path(path).name}")
+            self._inject_missing_eggs()
             self.refresh_grid()
     
     def save_game(self):
@@ -979,30 +981,90 @@ class App(tk.Tk):
             self.save.set_player('gold', amount)
             self.refresh_grid()
     
-    def reset_eggs(self):
-        """Reset egg shop to original state - full egg list and starting price."""
+    def _inject_missing_eggs(self):
+        """Auto-add missing eggs to shop without resetting progress or price."""
         if not self.save.data:
             return
         
-        # Original egg list from pokemonData.js
-        original_egg_list = [
-            'charmander', 'treecko', 'froaki', 
+        # Full expanded egg list (must match reset_eggs list)
+        all_eggs = [
+            # === STARTERS ===
+            'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin', 
+            'turtwig', 'chimchar', 'oshawott', 'sobble', 'rowlet', 'fuecoco',
+            # === ORIGINAL EGG POKEMON ===
             'natu', 'spoink', 'murkrow',
-            'voltorb', 'machop', 'mankey', 'chimchar', 
-            'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 'chikorita', 
+            'voltorb', 'machop', 'mankey', 
+            'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 
             'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
             'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
             'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
-            'cubone', 'binacle', 'absol', 'oshawott', 'sandshrew', 'sneasel', 
+            'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel', 
             'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
             'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
             'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
             'farfetchd', 'omanyte', 'kabuto', 'corsola', 
             'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
             'starly', 'abra', 'gastly', 'ditto', 
-            'magikarp', 'pikachu', 'fuecoco', 'larvesta', 'cherubi',
+            'magikarp', 'pikachu', 'larvesta', 'cherubi',
             'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
-            'sobble', 'rowlet', 'comfey', 'smeargle', 'carvanha', 
+            'comfey', 'smeargle', 'carvanha', 
+            # === NEW POKEMON (previously missing from shop) ===
+            'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
+            'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
+            'tarountula', 'carbink',
+        ]
+        
+        # Get current shop data
+        if 'save' in self.save.data:
+            shop = self.save.data['save'].get('shop', {})
+        else:
+            shop = self.save.data.get('shop', {})
+        
+        current_eggs = shop.get('eggList', [])
+        
+        # Find and append missing eggs (preserves order, adds new ones at end)
+        missing = [egg for egg in all_eggs if egg not in current_eggs]
+        if missing:
+            current_eggs.extend(missing)
+            if 'save' in self.save.data:
+                self.save.data['save']['shop']['eggList'] = current_eggs
+            else:
+                self.save.data['shop']['eggList'] = current_eggs
+            print(f"[Mod] Injected {len(missing)} missing eggs into shop")
+    
+    def reset_eggs(self):
+        """Reset egg shop to EXPANDED egg list with all available Pokemon."""
+        if not self.save.data:
+            return
+        
+        # EXPANDED egg list - includes 17 additional Pokemon that were missing
+        original_egg_list = [
+            # === STARTERS ===
+            'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin', 
+            'turtwig', 'chimchar', 'oshawott', 'sobble', 'rowlet', 'fuecoco',
+            
+            # === ORIGINAL EGG POKEMON ===
+            'natu', 'spoink', 'murkrow',
+            'voltorb', 'machop', 'mankey', 
+            'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 
+            'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
+            'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
+            'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
+            'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel', 
+            'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
+            'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
+            'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
+            'farfetchd', 'omanyte', 'kabuto', 'corsola', 
+            'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
+            'starly', 'abra', 'gastly', 'ditto', 
+            'magikarp', 'pikachu', 'larvesta', 'cherubi',
+            'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
+            'comfey', 'smeargle', 'carvanha', 
+            
+            # === NEW POKEMON (previously missing from shop) ===
+            'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
+            'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
+            'tarountula', 'carbink',
         ]
         
         # Starting egg price

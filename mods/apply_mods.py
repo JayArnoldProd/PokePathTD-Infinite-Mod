@@ -780,6 +780,99 @@ def apply_profile_endless_stats():
     return False
 
 # ============================================================================
+# POKEMONDATA.JS - Expand egg shop with missing Pokemon
+# ============================================================================
+def apply_expanded_egg_list():
+    """Add missing Pokemon to the egg shop that exist in game but weren't in shop."""
+    path = JS_ROOT / "game" / "data" / "pokemonData.js"
+    
+    if not path.exists():
+        log_fail("pokemonData.js: File not found")
+        return False
+    
+    content = read_file(path)
+    
+    # Check if already expanded (look for one of the new Pokemon)
+    if "'bidoof'" in content and "'turtwig'" in content and "'vulpix'" in content:
+        # Check if they're in the eggListData specifically
+        egg_section = content[content.find("export const eggListData"):content.find("export const eggListDataUpdate")]
+        if "'bidoof'" in egg_section and "'turtwig'" in egg_section:
+            log_skip("pokemonData.js: Egg list already expanded")
+            return True
+    
+    # Old egg list
+    old_egg_list = """export const eggListData = [
+	'charmander', 'treecko', 'froaki', 
+
+	'natu', 'spoink', 'murkrow',
+	'voltorb', 'machop', 'mankey', 'chimchar', 
+	'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 'chikorita', 
+	'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
+	'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
+	'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
+	'cubone', 'binacle', 'absol', 'oshawott', 'sandshrew', 'sneasel', 
+	'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
+	'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
+	'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
+	'farfetchd', 'omanyte', 'kabuto', 'corsola', 
+	'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
+	'starly', 'abra', 'gastly', 'ditto', 
+
+	'magikarp', 'pikachu', 'fuecoco', 'larvesta', 'cherubi',
+	'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
+	'sobble', 'rowlet', 'comfey', 'smeargle', 'carvanha', 
+]"""
+    
+    # New expanded egg list with 17 additional Pokemon
+    new_egg_list = """export const eggListData = [
+	// === STARTERS ===
+	'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin', 
+	'turtwig', 'chimchar', 'oshawott', 'sobble', 'rowlet', 'fuecoco',
+
+	// === ORIGINAL EGG POKEMON ===
+	'natu', 'spoink', 'murkrow',
+	'voltorb', 'machop', 'mankey', 
+	'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 
+	'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
+	'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
+	'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
+	'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel', 
+	'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
+	'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
+	'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
+	'farfetchd', 'omanyte', 'kabuto', 'corsola', 
+	'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
+	'starly', 'abra', 'gastly', 'ditto', 
+	'magikarp', 'pikachu', 'larvesta', 'cherubi',
+	'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
+	'comfey', 'smeargle', 'carvanha', 
+
+	// === NEW POKEMON (previously missing from shop) ===
+	'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
+	'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
+	'tarountula', 'carbink',
+]"""
+    
+    if old_egg_list in content:
+        content = content.replace(old_egg_list, new_egg_list)
+        write_file(path, content)
+        log_success("pokemonData.js: Egg list expanded (+17 Pokemon)")
+        return True
+    
+    # Try a more flexible match - just find and replace the eggListData export
+    import re
+    pattern = r"export const eggListData = \[[^\]]+\]"
+    match = re.search(pattern, content, re.DOTALL)
+    if match:
+        content = content[:match.start()] + new_egg_list + content[match.end():]
+        write_file(path, content)
+        log_success("pokemonData.js: Egg list expanded (+17 Pokemon) (regex)")
+        return True
+    
+    log_fail("pokemonData.js: Could not find eggListData to expand")
+    return False
+
+# ============================================================================
 # MAIN
 # ============================================================================
 def main():
@@ -825,6 +918,7 @@ def main():
     apply_projectile_scaling()
     apply_box_expansion()
     apply_profile_endless_stats()
+    apply_expanded_egg_list()
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
