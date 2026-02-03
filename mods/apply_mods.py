@@ -43,6 +43,79 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 applied_mods = []
 failed_mods = []
 
+# ============================================================================
+# MOD FEATURES - Defines selectable feature groups for the installer GUI
+# ============================================================================
+MOD_FEATURES = {
+    'speed': {
+        'name': '10x Speed',
+        'description': 'Adds 2x, 3x, 5x, and 10x game speed options',
+        'functions': ['apply_speed_mod'],
+        'default': True,
+    },
+    'endless': {
+        'name': 'Endless Mode',
+        'description': 'Continue past wave 100 with scaling difficulty and checkpoints',
+        'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
+                      'apply_enemy_scaling', 'apply_profile_endless_stats'],
+        'default': True,
+    },
+    'infinite_levels': {
+        'name': 'Infinite Levels',
+        'description': 'Remove level 100 cap, asymptotic stat scaling',
+        'functions': ['apply_pokemon_mods'],
+        'default': True,
+    },
+    'shiny': {
+        'name': 'Shiny Eggs & Starters (1/30)',
+        'description': '1 in 30 chance for shiny Pokemon from eggs and starters',
+        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites'],
+        'default': True,
+    },
+    'auto_continue': {
+        'name': 'Auto-Continue Option',
+        'description': 'Adds "Continue" to auto-reset options for endless mode',
+        'functions': ['apply_text_continue_option', 'apply_menu_autoreset_range'],
+        'default': True,
+    },
+    'wave_record': {
+        'name': 'Wave Record Uncap',
+        'description': 'Display wave records above 100 on the map',
+        'functions': ['apply_map_record_uncap'],
+        'default': True,
+    },
+    'ui': {
+        'name': 'UI Improvements',
+        'description': 'Item tooltips, save/load tooltips, and visual polish',
+        'functions': ['apply_item_tooltips', 'apply_ui_mods'],
+        'default': True,
+    },
+    'box_expansion': {
+        'name': 'Box Expansion (500 slots)',
+        'description': 'Expand Pokemon storage from 120 to 500 slots',
+        'functions': ['apply_box_expansion'],
+        'default': True,
+    },
+    'egg_shop': {
+        'name': 'Expanded Egg Shop',
+        'description': 'Add 17 previously missing Pokemon to the egg shop',
+        'functions': ['apply_expanded_egg_list'],
+        'default': True,
+    },
+    'deltatime': {
+        'name': 'Delta Time Fixes',
+        'description': 'Smoother animations and accurate projectile timing',
+        'functions': ['apply_tower_deltatime', 'apply_projectile_scaling', 'apply_pokemonscene_mods'],
+        'default': True,
+    },
+    'devtools': {
+        'name': 'Developer Tools (F12)',
+        'description': 'Enable F12/Ctrl+Shift+I for browser dev tools',
+        'functions': ['apply_devtools'],
+        'default': True,
+    },
+}
+
 def log_success(name):
     applied_mods.append(name)
     print(f"  [OK] {name}")
@@ -871,6 +944,107 @@ def apply_expanded_egg_list():
     
     log_fail("pokemonData.js: Could not find eggListData to expand")
     return False
+
+# ============================================================================
+# SELECTIVE MOD APPLICATION
+# ============================================================================
+def apply_selected_mods(selected_features: list, progress_callback=None):
+    """
+    Apply only selected mod features.
+    
+    Args:
+        selected_features: List of feature keys from MOD_FEATURES
+        progress_callback: Optional callback(current, total, message) for GUI progress
+    
+    Returns:
+        tuple: (success: bool, applied: list, failed: list)
+    """
+    global applied_mods, failed_mods
+    applied_mods = []
+    failed_mods = []
+    
+    if not APP_EXTRACTED.exists():
+        return False, [], ["Game not extracted - run extraction first"]
+    
+    # Build list of functions to call
+    functions_to_call = []
+    for feature_key in selected_features:
+        if feature_key in MOD_FEATURES:
+            functions_to_call.extend(MOD_FEATURES[feature_key]['functions'])
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_functions = []
+    for f in functions_to_call:
+        if f not in seen:
+            seen.add(f)
+            unique_functions.append(f)
+    
+    total = len(unique_functions) + 1  # +1 for repack
+    current = 0
+    
+    # Get function references from globals
+    for func_name in unique_functions:
+        current += 1
+        if progress_callback:
+            progress_callback(current, total, f"Applying {func_name}...")
+        
+        func = globals().get(func_name)
+        if func and callable(func):
+            try:
+                func()
+            except Exception as e:
+                failed_mods.append(f"{func_name}: {str(e)}")
+        else:
+            failed_mods.append(f"{func_name}: function not found")
+    
+    # Repack
+    if progress_callback:
+        progress_callback(total, total, "Repacking game...")
+    
+    repack_success = _repack_game()
+    
+    return repack_success, applied_mods.copy(), failed_mods.copy()
+
+def _repack_game():
+    """Repack the game asar. Returns True on success."""
+    import subprocess
+    import sys
+    
+    creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+    
+    try:
+        if sys.platform == 'win32':
+            cmd = ['cmd', '/c', 'npx', 'asar', 'pack', 
+                   str(APP_EXTRACTED), 
+                   str(GAME_ROOT / 'resources' / 'app.asar')]
+        else:
+            cmd = ['npx', 'asar', 'pack', 
+                   str(APP_EXTRACTED), 
+                   str(GAME_ROOT / 'resources' / 'app.asar')]
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True, 
+            text=True,
+            timeout=300,
+            creationflags=creationflags
+        )
+        
+        if 'cannot be loaded because running scripts is disabled' in result.stderr:
+            print("  [ERROR] PowerShell is blocking scripts. Try running from Command Prompt (cmd.exe)")
+            return False
+        elif result.returncode == 0:
+            return True
+        else:
+            print(f"  [ERROR] Repack failed: {result.stderr}")
+            return False
+    except subprocess.TimeoutExpired:
+        print("  [ERROR] Repack timed out after 5 minutes")
+        return False
+    except FileNotFoundError:
+        print("  [ERROR] npx/asar not found - make sure Node.js is installed")
+        return False
 
 # ============================================================================
 # MAIN

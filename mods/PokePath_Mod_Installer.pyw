@@ -143,6 +143,167 @@ def run_command(cmd, cwd=None, timeout=300):
     except Exception as e:
         return False, "", str(e)
 
+class FeatureSelectionDialog(tk.Toplevel):
+    """Dialog for selecting which mod features to install."""
+    
+    def __init__(self, parent, on_confirm_callback):
+        super().__init__(parent)
+        self.parent = parent
+        self.on_confirm = on_confirm_callback
+        
+        self.title("Select Mod Features")
+        self.geometry("450x500")
+        self.resizable(False, False)
+        self.configure(bg='#1a1a2e')
+        self.transient(parent)
+        self.grab_set()
+        
+        # Center on parent
+        self.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() - 450) // 2
+        y = parent.winfo_y() + (parent.winfo_height() - 500) // 2
+        self.geometry(f"+{x}+{y}")
+        
+        # Import MOD_FEATURES
+        try:
+            sys.path.insert(0, str(SCRIPT_DIR))
+            from apply_mods import MOD_FEATURES
+            self.mod_features = MOD_FEATURES
+        except ImportError as e:
+            messagebox.showerror("Error", f"Could not load mod features:\n{e}")
+            self.destroy()
+            return
+        
+        self.feature_vars = {}
+        self.create_widgets()
+    
+    def create_widgets(self):
+        # Header
+        header = tk.Label(
+            self,
+            text="Select Features to Install",
+            font=('Segoe UI', 16, 'bold'),
+            fg='#e94560',
+            bg='#1a1a2e'
+        )
+        header.pack(pady=(15, 5))
+        
+        subtitle = tk.Label(
+            self,
+            text="Uncheck any features you don't want",
+            font=('Segoe UI', 10),
+            fg='#888888',
+            bg='#1a1a2e'
+        )
+        subtitle.pack(pady=(0, 10))
+        
+        # Select All / Deselect All buttons
+        btn_frame = tk.Frame(self, bg='#1a1a2e')
+        btn_frame.pack(fill='x', padx=20, pady=5)
+        
+        tk.Button(
+            btn_frame, text="Select All", 
+            command=self.select_all,
+            bg='#4ecca3', fg='#1a1a2e',
+            font=('Segoe UI', 10, 'bold'),
+            relief='flat', cursor='hand2'
+        ).pack(side='left', padx=5)
+        
+        tk.Button(
+            btn_frame, text="Deselect All",
+            command=self.deselect_all,
+            bg='#666666', fg='white',
+            font=('Segoe UI', 10, 'bold'),
+            relief='flat', cursor='hand2'
+        ).pack(side='left', padx=5)
+        
+        # Scrollable frame for features
+        container = tk.Frame(self, bg='#1a1a2e')
+        container.pack(fill='both', expand=True, padx=20, pady=10)
+        
+        canvas = tk.Canvas(container, bg='#252540', highlightthickness=0)
+        scrollbar = tk.Scrollbar(container, orient='vertical', command=canvas.yview)
+        self.features_frame = tk.Frame(canvas, bg='#252540')
+        
+        self.features_frame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.create_window((0, 0), window=self.features_frame, anchor='nw', width=390)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
+        
+        # Bind mousewheel
+        def on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), 'units')
+        canvas.bind_all('<MouseWheel>', on_mousewheel)
+        
+        # Create checkboxes for each feature
+        for feature_key, feature_info in self.mod_features.items():
+            var = tk.BooleanVar(value=feature_info.get('default', True))
+            self.feature_vars[feature_key] = var
+            
+            frame = tk.Frame(self.features_frame, bg='#252540')
+            frame.pack(fill='x', pady=5, padx=10)
+            
+            cb = tk.Checkbutton(
+                frame, 
+                text=feature_info['name'],
+                variable=var,
+                font=('Segoe UI', 11, 'bold'),
+                fg='#4ecca3',
+                bg='#252540',
+                selectcolor='#1a1a2e',
+                activebackground='#252540',
+                activeforeground='#4ecca3',
+                cursor='hand2'
+            )
+            cb.pack(anchor='w')
+            
+            desc = tk.Label(
+                frame, 
+                text=feature_info['description'],
+                font=('Segoe UI', 9),
+                fg='#888888',
+                bg='#252540',
+                wraplength=360,
+                justify='left'
+            )
+            desc.pack(anchor='w', padx=20)
+        
+        # Install button
+        tk.Button(
+            self,
+            text="⚡ Install Selected",
+            font=('Segoe UI', 14, 'bold'),
+            bg='#4ecca3',
+            fg='#1a1a2e',
+            activebackground='#3db892',
+            relief='flat',
+            cursor='hand2',
+            width=20,
+            height=2,
+            command=self.confirm_install
+        ).pack(pady=15)
+    
+    def select_all(self):
+        for var in self.feature_vars.values():
+            var.set(True)
+    
+    def deselect_all(self):
+        for var in self.feature_vars.values():
+            var.set(False)
+    
+    def confirm_install(self):
+        selected = [key for key, var in self.feature_vars.items() if var.get()]
+        
+        if not selected:
+            messagebox.showwarning("No Selection", "Please select at least one feature to install.")
+            return
+        
+        self.destroy()
+        self.on_confirm(selected)
+
+
 class ModInstaller(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -292,10 +453,19 @@ class ModInstaller(tk.Tk):
         self.editor_btn.config(state=state, bg=bg_editor)
     
     def install_mods_async(self):
-        """Run mod installation in background thread."""
+        """Open feature selection dialog, then run mod installation."""
         if self.is_working:
             return
         
+        # Open feature selection dialog
+        FeatureSelectionDialog(self, self.start_installation)
+    
+    def start_installation(self, selected_features):
+        """Start installation with selected features."""
+        if self.is_working:
+            return
+        
+        self.selected_features = selected_features
         self.is_working = True
         self.set_buttons_enabled(False)
         self.set_status("Starting installation...", '#4ecca3')
@@ -335,25 +505,29 @@ class ModInstaller(tk.Tk):
                     else:
                         raise Exception(f"Failed to extract game files.\n\nError: {stderr[:300]}")
             
-            # Step 2: Apply mods
-            self.after(0, lambda: self.set_status("Applying mods...", '#4ecca3'))
+            # Step 2: Apply selected mods
+            self.after(0, lambda: self.set_status("Applying selected mods...", '#4ecca3'))
             
-            apply_script = SCRIPT_DIR / "apply_mods.py"
-            success, stdout, stderr = run_command(
-                [sys.executable, str(apply_script)],
-                cwd=SCRIPT_DIR,
-                timeout=120  # 2 minute timeout for applying mods
+            # Import and run apply_selected_mods with selected features
+            sys.path.insert(0, str(SCRIPT_DIR))
+            from apply_mods import apply_selected_mods
+            
+            def progress_callback(current, total, message):
+                self.after(0, lambda m=message: self.set_status(m, '#4ecca3'))
+            
+            success, applied, failed = apply_selected_mods(
+                self.selected_features, 
+                progress_callback
             )
             
             if not success:
-                raise Exception(f"Failed to apply mods: {stderr}")
+                raise Exception(f"Failed to apply mods. Applied: {len(applied)}, Failed: {len(failed)}")
             
-            # Check for failures in output
-            if "Failed:" in stdout and "Failed:  0" not in stdout:
-                # Some mods failed but continue anyway
-                self.after(0, lambda: self.set_status("Some mods failed, continuing...", '#ffaa00'))
+            # Check for failures
+            if failed:
+                self.after(0, lambda: self.set_status(f"Some mods failed ({len(failed)}), continuing...", '#ffaa00'))
             
-            # Step 3: Repack (already done by apply_mods.py, but verify)
+            # Step 3: Finalize
             self.after(0, lambda: self.set_status("Finalizing...", '#4ecca3'))
             
             # Success!
