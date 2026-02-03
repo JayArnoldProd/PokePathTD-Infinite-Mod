@@ -122,6 +122,32 @@ def main():
               "Re-download the mod - patch files are missing")
         all_good &= len(patch_files) > 10
     
+    # 5b. Check node_modules and dependencies
+    print("\n[Checking Node.js dependencies...]")
+    node_modules = script_dir / "node_modules"
+    has_node_modules = node_modules.exists()
+    check("node_modules folder exists", has_node_modules,
+          "Run 'npm install' in the mods folder")
+    
+    if has_node_modules:
+        # Check for @electron/asar (needed for extraction/repacking)
+        asar_pkg = node_modules / "@electron" / "asar"
+        has_asar = asar_pkg.exists()
+        check("@electron/asar installed", has_asar,
+              "Run 'npm install' in the mods folder")
+        all_good &= has_asar
+        
+        # Check for level (needed for save editor)
+        level_pkg = node_modules / "level"
+        has_level = level_pkg.exists()
+        check("level package installed (for save editor)", has_level,
+              "Run 'npm install' in the mods folder")
+        # Don't fail on this - save editor is optional
+    else:
+        all_good = False
+        print("   → Dependencies not installed. The installer will auto-install them,")
+        print("     or you can run 'npm install' manually in the mods folder.")
+    
     # 6. Check for common mistakes
     print("\n[Checking for common mistakes...]")
     

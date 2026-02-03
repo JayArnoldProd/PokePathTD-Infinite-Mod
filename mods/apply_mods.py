@@ -1013,6 +1013,31 @@ def _repack_game():
     
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
     
+    # Try local repack script first (more reliable)
+    repack_script = SCRIPT_DIR / "repack_game.js"
+    if repack_script.exists():
+        try:
+            result = subprocess.run(
+                ['node', str(repack_script)],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                creationflags=creationflags
+            )
+            if result.returncode == 0 and 'OK:' in result.stdout:
+                print("  [OK] Game repacked successfully!")
+                return True
+            elif result.returncode == 0:
+                # Give it a moment for async operation
+                import time
+                time.sleep(2)
+                return True
+            else:
+                print(f"  [WARN] Local repack failed, trying npx: {result.stderr}")
+        except Exception as e:
+            print(f"  [WARN] Local repack error, trying npx: {e}")
+    
+    # Fallback to npx
     try:
         if sys.platform == 'win32':
             cmd = ['cmd', '/c', 'npx', 'asar', 'pack', 
@@ -1035,6 +1060,7 @@ def _repack_game():
             print("  [ERROR] PowerShell is blocking scripts. Try running from Command Prompt (cmd.exe)")
             return False
         elif result.returncode == 0:
+            print("  [OK] Game repacked successfully!")
             return True
         else:
             print(f"  [ERROR] Repack failed: {result.stderr}")

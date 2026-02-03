@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "level": "^8.0.1"
+    "level": "^8.0.1",
+    "@electron/asar": "^3.2.0"
+  },
+  "scripts": {
+    "extract": "node extract_game.js",
+    "repack": "node repack_game.js",
+    "postinstall": "echo Dependencies installed successfully!"
   }
 }
