@@ -38,15 +38,30 @@ MOD_VERSION = get_version()
 def check_node_installed():
     """Check if Node.js is installed and accessible."""
     try:
-        # Use cmd.exe explicitly on Windows to avoid PowerShell execution policy issues
         if sys.platform == 'win32':
+            # Try cmd.exe first (bypasses PowerShell execution policy issues)
+            try:
+                result = subprocess.run(
+                    ['cmd', '/c', 'node', '--version'],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                if result.returncode == 0:
+                    return True
+            except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+                pass
+            # Fallback: try node directly (handles cases where cmd /c fails
+            # but node is on PATH, e.g. pythonw.exe environment differences)
             result = subprocess.run(
-                ['cmd', '/c', 'node', '--version'],
+                ['node', '--version'],
                 capture_output=True,
                 text=True,
                 timeout=10,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
+            return result.returncode == 0
         else:
             result = subprocess.run(
                 ['node', '--version'],
@@ -54,7 +69,7 @@ def check_node_installed():
                 text=True,
                 timeout=10
             )
-        return result.returncode == 0
+            return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
         return False
 
@@ -62,14 +77,32 @@ def check_npx_works():
     """Check if npx works (might be blocked by PowerShell execution policy)."""
     try:
         if sys.platform == 'win32':
-            # Use cmd.exe to bypass PowerShell .ps1 script blocking
+            # Try cmd.exe first (bypasses PowerShell .ps1 script blocking)
+            try:
+                result = subprocess.run(
+                    ['cmd', '/c', 'npx', '--version'],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                if 'cannot be loaded because running scripts is disabled' in result.stderr:
+                    return False, 'powershell_blocked'
+                if result.returncode == 0:
+                    return True, None
+            except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+                pass
+            # Fallback: try npx directly (handles pythonw.exe environment differences)
             result = subprocess.run(
-                ['cmd', '/c', 'npx', '--version'],
+                ['npx', '--version'],
                 capture_output=True,
                 text=True,
                 timeout=10,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
+            if 'cannot be loaded because running scripts is disabled' in result.stderr:
+                return False, 'powershell_blocked'
+            return result.returncode == 0, None
         else:
             result = subprocess.run(
                 ['npx', '--version'],
@@ -77,12 +110,9 @@ def check_npx_works():
                 text=True,
                 timeout=10
             )
-        
-        # Check for PowerShell execution policy error in stderr
-        if 'cannot be loaded because running scripts is disabled' in result.stderr:
-            return False, 'powershell_blocked'
-        
-        return result.returncode == 0, None
+            if 'cannot be loaded because running scripts is disabled' in result.stderr:
+                return False, 'powershell_blocked'
+            return result.returncode == 0, None
     except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
         return False, str(e)
 
