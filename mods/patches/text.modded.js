@@ -260,6 +260,20 @@ export const text = {
 	},
 	inventory: {
 		title: ['Inventory', 'Inventario', 'Inventaire', 'Inventário', 'Inventario', 'Inventar', 'インベントリ', '인벤토리', '物品栏', 'Ekwipunek'],
+		// RESTORED: Vanilla inventory text entries
+		noItem: ['no item', 'sin objeto', "pas d'objet", 'nenhum item', 'nessun oggetto', 'kein Gegenstand', 'アイテムなし', '아이템 없음', '無道具', 'brak przedmiotu'],
+		noItemDescription:[
+			"No item selected currently.",
+			"No hay ningún objeto seleccionado actualmente.",
+			"Aucun objet n'est actuellement sélectionné.",
+			"Nenhum item está selecionado no momento.",
+			"Nessun oggetto è attualmente selezionato.",
+			"Derzeit ist kein Item ausgewählt.",
+			"現在、選択されているアイテムはありません。",
+			"현재 선택된 아이템이 없습니다.",
+			"目前未選擇任何道具。",
+			"Obecnie nie masz wybranego żadnego przedmiotu."
+		],
 	},
 	shop: {
 		title: ['Shop', 'Tienda', 'Boutique', 'Loja', 'Negozio', 'Shop', 'ショップ', '상점', '商店', 'Sklep'],

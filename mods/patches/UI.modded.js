@@ -8,7 +8,7 @@ import { weatherData } from './data/weatherData.js';
 import { saveData } from '../file/data.js';
 import { songData } from './data/songData.js';
 
-const SECTIONS = ['profile', 'box', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
+const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];  // RESTORED: Vanilla inventory
 
 export class UI {
 	constructor(main) {
@@ -241,6 +241,7 @@ export class UI {
 
 		this.section['profile'].addEventListener('click', () => { this.main.profileScene.open() });
 		this.section['box'].addEventListener('click', () => { this.main.boxScene.open() });
+		this.section['inventory'].addEventListener('click', () => { this.main.inventoryScene.open() });  // RESTORED
 		this.section['shop'].addEventListener('click', () => { this.main.shopScene.open() });
 		this.section['map'].addEventListener('click', () => { this.main.mapScene.open() });
 		this.section['challenge'].addEventListener('click', () => { this.main.challengeScene.open()  });
@@ -386,6 +387,10 @@ export class UI {
 			this.section['box'].style.opacity = (this.main.area.inChallenge.draft) ? 0.4 : 1;
 			this.section['box'].style.pointerEvents = (this.main.area.inChallenge.draft) ? 'none' : 'revert-layer';
 
+			// RESTORED: Inventory challenge handling
+			this.section['inventory'].style.opacity = (this.main.area.inChallenge.noItems) ? 0.4 : 1;
+			this.section['inventory'].style.pointerEvents = (this.main.area.inChallenge.noItems) ? 'none' : 'revert-layer';
+
 			this.chrono.style.display = 'revert-layer';
 			this.challenge.innerText = text.challenge.label[this.main.lang].toUpperCase();
 		} else {
@@ -395,6 +400,9 @@ export class UI {
 			this.section['map'].style.pointerEvents = 'revert-layer';
 			this.section['box'].style.opacity = 1;
 			this.section['box'].style.pointerEvents = 'revert-layer';
+			// RESTORED: Inventory reset when not in challenge
+			this.section['inventory'].style.opacity = 1;
+			this.section['inventory'].style.pointerEvents = 'revert-layer';
 		}
 
 		if (!this.main.area.inChallenge) {
