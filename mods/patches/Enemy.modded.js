@@ -724,25 +724,53 @@ export class Enemy extends Sprite {
 			this.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon); 
 		}
 
+	    // RESTORED: Vanilla heal logic - items only heal when not at full health, per-wave limits
+	    if (this.main.player.health[this.main.area.map.id] < 14) {
+			if (pokemon?.item?.id == 'leftovers' && Math.random() < 0.0005 && !this.main.area.leftoversWaveUsed) {
+				playSound('hit3', 'effect');
+				this.main.player.getHealed(1);
+				this.main.player.achievementProgress.heartRestore++;
+				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				this.main.area.leftoversWaveUsed = true;
+				this.main.area.heartScale = true;
+			}
+
+			if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000 && !this.main.area.shellBellWaveUsed) {
+				playSound('hit3', 'effect');
+				this.main.player.getHealed(1);
+				this.main.player.achievementProgress.heartRestore++;
+				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				this.main.area.shellBellWaveUsed = true;
+				this.main.area.heartScale = true;
+			}
+
+			if (pokemon?.item?.id == 'clefairyDoll' && pokemon.trueDamageDealt > 25000 && !this.main.area.clefairyDollUsed) {
+				playSound('hit3', 'effect');
+				this.main.player.getHealed(1);
+				this.main.player.achievementProgress.heartRestore++;
+				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				this.main.area.clefairyDollUsed = true;
+				this.main.area.heartScale = true;
+			}
+		}
+		
+	    // RESTORED: Heal ability with per-pokemon limit
 	    if (
-	    	(pokemon?.item?.id == 'leftovers' && Math.random() < 0.005) ||
-	    	((ability?.id === 'heal' && pokemon?.item?.id != 'lifeOrb') && Math.random() < 0.025) ||
-	    	(pokemon?.item?.id == 'shellBell' && pokemon.damageDealt > 50000 && !this.main.area.shellBellWaveUsed) ||
-	    	(pokemon?.item?.id == 'clefairyDoll' && pokemon.damageDealt > 25000 && !this.main.area.clefairyDollUsed)
+	    	ability?.id === 'heal' && 
+	    	pokemon?.item?.id != 'lifeOrb' && 
+	    	Math.random() < 0.025 && 
+	    	!pokemon.healUsed
 	    ) {
 	        playSound('hit3', 'effect');
-	        let healValue = 1;
-	        if (pokemon?.item?.id == 'bigRoot') healValue++;		        
+	        const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
 	        this.main.player.getHealed(healValue);
 	        this.main.player.achievementProgress.heartRestore += healValue;
-	        
 	    	if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
-	    	if (pokemon?.item?.id == 'clefairyDoll' && pokemon.damageDealt > 25000) this.main.area.clefairyDollUsed = true;
-	    	if (pokemon?.item?.id == 'shellBell' && pokemon.damageDealt > 50000) this.main.area.shellBellWaveUsed = true;
+	    	pokemon.healUsed = true;
 	    	this.main.area.heartScale = true;
 	    }
 
-	    if (pokemon?.item?.id == 'shellBell' && pokemon.damageDealt > 50000) this.main.area.shellBellWaveUsed = true;
+	    if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000) this.main.area.shellBellWaveUsed = true;
 
 	    if (ability?.id === 'greed') {
 	    	let g = Math.ceil(this.gold * 0.1);

@@ -325,25 +325,26 @@ export class Projectile extends Sprite {
                 finalDamage = Math.ceil(finalDamage * (1 + this.critical * 0.01));
             }
 
-            if (this.tower?.ability?.id === 'focus') {
-                if (this.tower.lastTarget === this.enemy) {
-                    this.tower.damageBoost = (this.tower.damageBoost || 0) + Math.ceil(finalDamage * 0.075);
-                } else {
-                    this.tower.damageBoost = 0;
-                    this.tower.lastTarget = this.enemy;
-                }
-                finalDamage += this.tower.damageBoost || 0;
-            }
+            // RESTORED: Vanilla Focus implementation - percentage-based, not exponential
+            if (this.tower?.ability?.id === 'focus' || this.tower?.pokemon?.item?.id === 'focusBand') {
+                let focusBoost = 0;
 
-            if (this.tower?.pokemon?.item?.id === 'focusBand') {
                 if (this.tower.lastTarget === this.enemy) {
-                    let focusBandBonus = (this.tower?.ability?.id == 'simple') ? 0.075 : 0.07;
-                    this.tower.damageBoost = (this.tower.damageBoost || 0) + Math.ceil(finalDamage * focusBandBonus);
+                    if (this.tower?.ability?.id === 'focus') {
+                        focusBoost += 0.075;
+                    }
+
+                    if (this.tower?.pokemon?.item?.id === 'focusBand') {
+                        focusBoost += (this.tower?.ability?.id == 'simple') ? 0.075 : 0.05;
+                    }
+
+                    this.tower.damageBoost += focusBoost;
                 } else {
                     this.tower.damageBoost = 0;
                     this.tower.lastTarget = this.enemy;
                 }
-                finalDamage += this.tower.damageBoost || 0;
+
+                finalDamage = Math.ceil(finalDamage * (1 + this.tower.damageBoost));  
             }
 
             if (this.tower?.ability?.id === 'firstImpression') {
