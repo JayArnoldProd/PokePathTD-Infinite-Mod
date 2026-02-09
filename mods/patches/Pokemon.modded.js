@@ -231,68 +231,79 @@ export class Pokemon {
     }
 
 	// MOD: Endless mode cost scaling - costs continue scaling past level 100
+	// Levels 1-100: Use vanilla formula WITH vanilla caps (100k or 150k for veryHigh)
+	// Levels 101+: Cost = (previous × 1.02) + 8000, capping at 1 billion
 	setCost() {
+		const vanillaCap = this.specie.costScale === 'veryHigh' ? 150000 : 100000;
+		
+		// Calculate vanilla cost at the effective level (capped at 100 for formula)
+		const effectiveLevel = Math.min(this.lvl, 100);
 		let baseCost;
+		
 		if (this.specie.costScale === 'low') {
-			baseCost = Math.ceil(27 * Math.pow(1.12, Math.min(this.lvl, 100))) - 11;
+			baseCost = Math.ceil(27 * Math.pow(1.12, effectiveLevel)) - 11;
 		} else if (this.specie.costScale === 'mid') {
-			baseCost = Math.ceil(35 * Math.pow(1.12, Math.min(this.lvl, 100))) + ((Math.min(this.lvl, 100)-1) * 5);
+			baseCost = Math.ceil(35 * Math.pow(1.12, effectiveLevel)) + ((effectiveLevel - 1) * 5);
 		} else if (this.specie.costScale === 'high') {
-			baseCost = Math.ceil(51 * Math.pow(1.12, Math.min(this.lvl, 100))) + (Math.min(this.lvl, 100) * 3) - 1;		
+			baseCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
 		} else if (this.specie.costScale === 'veryHigh') {
-			baseCost = Math.ceil(51 * Math.pow(1.12, Math.min(this.lvl, 100))) + (Math.min(this.lvl, 100) * 3) - 1;
+			baseCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
 		} else {
-			baseCost = 100000;
+			baseCost = vanillaCap;
 		}
-
-		// MOD: For levels > 100, add additional scaling
+		
+		// Apply vanilla cap for levels 1-100
+		baseCost = Math.min(vanillaCap, baseCost);
+		
+		// MOD: For levels > 100, apply endless scaling from the capped level 100 cost
 		if (this.lvl > 100) {
 			const excessLevels = this.lvl - 100;
-			// Cost increases by (previous * 1.02) + 8000 per level past 100
+			// Cost increases by (previous × 1.02) + 8000 per level past 100
 			for (let i = 0; i < excessLevels; i++) {
-				baseCost = Math.min(1000000000, Math.floor(baseCost * 1.02) + 8000);
+				baseCost = Math.floor(baseCost * 1.02) + 8000;
 			}
 		}
 		
-		// Cap at different values based on costScale
-		if (this.specie.costScale === 'veryHigh') {
-			this.cost = Math.min(1000000000, baseCost);
-		} else {
-			this.cost = Math.min(1000000000, baseCost);
-		}
+		// Final cap at 1 billion
+		this.cost = Math.min(1000000000, baseCost);
 	}
 
 	checkCost(num) {
-		let cost = 0;
+		let totalCost = 0;
+		const vanillaCap = this.specie.costScale === 'veryHigh' ? 150000 : 100000;
 
 		for (let i = 0; i < num; i++) {
 			const checkLevel = this.lvl + i;
+			const effectiveLevel = Math.min(checkLevel, 100);
 			let levelCost;
 			
 			if (this.specie.costScale === 'low') {
-				levelCost = Math.ceil(27 * Math.pow(1.12, Math.min(checkLevel, 100))) - 11;
+				levelCost = Math.ceil(27 * Math.pow(1.12, effectiveLevel)) - 11;
 			} else if (this.specie.costScale === 'mid') {
-				levelCost = Math.ceil(35 * Math.pow(1.12, Math.min(checkLevel, 100))) + ((Math.min(checkLevel, 100)-1) * 5);
+				levelCost = Math.ceil(35 * Math.pow(1.12, effectiveLevel)) + ((effectiveLevel - 1) * 5);
 			} else if (this.specie.costScale === 'high') {
-				levelCost = Math.ceil(51 * Math.pow(1.12, Math.min(checkLevel, 100))) + (Math.min(checkLevel, 100) * 3) - 1;		
+				levelCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
 			} else if (this.specie.costScale === 'veryHigh') {
-				levelCost = Math.ceil(51 * Math.pow(1.12, Math.min(checkLevel, 100))) + (Math.min(checkLevel, 100) * 3) - 1;
+				levelCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
 			} else {
-				levelCost = 100000;
+				levelCost = vanillaCap;
 			}
+			
+			// Apply vanilla cap for levels 1-100
+			levelCost = Math.min(vanillaCap, levelCost);
 			
 			// MOD: Add endless scaling for levels > 100
 			if (checkLevel > 100) {
 				const excessLevels = checkLevel - 100;
 				for (let j = 0; j < excessLevels; j++) {
-					levelCost = Math.min(1000000000, Math.floor(levelCost * 1.02) + 8000);
+					levelCost = Math.floor(levelCost * 1.02) + 8000;
 				}
 			}
 			
-			cost += Math.min(1000000000, levelCost);
+			totalCost += Math.min(1000000000, levelCost);
 		}
 		
-		return cost;
+		return totalCost;
 	}
 
 	updateStats() {
