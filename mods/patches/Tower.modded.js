@@ -823,7 +823,7 @@ export class Tower extends Sprite {
                         const dx = enemy.center.x - this.center.x;
                         const dy = enemy.center.y - this.center.y;
                         const dist = Math.hypot(dx, dy);
-                        if (dist <= 140 && Math.random() < 0.33) {
+                        if (dist <= 115 && Math.random() < 0.25) {  // RESTORED: Vanilla values (was 140/0.33)
                             playSound('paralyzed', 'effect');
                             this.attackCooldown += areaAttackSpeed;
                             areaStunned = true;
@@ -899,8 +899,9 @@ export class Tower extends Sprite {
 
                     if (isCritical && this.pokemon?.item?.id == 'razorClaw' && enemy.canSlow) enemy.applyStatusEffect({ type: 'slow', duration: 0.2, slowPercent: 0.5 })
 
-                    if (enemy.canBurn && this.ability && this.ability.id === 'burnNerf' && Math.random() < 0.5) {
-                        if (this.pokemon?.item?.id == 'heatRock') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
+                    // RESTORED: Vanilla logic - Heat Rock = 100% burn chance
+                    if (enemy.canBurn && this.ability && this.ability.id === 'burnNerf' && (Math.random() < 0.5 || this.pokemon?.item?.id == 'heatRock')) {
+                        if (this.pokemon?.item?.id == 'magmaStone') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
                         else if (this.pokemon?.item?.id == 'falmeOrb') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.pokemon);
                         else enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);
                     }
@@ -998,7 +999,7 @@ export class Tower extends Sprite {
                     const dx = cand.center.x - this.center.x;
                     const dy = cand.center.y - this.center.y;
                     const dist = Math.hypot(dx, dy);
-                    if (dist <= 140 && Math.random() < 0.33) {
+                    if (dist <= 115 && Math.random() < 0.25) {  // RESTORED: Vanilla values (was 140/0.33)
                         playSound('paralyzed', 'effect');
                         skipAttack = true;
                         break;

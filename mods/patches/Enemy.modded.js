@@ -209,7 +209,7 @@ export class Enemy extends Sprite {
 			const cx = this.position.x + this.width / 2;
 			const cy = this.position.y + this.height / 2;
 
-			const radius = 140;
+			const radius = 115;  // RESTORED: Vanilla value (was 140)
 			const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
 
 			// aura eléctrica (más intensa)
