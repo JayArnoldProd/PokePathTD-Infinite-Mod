@@ -159,8 +159,8 @@ export class Projectile extends Sprite {
             let isCritical = false;
 
             if (this.tower?.pokemon?.item?.id == 'protein') {
-                finalDamage += 10;
-                if (this.tower?.ability?.id == 'simple') finalDamage += 5;
+                finalDamage += 15;  // RESTORED: Vanilla value (was 10)
+                if (this.tower?.ability?.id == 'simple') finalDamage += 8;  // RESTORED: Vanilla value (was 5)
 
             }
             if (this.tower?.pokemon?.item?.id == 'xAttack') {

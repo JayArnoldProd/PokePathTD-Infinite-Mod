@@ -842,7 +842,7 @@ export class Tower extends Sprite {
                         finalDamage += Math.floor(finalDamage * (ssBonus / 100));
                     }
 
-                    if (this.pokemon?.item?.id == 'protein') finalDamage += 10;
+                    if (this.pokemon?.item?.id == 'protein') finalDamage += 15;  // RESTORED: Vanilla value (was 10)
                     if (this.pokemon?.item?.id == 'xAttack') finalDamage += 50;
 
                     if (this.pokemon?.item?.id == 'sharpBeak' && this.tile.land == 4) {

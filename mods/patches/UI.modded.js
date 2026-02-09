@@ -16,6 +16,7 @@ export class UI {
 		this.render();
 
 		this.damageDealtDisplay = false;
+		this.damageDealtType = 'trueDamage';  // RESTORED: Vanilla damage type toggle
 		this.enemyPositionDisplay = 0;
 		this.tileTerrainHover = null;
 		
@@ -286,6 +287,10 @@ export class UI {
 		this.nextWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
 		this.nextWave.addEventListener('click', () => this.main.area.newWave());
 
+		this.pauseWave = new Element(this.mapPanel, { className: 'ui-pause-wave', text: '||' }).element;
+		this.pauseWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
+		this.pauseWave.addEventListener('click', () => { this.main.game.switchPause(); });
+
 		this.autoWave = new Element(this.mapPanel, { className: 'ui-auto-wave' }).element;
 		this.autoWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
 		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());
@@ -295,6 +300,11 @@ export class UI {
 		this.speedWave.addEventListener('click', () => { this.main.game.toggleSpeed() });
 
 		this.damageDealtContainer = new Element(this.mapPanel, { className: 'ui-damage-dealt-container' }).element;
+		// RESTORED: Vanilla damage type toggle button
+		this.damageDealtButton = new Element(this.mapPanel, { className: 'ui-damage-dealt-button' }).element;
+		this.damageDealtButton.addEventListener('mouseenter', () => { playSound('open', 'ui') });
+		this.damageDealtButton.addEventListener('click', () => { this.changeDamageType() });
+
 		this.damageDealtUnit = [];
 
 		for (let i = 0; i < 10; i++) {
@@ -607,7 +617,8 @@ export class UI {
 			}	
 
 			if (pokemon.isDeployed) {
-				if (['airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'ejectButton'].includes(pokemon?.item?.id)) {
+				// RESTORED: silphScope added back to vanilla disabled items list
+				if (['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'ejectButton'].includes(pokemon?.item?.id)) {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
@@ -1216,6 +1227,14 @@ export class UI {
 	    this.musicName.innerHTML = `♪ ${this.main.area.music.name[this.main.lang].toUpperCase()}`;
 
 	    playMusic(this.main.area.music.song);
+	}
+
+	// RESTORED: Vanilla damage type toggle method
+	changeDamageType() {
+		this.damageDealtType = (this.damageDealtType == 'trueDamage') ? 'overdamage' : 'trueDamage';
+		playSound('option', 'ui');
+		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
+		this.updateDamageDealt();
 	}
 }
 

@@ -55,6 +55,31 @@ export const text = {
 			"웨이브 매니저",
 			"波次 管理",
 			"Menadżer fal"
+		],
+		// RESTORED: Vanilla damage type toggle text
+		trueDamage: [
+			"True Damage",
+			"Daño real",
+			"Dégâts réels",
+			"Dano real",
+			"Danno reale",
+			"Direkter Schaden",
+			"真のダメージ",
+			"실제 피해",
+			"真实伤害",
+			"Prawdziwe obrażenia"
+		],
+		overdamage: [
+			"Overdamage",
+			"Daño excedente",
+			"Dégâts excessifs",
+			"Dano excedente",
+			"Danno eccessivo",
+			"Über Schaden",
+			"オーバーダメージ",
+			"초과 피해",
+			"超额伤害",
+			"Nadwyżka obrażeń"
 		]
 	},
 	notification: {

@@ -171,17 +171,27 @@ export class BoxScene extends GameScene {
 	searchByName() {
 		const searchValue = this.search.value.value.toLowerCase(); 
 
-	    this.searchPokemon = this.pokemon.filter(poke => 
-	        (poke.name && poke.name[this.main.lang].toLowerCase().startsWith(searchValue)) || 
-	        (poke.alias && poke.alias.toLowerCase().startsWith(searchValue)) ||
-	        (poke.ability && poke.ability.name[this.main.lang].toLowerCase().startsWith(searchValue)) ||
-	        (searchValue === "shiny" && poke.isShiny === true) || 
-	        ((searchValue === "area" || searchValue === "aoe") && poke.attackType === 'area') ||
-	        (searchValue === "x" && poke.rangeType === 'xShape') ||
-	        ((searchValue === "cross" || searchValue === "+") && poke.rangeType === 'cross') ||
-	        (searchValue === "stun" && poke.id === 72) ||
-	        (searchValue === "slow" && (poke.id === 80 || poke.id === 64)) 
-	    );
+		// RESTORED: Vanilla search with m- prefix normalization for Mega Pokemon
+		this.searchPokemon = this.pokemon.filter(poke => {
+	        const normalizedName =
+	            poke.name && poke.name[this.main.lang]
+	                ? poke.name[this.main.lang]
+	                      .toLowerCase()
+	                      .replace(/^m-/, '') 
+	                : '';
+
+	        return (
+	            (normalizedName.startsWith(searchValue)) ||
+	            (poke.alias && poke.alias.toLowerCase().startsWith(searchValue)) ||
+	            (poke.ability && poke.ability.name[this.main.lang].toLowerCase().startsWith(searchValue)) ||
+	            (searchValue === "shiny" && poke.isShiny === true) ||
+	            ((searchValue === "area" || searchValue === "aoe") && poke.attackType === 'area') ||
+	            (searchValue === "x" && poke.rangeType === 'xShape') ||
+	            ((searchValue === "cross" || searchValue === "+") && poke.rangeType === 'cross') ||
+	            (searchValue === "stun" && poke.id === 72) ||
+	            (searchValue === "slow" && (poke.id === 80 || poke.id === 64))
+	        );
+	    });
 
 	    this.displayUnits();
 	}
