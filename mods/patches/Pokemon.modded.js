@@ -252,12 +252,13 @@ export class Pokemon {
 			baseCost = vanillaCap;
 		}
 		
-		// Apply vanilla cap for levels 1-100
+		// Apply vanilla cap for levels 1-99
 		baseCost = Math.min(vanillaCap, baseCost);
 		
-		// MOD: For levels > 100, apply endless scaling from the capped level 100 cost
-		if (this.lvl > 100) {
-			const excessLevels = this.lvl - 100;
+		// MOD: For levels >= 100, apply endless scaling from the capped level 100 cost
+		// (cost shown at level 100 is the cost to reach 101, so scaling starts here)
+		if (this.lvl >= 100) {
+			const excessLevels = this.lvl - 99;
 			// Cost increases by (previous × 1.02) + 8000 per level past 100
 			for (let i = 0; i < excessLevels; i++) {
 				baseCost = Math.floor(baseCost * 1.02) + 8000;
@@ -289,12 +290,13 @@ export class Pokemon {
 				levelCost = vanillaCap;
 			}
 			
-			// Apply vanilla cap for levels 1-100
+			// Apply vanilla cap for levels 1-99
 			levelCost = Math.min(vanillaCap, levelCost);
 			
-			// MOD: Add endless scaling for levels > 100
-			if (checkLevel > 100) {
-				const excessLevels = checkLevel - 100;
+			// MOD: Add endless scaling for levels >= 100
+			// (cost at level 100 is cost to reach 101, so scaling starts here)
+			if (checkLevel >= 100) {
+				const excessLevels = checkLevel - 99;
 				for (let j = 0; j < excessLevels; j++) {
 					levelCost = Math.floor(levelCost * 1.02) + 8000;
 				}
