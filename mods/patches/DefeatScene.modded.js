@@ -13,7 +13,8 @@ export class DefeatScene extends GameScene {
 		
 		this.header.removeChild(this.closeButton);
 		this.render();
-		this.saveWaveRetry = [25, 50, 75]; // Base checkpoints, extended dynamically for endless
+		// MOD: Endless checkpoints - checkpoints every 50 waves after 100
+		this.saveWaveRetry = [25, 50, 75];
 		this.savedWave = 0;
 	}
 
@@ -47,7 +48,7 @@ export class DefeatScene extends GameScene {
 		this.restartButton.innerText = text.defeat.restart[this.main.lang].toUpperCase();
 		this.retryButton.innerText = text.defeat.retry[this.main.lang].toUpperCase();
 
-		if (this.main.area.waveNumber > 25 || this.main.area.endlessMode) {
+		if (this.main.area.waveNumber > 25) {
 			this.getRetryWave();
 			this.retryButton.style.filter = 'revert-layer';
 			this.retryButton.style.pointerEvents = 'revert-layer';
@@ -113,9 +114,7 @@ export class DefeatScene extends GameScene {
 			this.main.player.stats.maxGoldPerWave[1] = this.main.area.getRouteTag(this.main.area.routeNumber, this.main.area.waveNumber);
 		}
 		if (this.main.area.waveStartTime !== null) {
-	        this.main.area.waveElapsedTime = Math.floor(
-	            (performance.now() - this.main.area.waveStartTime) / 1000
-	        ); 
+	        this.main.area.waveElapsedTime = (performance.now() - this.main.area.waveStartTime) / 1000;
 	        this.main.area.waveStartTime = null;
 	    }
 	    
@@ -151,151 +150,103 @@ export class DefeatScene extends GameScene {
 		
 		playSound('results', 'ui');
 
-		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) { this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) } 
+		// MOD: Auto-reset options - 0=Off, 1=Restart, 2=Retry, 3=Continue
+		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) { 
+			this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
+		} 
 		if (this.main.autoReset == 2 && !this.main.area.inChallenge.permadeath) { 
 			if (this.main.area.waveNumber > 25) this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
 			else this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor})
 		}
-		// AUTO-RESET "Continue" mode (3): Same as retry in DefeatScene (continue is only for FinalScene)
-		if (this.main.autoReset == 3 && !this.main.area.inChallenge.permadeath) { 
-			if (this.main.area.waveNumber > 25) this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
-			else this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor})
-		} 
+		// MOD: Auto-continue option (3) - continue from current wave in endless mode
+		if (this.main.autoReset == 3 && !this.main.area.inChallenge.permadeath) {
+			// In endless mode (wave > 100), continue from checkpoint
+			if (this.main.area.waveNumber > 100) {
+				this.getRetryWave();
+				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			} else if (this.main.area.waveNumber > 25) {
+				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			} else {
+				this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			}
+		}
 	}
 
 	restart(autoReset = {}) {
-		console.log('DefeatScene.restart() called, autoReset:', autoReset);
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
-		
-		// BUGFIX: Force complete wave state reset before loading
-		this.main.area.endlessMode = false;
-		this.main.area.waveActive = false;
-		this.main.area.autoWave = false;
-		this.main.area.enemies = [];
-		
-		// Store speed to restore after close
-		const restoreSpeed = autoReset.speedBuff || 1;
-		const restoreAutoWave = autoReset.autoWave || false;
-		
-		console.log('restart: calling loadArea with wave=1');
-		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge);
+		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(14);
-		
-		console.log('restart: calling close()');
 		this.close();
-		
-		// BUGFIX: Restore speed and auto-wave settings after close
-		if (restoreSpeed > 1) {
-			this.main.game.speedFactor = restoreSpeed;
-			this.main.UI.speedWave.innerHTML = restoreSpeed + 'x';
-		}
-		if (restoreAutoWave) {
-			this.main.area.switchAutoWave();
-		}
-		
-		console.log(`restart complete: waveActive=${this.main.area.waveActive}`);
+
+		if (autoReset.autoWave) this.main.area.switchAutoWave();
 	}
 
 	retry(autoReset = {}) {
-		console.log(`DefeatScene.retry() called, savedWave=${this.savedWave}, autoReset:`, autoReset);
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		let lives = 7;
 		if (this.main.player.stars >= 150) lives++;
 		if (this.main.player.stars >= 300) lives++;
 		if (this.main.player.stars >= 450) lives++;
-		if (this.main.area.waveNumber == 100) lives = 1;
+		// MOD: In endless mode (wave >= 100), give more lives for retrying
+		if (this.main.area.waveNumber >= 100) {
+			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
+		}
 		
-		// BUGFIX: Force complete wave state reset before loading
-		this.main.area.endlessMode = false;
-		this.main.area.waveActive = false;
-		this.main.area.autoWave = false;
-		this.main.area.enemies = [];
-		
-		// Store speed to restore after close
-		const restoreSpeed = autoReset.speedBuff || 1;
-		const restoreAutoWave = autoReset.autoWave || false;
-		
-		console.log(`retry: calling loadArea with wave=${this.savedWave}`);
-		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge);
+		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(lives);
-		
-		console.log('retry: calling close()');
 		this.close();
-		
-		// BUGFIX: Restore speed and auto-wave settings after close
-		if (restoreSpeed > 1) {
-			this.main.game.speedFactor = restoreSpeed;
-			this.main.UI.speedWave.innerHTML = restoreSpeed + 'x';
-		}
-		if (restoreAutoWave) {
-			this.main.area.switchAutoWave();
-		}
-		
-		console.log(`retry complete: waveActive=${this.main.area.waveActive}`);
+
+		if (autoReset.autoWave) this.main.area.switchAutoWave();
 	}
 
 	close() {
-		console.log('DefeatScene.close() called');
 		super.close();
 		this.savedWave = 0;
 
 		this.main.UI.nextWave.style.filter = `revert-layer`;
 		this.main.UI.nextWave.style.pointerEvents = 'all';
 
-		// BUGFIX: Force reset wave state again in close
-		this.main.area.waveActive = false;
 		this.main.area.autoWave = false;
 		this.main.UI.autoWave.style.background = '#2c70e3';
 
 		this.main.UI.update();
 		this.main.UI.revertUI();
-		
-		console.log('DefeatScene.close: calling game.resume()');
-		
-		// BUGFIX: Force game loop restart - don't rely on resume() alone
-		this.main.game.stopped = true; // Ensure stopped is true so resume() actually runs
 		this.main.game.resume();
-		
-		// FAILSAFE: If game loop still not running after 100ms, force restart it
-		setTimeout(() => {
-			if (this.main.game.stopped || !this.main.game.loopId) {
-				console.warn('FAILSAFE: Game loop not running, forcing restart');
-				this.main.game.stopped = false;
-				this.main.game.lastTime = performance.now();
-				if (this.main.game.loopId) clearInterval(this.main.game.loopId);
-				this.main.game.loopId = setInterval(() => this.main.game.animate(performance.now()), this.main.game.frameDuration);
-			}
-		}, 100);
-		
 		this.main.player.stats.resets++;
 		if (this.main.player.stats.resets == 100) this.main.player.unlockAchievement(11);
 		
 		playSound('button2', 'ui');
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
-		
-		console.log(`DefeatScene.close complete: waveActive=${this.main.area.waveActive}, stopped=${this.main.game.stopped}`);
 	}
 
+	// MOD: Extended checkpoints for endless mode - every 50 waves after 100
 	getRetryWave() {
-		// ENDLESS MODE: Dynamic checkpoint calculation
+		// Generate dynamic checkpoints for endless mode
 		const wave = this.main.area.waveNumber;
 		
-		if (wave <= 100) {
-			// Vanilla behavior: checkpoints at 25, 50, 75
-			for (let i = 0; i < this.saveWaveRetry.length; i++) {
-				if (this.saveWaveRetry[i] < wave) {
-					this.savedWave = this.saveWaveRetry[i];
-				} else {
-					break;
-				}
+		// Build checkpoint list dynamically
+		let checkpoints = [25, 50, 75];
+		
+		// MOD: Add checkpoints every 50 waves for endless mode (100, 150, 200, etc.)
+		if (wave > 100) {
+			// Add checkpoint at 100
+			checkpoints.push(100);
+			// Add checkpoints every 50 waves after 100
+			let checkpoint = 150;
+			while (checkpoint < wave) {
+				checkpoints.push(checkpoint);
+				checkpoint += 50;
 			}
-		} else {
-			// Endless mode: checkpoints every 50 waves starting at 100
-			// Die on 101-149 -> 100, 150-199 -> 150, 200-249 -> 200, etc.
-			this.savedWave = Math.floor((wave - 1) / 50) * 50;
-			// Ensure minimum of 100 for endless mode
-			if (this.savedWave < 100) this.savedWave = 100;
 		}
+		
+		this.savedWave = 0;
+	  	for (let i = 0; i < checkpoints.length; i++) {
+		    if (checkpoints[i] < wave) {
+		      	this.savedWave = checkpoints[i];
+		    } else {
+		      	break;
+	    	}
+	    }
 	}
 
 	getRetryText(lang) {
@@ -303,10 +254,14 @@ export class DefeatScene extends GameScene {
 		if (this.main.player.stars >= 150) lives++;
 		if (this.main.player.stars >= 300) lives++;
 		if (this.main.player.stars >= 450) lives++;
-		// Boss waves (100, 200, 300...) give only 1 life
-		if (this.main.area.waveNumber % 100 === 0 && this.main.area.waveNumber >= 100) {
-			lives = 1;
-			// savedWave already set by getRetryWave()
+		
+		// MOD: Special handling for endless mode (wave >= 100)
+		if (this.main.area.waveNumber >= 100) {
+			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
+			// Ensure savedWave is calculated
+			if (this.savedWave === 0) {
+				this.getRetryWave();
+			}
 		}
 
 		const text = [
@@ -314,7 +269,7 @@ export class DefeatScene extends GameScene {
 			`Puedes reintentar y volver a la oleada ${this.savedWave} con ${lives} vidas`,
 			`Vous pouvez réessayer et revenir à la vague ${this.savedWave} avec ${lives} vies`,
 			`Você pode reiniciar e voltar à onda ${this.savedWave} com ${lives} vidas`,
-			`Puoi ritentare e tornare all’ondata ${this.savedWave} con ${lives} vite`,
+			`Puoi ritentare e tornare all'ondata ${this.savedWave} con ${lives} vite`,
 			`Du kannst mit ${lives} Leben zu Welle ${this.savedWave} zurück.`,
 			`リトライを使うと、${lives}ライフの状態でウェーブ${this.savedWave}に戻れます`,
 			`재시도를 사용하면 목숨 ${lives}개로 ${this.savedWave}웨이브로 돌아갈 수 있습니다`,

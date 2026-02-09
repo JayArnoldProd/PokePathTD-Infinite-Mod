@@ -1,12 +1,12 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.1
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.3
 
-**Compatible with PokePath TD v1.4.1** ✅
+**Compatible with PokePath TD v1.4.3** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
-> **v1.4.1 Update:** Merged 1.4.1's improved drag-and-drop system with pointer events, plus Silph Scope unequip fix.
+> **v1.4.3 Update:** Compatible with latest game version. Merged 1.4.3 improvements including trueDamage tracking. All endless mode features preserved.
 
 ---
 
@@ -88,7 +88,8 @@ A graphical save editor with full control over your game:
 
 | Version | Game Compatibility | Download |
 |---------|-------------------|----------|
-| **v1.4.1** (Latest) | PokePath TD 1.4.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.1) |
+| **v1.4.3** (Latest) | PokePath TD 1.4.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.3) |
+| v1.4.1 | PokePath TD 1.4.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.1) |
 | v1.4 | PokePath TD 1.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4) |
 
 > 💡 **Match your game version!** Check your game's title screen for the version number.

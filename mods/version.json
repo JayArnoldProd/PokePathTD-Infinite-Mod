@@ -1,12 +1,14 @@
 {
-  "version": "1.4.1",
-  "game_version": "1.4.1",
-  "release_date": "2026-01-31",
+  "version": "1.4.3",
+  "game_version": "1.4.3",
+  "release_date": "2026-02-08",
   "changelog": [
-    "Compatible with PokePath TD v1.4.1",
-    "Merged 1.4.1 improved drag-and-drop system with pointer events",
-    "Added Silph Scope to unequip restriction (1.4.1 bug fix)",
-    "Sub-stepping and 5x/10x speed preserved",
-    "All endless mode features intact"
+    "Compatible with PokePath TD v1.4.3",
+    "Merged 1.4.3 improvements including trueDamageDealt tracking and healUsed field",
+    "Preserved all endless mode features: continue past wave 100, checkpoints every 50 waves",
+    "Sub-stepping and 5x/10x speed preserved for high-speed accuracy",
+    "All shiny egg/starter features intact (1/30 chance)",
+    "Asymptotic stat scaling prevents negative attack speeds at high levels",
+    "Auto-continue option for endless mode preserved"
   ]
 }

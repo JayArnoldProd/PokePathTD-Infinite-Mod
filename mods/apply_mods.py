@@ -304,7 +304,7 @@ def apply_map_record_uncap():
 # SHOP.JS - 1/30 shiny chance for eggs
 # ============================================================================
 def apply_shiny_eggs():
-    """Add 1/30 shiny chance when buying eggs."""
+    """Add 1/30 shiny chance when buying eggs - uses full file replacement."""
     path = JS_ROOT / "game" / "core" / "Shop.js"
     content = read_file(path)
     
@@ -313,40 +313,14 @@ def apply_shiny_eggs():
         log_skip("Shop.js: Shiny eggs")
         return True
     
-    # Find the buyEgg function and modify it
-    old_pattern = """if (this.main.team.pokemon.length < this.main.player.teamSlots) {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
-		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
-		}"""
-    
-    new_pattern = """// Create the new Pokemon
-		const newPokemon = new Pokemon(pokemon, 1, null, this.main);
-		
-		// 1/30 chance of being shiny from egg!
-		const isShinyEgg = Math.random() < (1/30);
-		if (isShinyEgg) {
-			newPokemon.isShiny = true;
-			newPokemon.setShiny();
-		}
-		
-		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
-			this.main.team.addPokemon(newPokemon);
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShinyEgg)
-		} else {
-			this.main.box.addPokemon(newPokemon);
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShinyEgg)
-		}"""
-    
-    if old_pattern in content:
-        content = content.replace(old_pattern, new_pattern)
-        write_file(path, content)
-        log_success("Shop.js: Shiny eggs (1/30)")
+    # Use full file replacement from patches/Shop.modded.js
+    modded_path = SCRIPT_DIR / "patches" / "Shop.modded.js"
+    if modded_path.exists():
+        shutil.copy(modded_path, path)
+        log_success("Shop.js: Shiny eggs (full file replacement)")
         return True
     
-    log_fail("Shop.js: Shiny eggs")
+    log_fail("Shop.js: Shiny eggs", "Shop.modded.js not found")
     return False
 
 # ============================================================================
