@@ -370,7 +370,8 @@ export class Projectile extends Sprite {
 
             // efectos secundarios
 
-            if (this.enemy.canSlow && this.tower?.item?.id === 'magnet' && this.enemy.armor > 0) {
+            // FIXED: Magnet was missing .pokemon in the path
+            if (this.enemy.canSlow && this.tower?.pokemon?.item?.id === 'magnet' && this.enemy.armor > 0) {
                 this.enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 1 });
             }
             if (isCritical && this.tower?.pokemon?.item?.id == 'razorClaw' && this.enemy.canSlow) {

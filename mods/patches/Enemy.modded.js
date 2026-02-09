@@ -654,7 +654,17 @@ export class Enemy extends Sprite {
 	   
 	    let cursedDamageSpread = amount;
 
-	    if (this.cursed && pokemon?.item?.id == 'strangeIdol') amount = Math.ceil(amount * 1.1);
+	    // RESTORED: Vanilla Strange Idol - 50% bonus minus 1% per cursed enemy
+	    if (pokemon?.item?.id == 'strangeIdol') {
+	    	let strangeIdolBuff = 50;
+	    	this.main.area.enemies.forEach(e => {
+	            if (e !== this && e.cursed && e.hp > 0) {
+	            	strangeIdolBuff -= 1;
+	        	}
+		    });
+		    if (strangeIdolBuff > 0) amount += Math.ceil(amount * strangeIdolBuff/100);
+		}
+
 	    if (pokemon?.item?.id == 'spellTag' && this.statusEffects.length > 0) {
 	    	let spellTagBonus = 0
 			this.statusEffects.forEach((effect) => {
