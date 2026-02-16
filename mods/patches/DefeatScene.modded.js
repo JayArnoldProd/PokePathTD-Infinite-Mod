@@ -13,6 +13,7 @@ export class DefeatScene extends GameScene {
 		
 		this.header.removeChild(this.closeButton);
 		this.render();
+		// MOD: Endless checkpoints - checkpoints every 50 waves after 100
 		this.saveWaveRetry = [25, 50, 75];
 		this.savedWave = 0;
 	}
@@ -149,11 +150,26 @@ export class DefeatScene extends GameScene {
 		
 		playSound('results', 'ui');
 
-		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) { this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) } 
+		// MOD: Auto-reset options - 0=Off, 1=Restart, 2=Retry, 3=Continue
+		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) { 
+			this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
+		} 
 		if (this.main.autoReset == 2 && !this.main.area.inChallenge.permadeath) { 
 			if (this.main.area.waveNumber > 25) this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
 			else this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor})
-		} 
+		}
+		// MOD: Auto-continue option (3) - continue from current wave in endless mode
+		if (this.main.autoReset == 3 && !this.main.area.inChallenge.permadeath) {
+			// In endless mode (wave > 100), continue from checkpoint
+			if (this.main.area.waveNumber > 100) {
+				this.getRetryWave();
+				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			} else if (this.main.area.waveNumber > 25) {
+				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			} else {
+				this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			}
+		}
 	}
 
 	restart(autoReset = {}) {
@@ -171,7 +187,10 @@ export class DefeatScene extends GameScene {
 		if (this.main.player.stars >= 150) lives++;
 		if (this.main.player.stars >= 300) lives++;
 		if (this.main.player.stars >= 450) lives++;
-		if (this.main.area.waveNumber == 100) lives = 1;
+		// MOD: In endless mode (wave >= 100), give more lives for retrying
+		if (this.main.area.waveNumber >= 100) {
+			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
+		}
 		
 		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(lives);
@@ -200,10 +219,30 @@ export class DefeatScene extends GameScene {
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
 
+	// MOD: Extended checkpoints for endless mode - every 50 waves after 100
 	getRetryWave() {
-	  	for (let i = 0; i < this.saveWaveRetry.length; i++) {
-		    if (this.saveWaveRetry[i] < this.main.area.waveNumber) {
-		      	this.savedWave = this.saveWaveRetry[i];
+		// Generate dynamic checkpoints for endless mode
+		const wave = this.main.area.waveNumber;
+		
+		// Build checkpoint list dynamically
+		let checkpoints = [25, 50, 75];
+		
+		// MOD: Add checkpoints every 50 waves for endless mode (100, 150, 200, etc.)
+		if (wave > 100) {
+			// Add checkpoint at 100
+			checkpoints.push(100);
+			// Add checkpoints every 50 waves after 100
+			let checkpoint = 150;
+			while (checkpoint < wave) {
+				checkpoints.push(checkpoint);
+				checkpoint += 50;
+			}
+		}
+		
+		this.savedWave = 0;
+	  	for (let i = 0; i < checkpoints.length; i++) {
+		    if (checkpoints[i] < wave) {
+		      	this.savedWave = checkpoints[i];
 		    } else {
 		      	break;
 	    	}
@@ -215,9 +254,14 @@ export class DefeatScene extends GameScene {
 		if (this.main.player.stars >= 150) lives++;
 		if (this.main.player.stars >= 300) lives++;
 		if (this.main.player.stars >= 450) lives++;
-		if (this.main.area.waveNumber == 100) {
-			lives = 1;
-			this.savedWave = 100;
+		
+		// MOD: Special handling for endless mode (wave >= 100)
+		if (this.main.area.waveNumber >= 100) {
+			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
+			// Ensure savedWave is calculated
+			if (this.savedWave === 0) {
+				this.getRetryWave();
+			}
 		}
 
 		const text = [
@@ -225,7 +269,7 @@ export class DefeatScene extends GameScene {
 			`Puedes reintentar y volver a la oleada ${this.savedWave} con ${lives} vidas`,
 			`Vous pouvez r├⌐essayer et revenir ├á la vague ${this.savedWave} avec ${lives} vies`,
 			`Voc├¬ pode reiniciar e voltar ├á onda ${this.savedWave} com ${lives} vidas`,
-			`Puoi ritentare e tornare allΓÇÖondata ${this.savedWave} con ${lives} vite`,
+			`Puoi ritentare e tornare all'ondata ${this.savedWave} con ${lives} vite`,
 			`Du kannst mit ${lives} Leben zu Welle ${this.savedWave} zur├╝ck.`,
 			`πâ¬πâêπâ⌐πéñπéÆΣ╜┐πüåπü¿πÇü${lives}πâ⌐πéñπâòπü«τè╢µàïπüºπéªπéºπâ╝πâû${this.savedWave}πü½µê╗πéîπü╛πüÖ`,
 			`∞₧¼∞ï£δÅäδÑ╝ ∞é¼∞Ü⌐φòÿδ⌐┤ δ¬⌐∞ê¿ ${lives}Ω░£δí£ ${this.savedWave}∞¢¿∞¥┤δ╕îδí£ δÅî∞òäΩ░ê ∞êÿ ∞₧ê∞è╡δïêδïñ`,

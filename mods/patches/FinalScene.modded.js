@@ -16,7 +16,7 @@ const BOSS = [
 
 export class FinalScene extends GameScene {
 	constructor(main) {
-		super(440, 230);
+		super(440, 280); // Slightly taller for buttons
 		this.main = main;
 		this.boss;
 
@@ -36,6 +36,28 @@ export class FinalScene extends GameScene {
 
 		this.challengeContainer = new Element(this.container, { className: 'final-challenge-container' }).element;
 		this.challenge = [];
+
+		// ENDLESS MODE: Button container
+		this.buttonContainer = new Element(this.container, { className: 'final-button-container' }).element;
+		this.buttonContainer.style.cssText = 'position:absolute;bottom:45px;left:0;right:0;display:flex;gap:15px;justify-content:center;';
+
+		// Continue button (green - endless mode)
+		this.continueButton = new Element(this.buttonContainer, { 
+			className: 'final-scene-button', 
+			text: 'CONTINUE' 
+		}).element;
+		this.continueButton.style.cssText = 'padding:12px 25px;cursor:pointer;font-weight:bold;border:none;border-radius:5px;background:linear-gradient(180deg,#70ac4c 0%,#5a8c3c 100%);color:white;font-size:14px;';
+		this.continueButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui'); });
+		this.continueButton.addEventListener('click', () => this.continueEndless());
+
+		// Restart button (red - back to wave 1)
+		this.restartButton = new Element(this.buttonContainer, { 
+			className: 'final-scene-button', 
+			text: 'RESTART' 
+		}).element;
+		this.restartButton.style.cssText = 'padding:12px 25px;cursor:pointer;font-weight:bold;border:none;border-radius:5px;background:linear-gradient(180deg,#e06666 0%,#b33333 100%);color:white;font-size:14px;';
+		this.restartButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui'); });
+		this.restartButton.addEventListener('click', () => this.close());
 	}
 
 	update() {
@@ -131,13 +153,50 @@ export class FinalScene extends GameScene {
 		})
 
 		playSound('results', 'ui');
+
+		// AUTO-RESET: If set to "continue" mode (3), auto-continue to endless
+		if (this.main.autoReset === 3) {
+			this.continueEndless({ autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor });
+		}
 	}
 
+	// ENDLESS MODE: Continue to wave 101+
+	continueEndless(autoReset = {}) {
+		super.close();
+
+		if (this.main.area.inChallenge) this.main.challengeScene.cancelChallenge();
+
+		// Enable endless mode and go to wave 101
+		this.main.area.endlessMode = true;
+		this.main.area.waveNumber = 101;
+		this.main.area.routeWaves[this.main.area.routeNumber] = 101;
+		
+		this.main.player.getHealed(14);
+
+		this.main.UI.nextWave.style.filter = `revert-layer`;
+		this.main.UI.nextWave.style.pointerEvents = 'all';
+
+		this.main.area.autoWave = false;
+		this.main.UI.autoWave.style.background = '#2c70e3';
+		
+		this.main.UI.update();
+		this.main.UI.revertUI();
+		this.main.game.resume();
+
+		playSound('obtain', 'ui');
+		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+
+		// Restore auto-wave if it was on
+		if (autoReset.autoWave) this.main.area.switchAutoWave();
+	}
+
+	// RESTART: Back to wave 1 (original behavior)
 	close() {
 		super.close();
 
 		if (this.main.area.inChallenge) this.main.challengeScene.cancelChallenge();
 
+		this.main.area.endlessMode = false; // Disable endless mode
 		this.main.area.loadArea(this.main.area.map.id, 1, true);
 		this.main.player.getHealed(14);
 

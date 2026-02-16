@@ -8,7 +8,7 @@ import { weatherData } from './data/weatherData.js';
 import { saveData } from '../file/data.js';
 import { songData } from './data/songData.js';
 
-const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
+const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];  // RESTORED: Vanilla inventory
 
 export class UI {
 	constructor(main) {
@@ -16,9 +16,12 @@ export class UI {
 		this.render();
 
 		this.damageDealtDisplay = false;
-		this.damageDealtType = 'trueDamage';
+		this.damageDealtType = 'trueDamage';  // RESTORED: Vanilla damage type toggle
 		this.enemyPositionDisplay = 0;
 		this.tileTerrainHover = null;
+		
+		// ENDLESS MOD: Wave Info Panel (bottom-left) - default off
+		this.waveInfoDisplay = false;
 
 		this.fastScene = new FastScene(this.main, this);
 	}
@@ -31,9 +34,14 @@ export class UI {
 		this.saveTeamButton = [];
 		for (let i = 0; i < 5; i++) {
 			this.saveTeamButton[i] = new Element(this.saveTeamButtonContainer, { className: 'ui-save-team-button', text: `#${i+1}` }).element;
-			this.saveTeamButton[i].addEventListener('mouseenter', () => { playSound('open', 'ui') })
+			this.saveTeamButton[i].addEventListener('mouseenter', () => { 
+				playSound('open', 'ui');
+				if (this.main.tooltip) this.main.tooltip.showText('Save');
+			})
+			this.saveTeamButton[i].addEventListener('mouseleave', () => { 
+				if (this.main.tooltip) this.main.tooltip.hide();
+			})
 			this.saveTeamButton[i].addEventListener('click', () => { 
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.saveTeamButtonHandle(i);
 			});
 		}
@@ -43,9 +51,14 @@ export class UI {
 		this.importTeamButton = [];
 		for (let i = 0; i < 5; i++) {
 			this.importTeamButton[i] = new Element(this.importTeamButtonContainer, { className: 'ui-import-team-button', text: `#${i+1}` }).element;
-			this.importTeamButton[i].addEventListener('mouseenter', () => { playSound('open', 'ui') })
+			this.importTeamButton[i].addEventListener('mouseenter', () => { 
+				playSound('open', 'ui');
+				if (this.main.tooltip) this.main.tooltip.showText('Load');
+			})
+			this.importTeamButton[i].addEventListener('mouseleave', () => { 
+				if (this.main.tooltip) this.main.tooltip.hide();
+			})
 			this.importTeamButton[i].addEventListener('click', () => { 
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.importTeamButtonHandle(i);
 			});
 		}
@@ -80,6 +93,30 @@ export class UI {
 		this.waveSelectorOneMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorTenMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorBlock.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+
+		// ENDLESS MOD: Wave Info Panel (bottom-left corner)
+		this.waveInfoPanel = new Element(this.main.scene, { className: 'ui-wave-info-panel' }).element;
+		this.waveInfoPanel.style.cssText = `
+			position: absolute;
+			bottom: 8px;
+			left: 8px;
+			background: rgba(0, 0, 0, 0.75);
+			border: 2px solid #444;
+			border-radius: 6px;
+			padding: 8px 12px;
+			font-family: 'Pokemon', monospace;
+			font-size: 11px;
+			color: #fff;
+			min-width: 140px;
+			display: none;
+			z-index: 100;
+		`;
+		this.waveInfoWave = new Element(this.waveInfoPanel, { className: 'ui-wave-info-row' }).element;
+		this.waveInfoWave.style.cssText = 'margin-bottom: 4px; color: #4ecca3; font-weight: bold;';
+		this.waveInfoEnemies = new Element(this.waveInfoPanel, { className: 'ui-wave-info-row' }).element;
+		this.waveInfoEnemies.style.cssText = 'margin-bottom: 4px;';
+		this.waveInfoTime = new Element(this.waveInfoPanel, { className: 'ui-wave-info-row' }).element;
+		this.waveInfoTime.style.cssText = 'color: #888;';
 
 		this.tilesCountContainer = new Element(this.bottomBar, { className: 'ui-tiles-count-container' }).element;
 		this.tilesCount = [];
@@ -135,10 +172,12 @@ export class UI {
 
 			this.pokemon[i].levelUp.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 			this.pokemon[i].levelUp.addEventListener('click', () => {
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
-				if (this.main.team.pokemon[i].lvl < 100 && this.main.player.gold >= this.main.team.pokemon[i].cost) {
-					this.main.player.changeGold(-this.main.team.pokemon[i].cost);
-					this.main.team.pokemon[i].levelUp();
+				const pokemon = this.main.team.pokemon[i];
+				// Only shiny Pokemon can level past 100
+				if (pokemon.lvl >= 100 && !pokemon.isShiny) return;
+				if (this.main.player.gold >= pokemon.cost) {
+					this.main.player.changeGold(-pokemon.cost);
+					pokemon.levelUp();
 					this.updatePokemon();
 					playSound('obtain', 'ui');
 					if (this.fastScene.isOpen) this.fastScene.close();
@@ -152,32 +191,28 @@ export class UI {
 			this.pokemon[i].noPokemon.addEventListener('click', () => { this.fastScene.open('pokemon', i) });
 
 			this.pokemon[i].sprite.addEventListener('dblclick', () => {
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
-
-				const pokemon = this.main.team.pokemon[i];
-				if (!pokemon || this.main.area.inChallenge.draft) return;
-
-				if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
-
-				if (pokemon.isDeployed) {
-					this.main.game.deployingUnit = pokemon;
-					this.main.game.retireUnit();
-				} else {
+				if (this.main.team.pokemon[i] != undefined && !this.main.area.inChallenge.draft) {
+					if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
+					if (this.main.team.pokemon[i].isDeployed) {
+						this.main.team.pokemon[i].isDeployed = false;
+					
+						// RETIRAR TORRE
+						const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this.main.team.pokemon[i]);
+						this.tilesCountNum[this.main.area.towers[index].tile.land-1]--;
+						this.main.area.towers[index].tile.tower = false;
+						this.main.area.towers.splice(index, 1)
+					}
 					playSound('unequip', 'ui');
+					this.main.box.addPokemon(this.main.team.pokemon[i]);
+					this.main.team.removePokemon(this.main.team.pokemon[i]);
+					this.main.area.checkWeather();
+					this.update();
+					if (this.fastScene.isOpen) this.fastScene.close();
 				}
-
-				this.main.box.addPokemon(pokemon);
-				this.main.team.removePokemon(pokemon);
-
-				this.main.area.checkWeather();
-				this.update();
-
-				if (this.fastScene.isOpen) this.fastScene.close();
-			});
+			})
 
 			this.pokemon[i].shiny.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 			this.pokemon[i].shiny.addEventListener('click', () => {
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				if (this.main.team.pokemon[i] != undefined) {
 					if (this.main.team.pokemon[i].isShiny) {
 						this.main.team.pokemon[i].toggleShiny();
@@ -206,7 +241,7 @@ export class UI {
 
 		this.section['profile'].addEventListener('click', () => { this.main.profileScene.open() });
 		this.section['box'].addEventListener('click', () => { this.main.boxScene.open() });
-		this.section['inventory'].addEventListener('click', () => { this.main.inventoryScene.open() });
+		this.section['inventory'].addEventListener('click', () => { this.main.inventoryScene.open() });  // RESTORED
 		this.section['shop'].addEventListener('click', () => { this.main.shopScene.open() });
 		this.section['map'].addEventListener('click', () => { this.main.mapScene.open() });
 		this.section['challenge'].addEventListener('click', () => { this.main.challengeScene.open()  });
@@ -259,13 +294,14 @@ export class UI {
 
 		this.autoWave = new Element(this.mapPanel, { className: 'ui-auto-wave' }).element;
 		this.autoWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
-		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());	
+		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());
 
 		this.speedWave = new Element(this.mapPanel, { className: 'ui-speed-wave', text: '≡ƒÜÇ' }).element;
 		this.speedWave.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 		this.speedWave.addEventListener('click', () => { this.main.game.toggleSpeed() });
 
 		this.damageDealtContainer = new Element(this.mapPanel, { className: 'ui-damage-dealt-container' }).element;
+		// RESTORED: Vanilla damage type toggle button
 		this.damageDealtButton = new Element(this.mapPanel, { className: 'ui-damage-dealt-button' }).element;
 		this.damageDealtButton.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 		this.damageDealtButton.addEventListener('click', () => { this.changeDamageType() });
@@ -281,23 +317,24 @@ export class UI {
 			this.damageDealtUnit[i].bar = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar' }).element;
 		}	
 
-		this.renderInteractiveMap();
-	}
-
-	renderInteractiveMap() {
 		this.secretCacnea = new Element(this.main.scene, { className: 'secret-cacnea' }).element;
 		this.secretCacnea.addEventListener('click', () => { 
 			this.secretCacnea.style.pointerEvents = 'none';
 			this.main.player.secrets.cacnea = true;
 			this.getSecret('cacnea');
 		});
-
 		this.secretGreavard = new Element(this.main.scene, { className: 'secret-greavard' }).element;
 		this.secretGreavard.addEventListener('click', () => { 
 			this.secretGreavard.style.pointerEvents = 'none';
 			this.main.player.secrets.greavard = true;
 			this.getSecret('greavard'); 
 		});
+		// this.secretAipom = new Element(this.main.scene, { className: 'secret-aipom' }).element;
+		// this.secretAipom.addEventListener('click', () => { 
+		// 	this.secretAipom.style.pointerEvents = 'none';
+		// 	this.main.player.secrets.greavard = true;
+		// 	this.getSecret('aipom'); 
+		// });
 	}
 
 	update() {
@@ -305,12 +342,21 @@ export class UI {
 		this.updatePokemon();
 		this.updateMap();
 
-		const wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
+		// ENDLESS MODE: Get wave preview safely for any wave number
+		let wavePreview;
+		if (this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
+			wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
+		} else {
+			// Endless mode - use template
+			const templateWaveNum = ((this.main.area.waveNumber - 1) % 99) + 1;
+			wavePreview = this.main.area.waves[templateWaveNum]?.preview || this.main.area.waves[1].preview;
+		}
 		this.displayEnemyInfo(wavePreview[this.enemyPositionDisplay], this.enemyPositionDisplay);
 
 		this.waveSelectorContainer.style.display = 'none';
 		this.waveSelectorLabel.innerText = text.ui.waveManager[this.main.lang].toUpperCase();
-		if (!this.main.area.inChallenge && this.main.player.records[this.main.area.map.id] === 100 && this.main.player.hasBike) this.waveSelectorContainer.style.display = 'revert-layer';
+		// ENDLESS MODE: Show wave selector if record >= 100 (not just exactly 100)
+		if (!this.main.area.inChallenge && this.main.player.records[this.main.area.map.id] >= 100 && this.main.player.hasBike) this.waveSelectorContainer.style.display = 'revert-layer';
 		
 		this.musicContainer.style.display = 'none';
 		if (this.main.player.hasSubwoofer) {
@@ -341,6 +387,7 @@ export class UI {
 			this.section['box'].style.opacity = (this.main.area.inChallenge.draft) ? 0.4 : 1;
 			this.section['box'].style.pointerEvents = (this.main.area.inChallenge.draft) ? 'none' : 'revert-layer';
 
+			// RESTORED: Inventory challenge handling
 			this.section['inventory'].style.opacity = (this.main.area.inChallenge.noItems) ? 0.4 : 1;
 			this.section['inventory'].style.pointerEvents = (this.main.area.inChallenge.noItems) ? 'none' : 'revert-layer';
 
@@ -353,6 +400,7 @@ export class UI {
 			this.section['map'].style.pointerEvents = 'revert-layer';
 			this.section['box'].style.opacity = 1;
 			this.section['box'].style.pointerEvents = 'revert-layer';
+			// RESTORED: Inventory reset when not in challenge
 			this.section['inventory'].style.opacity = 1;
 			this.section['inventory'].style.pointerEvents = 'revert-layer';
 		}
@@ -401,7 +449,50 @@ export class UI {
 			this.secretGreavard.style.pointerEvents = 'none';
 		}
 
+		// ENDLESS MOD: Update wave info panel
+		this.updateWaveInfo();
+
 		this.displayWeather();
+	}
+
+	// ENDLESS MOD: Update wave info panel display
+	updateWaveInfo() {
+		if (!this.waveInfoDisplay) {
+			this.waveInfoPanel.style.display = 'none';
+			return;
+		}
+		
+		this.waveInfoPanel.style.display = 'block';
+		
+		// Wave number
+		const waveNum = this.main.area.waveNumber;
+		const isEndless = waveNum > 100;
+		this.waveInfoWave.innerHTML = `WAVE ${waveNum}${isEndless ? ' <span style="color:#e94560;">(Γê₧)</span>' : ''}`;
+		
+		// Enemies remaining
+		const enemiesRemaining = this.main.area.enemies?.length || 0;
+		const waveActive = this.main.area.waveActive;
+		if (waveActive) {
+			this.waveInfoEnemies.innerHTML = `Enemies: <span style="color:#ff6b6b;">${enemiesRemaining}</span>`;
+		} else {
+			this.waveInfoEnemies.innerHTML = `<span style="color:#666;">Wave Complete</span>`;
+		}
+		
+		// Time elapsed (if wave is active)
+		if (waveActive && this.main.area.waveStartTime) {
+			const elapsed = Math.floor((Date.now() - this.main.area.waveStartTime) / 1000);
+			const mins = Math.floor(elapsed / 60);
+			const secs = elapsed % 60;
+			this.waveInfoTime.innerHTML = `Time: ${mins}:${secs.toString().padStart(2, '0')}`;
+		} else {
+			this.waveInfoTime.innerHTML = '';
+		}
+	}
+
+	// ENDLESS MOD: Toggle wave info panel
+	toggleWaveInfo() {
+		this.waveInfoDisplay = !this.waveInfoDisplay;
+		this.updateWaveInfo();
 	}
 
 	displayWeather() {
@@ -418,7 +509,8 @@ export class UI {
 		this.playerPortrait.style.backgroundImage = `url("./src/assets/images/portraits/${this.main.player.portrait}.png")`;
 		this.playerName.innerText = this.main.player.name.toUpperCase();
 		this.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;
-		this.playerStars.innerHTML = `<span class="msrre">Γ¡É</span>${Math.min(1200, this.main.player.stars)}`;
+		// ENDLESS MODE: No cap on star display
+		this.playerStars.innerHTML = `<span class="msrre">Γ¡É</span>${this.main.player.stars}`;
 		this.playerRibbonsText.innerHTML = `${this.main.player.ribbons}`;
 
 		this.playerHealth.innerHTML = '';
@@ -474,12 +566,8 @@ export class UI {
 		}
 
 		this.main.team.pokemon.forEach((pokemon, i) => {
-			let lang = this.main.lang;
-			if (pokemon.name[lang] == undefined) lang = 0;
-
 			this.pokemon[i].noPokemon.style.display = 'none';
-			
-			this.pokemon[i].name.innerText = (pokemon.alias != undefined) ? pokemon.alias.toUpperCase() : pokemon.name[lang].toUpperCase();
+			this.pokemon[i].name.innerText = (pokemon.alias != undefined) ? pokemon.alias.toUpperCase() : pokemon.name[this.main.lang].toUpperCase();
 			
 			if (pokemon.id == 70) this.pokemon[i].dittoBg.style.display = 'revert-layer';
 	
@@ -523,15 +611,22 @@ export class UI {
 			this.pokemon[i].item.style.pointerEvents = 'all';
 
 			if (typeof this.main.area.inChallenge.lvlCap !== 'number') {
-				if (pokemon.lvl < 100) this.pokemon[i].levelUp.style.display = 'revert-layer';
-				if (pokemon.lvl < 100 && this.main.player.gold >= pokemon.cost) {
-					this.pokemon[i].levelUp.style.pointerEvents = 'all';
-					this.pokemon[i].levelUp.style.filter = 'revert-layer';
-				}	
+				// Only shiny Pokemon can level past 100
+				if (pokemon.lvl >= 100 && !pokemon.isShiny) {
+					this.pokemon[i].levelUp.style.display = 'none';
+					this.pokemon[i].levelUp.style.pointerEvents = 'none';
+				} else {
+					this.pokemon[i].levelUp.style.display = 'revert-layer';
+					if (this.main.player.gold >= pokemon.cost) {
+						this.pokemon[i].levelUp.style.pointerEvents = 'all';
+						this.pokemon[i].levelUp.style.filter = 'revert-layer';
+					}
+				}
 			}	
 
 			if (pokemon.isDeployed) {
-				if (['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'subwoofer', 'ejectButton'].includes(pokemon?.item?.id)) {
+				// RESTORED: silphScope added back to vanilla disabled items list
+				if (['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'ejectButton'].includes(pokemon?.item?.id)) {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
@@ -577,7 +672,6 @@ export class UI {
 	    let slotElement = null;
 
 	    const clearDragState = () => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (clone) {
 	            clone.remove();
 	            clone = null;
@@ -588,18 +682,9 @@ export class UI {
 	        draggedIndex = null;
 	        activePointerId = null;
 	        slotElement = null;
-
-	        // limpiar coordenadas del canvas para que las tiles dejen de mostrarse
-	        if (this.main?.game?.mouse) {
-	            this.main.game.mouse.x = undefined;
-	            this.main.game.mouse.y = undefined;
-	            // forzar redraw inmediato para que desaparezcan los highlights
-	            try { this.main.game.animate(performance.now()); } catch (err) {}
-	        }
 	    };
 
 	    const onPointerMoveDuringDrag = (e) => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!clone) return;
 	        clone.style.left = `${e.pageX - clone.offsetWidth / 2}px`;
 	        clone.style.top = `${e.pageY - clone.offsetHeight / 2}px`;
@@ -614,207 +699,14 @@ export class UI {
 	        if (targetSlot && parseInt(targetSlot.dataset.index) !== draggedIndex) {
 	            targetSlot.classList.add('drag-over');
 	        }
-
-	        // --- NUEVO: actualizar mouse del juego si el cursor est├í sobre el canvas ---
-	        try {
-	            const canvasEl = this.main.game.canvas;
-	            const rect = canvasEl.getBoundingClientRect();
-
-	            if (
-	                e.clientX >= rect.left && e.clientX <= rect.right &&
-	                e.clientY >= rect.top && e.clientY <= rect.bottom
-	            ) {
-	                const scaleX = canvasEl.width / rect.width;
-	                const scaleY = canvasEl.height / rect.height;
-	                const canvasX = (e.clientX - rect.left) * scaleX;
-	                const canvasY = (e.clientY - rect.top) * scaleY;
-
-	                // actualizar coordenadas globales del juego para que PlacementTile.update las use
-	                this.main.game.mouse.x = canvasX;
-	                this.main.game.mouse.y = canvasY;
-	            } else {
-	                // fuera del canvas -> limpiar coordenadas para que no quede highlight
-	                this.main.game.mouse.x = undefined;
-	                this.main.game.mouse.y = undefined;
-	            }
-	        } catch (err) {
-	            // si no hay game/canvas, noop
-	        }
-
-	        // forzar render (intento inmediato)
-	        try { this.main.game.animate(performance.now()); } catch (err) {}
 	    };
 
 	    const onPointerUpDuringDrag = (e) => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
-
-	        // quitar listeners de arrastre
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
 	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
 
 	        if (clone) clone.remove();
 
-	        // --- Intentar detectar drop sobre canvas/mapa ---
-	        const canvasEl = this.main.game.canvas;
-	        const rect = canvasEl.getBoundingClientRect();
-
-	        // comprobamos si el pointer up ocurri├│ dentro del canvas (cliente)
-	        const cx = e.clientX;
-	        const cy = e.clientY;
-
-	        let tile = null;
-	        if (
-	            cx >= rect.left && cx <= rect.right &&
-	            cy >= rect.top && cy <= rect.bottom &&
-	            draggedIndex != null
-	        ) {
-	            // convertir a coordenadas de canvas (teniendo en cuenta escalado CSS)
-	            const scaleX = canvasEl.width / rect.width;
-	            const scaleY = canvasEl.height / rect.height;
-	            const canvasX = (cx - rect.left) * scaleX;
-	            const canvasY = (cy - rect.top) * scaleY;
-
-	            // buscar tile bajo esas coordenadas
-	            tile = this.main.area.placementTiles.find(t =>
-	                canvasX > t.position.x &&
-	                canvasX < t.position.x + t.size &&
-	                canvasY > t.position.y &&
-	                canvasY < t.position.y + t.size
-	            );
-	        }
-
-	        // Si hay tile, intentar desplegar / swap / retirar seg├║n corresponda
-	        if (tile && draggedIndex != null) {
-	            const pokemon = this.main.team.pokemon[draggedIndex];
-	            const clickedPokemon = tile.tower || null;
-
-	            // poner el juego en modo deploy (tryDeployUnit puede llamar retireUnit internamente)
-	            this.main.game.tryDeployUnit(draggedIndex, true);
-
-	            // si tryDeployUnit retir├│ la unidad (deployingUnit qued├│ vac├¡o), reasignar temporalmente
-	            if (!this.main.game.deployingUnit) {
-	                this.main.game.deployingUnit = pokemon;
-	            }
-
-	            // Si el jugador hizo click sobre la misma torre que estaba desplegando -> cancelar
-	            if (clickedPokemon === this.main.game.deployingUnit) {
-	                this.main.game.cancelDeployUnit();
-	            } else {
-	                // validar si la unidad puede colocarse en ese tipo de tile
-	                const canPlace = tile?.canPlacePokemonHere 
-				    ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
-				    : (
-				        this.main.game.deployingUnit.tiles.includes(tile.land) ||
-				        (this.main.game.deployingUnit?.item?.id == 'airBalloon' && tile.land == 4) ||
-				        (this.main.game.deployingUnit?.item?.id == 'heavyDutyBoots' && tile.land == 2) ||
-				        (this.main.game.deployingUnit?.item?.id == 'assaultVest' && tile.land == 2) ||
-				        (this.main.game.deployingUnit?.item?.id == 'dampMulch' && tile.land == 1) ||
-				        (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && this.main.game.deployingUnit.id == 76)
-				    );
-
-	                if (!canPlace) {
-	                    // no se puede colocar ah├¡ -> cancelar deploy
-	                    this.main.game.cancelDeployUnit();
-	                } else {
-	                    if (!clickedPokemon) {
-	                        // tile vac├¡o -> desplegar normalmente
-	                        this.main.game.moveUnitToTile(tile);
-	                    } else {
-						    // tile ocupado -> decidir swap o passenger o reemplazo
-						    if (this.main.game.deployingUnit.isDeployed) {
-						        // la que arrastramos ya estaba desplegada -> swap
-						        const sourceTile = this.main.area.placementTiles.find(t => t.tower === this.main.game.deployingUnit);
-						        if (sourceTile) {
-						            this.main.game.swapUnits(sourceTile, this.main.game.deployingUnit, tile, clickedPokemon);
-						        } else {
-						            // fallback: retirar la torre objetivo y colocar nueva
-						            this.main.game.retireUnit();
-						            this.main.game.moveUnitToTile(tile);
-						        }
-						        this.main.game.cancelDeployUnit();
-						        playSound('equip', 'ui');
-						        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-						        if (!this.main.area.waveActive) {
-						            this.main.UI.revertUI();
-						            this.main.UI.nextWave.style.filter = 'revert-layer';
-						            this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
-						        }
-						    } else {
-						        // la que arrastramos no estaba desplegada -> intentar passenger si la base lo permite
-						        const base = clickedPokemon; // pokemon que hace de base en la tile
-						        const hasPassenger = !!tile.passenger;
-
-						        // helper: comprobar si la unidad arrastrada puede ir sobre esta tile (incluye reglas para grassyTerrain)
-						        const canBePlacedHere = tile?.canPlacePokemonHere
-						            ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
-						            : (
-						                this.main.game.deployingUnit.tiles && this.main.game.deployingUnit.tiles.includes(tile.land) ||
-						                (this.main.game.deployingUnit?.item?.id == 'airBalloon' && tile.land == 4) ||
-						                (this.main.game.deployingUnit?.item?.id == 'heavyDutyBoots' && tile.land == 2) ||
-						                (this.main.game.deployingUnit?.item?.id == 'assaultVest' && tile.land == 2) ||
-						                (this.main.game.deployingUnit?.item?.id == 'dampMulch' && tile.land == 1) ||
-						                (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && this.main.game.deployingUnit.id == 76)
-						            );
-
-						        // Si la base permite passenger (grassyTerrain)
-						        if (base?.ability?.id === 'grassyTerrain') {
-						            if (!hasPassenger) {
-						                // no hay pasajero -> moveUnitToTile colocar├í como passenger
-						                this.main.game.moveUnitToTile(tile);
-						            } else {
-						                // ya hay pasajero: si la unidad arrastrada PUEDE ser passenger -> reemplazar pasajero
-						                if (canBePlacedHere) {
-						                    const oldPassenger = tile.passenger;
-						                    // retirar el pasajero actual: retireUnit usa this.deployingUnit, as├¡ que lo ajustamos temporalmente
-						                    this.main.game.deployingUnit = oldPassenger;
-						                    this.main.game.retireUnit();
-
-						                    // ahora colocar la unidad que arrastramos como passenger
-						                    this.main.game.deployingUnit = pokemon; // pokemon es la variable del arrastre
-						                    this.main.game.moveUnitToTile(tile);
-						                } else {
-						                    // no puede ser pasajero -> retirar base (lo que tambi├⌐n limpia al pasajero) y colocar como base
-						                    const tempDeploying = this.main.game.deployingUnit;
-						                    this.main.game.deployingUnit = base;
-						                    this.main.game.retireUnit(); // elimina base y pasajero
-						                    this.main.game.deployingUnit = tempDeploying;
-						                    this.main.game.moveUnitToTile(tile); // ahora la tile est├í libre, colocar├í la nueva unidad como base
-						                }
-						            }
-						        } else {
-						            // base no permite passenger -> comportamiento cl├ísico: sustituir la base
-						            const tempDeploying = this.main.game.deployingUnit;
-						            this.main.game.deployingUnit = clickedPokemon;
-						            this.main.game.retireUnit();
-						            this.main.game.deployingUnit = tempDeploying;
-						            this.main.game.moveUnitToTile(tile);
-						        }
-						    }
-						}
-	                }
-	            }
-
-	            // UI updates y limpieza
-	            this.updatePokemon();
-	            this.pokemon.forEach(s => s.classList.remove('drag-over'));
-	            clearDragState();
-	            this.pokemon.forEach(slot => {
-	                const sprite = slot.querySelector('.ui-pokemon-sprite');
-	                if (sprite) sprite.style.opacity = '1';
-	            });
-
-	            // asegurarse de limpiar mouse del juego y forzar redraw final
-	            if (this.main?.game?.mouse) {
-	                this.main.game.mouse.x = undefined;
-	                this.main.game.mouse.y = undefined;
-	            }
-	            try { this.main.game.animate(performance.now()); } catch (err) {}
-
-	            document.body.style.cursor = '';
-	            return; // fin del flujo de drop en mapa
-	        }
-
-	        // --- Si no se solt├│ sobre mapa: comportamiento por defecto (reordenar slots) ---
 	        const targetElement = document.elementFromPoint(e.clientX, e.clientY);
 	        const targetSlot = targetElement?.closest('.ui-pokemon');
 
@@ -839,55 +731,37 @@ export class UI {
 	                playSound('click1', 'ui');
 
 	                if (this.main.team.pokemon[0] !== firstBefore) {
-	                    const ditto = this.main.team.pokemon.find(p => p.id === 70);
-	                    if (ditto != undefined && !ditto.isDeployed) {
-	                        playSound('teleport', 'effect')
+		                const ditto = this.main.team.pokemon.find(p => p.id === 70);
+		                if (ditto != undefined && !ditto.isDeployed) {
+							playSound('teleport', 'effect')
 
-	                        if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
-	                        ditto.adn = this.main.team.pokemon[0].specie;
-	                        if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
-	                        ditto.transformADN();
-	                        this.main.UI.updatePokemon();
-	                        this.update();
-	                    }
-	                }
+							if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
+							ditto.adn = this.main.team.pokemon[0].specie;
+							if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
+							ditto.transformADN();
+							this.main.UI.updatePokemon();
+							this.update();
+						}
+		            }
 	            }
 	        }
 
-	        // limpieza final si no se coloc├│ en el mapa
 	        this.pokemon.forEach(s => s.classList.remove('drag-over'));
 	        clearDragState();
 
 	        this.pokemon.forEach(slot => {
-	            const sprite = slot.querySelector('.ui-pokemon-sprite');
-	            if (sprite) sprite.style.opacity = '1';
-	        });
-
-	        // Si no se coloc├│ en tile: quitar el modo deploying s├│lo cuando la unidad no qued├│ desplegada
-	        if (!tile) {
-	            if (this.main.game.deployingUnit && !this.main.game.deployingUnit.isDeployed) {
-	                this.main.game.deployingUnit = undefined;
-	            }
-	        }
-
-	        // limpiar mouse y forzar redraw
-	        if (this.main?.game?.mouse) {
-	            this.main.game.mouse.x = undefined;
-	            this.main.game.mouse.y = undefined;
-	            try { this.main.game.animate(performance.now()); } catch (err) {}
-	        }
+			    const sprite = slot.querySelector('.ui-pokemon-sprite');
+			    if (sprite) sprite.style.opacity = '1';
+			});
 
 	        document.body.style.cursor = '';
 	    };
 
 	    const startDragActual = (e, index, originatingSlot) => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!this.main.team.pokemon[index] || index >= this.main.player.teamSlots) {
 	            clearDragState();
 	            return;
 	        }
-
-	        this.main.game.deployingUnit = this.main.team.pokemon[index];
 
 	        if (this.fastScene.isOpen) this.fastScene.close();
 
@@ -901,7 +775,7 @@ export class UI {
 	        clone.style.position = 'absolute';
 	        clone.style.zIndex = '10000';
 	        clone.style.opacity = '0.9';
-	        clone.style.pointerEvents = 'none'; // importante para elementFromPoint
+	        clone.style.pointerEvents = 'none';
 	        clone.classList.add('dragging');
 	        document.body.appendChild(clone);
 
@@ -964,8 +838,8 @@ export class UI {
 	    };
 
 	    this.pokemon.forEach((slot, index) => {
-	        if (slot.dragSetup) return;
-	        slot.dragSetup = true;
+	        if (slot._dragSetup) return;
+	        slot._dragSetup = true;
 
 	        slot.dataset.index = index;
 
@@ -978,7 +852,7 @@ export class UI {
 	        slot.addEventListener('dragstart', (e) => e.preventDefault());
 	    });
 	}
-	
+
 	displayEnemyInfo(enemy, pos) {
 		if (pos >= this.mapWavePokemon.length) {
 			const wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
@@ -991,16 +865,72 @@ export class UI {
 			if (pos === i) pokemon.style.filter = `brightness(1) drop-shadow(0 0 1px white)`;
 		})
 
-		const bonusSteps = Math.floor((this.main.area.waveNumber-1) / 5);
+		const wave = this.main.area.waveNumber;
+		const bonusSteps = Math.floor((wave-1) / 5);
 
 		let hp = enemy.hp;
 		let armor = enemy.armor;
 		let gold = enemy.gold + this.main.player.extraGold;
 
-		if (bonusSteps > 0) {
-			if (this.main.area.waveNumber != 100) hp = Math.floor(enemy.hp * (1 + 0.02 * bonusSteps));
-			if (this.main.area.waveNumber != 100) armor = Math.floor(enemy.armor * (1 + 0.01 * bonusSteps));
-			gold = Math.floor(gold * (1 + 0.15 * bonusSteps));
+		// ENDLESS MODE: Use power budget system for waves > 100
+		if (wave > 100 && wave % 100 !== 0) {
+			// Match spawnEndlessWave calculation exactly
+			const wavesPast100 = wave - 100;
+			const baseBudget = 160000;
+			let hpMult;
+			if (wave < 200) {
+				hpMult = 1 + wavesPast100 * 0.115;
+			} else {
+				hpMult = wave / 16;
+			}
+			const powerBudget = Math.floor(baseBudget * hpMult);
+			const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
+			
+			// Get wave preview (same as spawning)
+			const templateWaveNum = ((wave - 1) % 99) + 1;
+			const waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
+			const endlessPreview = waveData?.preview || [enemy];
+			
+			// Calculate inverse HP distribution (same as spawning)
+			const hpValues = endlessPreview.map(p => p.hp || 100);
+			const inverseHp = hpValues.map(h => 1 / h);
+			const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
+			const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+			
+			// Calculate total base HP of all enemies that will spawn
+			let totalBaseHp = 0;
+			endlessPreview.forEach((p, idx) => {
+				totalBaseHp += (p.hp || 100) * enemyCounts[idx];
+			});
+			
+			// HP scale factor (same as spawning)
+			const hpScaleFactor = powerBudget / totalBaseHp;
+			
+			// Apply to this specific enemy
+			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor));
+			
+			// Armor scales with wave
+			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * wavesPast100));
+			
+			// Gold scales linearly: 100x at wave 1000
+			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
+		} else if (wave % 100 === 0 && wave > 100) {
+			// Boss waves: show boss HP with multiplier
+			const bossCount = Math.floor(wave / 100);
+			let hpMult = 1 + 0.02 * bonusSteps;
+			hpMult *= Math.pow(2, (wave - 100) / 50);
+			hp = Math.floor(enemy.hp * hpMult * 2); // Boss bonus
+			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * (wave - 100)));
+			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
+		} else if (bonusSteps > 0) {
+			// Waves 1-100: Original scaling
+			let hpMult = 1 + 0.02 * bonusSteps;
+			let armorMult = 1 + 0.01 * bonusSteps;
+			let goldMult = 1 + 0.15 * bonusSteps;
+			
+			hp = Math.floor(enemy.hp * hpMult);
+			armor = Math.floor(enemy.armor * armorMult);
+			gold = Math.floor(gold * goldMult);
 		}
 
 		if (typeof this.main.area.inChallenge.toughEnemies == 'number') {
@@ -1044,10 +974,49 @@ export class UI {
 	}
 
 	updateMap() {
-		this.mapRecord.innerHTML = `<span class="msrre">Γ¡É</span>${Math.min(100, this.main.player.records[this.main.area.map.id])}`;
+		// ENDLESS MODE: No cap on star display
+		this.mapRecord.innerHTML = `<span class="msrre">Γ¡É</span>${this.main.player.records[this.main.area.map.id]}`;
 
-		const pokemonCount = this.countPokemon(this.main.area.waves[this.main.area.waveNumber]);
-		const wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
+		// ENDLESS MODE: Get wave data (use templates for waves > 100)
+		let waveData, wavePreview;
+		if (this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
+			waveData = this.main.area.waves[this.main.area.waveNumber];
+			wavePreview = waveData.preview;
+		} else {
+			// Endless mode - use template wave
+			const templateWaveNum = ((this.main.area.waveNumber - 1) % 99) + 1;
+			waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
+			wavePreview = waveData.preview;
+			
+			// Boss wave override (every 100 waves)
+			if (this.main.area.waveNumber % 100 === 0 && this.main.area.waveNumber > 100) {
+				const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon', 
+					'registeel', 'regice', 'regigigas', 'zapdos', 'hooh', 'articuno'];
+				const bossKey = BOSS_KEYS[this.main.area.routeNumber] || 'shaymin';
+				const boss = this.main.area.main.area.waves[100]?.preview?.[0]; // Use wave 100 boss
+				if (boss) wavePreview = [boss];
+			}
+		}
+		let pokemonCount = this.countPokemon(waveData);
+		
+		// ENDLESS MODE: Override enemy count for waves > 100
+		const wave = this.main.area.waveNumber;
+		if (wave > 100) {
+			const wavesPast100 = wave - 100;
+			// Boss waves (200, 300, etc.) show boss count
+			if (wave % 100 === 0) {
+				const bossCount = Math.floor(wave / 100);
+				pokemonCount = wavePreview.map(() => bossCount);
+			} else {
+				// Regular endless waves: 20 + wavesPast100 * 1.2
+				const totalEnemies = Math.floor(20 + wavesPast100 * 1.2);
+				// Distribute count inversely by HP (more weak enemies, fewer strong ones)
+				const hpValues = wavePreview.map(p => p.hp || 100);
+				const inverseHp = hpValues.map(hp => 1 / hp);
+				const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
+				pokemonCount = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemies * (inv / totalInverse))));
+			}
+		}
 
 		this.mapWavePokemonContainer.innerHTML = "";
 		this.mapWavePokemon = [];
@@ -1058,7 +1027,9 @@ export class UI {
 				this.displayEnemyInfo(pokemon, i);
 			})
 			this.mapWavePokemon[i].addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
-			this.mapWavePokemon[i].count = new Element(this.mapWavePokemon[i], { className: 'stroke', text: `x${pokemonCount[i]-1}` }).element;
+			// ENDLESS MODE: Don't subtract 1 for endless waves (already exact count), hide 0 counts
+			const displayCount = wave > 100 ? pokemonCount[i] : pokemonCount[i] - 1;
+			this.mapWavePokemon[i].count = new Element(this.mapWavePokemon[i], { className: 'stroke', text: displayCount > 0 ? `x${displayCount}` : '' }).element;
 			this.mapWavePokemon[i].count.style.position = 'absolute';
 			this.mapWavePokemon[i].count.style.color = 'var(--white)';
 			this.mapWavePokemon[i].count.style.width = '100%';
@@ -1082,8 +1053,6 @@ export class UI {
 			this.nextWave.style.filter = `revert-layer`;
 			this.nextWave.style.pointerEvents = 'all';
 		}
-
-		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
 	}
 
 	countPokemon(grupo) {
@@ -1106,12 +1075,10 @@ export class UI {
 
 	updateDamageDealt() {
 		this.main.team.pokemon.forEach((pokemon, i) => {
-			const totalDamageDealt = (this.damageDealtType == 'trueDamage') ? this.main.area.totalTrueDamageDealt : this.main.area.totalDamageDealt
-			const damageDealt = (this.damageDealtType == 'trueDamage') ? pokemon.trueDamageDealt : pokemon.damageDealt;
-			if (damageDealt > 0) {
-				const per = Math.ceil((damageDealt / totalDamageDealt) * 100)
+			if (pokemon.damageDealt > 0) {
+				const per = Math.ceil((pokemon.damageDealt/this.main.area.totalDamageDealt)*100)
 				this.damageDealtUnit[i].number.innerHTML = `
-					${this.main.utility.numberDot(damageDealt, this.main.lang)} 
+					${this.main.utility.numberDot(pokemon.damageDealt, this.main.lang)} 
 					<span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(${per}%)</span>
 				`;
 				this.damageDealtUnit[i].bar.style.width = `${per}%`;
@@ -1127,10 +1094,7 @@ export class UI {
 
 	refreshDamageDealt(force = false) {	
 		for (let i = 0; i < 10; i++) {
-			if (this.main.team.pokemon[i]) {
-				this.main.team.pokemon[i].damageDealt = 0;
-				this.main.team.pokemon[i].trueDamageDealt = 0;
-			}
+			if (this.main.team.pokemon[i]) this.main.team.pokemon[i].damageDealt = 0;
 			this.damageDealtUnit[i].number.innerHTML = `0 <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(0%)</span>`;
 			this.damageDealtUnit[i].barPrevious.style.width = (force) ? '0%' : this.damageDealtUnit[i].bar.style.width;
 			this.damageDealtUnit[i].bar.style.width = '0%';
@@ -1140,13 +1104,8 @@ export class UI {
 	damageDealtSwitch() {
 		playSound('option', 'ui');
 		this.damageDealtDisplay =! this.damageDealtDisplay;
-		if (this.damageDealtDisplay) {
-			this.damageDealtContainer.style.display = 'block';
-			this.damageDealtButton.style.display = 'block';
-		} else {
-			this.damageDealtContainer.style.display = 'none';
-			this.damageDealtButton.style.display = 'none';
-		}
+		if (this.damageDealtDisplay) this.damageDealtContainer.style.display = 'block';
+		else this.damageDealtContainer.style.display = 'none';
 	}
 
 	blockRightUI() {
@@ -1278,13 +1237,13 @@ export class UI {
 	    playMusic(this.main.area.music.song);
 	}
 
+	// RESTORED: Vanilla damage type toggle method
 	changeDamageType() {
 		this.damageDealtType = (this.damageDealtType == 'trueDamage') ? 'overdamage' : 'trueDamage';
 		playSound('option', 'ui');
 		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
 		this.updateDamageDealt();
 	}
-	
 }
 
 class FastScene {
@@ -1317,10 +1276,9 @@ class FastScene {
 	}
 
 	open(scene, position) {
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
 		if (this.isOpen && this.position == position) return this.close();
 		if (this.main.area.inChallenge.noItems && scene == 'item') {
-			playSound('pop0', 'ui');
+			playSound('pop0', 'ui')
 			return;
 		}
 		if (
@@ -1328,11 +1286,11 @@ class FastScene {
 			typeof this.main.area.inChallenge.slotLimit == 'number' &&
 			position >= this.main.area.inChallenge.slotLimit
 		) {
-			playSound('pop0', 'ui');
+			playSound('pop0', 'ui')
 			return;
 		}
 
-		playSound('open', 'ui');
+		playSound('open', 'ui')
 
 		this.pokemonArray = [];
 		this.itemArray = [];
@@ -1377,32 +1335,66 @@ class FastScene {
 	}
 
 	openItemScene() {
-	  	const pokemon = this.main.team.pokemon[this.position];
+		const pokemon = this.main.team.pokemon[this.position];
 
-	  	this.itemArray = this.main.itemController
-	    	.getItems()
-	    	.filter(item => this.main.itemController.canEquip(item, pokemon));
+		this.itemArray = this.main.player.items.filter(item => this.checkRestriction(item));
 
-	  	this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
+		this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
 
-	  	this.itemArray.forEach((item, i) => {
-	    	const slot = new Element(this.container, {
-	      		className: 'fast-scene-pokemon-item'
-	    	}).element;
+		this.itemArray.forEach((item, i) => {
+			this.itemSlot[i] = new Element(this.container, { className: 'fast-scene-pokemon-item' }).element;
+			this.itemSlot[i].style.backgroundImage = `url("${item.sprite}")`;
 
-		    slot.equiped = new Element(slot, {
-		      	className: 'item-scene-slot-equiped stroke'
-		    }).element;
+			// Add tooltip for item info
+			this.main.tooltip.bindTo(this.itemSlot[i], item, 'item');
 
-	    	slot.style.backgroundImage = `url("${item.sprite}")`;
-	    	slot.equiped.innerHTML = this.main.itemController.isEquipped(item) ? 'E' : '';
+			this.itemSlot[i].addEventListener('click', () => {
+				playSound('equip', 'ui');
+				this.equipItem(item)
+				this.close();
+			})
+		})
+	}
 
-	    	slot.addEventListener('click', () => {
-		      	playSound('equip', 'ui');
-		      	this.main.itemController.equip(item, pokemon);
-		      	this.UI.update();
-		      	this.close();
-	    	});
-	  	});
+	checkRestriction(item) {
+		const pokemon = this.main.team.pokemon[this.position];
+		const key = Object.keys(item.restriction)[0];
+
+		switch(key) {
+			case 'key':
+				if (item.restriction[key] == pokemon.specie.key) return true;
+			break;
+			case 'id':
+				if (item.restriction[key].includes(pokemon.id)) return true;
+				break;
+			case 'idForbidden':	
+				if (!item.restriction[key].includes(pokemon.id)) return true;
+				break;
+			case 'tile': 
+				if (pokemon.id == 70) return false;	
+				if (item.restriction[key].some(tile => pokemon.tiles.includes(tile))) return true;
+				break;
+			case 'tileForbidden':
+				if (pokemon.id == 70) return false;	
+				if (!item.restriction[key].some(tile => pokemon.tiles.includes(tile)))  return true;
+				break;
+			case 'attackType':
+				if (pokemon.id == 70) return false;	
+				if (item.restriction[key] == pokemon.attackType) return true;
+				break;
+			case 'rangeType':
+				if (pokemon.id == 70) return false;	
+				if (item.restriction[key] == pokemon.rangeType) return true;
+				break;
+		}
+		return false;
+	}
+
+	equipItem(item) {
+		const pokemon = this.main.team.pokemon[this.position];
+
+		pokemon.equipItem(item);
+		this.UI.update();
 	}
 }
+

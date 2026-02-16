@@ -2,10 +2,9 @@
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { playSound } from '../../file/audio.js';
+import { abilityData } from '../data/abilityData.js';
 import { Input } from '../../utils/Input.js';
 import { ChangePokemonName } from './ChangePokemonName.js';
-import { abilityData } from '../data/abilityData.js';
-import { allPokemon } from '../data/pokemonData.js';
 
 const sort = ['team', 'alphabetical', 'level', 'ability', 'grass', 'water', 'mountain', 'power', 'speed', 'range', 'shiny']
 const TAB_CONTENT = ['allTab', 'grassTab', 'waterTab', 'mountainTab', 'fossilTab']
@@ -36,7 +35,7 @@ export class BoxScene extends GameScene {
 			this.nameChange.open(this.selected);
 		})
 
-		this.favoriteButton = new Element(this.container, { className: 'box-scene-favorite-button', text: 'Γ¡É' }).element;
+		this.favoriteButton = new Element(this.container, { className: 'box-scene-favorite-button', text: 'â­' }).element;
 
 		this.favoriteButton.addEventListener('click', () => {
 			playSound('hover2', 'ui')
@@ -52,16 +51,18 @@ export class BoxScene extends GameScene {
 		this.dataUnit = new Element(this.buttonContainer, { className: 'box-scene-button' }).element;
 		this.removeAll = new Element(this.buttonContainer, { className: 'box-scene-button' }).element;
 
-		this.dataUnit.addEventListener('click', () => { this.main.pokemonScene.open(this.selected, this.selectedPos, this.searchPokemon) });
+		this.dataUnit.addEventListener('click', () => { this.main.pokemonScene.open(this.selected, this.selectedPos, this.pokemon) });
 		this.addUnit.addEventListener('click', () => { 
 			playSound('equip', 'ui');
 			this.addButton();
 		});
 		this.removeUnit.addEventListener('click', () => {
-			this.removeButton();
+			playSound('unequip', 'ui');
+		 	this.removeButton() 
 		});
-		this.removeAll.addEventListener('click', () => {
-			this.removeAllButton();
+		this.removeAll.addEventListener('click', () => { 
+			playSound('unequip', 'ui');
+			this.removeAllButton() 
 		});
 
 		this.dataUnit.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
@@ -69,7 +70,7 @@ export class BoxScene extends GameScene {
 		this.removeUnit.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 		this.removeAll.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 
-		for (let i = 0; i < allPokemon.length; i++) {
+		for (let i = 0; i < 200; i++) {
 			this.units[i] = new Element(this.unitContainer, { className: 'box-scene-unit' }).element;
 			this.units[i].text = new Element(this.units[i], { className: 'box-scene-unit-text stroke' }).element;
 			this.units[i].fav = new Element(this.units[i], { className: 'box-scene-unit-fav' }).element;
@@ -83,18 +84,18 @@ export class BoxScene extends GameScene {
 			this.units[i].addEventListener('dblclick', () => {
 				this.selected = this.searchPokemon[i];
 				if (this.selected.inGroup) {
-					if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
-
+					playSound('unequip', 'ui');
 					if (this.selected.isDeployed) {
-						this.main.game.deployingUnit = this.selected;
-						this.main.game.retireUnit();
-					} else {
-						playSound('unequip', 'ui');
+						this.selected.isDeployed = false;
+					
+						// RETIRAR TORRE
+						const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this.selected);
+						this.main.UI.tilesCountNum[this.main.area.towers[index].tile.land-1]--;
+						this.main.area.towers[index].tile.tower = false;
+						this.main.area.towers.splice(index, 1)
 					}
-
 					this.main.box.addPokemon(this.selected);
 					this.main.team.removePokemon(this.selected);
-
 					this.update();
 					this.main.area.checkWeather();
 					this.main.UI.update();
@@ -112,7 +113,7 @@ export class BoxScene extends GameScene {
 					this.update();
 					this.main.UI.update();
 				}
-			});
+			})
 			this.units[i].addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		}
 
@@ -170,6 +171,7 @@ export class BoxScene extends GameScene {
 	searchByName() {
 		const searchValue = this.search.value.value.toLowerCase(); 
 
+		// RESTORED: Vanilla search with m- prefix normalization for Mega Pokemon
 		this.searchPokemon = this.pokemon.filter(poke => {
 	        const normalizedName =
 	            poke.name && poke.name[this.main.lang]
@@ -197,12 +199,12 @@ export class BoxScene extends GameScene {
 	displayUnits() {
 		this.sortUnits();
 
-		for (let i = 0; i < allPokemon.length; i++) {
+		for (let i = 0; i < 200; i++) {
 			const unit = this.units[i];
 			const poke = this.searchPokemon[i];
 
 			if (poke) {
-				if (poke.favorite) this.units[i].fav.innerHTML = "Γ¡É"; 
+				if (poke.favorite) this.units[i].fav.innerHTML = "â­"; 
 				else this.units[i].fav.innerHTML = "";
 
 				if (poke?.item?.id == 'inverter') this.units[i].style.transform = `scale(1, -1)`;
@@ -269,36 +271,27 @@ export class BoxScene extends GameScene {
 	}
 
 	applyTabEffect(tab) {
-	    playSound('option', 'ui');
-	    this.tabSelected = tab;
-
-	    if (!this.searchPokemon) return;
-
-	    for (let i = 0; i < this.units.length; i++) {
-	        const poke = this.searchPokemon[i]; // pokemon filtrado por b├║squeda
-	        if (!poke) {
-	            this.units[i].style.filter = 'brightness(0.5)'; // ocultos o vac├¡os
-	            continue;
-	        }
-
-	        this.units[i].style.filter = 'revert-layer';
-	        switch (tab) {
-	            case 1:
-	                if (!poke.tiles.includes(2)) this.units[i].style.filter = 'brightness(0.3)';
-	                break;
-	            case 2:
-	                if (!poke.tiles.includes(3)) this.units[i].style.filter = 'brightness(0.3)';
-	                break;
-	            case 3:
-	                if (!poke.tiles.includes(4)) this.units[i].style.filter = 'brightness(0.3)';
-	                break;
-	            case 4:
-	                if (![58, 59, 63, 64, 65, 66, 94].includes(poke.id)) this.units[i].style.filter = 'brightness(0.3)';
-	                break;
-	        }
-	    }
+		playSound('option', 'ui')
+		this.tabSelected = tab;
+		this.pokemon.forEach((pokemon, i) => {
+			this.units[i].style.filter = 'revert-layer';
+			switch (tab) {
+			case 1:
+				if (!pokemon.tiles.includes(2)) this.units[i].style.filter = 'brightness(0.3)';
+				break;
+			case 2:
+				if (!pokemon.tiles.includes(3)) this.units[i].style.filter = 'brightness(0.3)';
+				break;
+			case 3:
+				if (!pokemon.tiles.includes(4)) this.units[i].style.filter = 'brightness(0.3)';
+				break;
+			case 4:
+				if (![58, 59, 63, 64, 65, 66, 94].includes(pokemon.id)) this.units[i].style.filter = 'brightness(0.3)';
+				break;
+			}
+		})
 	}
-	
+
 	displayPokemon() {
 		this.unitSelectedName.innerText = (this.selected.alias != undefined) ? this.selected.alias.toUpperCase() : this.selected.name[this.main.lang].toUpperCase();
 		this.unitSelectedName.innerText += (this.main.area.inChallenge.lvlCap === 'number') ? ` [${this.main.area.inChallenge.lvlCap}]` : ` [${this.selected.lvl}]`;
@@ -339,18 +332,18 @@ export class BoxScene extends GameScene {
 	}
 
 	removeButton() {
-		if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
-
 		if (this.selected.isDeployed) {
-			this.main.game.deployingUnit = this.selected;
-			this.main.game.retireUnit();
-		} else {
-			playSound('unequip', 'ui');
+			this.selected.isDeployed = false;
+		
+			// RETIRAR TORRE
+			const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this.selected);
+			this.main.UI.tilesCountNum[this.main.area.towers[index].tile.land-1]--;
+			this.main.area.towers[index].tile.tower = false;
+			this.main.area.towers.splice(index, 1)
 		}
 
 		this.main.box.addPokemon(this.selected);
 		this.main.team.removePokemon(this.selected);
-
 		this.main.area.checkWeather();
 		this.update();
 		this.main.UI.update();
@@ -360,11 +353,16 @@ export class BoxScene extends GameScene {
 		const teamCopy = [...this.main.team.pokemon];
 
 		for (const pokemon of teamCopy) {
-
 			if (pokemon.isDeployed) {
-				if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
-				this.main.game.deployingUnit = pokemon;
-				this.main.game.retireUnit();
+				pokemon.isDeployed = false;
+
+				// retirar torre
+				const index = this.main.area.towers.findIndex(tower => tower.pokemon === pokemon);
+				if (index !== -1) {
+					this.main.UI.tilesCountNum[this.main.area.towers[index].tile.land-1]--;
+					this.main.area.towers[index].tile.tower = false;
+					this.main.area.towers.splice(index, 1);
+				}
 			}
 
 			this.main.box.addPokemon(pokemon);
@@ -410,11 +408,9 @@ export class BoxScene extends GameScene {
 		        break;
 		    case 'ability':
 		        this.searchPokemon.sort((a, b) => {
-			        if (a.favorite && !b.favorite) return -1;
-			        if (!a.favorite && b.favorite) return 1;
-			        const nameA = a.ability?.name?.[this.main.lang] ?? '';
-			        const nameB = b.ability?.name?.[this.main.lang] ?? '';
-			        return nameA.localeCompare(nameB);
+		            if (a.favorite && !b.favorite) return -1;
+		            if (!a.favorite && b.favorite) return 1;
+		            return a.ability.id.localeCompare(b.ability.id);
 		        });
 		        break;
 		    case 'grass':
@@ -484,8 +480,7 @@ export class BoxScene extends GameScene {
 
 	open() {
 		if (this.main.area.inChallenge.draft) return;
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
-		
+
 		super.open();
 		this.search.value.value = "";
 		this.tabSelected = 0;
@@ -503,4 +498,6 @@ export class BoxScene extends GameScene {
 		this.update();
 	}
 }
+
+
 

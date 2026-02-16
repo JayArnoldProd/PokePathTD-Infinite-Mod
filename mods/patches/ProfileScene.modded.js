@@ -4,8 +4,8 @@ import { Input } from '../../utils/Input.js';
 import { text } from '../../file/text.js';
 import { playSound } from '../../file/audio.js';
 
-import { allPokemon } from '../data/pokemonData.js';
 import { achievementData } from '../data/achievementData.js';
+import { pokemonData } from '../data/pokemonData.js';
 
 export class ProfileScene extends GameScene {
 	constructor(main) {
@@ -84,6 +84,63 @@ export class ProfileScene extends GameScene {
 		this.background.addEventListener('click', (e) => { if (e.target == this.background) this.close() })
 	}
 
+	// ENDLESS MOD: Count unique Pokemon species owned (not duplicates)
+	countUniqueSpecies() {
+		const owned = new Set();
+		
+		// Count from team
+		if (this.main.team?.pokemon) {
+			this.main.team.pokemon.forEach(p => {
+				if (p?.specie?.key) owned.add(p.specie.key);
+				else if (p?.id !== undefined) owned.add(p.id);
+			});
+		}
+		
+		// Count from box
+		if (this.main.box?.pokemon) {
+			this.main.box.pokemon.forEach(p => {
+				if (p?.specie?.key) owned.add(p.specie.key);
+				else if (p?.id !== undefined) owned.add(p.id);
+			});
+		}
+		
+		return owned.size;
+	}
+
+	// ENDLESS MOD: Count total possible Pokemon species
+	countTotalSpecies() {
+		// Count base forms only (not evolutions that can't be obtained directly)
+		// 103 is the vanilla egg pool size
+		return 103;
+	}
+
+	// ENDLESS MOD: Count unique shiny species owned
+	countUniqueShinySpecies() {
+		const shinies = new Set();
+		
+		// Count from team
+		if (this.main.team?.pokemon) {
+			this.main.team.pokemon.forEach(p => {
+				if (p?.isShiny) {
+					if (p?.specie?.key) shinies.add(p.specie.key);
+					else if (p?.id !== undefined) shinies.add(p.id);
+				}
+			});
+		}
+		
+		// Count from box
+		if (this.main.box?.pokemon) {
+			this.main.box.pokemon.forEach(p => {
+				if (p?.isShiny) {
+					if (p?.specie?.key) shinies.add(p.specie.key);
+					else if (p?.id !== undefined) shinies.add(p.id);
+				}
+			});
+		}
+		
+		return shinies.size;
+	}
+
 	update() {
 		this.title.innerHTML = text.profile.title[this.main.lang].toUpperCase();
 		this.name.value.placeholder = this.main.player.name;
@@ -99,12 +156,27 @@ export class ProfileScene extends GameScene {
 		 	this.stats[i].label.innerText = text.profile.stats[i][this.main.lang].toUpperCase();
 		}
 
+		// ENDLESS MOD: Updated stats display
 		this.stats[0].value.innerText = this.main.utility.minutsToTime(this.main.player.stats.timePlayed);
-		this.stats[1].value.innerText = `${Math.min(1200, this.main.player.stars)}/1200`;
-		this.stats[2].value.innerText = `${this.main.player.stats.pokemonOwned}/${allPokemon.length-1}`;
-		this.stats[3].value.innerText = `${this.main.player.shinyAmount}/${allPokemon.length-1}`;
-		this.stats[4].value.innerText = `${this.main.player.stats.highestPokemonLevel}/100`;
-		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}/${this.main.utility.numberDot(((allPokemon.length-1)*100), this.main.lang)}`;
+		
+		// Stars: No cap in endless mode
+		this.stats[1].value.innerText = `${this.main.utility.numberDot(this.main.player.stars, this.main.lang)}`;
+		
+		// Pokemon Owned: Show unique species collected / total possible
+		const uniqueOwned = this.countUniqueSpecies();
+		const totalSpecies = this.countTotalSpecies();
+		this.stats[2].value.innerText = `${uniqueOwned}/${totalSpecies}`;
+		
+		// Shiny Pokemon: Show unique shiny species / total possible
+		const uniqueShinies = this.countUniqueShinySpecies();
+		this.stats[3].value.innerText = `${uniqueShinies}/${totalSpecies}`;
+		
+		// Highest Level: Just show the level (no /100 cap)
+		this.stats[4].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestPokemonLevel, this.main.lang)}`;
+		
+		// Total Levels: Just show the total (no max cap)
+		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}`;
+		
 		this.stats[6].value.innerText = `$${this.main.utility.numberDot(this.main.player.stats.totalGold, this.main.lang)}`;
 		this.stats[7].value.innerText = `${this.main.player.itemAmount}/91`;
 		this.stats[8].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.wavesCompleted, this.main.lang)}`;
@@ -128,8 +200,8 @@ export class ProfileScene extends GameScene {
 		let pos = this.main.player.portrait;
 		pos += dir;
 
-		if (pos < 0) pos = 52;
-		else if (pos > 52) pos = 0
+		if (pos < 0) pos = 19;
+		else if (pos > 19) pos = 0
 
 		this.main.player.portrait = pos;	
 
@@ -151,10 +223,8 @@ export class ProfileScene extends GameScene {
 	}
 
 	open() {
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
 		super.open();
 		this.update();
-		this.main.game.cancelDeployUnit()
 	}
 
 	close() {

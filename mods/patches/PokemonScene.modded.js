@@ -151,7 +151,9 @@ export class PokemonScene extends GameScene {
 		this.levelUpContainer = new Element(this.container, { className: 'pokemon-scene-level-up-container' }).element;
 		this.levelUp = new Element(this.levelUpContainer, { className: 'pokemon-scene-level-up' }).element;
 		this.levelUp.addEventListener('click', () => {
-			if (this.pokemon.lvl < 100 && this.main.player.gold >= this.pokemon.cost) {
+			// Only shiny Pokemon can level past 100
+			if (this.pokemon.lvl >= 100 && !this.pokemon.isShiny) return;
+			if (this.main.player.gold >= this.pokemon.cost) {
 				this.main.player.changeGold(-this.pokemon.cost);
 				this.pokemon.levelUp();
 				this.main.UI.updatePokemon();
@@ -164,7 +166,9 @@ export class PokemonScene extends GameScene {
 
 		this.levelUpFive = new Element(this.levelUpContainer, { className: 'pokemon-scene-level-up' }).element;
 		this.levelUpFive.addEventListener('click', () => {
-			if (this.pokemon.lvl < 96 && this.main.player.gold >= this.pokemon.checkCost(5)) {
+			// Only shiny Pokemon can level past 100 (x5 would push past 100)
+			if (this.pokemon.lvl + 5 > 100 && !this.pokemon.isShiny) return;
+			if (this.main.player.gold >= this.pokemon.checkCost(5)) {
 				this.main.player.changeGold(-this.pokemon.checkCost(5));
 				for (let i = 0; i < 5; i++) this.pokemon.levelUp();
 				this.main.UI.updatePokemon();
@@ -177,7 +181,9 @@ export class PokemonScene extends GameScene {
 
 		this.levelUpTen = new Element(this.levelUpContainer, { className: 'pokemon-scene-level-up' }).element;
 		this.levelUpTen.addEventListener('click', () => {
-			if (this.pokemon.lvl < 91 && this.main.player.gold >= this.pokemon.checkCost(10)) {
+			// Only shiny Pokemon can level past 100 (x10 would push past 100)
+			if (this.pokemon.lvl + 10 > 100 && !this.pokemon.isShiny) return;
+			if (this.main.player.gold >= this.pokemon.checkCost(10)) {
 				this.main.player.changeGold(-this.pokemon.checkCost(10));
 				for (let i = 0; i < 10; i++) this.pokemon.levelUp();
 				this.main.UI.updatePokemon();
@@ -268,6 +274,7 @@ export class PokemonScene extends GameScene {
 		DATA.forEach(data => { this.data[data].label.innerText = text.pokemon[data][this.main.lang] });
 
 		if (this.pokemon?.item?.id == 'inverter' && this.pokemon?.ability?.id != 'defiant') {
+			console.log(this.pokemon?.ability?.id)
 			this.window.style.transform = `translate(-50%, -50%) scale(1, -1)`;
 		} else {
 			this.window.style.transform = `revert-layer`;
@@ -321,8 +328,7 @@ export class PokemonScene extends GameScene {
 		this.updateLevelButton();
 
 		if (this.pokemon.targetMode == 'area' || this.pokemon.targetMode == 'aura' || 
-			this.pokemon.targetMode == 'allies' || 
-			(this.pokemon.targetMode == 'available' && this.pokemon?.item?.id != 'choiceScarf') || 
+			this.pokemon.targetMode == 'allies' || this.pokemon.targetMode == 'available' || 
 			(this.pokemon.ability.id == 'spinda' && this.pokemon?.item?.id != 'ringTarget')
 		) {
 			this.data['attackType'].style.pointerEvents = 'none';
@@ -330,16 +336,6 @@ export class PokemonScene extends GameScene {
 		} else {
 			this.data['attackType'].style.pointerEvents = 'revert-layer';
 			this.data['attackType'].style.opacity = 'revert-layer';
-		}
-
-		if (
-			['quadraShot', 'tripleShot', 'doubleShot', 'curseDoubleShot', 'cradily', 'poisonDoubleShot', 'armorBreakDoubleShot'].includes(this.pokemon.ability.id) &&
-			this.pokemon?.item?.id != 'choiceScarf'
-		) {
-			this.pokemon.targetMode = 'available';
-			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
-			this.data['attackType'].style.pointerEvents = 'none';
-			this.data['attackType'].style.opacity = '80%';
 		}
 
 		if (
@@ -358,7 +354,7 @@ export class PokemonScene extends GameScene {
 			this.pokemon.changeTargetMode(TARGET_MODES[20]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
 		} else if (
-			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk' && this.pokemon.ability.id != 'vigilantFrisk'
+			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk'
 		) {
 			this.pokemon.changeTargetMode(TARGET_MODES[0]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
@@ -389,7 +385,6 @@ export class PokemonScene extends GameScene {
 				else this.evolutionSprite.style.backgroundImage = `url("${pokemonData['lycanrocNight'].sprite.base}")`;
 			}
 			this.evolutionLevel.innerHTML = `Lv ${this.pokemon.specie.evolution.level}`;
-			if (this.pokemon.specie.key == 'inkay') this.evolutionLevel.innerHTML += '?';
 		} else this.evolutionSprite.style.display = 'none';
 
 		if (this.pokemon.id == 70 && !this.main.boxScene.isOpen) {
@@ -406,7 +401,7 @@ export class PokemonScene extends GameScene {
 
 		if (
 			(this.pokemon.id == 76 && this.pokemon.lvl == 100) ||
-			(this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword')
+			this.pokemon.id == 80
 		) {
 			this.buttonChangeForm.style.display = 'block';
 
@@ -448,7 +443,7 @@ export class PokemonScene extends GameScene {
 			this.itemIcon.style.backgroundImage = `url("${this.pokemon.item.sprite}")`
 		}
 
-		if (this.pokemon.isDeployed && ['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'subwoofer', 'ejectButton'].includes(this.pokemon?.item?.id)) {
+		if (this.pokemon.isDeployed && ['airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'ejectButton'].includes(this.pokemon?.item?.id)) {
 			this.itemIcon.style.pointerEvents = 'none';
 			this.itemIcon.style.outline = "0px";
 			this.itemIcon.innerHTML = '';
@@ -460,7 +455,7 @@ export class PokemonScene extends GameScene {
 
 	changeAttackType(dir) {
 		let index = TARGET_MODES.findIndex((targetMode) => targetMode == this.pokemon.targetMode);
-		let indexMax = (this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
+		let indexMax = (this.pokemon.ability.id == 'frisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
 		let indexMin = 0;
 
 		index += dir;
@@ -490,7 +485,8 @@ export class PokemonScene extends GameScene {
 			return;
 		}
 
-		if (this.pokemon.lvl === 100) {
+		// Only shiny Pokemon can level past 100 (x1 would go to 101+)
+		if (this.pokemon.lvl >= 100 && !this.pokemon.isShiny) {
 			this.levelUp.innerHTML = `MAX`;
 			this.levelUp.style.filter = 'brightness(0.8)';
 			this.levelUp.style.pointerEvents = 'none';
@@ -506,7 +502,8 @@ export class PokemonScene extends GameScene {
 			}		
 		}
 
-		if (this.pokemon.lvl > 95) {
+		// Only shiny Pokemon can level past 100 (x5 would push past 100)
+		if (this.pokemon.lvl + 5 > 100 && !this.pokemon.isShiny) {
 			this.levelUpFive.innerHTML = `MAX`;
 			this.levelUpFive.style.filter = 'brightness(0.8)';
 			this.levelUpFive.style.pointerEvents = 'none';
@@ -522,7 +519,8 @@ export class PokemonScene extends GameScene {
 			}		
 		}
 
-		if (this.pokemon.lvl > 90) {
+		// Only shiny Pokemon can level past 100 (x10 would push past 100)
+		if (this.pokemon.lvl + 10 > 100 && !this.pokemon.isShiny) {
 			this.levelUpTen.innerHTML = `MAX`;
 			this.levelUpTen.style.filter = 'brightness(0.8)';
 			this.levelUpTen.style.pointerEvents = 'none';
@@ -541,7 +539,7 @@ export class PokemonScene extends GameScene {
 
 	changePokemon(dir) {
 		this.pos += dir;
-		if (this.main.boxScene.isOpen || this.main.inventoryScene.isOpen ) {
+		if (this.main.boxScene.isOpen) {
 			if (this.pos >= this.boxArray.length) this.pos = 0;
 			else if (this.pos < 0) this.pos = this.boxArray.length - 1;
 			this.pokemon = this.boxArray[this.pos];
@@ -555,7 +553,6 @@ export class PokemonScene extends GameScene {
 	}
 
 	open(pokemon, pos, boxArray = [], isBlocked = false) {
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
 		super.open();
 		this.background.style.backgroundColor = (this.main.boxScene.isOpen) ? 'rgba(0, 0, 0, 0)' : 'rgba(0, 0, 0, 0.6)'
 		this.isBlocked = isBlocked;
@@ -575,11 +572,15 @@ export class PokemonScene extends GameScene {
 
 	showLevelUpEffect(levels = 1) {
 		const specie = (this.pokemon.specie.evolution != undefined && (this.pokemon.lvl >= this.pokemon.specie.evolution.level - levels)) ? pokemonData[this.pokemon.specie.evolution.pokemon] : this.pokemon.specie;
+		const newLevel = this.pokemon.lvl + levels;
 
-		const newPower = Math.floor(specie.power.base + (specie.power.scale * (this.pokemon.lvl + levels)));
-		const newSpeed = Math.floor(specie.speed.base + (specie.speed.scale * (this.pokemon.lvl + levels)));
-		const newCritical = specie.critical.base + (specie.critical.scale * (this.pokemon.lvl + levels));
-		const newRange = Math.floor(specie.range.base + (specie.range.scale * (this.pokemon.lvl + levels)));
+		const newPower = Math.floor(specie.power.base + (specie.power.scale * newLevel));
+		// Use the same asymptotic speed formula as Pokemon.calculateAsymptoticSpeed
+		const newSpeed = this.calculatePreviewSpeed(specie.speed.base, specie.speed.scale, newLevel);
+		// Use the same asymptotic crit formula as Pokemon.calculateAsymptoticCrit
+		const newCritical = this.calculatePreviewCrit(specie.critical.base, specie.critical.scale, newLevel);
+		// Use the same range formula as Pokemon (includes endless scaling)
+		const newRange = this.calculatePreviewRange(specie.range.base, specie.range.scale, newLevel);
 		
 		const powerDiff = newPower - this.pokemon.power;
 		const speedDiff = Math.abs((newSpeed / 1000).toFixed(2) - (this.pokemon.speed / 1000).toFixed(2)).toFixed(2);
@@ -598,6 +599,51 @@ export class PokemonScene extends GameScene {
 		if (rangeDiff > 0) {
 			this.data['range'].value.innerHTML = `${this.pokemon.range} <span style="color:var(--green)">(+${rangeDiff})</span>`;
 		}
+	}
+
+	// Mirror of Pokemon.calculateAsymptoticSpeed for preview
+	calculatePreviewSpeed(base, scale, level) {
+		if (level <= 100) {
+			return Math.max(1, Math.floor(base + (scale * level)));
+		}
+		const speedAt100 = Math.max(1, base + (scale * 100));
+		const linearSpeedAtLevel = base + (scale * level);
+		const hasFastScaling = linearSpeedAtLevel <= 1 || scale < -1;
+		const ratio = 100 / level;
+		let decayedSpeed;
+		if (hasFastScaling) {
+			decayedSpeed = speedAt100 * ratio;
+		} else {
+			const wavesPast100 = level - 100;
+			decayedSpeed = speedAt100 * 225 / (225 + wavesPast100);
+		}
+		return Math.max(0.001, decayedSpeed);
+	}
+
+	// Range calculation with logarithmic scaling past level 100
+	// 1x at 100, 3x at 1000
+	calculatePreviewRange(base, scale, level) {
+		const baseRange = Math.floor(base + (scale * level));
+		if (level <= 100) {
+			return baseRange;
+		}
+		// Logarithmic scaling: 1x at 100, 3x at 1000
+		const scaleFactor = 2 / Math.log2(10); // ~0.602
+		const rangeMultiplier = 1 + Math.log2(level / 100) * scaleFactor;
+		return Math.floor(baseRange * rangeMultiplier);
+	}
+
+	// Crit calculation with asymptotic approach to 100%
+	// Every 100 levels past 100, get 50% closer to 100%
+	calculatePreviewCrit(base, scale, level) {
+		const critAt100 = base + (scale * 100);
+		if (level <= 100) {
+			return base + (scale * level);
+		}
+		// Each 100 levels past 100, close 50% of the gap to 100
+		const periods = (level - 100) / 100;
+		const remainingGap = (100 - critAt100) * Math.pow(0.5, periods);
+		return 100 - remainingGap;
 	}
 
 	updateStatsChanges() { 
@@ -624,14 +670,14 @@ export class PokemonScene extends GameScene {
 	        let tower = this.main.area.towers.find(t => t.pokemon === this.pokemon);
 
 	        if (
-	            (tower.tile && (tower.tile.land === 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower.isPassenger) && (tower.pokemon.ability.id === 'toughClawsNight'  || tower.pokemon.ability.id === 'toughClaws')) ||
+	            (tower.tile && (tower.tile.land === 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser')) && (tower.pokemon.ability.id === 'toughClawsNight'  || tower.pokemon.ability.id === 'toughClaws')) ||
 	            (tower.tile && ((tower.tile.land === 4 || tower.tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && (tower.pokemon.ability.id === 'toughClawsDay')))
 	        ) flatCritical = 100 - baseCritical;
 	    }
 
 	    switch (this.pokemon?.item?.id) {
 	        case 'protein':
-	            flatPower += 15; 
+	            flatPower += 10; 
 	            break;
 
 	        case 'xAttack':
@@ -639,14 +685,14 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'bicycle':
-	            if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'chatot' && typeof this.main?.area?.inChallenge.lvlCap !== 'number') {
+	            if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'chatot') {
 	        		flatSpeed -= 4000;
 	        		flatCritical -= 4;
 	        	}
 	        	break;
 
 	        case 'silphScope':
-	            if (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk') {
+	            if (this.pokemon.ability.id === 'frisk') {
 	            	flatRange += 15;
 	            	flatPower += 60; 
 	            }
@@ -667,12 +713,12 @@ export class PokemonScene extends GameScene {
 	        		mulPower *= 1 + 0.5;
 	        		mulSpeed *= 1 - 0.5;
 	        		mulCritical *= 1 + 0.5;
-	        		//mulRange *= 2;
+	        		mulRange *= 2;
 	        	}
 	        	break;
 
 	        case 'wrestlingMask':
-	        	mulSpeed *= 1 - 0.3;
+	        	mulSpeed *= 1 - 0.5;
 	            flatRange -= 75;
 	         	break;
 
@@ -737,11 +783,8 @@ export class PokemonScene extends GameScene {
 
 	        case 'thickClub':
 	        case 'lightBall':
-	        	mulPower *= 1.5; 
-	            break;
-	            
 	        case 'weaknessPolicy':
-	            mulPower *= 2; 
+	            mulPower *= 1 + 0.5; 
 	            break;
 
 	        case 'clawFossil':
@@ -769,7 +812,7 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'adrenalineOrb':
-	            const aoVal = 0.025 * (14 - this.main.player.health[this.main.area.routeNumber]);
+	            const aoVal = 0.02 * (14 - this.main.player.health[this.main.area.routeNumber]);
 	            mulSpeed *= 1 - aoVal;
 	            break;
 
@@ -842,6 +885,7 @@ export class PokemonScene extends GameScene {
 	        mulRange = 1.5 * mulRange - 0.5;
 	    }
 
+
 	    if (this.pokemon.id == 66) {
 	        const currentHp = this.main.player.health[this.main.area.routeNumber] || 0;
 	        const missingHp = Math.max(0, 14 - currentHp); 
@@ -850,9 +894,8 @@ export class PokemonScene extends GameScene {
 	    }
 
 	    if (this.pokemon.ability.id == 'makeItRain') {
-	    	let goldPerDigit = (this.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.05
-            let goldValue = this.main.player.stats.totalGold;
-            let goldBonus = goldValue.toString().length * goldPerDigit;
+            let goldvalue = this.main.player.gold;
+            let goldBonus = goldvalue.toString().length * 0.05;
             mulPower *= 1 + goldBonus;
         }
 
@@ -876,7 +919,7 @@ export class PokemonScene extends GameScene {
 
 	            if (
 	                tile &&
-	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser') || tower.pokemon?.isPassenger) &&
+	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser')) &&
 	                (towerAbility === 'ambusher' || towerAbility === 'castform')
 	            ) {
 	                mulPower *= 2; 
@@ -891,14 +934,14 @@ export class PokemonScene extends GameScene {
 
                 if (
 		            this.main.area.weather == 'harshSunlight' &&
-		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower.pokemon?.isPassenger)
+		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser'))
 		        ) {
 		            mulSpeed *= 1 - 0.5;
 		        }
 
 		        if (
 		            this.main.area.weather == 'extremelyHarshSunlight' &&
-		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower.pokemon?.isPassenger)
+		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser'))
 		        ) {
 		            mulSpeed *= 1 + 2;
 		        }
@@ -916,14 +959,14 @@ export class PokemonScene extends GameScene {
 	             	tile &&
 		            this.main.player.health[this.main.area.routeNumber] <= 5 &&
 		            towerAbility === 'overgrow' &&
-		            (tile.land === 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower.pokemon?.isPassenger)
+		            (tile.land === 3 || tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser')
 		        ) {
 		            mulPower *= 1.75;
 		        }
 		        
 	            if (
 	                tile &&
-	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser') || tower.pokemon?.isPassenger) &&
+	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser')) &&
 	                towerAbility === 'toughClawsNight'
 	            ) {
 	                mulPower *= 1.5;
@@ -940,7 +983,7 @@ export class PokemonScene extends GameScene {
 	            if (
 	            	tile && 
 	            	(tile.land === 4 || tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && 
-	            	(towerAbility === 'vigilant' || towerAbility === 'vigilantFrisk' || towerAbility === 'castform')
+	            	(towerAbility === 'vigilant' || towerAbility === 'castform')
 	            ) {
 	                mulRange *= 2;
 	            }
@@ -966,10 +1009,6 @@ export class PokemonScene extends GameScene {
 	            }
 
 	            if (tower.triageAura) {
-	                mulSpeed *= 1 - 0.15;
-	            }
-
-	            if (tower.isPassenger) {
 	                mulSpeed *= 1 - 0.15;
 	            }
 
@@ -1014,103 +1053,124 @@ export class PokemonScene extends GameScene {
 }
 
 class ItemWindow {
-  	constructor(main) {
-	    this.main = main;
-	    this.isOpen = false;
-	    this.pokemon = null;
-	    this.render();
-  	}
+	constructor(main) {
+		this.main = main;
+		this.isOpen = false;
+		this.render(); 
+
+		this.pokemon;
+	}
 
 	render() {
-	    this.window = document.createElement('div');
-	    this.window.className = 'item-scene-window';
+		this.window = document.createElement('div');
+		this.window.className = 'item-scene-window';
 
-	    this.container = new Element(this.window, { className: 'item-scene-container' }).element;
-	    this.slot = [];
+        this.container = new Element(this.window, { className: 'item-scene-container' }).element;
+        this.slot = [];
 
-	    for (let i = 0; i < 100; i++) {
-	      	this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
-	      	this.slot[i].addEventListener('click', () => { this.equipItem(i) });
-	      	this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: 'E' }).element;
-	    }
+        for (let i = 0; i < 100; i++) {
+        	this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
+        	this.slot[i].addEventListener('click', () => { this.equipItem(i) })
+        	this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: 'E' }).element;
+        }
 
-	    this.removeItem = new Element(this.container, { className: 'item-scene-slot item-scene-slot-x', text: 'X' }).element;
-	    this.removeItem.addEventListener('click', () => {
-	      	this.pokemon.retireItem();
-	      	this.main.UI.update();
-	      	this.main.pokemonScene.update();
-	      	playSound('equip', 'ui');
-	    });
+        this.removeItem = new Element(this.container, { className: 'item-scene-slot item-scene-slot-x', text: 'X' }).element;
+        this.removeItem.addEventListener('click', () => { 
+        	this.pokemon.retireItem();
+        	this.main.UI.update();
+			this.main.pokemonScene.update();
+			playSound('equip', 'ui');
+        })
 	}
 
-  	open(pokemon) {
-	    if (this.main.area.inChallenge.noItems) {
-	      	playSound('pop0', 'ui');
-	      	return;
-	    }
+	open(pokemon) {
+		if (this.main.area.inChallenge.noItems) {
+			playSound('pop0', 'ui')
+			return;
+		}
 
-	    if (!this.isOpen) {
-		    playSound('open', 'ui');
-		    this.isOpen = true;
-		    this.pokemon = pokemon;
+        if (!this.isOpen) {
+            playSound('open', 'ui');
+        	this.isOpen = true;
+        	this.pokemon = pokemon;
 
-		    this.main.pokemonScene.window.appendChild(this.window);
-		    this.window.style.display = 'block';
-		    this.update();
-	    } else {
-	      	this.close();
-	    }
-  	}
+        	this.main.pokemonScene.window.appendChild(this.window)
+        	this.window.style.display = 'block';
+        	this.update();
 
-  	close() {
-	    this.isOpen = false;
-	    playSound('close', 'ui');
-	    this.window.style.display = 'none';
-	    this.main.tooltip.hide();
-  	}
+        } else {
+        	this.close();
+        }
+    }
 
-  	update() {
-    	this.slot.forEach(slot => {
-	      	slot.style.backgroundImage = "";
-	      	slot.style.pointerEvents = 'none';
-	      	slot.equiped.innerHTML = "";
-	      	slot.style.filter = '';
-    	});
+    close() {
+        this.isOpen = false;
+        playSound('close', 'ui');
+        this.window.style.display = 'none';
+        this.main.tooltip.hide();
+    }
 
-	    const items = this.main.itemController.getItems();
-	    items.forEach((item, i) => {
-	     	const slotEl = this.slot[i];
-	      	slotEl.style.backgroundImage = `url(${item.sprite})`;
-	      	slotEl.style.pointerEvents = 'revert-layer';
-	      	this.main.tooltip.bindTo(slotEl, item, 'item');
+	update() {
+		this.slot.forEach(slot => {
+			slot.style.backgroundImage = "";
+			slot.style.pointerEvents = 'none';
+			slot.equiped.innerHTML = "";
+		});
 
-	      	const able = this.main.itemController.canEquip(item, this.pokemon);
+		this.main.player.items.forEach((item, i) => {
+			this.slot[i].style.backgroundImage = `url(${item.sprite})`;
+			this.slot[i].style.pointerEvents = 'revert-layer';
+			this.main.tooltip.bindTo(this.slot[i], item, 'item');
 
-	      	if (this.main.itemController.isEquipped(item)) {
-	        	slotEl.equiped.innerHTML = 'E';
-	      	}
+			let able = this.checkRestriction(item);
 
-	      	if (!able) {
-	        	slotEl.style.filter = 'brightness(0)';
-	      	} else if (this.main.itemController.isEquipped(item)) {
-	        	slotEl.style.filter = 'drop-shadow(0 0 2px var(--yellow))';
-	      	} else {
-	        	slotEl.style.filter = 'drop-shadow(0 0 2px var(--white))';
-	      	}
-	    });
+			if (item.equipedBy != undefined) { this.slot[i].equiped.innerHTML = 'E'; }
+
+			if (!able) this.slot[i].style.filter = 'brightness(0)';
+			else if (item.equipedBy != undefined) this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--yellow)) ';
+			else this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--white))';
+		})
 	}
 
-  	equipItem(pos) {
-	    const item = this.main.itemController.getItems()[pos];
-	    if (!item) return;
+	checkRestriction(item) {
+		const key = Object.keys(item.restriction)[0];
+		switch(key) {
+			case 'key':
+				if (item.restriction[key] == this.pokemon.specie.key) return true;
+			break;
+			case 'id':
+				if (item.restriction[key].includes(this.pokemon.id)) return true;
+				break;
+			case 'idForbidden':	
+				if (!item.restriction[key].includes(this.pokemon.id)) return true;
+				break;
+			case 'tile': 
+				if (this.pokemon.id == 70 || this.pokemon.id == 101) return false;	
+				if (item.restriction[key].some(tile => this.pokemon.tiles.includes(tile))) return true;
+				break;
+			case 'tileForbidden':
+				if (this.pokemon.id == 70) return false;	
+				if (!item.restriction[key].some(tile => this.pokemon.tiles.includes(tile)))  return true;
+				break;
+			case 'attackType':
+				if (this.pokemon.id == 70) return false;	
+				if (item.restriction[key] == this.pokemon.attackType) return true;
+				break;
+			case 'rangeType':
+				if (this.pokemon.id == 70) return false;	
+				if (item.restriction[key] == this.pokemon.rangeType) return true;
+				break;
+		}
+		return false;
+	}
 
-	    if (!this.main.itemController.canEquip(item, this.pokemon)) return;
-
-	    this.main.itemController.equip(item, this.pokemon);
-
-	    this.main.UI.update();
-	    this.main.pokemonScene.update();
-	    if (this.main.boxScene.isOpen) this.main.boxScene.update();
-	    playSound('equip', 'ui');
-  	}
+	equipItem(pos) {
+		let able = this.checkRestriction(this.main.player.items[pos])
+		if (!able) return;
+		this.pokemon.equipItem(this.main.player.items[pos]);
+		this.main.UI.update();
+		this.main.pokemonScene.update();
+		if (this.main.boxScene.isOpen) this.main.boxScene.update();
+	}
 }
+	

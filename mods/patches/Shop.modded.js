@@ -30,7 +30,7 @@ export class Shop {
 
 		this.itemBackup = Array.isArray(itemBackup) ? [...itemBackup] : [];
 		this.restoreItemBackup();
-
+		console.log(itemBackup)
 		this.generateStock();
 		this.removeOwnedItems();
 		this.removeGimmighoulIfGholdengo();
@@ -65,12 +65,27 @@ export class Shop {
 			pokemon = pk;
 		}
 
+		// MOD: 1/30 chance of shiny egg!
+		const isShinyEgg = Math.random() < (1/30);
+
 		if (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
+			const newPokemon = new Pokemon(pokemon, 1, null, this.main);
+			// MOD: Apply shiny status
+			if (isShinyEgg) {
+				newPokemon.isShiny = true;
+				newPokemon.setShiny();
+			}
+			this.main.team.addPokemon(newPokemon);
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShinyEgg)
 		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
+			const newPokemon = new Pokemon(pokemon, 1, null, this.main);
+			// MOD: Apply shiny status
+			if (isShinyEgg) {
+				newPokemon.isShiny = true;
+				newPokemon.setShiny();
+			}
+			this.main.box.addPokemon(newPokemon);
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShinyEgg)
 		}
 
 		this.main.player.stats.pokemonOwned++;

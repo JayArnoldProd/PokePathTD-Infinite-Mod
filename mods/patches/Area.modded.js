@@ -35,10 +35,11 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.heartScale = false;
-		this.healUsed = {};
-		
 		this.inChallenge = false;
 		this.music;
+
+		// MOD: Endless mode flag
+		this.endlessMode = false;
 
 		this.loadArea(areaData.routeNumber);
 		this.goldWave = 0;
@@ -83,7 +84,6 @@ export class Area {
 				if (pokemon.isDeployed) {
 					pokemon.isDeployed = false;
 					pokemon.tilePosition = -1;
-					// retirar torre
 					const index = this.main.area.towers.findIndex(tower => tower.pokemon === pokemon);
 					if (index !== -1) {
 						this.main.area.towers[index].tile.tower = false;
@@ -99,6 +99,9 @@ export class Area {
 		this.map = routeData[routeNumber];
 		this.waveNumber = this.routeWaves[routeNumber];
 		this.waveActive = false;
+
+		// MOD: Set endless mode flag if wave > 100
+		this.endlessMode = this.waveNumber > 100;
 
 		if (!keepTowers) {
 			this.placementTiles = [];
@@ -140,7 +143,6 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.heartScale = false;
-		this.healUsed = {};
 		this.main.UI.refreshDamageDealt(true);
 		this.music = this.map.music;
 		playMusic(this.music.song);
@@ -157,7 +159,6 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.heartScale = false;
-		this.healUsed = {};
 		this.main.UI.refreshDamageDealt();
 
 		this.waveStartTime = performance.now();
@@ -171,6 +172,7 @@ export class Area {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
 			t.lightningRodCharge = 0;
+			t.healUsed = false;
 		});
 
 		if (this.inChallenge) {
@@ -183,7 +185,6 @@ export class Area {
 		if (this.main.player.health[this.routeNumber] <= 0) return;
 
 		if (this.waveStartTime !== null) {
-		    // tiempo real en segundos (float)
 		    this.waveElapsedTime = (performance.now() - this.waveStartTime) / 1000;
 		    this.waveStartTime = null;
 		}
@@ -192,14 +193,18 @@ export class Area {
 		let bonusGold = Math.floor((5 * (this.routeNumber + 1) * this.waveNumber + Math.pow(this.waveNumber, 1.4))/2);
 		if (this.main.player.stars > 150) bonusGold = Math.floor(bonusGold * (this.main.player.stars / 150));
 
+		// MOD: Record handling for endless mode - don't cap at 100
 		if (this.main.player.records[this.routeNumber] < this.waveNumber) {
-			this.main.player.records[this.routeNumber] = Math.min(100, this.waveNumber);
+			this.main.player.records[this.routeNumber] = this.waveNumber; // MOD: Removed cap at 100
 			
 			if (this.main.player.stars > 50) {
 				this.main.player.changeGold(bonusGold);
 				this.goldWave += bonusGold;
 			}
-			this.main.player.obtainStar();
+			// MOD: Only award stars for waves 1-100
+			if (this.waveNumber <= 100) {
+				this.main.player.obtainStar();
+			}
 		}
 
 		this.towers.forEach(t => { 
@@ -232,7 +237,8 @@ export class Area {
 		this.waveActive = false;
 		if (this.main.player.health[this.routeNumber] === 1) this.main.player.unlockAchievement(12);
 
-		if (this.waveNumber < 100) {
+		// MOD: Handle endless mode - waves continue past 100
+		if (this.waveNumber < 100 || this.endlessMode) {
 			if (!this.repeat) this.waveNumber++;
 			if (!this.repeat) this.routeWaves[this.routeNumber]++;
 			this.main.UI.update();
@@ -256,16 +262,20 @@ export class Area {
 			}, 1500);
 
 			playSound('end', 'ui');
-			this.main.UI.displayEnemyInfo(this.waves[this.waveNumber].preview[0], 0);
+			
+			// MOD: Display enemy info with cycled wave number for endless
+			const displayWaveNum = ((this.waveNumber - 1) % 100) + 1;
+			this.main.UI.displayEnemyInfo(this.waves[displayWaveNum].preview[0], 0);
 
-			const futureWave = this.waves[((this.waveNumber - 1) % 100) + 1].preview;
+			const futureWave = this.waves[displayWaveNum].preview;
 			const invisibles = [e.ditto, e.kecleon, e.absol, e.lunala, e.froslass];
 
 			if (this.autoWave && this.main.autoStop && futureWave.some(poke => invisibles.includes(poke))) {
 				this.switchAutoWave();
 			}
 
-			if (this.autoWave && this.main.autoStopBoss && this.waveNumber == 100) {
+			// MOD: Don't auto-stop at wave 100 if in endless mode
+			if (this.autoWave && this.main.autoStopBoss && this.waveNumber == 100 && !this.endlessMode) {
 				this.switchAutoWave();
 			}
 
@@ -274,6 +284,7 @@ export class Area {
 			if (this.main.mapScene.isOpen) this.main.mapScene.update();
 			if (this.main.shopScene.isOpen) this.main.shopScene.update();
 		} else {
+			// Wave 100 reached - show final scene with continue option
 			if (this.main.team.pokemon.some(p => p.specie.name[0] == 'shuckle')) this.main.player.unlockAchievement(6);
 			if (this.main.player.health[this.routeNumber] >= 10) this.main.player.unlockAchievement(7);
 			if (this.routeNumber == 0) this.main.player.unlockAchievement(22);
@@ -313,6 +324,14 @@ export class Area {
 		}	
 	}
 
+	// MOD: Enable endless mode - called from FinalScene continue button
+	enableEndlessMode() {
+		this.endlessMode = true;
+		this.waveNumber = 101;
+		this.routeWaves[this.routeNumber] = 101;
+		this.main.UI.update();
+	}
+
 	switchAutoWave() {
 		this.autoWave = !this.autoWave;
 		if (this.autoWave) {
@@ -324,10 +343,11 @@ export class Area {
 	}
 
 	spawnEnemies() {
-		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;;
+		// MOD: Cycle wave number for endless mode (waves 101+ use wave 1-100 patterns)
+		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;
 
 		const wave = this.waves[falseWaveNumber].wave;
-		const waveOffset = this.waves[this.waveNumber].offSet || 50;
+		const waveOffset = this.waves[falseWaveNumber].offSet || 50;
 
 		wave.forEach((enemy, i) => {
 			const xOffset = (i + 1) * waveOffset;
@@ -348,14 +368,12 @@ export class Area {
 	}
 
 	recalculateAuras() {
-	    // Reinicia poder base
 	    this.towers.forEach(t => {
 	        t.power = t.basePower;
 	        t.projectile.power = t.basePower;
 	        t.auraBuffActive = false;
 	    });
 
-	    // Reaplica auras activas
 	    this.towers.forEach(auraTower => {
 	        if (!auraTower.ability || auraTower.ability.id !== 'powerAura') return;
 	        const auraRange = auraTower.range;
@@ -386,8 +404,15 @@ export class Area {
 		playSound('option', 'ui');
 
 		let nextWave = this.waveNumber + i;
-		if (nextWave <= 0) nextWave = 100;
-		else if (nextWave >= 101) nextWave = 1;
+		// MOD: Allow wave selection in endless mode (cycle 1-100)
+		if (this.endlessMode) {
+			// In endless mode, allow cycling through all reached waves
+			if (nextWave <= 0) nextWave = this.main.player.records[this.routeNumber] || 100;
+			else if (nextWave > this.main.player.records[this.routeNumber]) nextWave = 1;
+		} else {
+			if (nextWave <= 0) nextWave = 100;
+			else if (nextWave >= 101) nextWave = 1;
+		}
 
 		this.waveStartTime = null;
 		this.goldWave = 0;
@@ -406,7 +431,9 @@ export class Area {
 		this.waveActive = false;
 		this.enemies = [];
 
-		this.main.UI.displayEnemyInfo(this.waves[this.waveNumber].preview[0], 0);
+		// MOD: Display enemy info with cycled wave number
+		const displayWaveNum = ((this.waveNumber - 1) % 100) + 1;
+		this.main.UI.displayEnemyInfo(this.waves[displayWaveNum].preview[0], 0);
 
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
@@ -414,7 +441,6 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.heartScale = false;
-		this.healUsed = {};
 
 		this.main.UI.update();
 	}

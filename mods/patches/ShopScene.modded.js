@@ -84,7 +84,6 @@ export class ShopScene extends GameScene {
 	}
 
 	open() {
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
 		super.open();
 		this.update();
 		if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
@@ -101,6 +100,7 @@ class DisplayPokemon extends GameScene {
 		super(220, 240);
 		this.main = main;
 		this.pokemon;
+		this.isShinyReveal = false;
 		
 		this.header.removeChild(this.closeButton);
 		this.render();
@@ -116,7 +116,7 @@ class DisplayPokemon extends GameScene {
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
-		this.shinySymbol.innerHTML = '✨';
+		this.shinySymbol.innerHTML = 'Γ£¿';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
 		
 		// Add pulse animation keyframe if not exists
@@ -140,7 +140,7 @@ class DisplayPokemon extends GameScene {
 
 	update() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt.innerText = text.shop.new[this.main.lang].toUpperCase();
+		this.prompt.innerText = this.isShinyReveal ? 'Γ¡É SHINY! Γ¡É' : text.shop.new[this.main.lang].toUpperCase();
 		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
 		this.pokemonName.style.color = this.pokemon.specie.color;
 		
@@ -156,11 +156,15 @@ class DisplayPokemon extends GameScene {
 		}
 		this.image.style.backgroundImage = `url("${spriteUrl}")`;
 		this.closeButton.innerHTML = 'OK';
+		
+		// Show shiny symbol if it's a shiny reveal
+		this.shinySymbol.style.display = this.isShinyReveal ? 'block' : 'none';
 	}
 
-	open(pokemon) {
+	open(pokemon, isShiny = false) {
 		playSound('results', 'ui');
 		this.pokemon = pokemon;
+		this.isShinyReveal = isShiny;
 
 		super.open();
 		this.update();
