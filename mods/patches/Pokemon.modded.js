@@ -1,4 +1,4 @@
-import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
+﻿import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Pokemon {
@@ -16,7 +16,7 @@ export class Pokemon {
 		this.isShiny = isShiny;
 		this.isMega = isMega;
 
-		this.sprite = JSON.parse(JSON.stringify(specie.sprite));  // MOD: Deep copy to prevent shared sprite mutation
+		this.sprite = specie.sprite;
 		this.name = specie.name;
 		this.alias = alias;
 		this.ability = specie.ability;
@@ -25,8 +25,7 @@ export class Pokemon {
 		this.rangeType = specie.rangeType;
 		this.attackType = specie.attackType;
 
-		// MOD: ENDLESS MODE - Asymptotic speed scaling - approaches but never reaches 0
-		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, lvl);
+		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * lvl));
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * lvl));
 		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * lvl));
 
@@ -48,7 +47,6 @@ export class Pokemon {
 		this.isDeployed = false;
 		this.inGroup = false;
 		
-		this.healUsed = false;
 		this.damageDealt = 0;
 		this.trueDamageDealt = 0;
 
@@ -60,7 +58,7 @@ export class Pokemon {
 				this.ability.id == 'armorBreakDoubleShot'
 			) this.targetMode = 'available';
 			else if (this.attackType == 'aura') this.targetMode = 'aura';
-			else if (this.ability.id == 'frisk') this.targetMode = 'invisible';
+			else if (this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
 			else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
 			else if (this.ability.id == 'spinda') this.targetMode = 'random';
 			else if (this.ability.id == 'curse') this.targetMode = 'curseable';
@@ -80,6 +78,7 @@ export class Pokemon {
 			this.rangeType = 'donut';
 		}
 
+		this.form = (this.specie.form) ? this.specie.key : false;
 		this.baseSprite = JSON.parse(JSON.stringify(this.sprite));
 		this.hideShiny = hideShiny;
 
@@ -87,32 +86,6 @@ export class Pokemon {
 			if (!this.hideShiny) this.setShiny();
 			this.main.player.shinyAmount++;
 		}
-	}
-
-	// MOD: Asymptotic speed scaling - speed approaches minimum but never reaches 0
-	calculateAsymptoticSpeed(baseSpeed, scale, level) {
-		// For levels 1-100, use vanilla formula
-		if (level <= 100) {
-			return Math.floor(baseSpeed + (scale * level));
-		}
-		
-		// For levels > 100, use asymptotic curve
-		// Speed at level 100 as baseline
-		const speed100 = baseSpeed + (scale * 100);
-		
-		// Minimum speed floor (5% of speed at level 100, minimum 50ms)
-		const minSpeed = Math.max(50, Math.floor(speed100 * 0.05));
-		
-		// Calculate asymptotic approach: speed decreases but never goes below minSpeed
-		// Uses exponential decay towards minimum
-		const excessLevels = level - 100;
-		const decayRate = 0.005; // How fast we approach minimum
-		const decayFactor = Math.exp(-decayRate * excessLevels);
-		
-		// Interpolate between speed100 and minSpeed
-		const asymptoticSpeed = minSpeed + (speed100 - minSpeed) * decayFactor;
-		
-		return Math.max(minSpeed, Math.floor(asymptoticSpeed));
 	}
 
 	getOriginalData() {
@@ -149,15 +122,21 @@ export class Pokemon {
 	    let specie = null;
 
 	    if (data.specieKey) {
+	        // guardado nuevo
 	        specie = pokemonData[data.specieKey];
 	        if (!specie) {
+	            //console.warn('specieKey no encontrada:', data.specieKey);
+	            // no rompemos: fallback a data.specie si viene (por si existiera)
 	            if (data.specie) specie = data.specie;
 	        }
 	    } else if (data.specie) {
+	        // guardado antiguo: intentamos mapear al pokemonData canonical
 	        const mapped = findSpecieInCatalog(data.specie);
 	        if (mapped) {
 	            specie = mapped;
 	        } else {
+	            // no hemos encontrado match claro: mantenemos el objeto antiguo para no perder datos
+	            //console.warn('No se pudo mapear specie antigua a pokemonData; dejando el objeto antiguo. Datos:', data.specie.name?.[0] ?? data.specie);
 	            specie = data.specie;
 	        }
 	    }
@@ -186,7 +165,6 @@ export class Pokemon {
 	}
 
 	levelUp() {
-		// MOD: No level cap - remove the level 100 cap check
         this.lvl++;
         if (this.lvl >= this.specie.evolution?.level && this.id != 95) {
         	if (this.id != 76) this.updateSpecie(this.specie.evolution.pokemon);
@@ -210,6 +188,7 @@ export class Pokemon {
 		if (this.lvl > this.main.player.stats.highestPokemonLevel) this.main.player.stats.highestPokemonLevel = this.lvl;
 		this.main.player.stats.totalPokemonLevel++;
 
+		this.form = (this.specie.form) ? this.specie.key : false;
 		if (this.id == 70 && this.adn != undefined) this.transformADN();
 
         if (this.isDeployed) {
@@ -230,97 +209,48 @@ export class Pokemon {
         if (this.lvl == 100) this.main.player.unlockAchievement(2);
     }
 
-	// MOD: Endless mode cost scaling - costs continue scaling past level 100
-	// Levels 1-100: Use vanilla formula WITH vanilla caps (100k or 150k for veryHigh)
-	// Levels 101+: Cost = (previous × 1.02) + 8000, capping at 1 billion
 	setCost() {
-		const vanillaCap = this.specie.costScale === 'veryHigh' ? 150000 : 100000;
-		
-		// Calculate vanilla cost at the effective level (capped at 100 for formula)
-		const effectiveLevel = Math.min(this.lvl, 100);
-		let baseCost;
-		
 		if (this.specie.costScale === 'low') {
-			baseCost = Math.ceil(27 * Math.pow(1.12, effectiveLevel)) - 11;
+			this.cost = Math.min(100000, Math.ceil(27 * Math.pow(1.12, this.lvl)) - 11);
 		} else if (this.specie.costScale === 'mid') {
-			baseCost = Math.ceil(35 * Math.pow(1.12, effectiveLevel)) + ((effectiveLevel - 1) * 5);
+			this.cost = Math.min(100000, Math.ceil(35 * Math.pow(1.12, this.lvl)) + ((this.lvl-1) * 5));
 		} else if (this.specie.costScale === 'high') {
-			baseCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
+			this.cost = Math.min(100000, Math.ceil(51 * Math.pow(1.12, this.lvl)) + (this.lvl * 3) - 1);		
 		} else if (this.specie.costScale === 'veryHigh') {
-			baseCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
-		} else {
-			baseCost = vanillaCap;
+			this.cost = Math.min(150000, Math.ceil(51 * Math.pow(1.12, this.lvl)) + (this.lvl * 3) - 1);		
 		}
-		
-		// Apply vanilla cap for levels 1-99
-		baseCost = Math.min(vanillaCap, baseCost);
-		
-		// MOD: For levels >= 100, apply endless scaling from the capped level 100 cost
-		// (cost shown at level 100 is the cost to reach 101, so scaling starts here)
-		if (this.lvl >= 100) {
-			const excessLevels = this.lvl - 99;
-			// Cost increases by (previous × 1.02) + 8000 per level past 100
-			for (let i = 0; i < excessLevels; i++) {
-				baseCost = Math.floor(baseCost * 1.02) + 8000;
-			}
-		}
-		
-		// Final cap at 1 billion
-		this.cost = Math.min(1000000000, baseCost);
 	}
 
 	checkCost(num) {
-		let totalCost = 0;
-		const vanillaCap = this.specie.costScale === 'veryHigh' ? 150000 : 100000;
+		let cost = 0;
 
 		for (let i = 0; i < num; i++) {
-			const checkLevel = this.lvl + i;
-			const effectiveLevel = Math.min(checkLevel, 100);
-			let levelCost;
-			
 			if (this.specie.costScale === 'low') {
-				levelCost = Math.ceil(27 * Math.pow(1.12, effectiveLevel)) - 11;
+				cost += Math.min(100000, Math.ceil(27 * Math.pow(1.12, this.lvl+i)) - 11);
 			} else if (this.specie.costScale === 'mid') {
-				levelCost = Math.ceil(35 * Math.pow(1.12, effectiveLevel)) + ((effectiveLevel - 1) * 5);
+				cost += Math.min(100000, Math.ceil(35 * Math.pow(1.12, this.lvl+i)) + (((this.lvl+i)-1) * 5));
 			} else if (this.specie.costScale === 'high') {
-				levelCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
+				cost += Math.min(100000, Math.ceil(51 * Math.pow(1.12, this.lvl+i)) + ((this.lvl+i) * 3) - 1);		
 			} else if (this.specie.costScale === 'veryHigh') {
-				levelCost = Math.ceil(51 * Math.pow(1.12, effectiveLevel)) + (effectiveLevel * 3) - 1;
-			} else {
-				levelCost = vanillaCap;
+				cost += Math.min(150000, Math.ceil(51 * Math.pow(1.12, this.lvl+i)) + ((this.lvl+i) * 3) - 1);		
 			}
-			
-			// Apply vanilla cap for levels 1-99
-			levelCost = Math.min(vanillaCap, levelCost);
-			
-			// MOD: Add endless scaling for levels >= 100
-			// (cost at level 100 is cost to reach 101, so scaling starts here)
-			if (checkLevel >= 100) {
-				const excessLevels = checkLevel - 99;
-				for (let j = 0; j < excessLevels; j++) {
-					levelCost = Math.floor(levelCost * 1.02) + 8000;
-				}
-			}
-			
-			totalCost += Math.min(1000000000, levelCost);
 		}
 		
-		return totalCost;
+		return cost;
 	}
 
 	updateStats() {
 		let level = this.lvl;
-		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
+		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;
 
-		// MOD: Use asymptotic speed scaling
-		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level);
+		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
 		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
 		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
 	}
 
-	setStatsLevel(level = 50) {
-		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level);
+	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
 		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
 		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
@@ -356,9 +286,9 @@ export class Pokemon {
 		this.attackType = this.adn.attackType;
 
 		let level = this.lvl;
-		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
+		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;
 
-		this.speed = this.calculateAsymptoticSpeed(this.adn.speed.base, this.adn.speed.scale, level);
+		this.speed = Math.floor(this.adn.speed.base + (this.adn.speed.scale * level));
 		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
 		this.range = Math.floor(this.adn.range.base + (this.adn.range.scale * level));
 
@@ -377,7 +307,7 @@ export class Pokemon {
 			this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily'
 		) this.targetMode = 'available';
 		else if (this.attackType == 'aura') this.targetMode = 'aura';
-		else if (this.ability.id == 'frisk') this.targetMode = 'invisible';
+		else if (this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
 		else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
 		else if (this.ability.id == 'spinda') this.targetMode = 'random';
 		else if (this.ability.id == 'curse') this.targetMode = 'curseable';
@@ -392,7 +322,10 @@ export class Pokemon {
 		if (item?.equipedBy != undefined && this.ability.id != 'magician') {
 			const pokes = [...this.main.team.pokemon, ...this.main.box.pokemon];
 			const pokeWhitItem = pokes.find(poke => poke.id == item.equipedBy);
-			if (pokeWhitItem.isDeployed && (item?.id == 'silphScope' || item?.id == 'airBalloon' || item?.id == 'heavyDutyBoots' || item?.id == 'dampMulch' || item?.id == 'assaultVest')) {
+			if (pokeWhitItem.isDeployed && 
+				(item?.id == 'silphScope' || item?.id == 'airBalloon' || item?.id == 'heavyDutyBoots' || 
+				item?.id == 'dampMulch' || item?.id == 'assaultVest' || item?.id == 'subwoofer')
+			) {
 				playSound('pop0', 'ui')
 				return;
 			}
@@ -411,7 +344,7 @@ export class Pokemon {
 		if (
 			this.isDeployed && 
 			this.item.id == 'silphScope' && 
-			this.ability.id !== 'frisk'
+			(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk')
 		) {
 			const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 			this.main.area.towers[index].revealInvisible = true;
@@ -428,6 +361,8 @@ export class Pokemon {
 		}
 
 		if (item?.megaStone) this.addMegaStone();
+
+		this.main.UI.update();
 	}
 
 	retireItem() {
@@ -437,7 +372,7 @@ export class Pokemon {
 			if (
 				this.isDeployed && 
 				this.item.id == 'silphScope' && 
-				this.ability.id !== 'frisk'
+				(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk')
 			) {
 				const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 				this.main.area.towers[index].revealInvisible = false;
@@ -512,8 +447,10 @@ export class Pokemon {
 	        if (typeof p !== 'string') return p;
 
 	        if (this.hideShiny) {
+	            // shiny ΓåÆ normal
 	            return p.replace(/\/shiny\//g, '/normal/');
 	        } else {
+	            // normal ΓåÆ shiny
 	            return p.replace(/\/normal\//g, '/shiny/');
 	        }
 	    };

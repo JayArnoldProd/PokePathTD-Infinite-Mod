@@ -197,7 +197,7 @@ def apply_text_continue_option():
     
     # Try alternate pattern matching (encoding might differ)
     # Match the structure and add line 3
-    pattern = r"(reset:\s*\{\s*\n\s*0:\s*\[[^\]]+\],\s*\n\s*1:\s*\[[^\]]+\],\s*\n\s*2:\s*\[[^\]]+\],)(\s*\n\s*\})"
+    pattern = r"(reset:\s*\{\s*\n\s*0:\s*\[[^\]]+\],\s*\n\s*1:\s*\[[^\]]+\],\s*\n\s*2:\s*\[[^\]]+\],)(\s*\n\s*\},?)"
     match = re.search(pattern, content)
     if match:
         new_line = "\n\t\t\t\t3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],"
@@ -847,7 +847,7 @@ def apply_expanded_egg_list():
             log_skip("pokemonData.js: Egg list already expanded")
             return True
     
-    # Old egg list
+    # Old egg list (matches vanilla 1.4.4)
     old_egg_list = """export const eggListData = [
 	'charmander', 'treecko', 'froaki', 
 

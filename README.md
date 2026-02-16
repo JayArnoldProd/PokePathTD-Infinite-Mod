@@ -1,12 +1,12 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.3
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.4
 
-**Compatible with PokePath TD v1.4.3** ✅
+**Compatible with PokePath TD v1.4.4** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
-> **v1.4.3 Update:** Compatible with latest game version. Merged 1.4.3 improvements including trueDamage tracking. All endless mode features preserved.
+> **v1.4.4 Update:** Compatible with latest game version. Merged all 1.4.4 changes including Pokemon stat rebalancing (30+ Pokemon), new abilities (Grassy Terrain, Vigilant-Frisk, Armor Breaker Splash), item changes (Wide Lens, Leftovers, etc.), pause improvements, and bug fixes. All mod features preserved.
 
 ---
 

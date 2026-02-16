@@ -1,4 +1,4 @@
-import { Sprite } from '../../utils/Sprite.js';
+﻿import { Sprite } from '../../utils/Sprite.js';
 import { playSound } from '../../file/audio.js';
 
 export class Enemy extends Sprite {
@@ -47,7 +47,7 @@ export class Enemy extends Sprite {
 		this.timeTravelMin = 150;
 		this.timeTravelMax = 200;
 
-		// animación
+		// animaci├│n
 		this.reviveAnimTime = 0;
 		this.reviveScale = 1;
 
@@ -65,7 +65,7 @@ export class Enemy extends Sprite {
 			if (!cached && this.main && typeof this.main.getImage === 'function') {
 				cached = this.main.getImage(cursePath);
 			}
-			// también comprobar imageCache directo por compatibilidad
+			// tambi├⌐n comprobar imageCache directo por compatibilidad
 			if (!cached && this.main && this.main.imageCache && this.main.imageCache[cursePath]) {
 				cached = this.main.imageCache[cursePath];
 			}
@@ -77,32 +77,15 @@ export class Enemy extends Sprite {
 		    this.curseIcon = new Image();
 		    this.curseIcon.src = './src/assets/images/icons/curse.png';
 		}
-		// Wave scaling for difficulty (waves 1-100 only)
-		// ENDLESS MODE (wave > 100): All scaling handled by Area.js spawnEndlessWave
-		if (wave <= 100) {
-			const bonusSteps = Math.floor((wave - 1) / 5);
-			if (bonusSteps > 0) {
-				// Base scaling (waves 1-100): +2% HP, +1% armor per 5 waves
-				let hpMult = 1 + 0.02 * bonusSteps;
-				let armorMult = 1 + 0.01 * bonusSteps;
-				let goldMult = 1 + 0.15 * bonusSteps;
-				
-				this.hp = Math.floor(this.hp * hpMult);
-				this.hpMax = Math.floor(this.hpMax * hpMult);
-				this.armor = Math.floor(this.armor * armorMult);
-				this.armorMax = Math.floor(this.armorMax * armorMult);
-				this.gold = Math.floor(this.gold * goldMult);
-				
-				// Boss wave 100 gets +100% stats
-				if (wave === 100) {
-					this.hp = Math.floor(this.hp * 2);
-					this.hpMax = Math.floor(this.hpMax * 2);
-					this.armor = Math.floor(this.armor * 2);
-					this.armorMax = Math.floor(this.armorMax * 2);
-				}
-			}
+		// Aumentos cada 5 waves 
+		const bonusSteps = Math.floor((wave - 1) / 5);
+		if (bonusSteps > 0) {
+			if (wave != 100) this.hp = Math.floor(this.hp * (1 + 0.02 * bonusSteps));
+			if (wave != 100) this.hpMax = Math.floor(this.hpMax * (1 + 0.02 * bonusSteps));
+			if (wave != 100) this.armor = Math.floor(this.armor * (1 + 0.01 * bonusSteps));
+			if (wave != 100) this.armorMax = Math.floor(this.armorMax * (1 + 0.01 * bonusSteps));
+			this.gold = Math.floor(this.gold * (1 + 0.15 * bonusSteps));
 		}
-		// Wave > 100: Enemy receives pre-scaled stats from Area.js, no additional scaling here
 
 		if (typeof this.main.area.inChallenge.toughEnemies == 'number') {
 			this.hp += Math.floor(this.hp * (this.main.area.inChallenge.toughEnemies / 100));
@@ -176,16 +159,16 @@ export class Enemy extends Sprite {
 
 			// aura circular (siempre visible)
 			const grad = this.ctx.createRadialGradient(cx, cy, radius * 0.2, cx, cy, radius);
-			grad.addColorStop(0, `rgba(180,220,255,${0.35 + pulse * 0.15})`);
-			grad.addColorStop(0.7, `rgba(180,220,255,${0.15 + pulse * 0.10})`);
-			grad.addColorStop(1, `rgba(180,220,255,0.08)`); 
+			grad.addColorStop(0, `rgba(180, 220, 255,${0.35 + pulse * 0.15})`);
+			grad.addColorStop(0.7, `rgba(180, 220, 255,${0.15 + pulse * 0.10})`);
+			grad.addColorStop(1, `rgba(180, 220, 255, 0.08)`); 
 
 			this.ctx.fillStyle = grad;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 			this.ctx.fill();
 
-			this.ctx.strokeStyle = 'rgba(200,230,255,0.55)';
+			this.ctx.strokeStyle = 'rgba(200, 230, 255, 0.55)';
 			this.ctx.lineWidth = 2;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -198,7 +181,7 @@ export class Enemy extends Sprite {
 				const py = cy + Math.sin(angle) * r;
 				const size = 1 + Math.random() * 2;
 
-				this.ctx.fillStyle = 'rgba(210,240,255,0.8)';
+				this.ctx.fillStyle = 'rgba(210, 240, 255, 0.8)';
 				this.ctx.beginPath();
 				this.ctx.arc(px, py, size, 0, Math.PI * 2);
 				this.ctx.fill();
@@ -209,28 +192,25 @@ export class Enemy extends Sprite {
 			const cx = this.position.x + this.width / 2;
 			const cy = this.position.y + this.height / 2;
 
-			const radius = 115;  // RESTORED: Vanilla value (was 140)
+			const radius = 115;
 			const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
 
-			// aura eléctrica (más intensa)
 			const grad = this.ctx.createRadialGradient(cx, cy, radius * 0.2, cx, cy, radius);
-			grad.addColorStop(0, `rgba(255,255,180,${0.55 + pulse * 0.25})`);
-			grad.addColorStop(0.6, `rgba(255,240,120,${0.25 + pulse * 0.15})`);
-			grad.addColorStop(1, `rgba(255,240,120,0.08)`); 
+			grad.addColorStop(0, `rgba(255, 255, 180,${0.55 + pulse * 0.25})`);
+			grad.addColorStop(0.6, `rgba(255, 240, 120,${0.25 + pulse * 0.15})`);
+			grad.addColorStop(1, `rgba(255, 240, 120, 0.08)`); 
 
 			this.ctx.fillStyle = grad;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 			this.ctx.fill();
 
-			// borde eléctrico
-			this.ctx.strokeStyle = 'rgba(255,240,120,0.9)';
+			this.ctx.strokeStyle = 'rgba(255, 240, 120, 0.9)';
 			this.ctx.lineWidth = 2;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 			this.ctx.stroke();
 
-			// chispas eléctricas (rayos zigzag)
 			for (let i = 0; i < 22; i++) {
 				const angle = Math.random() * Math.PI * 2;
 				const r = radius * (0.55 + Math.random() * 0.45);
@@ -243,7 +223,7 @@ export class Enemy extends Sprite {
 				let x = px;
 				let y = py;
 
-				this.ctx.strokeStyle = `rgba(255,255,200,${0.85 + 0.15 * Math.sin(Date.now() / 100)})`;
+				this.ctx.strokeStyle = `rgba(255, 255, 200, ${0.85 + 0.15 * Math.sin(Date.now() / 100)})`;
 				this.ctx.lineWidth = 1.2;
 
 				this.ctx.beginPath();
@@ -260,7 +240,7 @@ export class Enemy extends Sprite {
 				this.ctx.stroke();
 
 				// punto brillante al inicio
-				this.ctx.fillStyle = 'rgba(255,240,120,0.95)';
+				this.ctx.fillStyle = 'rgba(255, 240, 120, 0.95)';
 				this.ctx.beginPath();
 				this.ctx.arc(px, py, 1.5, 0, Math.PI * 2);
 				this.ctx.fill();
@@ -382,7 +362,7 @@ export class Enemy extends Sprite {
 		    const size = 12;
 		    const offsetX = barX - size - 2;
 		    const offsetY = barY - 2.5;
-		    // this.curseIcon puede ser Image, ImageBitmap o Canvas (según preload)
+		    // this.curseIcon puede ser Image, ImageBitmap o Canvas (seg├║n preload)
 		    this.ctx.drawImage(this.curseIcon, offsetX, offsetY, size, size);
 		}
 
@@ -406,13 +386,10 @@ export class Enemy extends Sprite {
 	        }
 	    }
 
-		// DELTA TIME FIX: Skip drawing during sub-step simulation
-		if (!this._skipDraw) {
-		    this.ctx.save();
-		    this.ctx.globalAlpha = this.opacity;
-		    this.draw();
-		    this.ctx.restore();
-		}
+		this.ctx.save();
+	    this.ctx.globalAlpha = this.opacity;
+	    this.draw();
+	    this.ctx.restore();
 
 	    if (!this.dying) {
 	    	if (this.isRegeneratorReviving) {
@@ -539,7 +516,7 @@ export class Enemy extends Sprite {
 			        const vy = currentWP.y - prevWP.y;
 			        const length = Math.hypot(vx, vy) || 1;
 
-			        // dirección hacia atrás
+			        // direcci├│n hacia atr├ís
 			        const nx = -vx / length;
 			        const ny = -vy / length;
 
@@ -603,22 +580,22 @@ export class Enemy extends Sprite {
 			        this.baseSpeed += 1;
 			        this.timeTravelSpeedTimer = 1000;
 
-			        playSound('teleport', 'effect');
+			        if (!this.main.mute[1]) playSound('teleport', 'effect');
 			    }
 			}
 
-			if (this.passive?.id === 'iceBody' && this.passiveTimer > 0) {
-				this.passiveTimer -= simDelta;
-				if (this.passiveTimer <= 0) { 
-					this.passiveTimer = 0;
-					this.baseSpeed -= 0.5;
-	        		this.speed -= 0.5;
-	            }
-			}
+			// if (this.passive?.id === 'iceBody' && this.passiveTimer > 0) {
+			// 	this.passiveTimer -= simDelta;
+			// 	if (this.passiveTimer <= 0) { 
+			// 		this.passiveTimer = 0;
+			// 		this.baseSpeed -= 0.5;
+	        // 		this.speed -= 0.5;
+	        //     }
+			// }
 
 			if (this.passive?.id == 'shadowShield' && !this.invisible) {
 				this.passiveTimer += simDelta;
-				if (this.passiveTimer >= 3000) { 
+				if (this.passiveTimer >= 4000) { 
 					this.armor = this.armorMax;
 					this.passiveTimer = 0;
 					this.invisible = true;
@@ -651,10 +628,9 @@ export class Enemy extends Sprite {
 
 	getDamaged(amount, source = 'physical', ability = null, isCritical = false, alreadyCursed = new Set(), pokemon, tower) {
 	    if (this.hp <= 0 || this.invulnerable) return;
-	   
-	    let cursedDamageSpread = amount;
+	   	
+	   	let cursedDamageSpread = amount;
 
-	    // RESTORED: Vanilla Strange Idol - 50% bonus minus 1% per cursed enemy
 	    if (pokemon?.item?.id == 'strangeIdol') {
 	    	let strangeIdolBuff = 50;
 	    	this.main.area.enemies.forEach(e => {
@@ -669,14 +645,14 @@ export class Enemy extends Sprite {
 	    	let spellTagBonus = 0
 			this.statusEffects.forEach((effect) => {
 				if (effect.type != 'nightmare') spellTagBonus += 0.15;
-				if (pokemon?.ability?.id == 'simple') spellTagBonus += 8;
+				if (pokemon?.ability?.id == 'simple') spellTagBonus += 0.075;
 			})
 			amount = Math.ceil(amount * Math.min(1.5, (1 + spellTagBonus)));
 		}
 
 		if (pokemon?.item?.id == 'stickyBarb' && this.statusEffects.length > 0) {
 			this.statusEffects.forEach((effect) => {
-				if (effect.type == 'stun' || effect.type == 'slow') amount = (pokemon?.ability?.id == 'simple') ? Math.ceil(amount * 1.38) : Math.ceil(amount * 1.25);		
+				if (effect.type == 'stun' || effect.type == 'slow') amount = (pokemon?.ability?.id == 'simple') ? Math.ceil(amount * 1.375) : Math.ceil(amount * 1.25);		
 			})
 		}
 
@@ -694,49 +670,57 @@ export class Enemy extends Sprite {
 
 		if (pokemon?.item?.id == 'badgeOfHonor') {
 			let badgeMult = Math.min(30, (this.main.player.stars / 30));
+			if (pokemon?.ability?.id == 'simple') badgeMult = Math.ceil(badgeMult * 1.5);
 			amount += Math.ceil(amount * (badgeMult / 100));	
-			if (pokemon?.ability?.id == 'simple') amount = Math.ceil(amount * 1.5);
+			
 		}
-
-	    if (amount >= 9999 && source == 'physical') this.main.player.unlockAchievement(18)
-	    if (amount > this.main.player.stats.highestHit && source == 'physical') this.main.player.stats.highestHit = amount;
 
 		if ((
 			ability?.id === 'armorBreak' || 
+			ability?.id === 'armorBreakSplash' ||
 			ability?.id === 'armorBreakDoubleShot' || 
 			pokemon?.item?.id == 'shieldBreakerBullet') && 
 			this.enemy?.armor > 0
 	    ) amount *= 2;
 
 		if (this.passive?.id === 'lightMetal' && amount > 1000) amount = 1000;
-		if (this.passive?.id === 'iceBody' && isCritical) {
-			this.baseSpeed += 0.5;
-	        this.speed += 0.5;
-			this.passiveTimer = 2000;
-		}
+		// if (this.passive?.id === 'iceBody' && isCritical) {
+		// 	this.baseSpeed += 0.5;
+	    //     this.speed += 0.5;
+		// 	this.passiveTimer = 2000;
+		// }
 
-		if (this.passive?.id === 'sturdy' && source == 'physical' && this.hp < this.hpMax * 0.3) amount = 0;
+		//if (this.passive?.id === 'sturdy' && source == 'physical' && this.hp < this.hpMax * 0.3) amount = 0;
+		if (this.passive?.id === 'sturdy') amount = Math.max(0, amount - 200);
+		if (this.passive?.id === 'iceBody' && isCritical) amount = 0;
 
 		if (this.passive?.id === 'flameBody' && source == 'physical') {
 			const dx = this.center.x - tower.center.x;
 			const dy = this.center.y - tower.center.y;
 			const distance = Math.hypot(dx, dy);
-			if (distance < 120) amount = Math.floor(amount/2);
+			if (distance < 120) amount = Math.floor(amount / 2);
 		}
+
+		if (amount >= 9999 && source == 'physical') this.main.player.unlockAchievement(18)
+	    if (amount > this.main.player.stats.highestHit && source == 'physical') this.main.player.stats.highestHit = amount;
 
 	    let cursedDamage = amount;
 	    let armorDamage = amount;
 
 	    this.main.area.totalDamageDealt += amount;
-	    pokemon.damageDealt += amount; 	
+	    pokemon.damageDealt += amount; 
 
-	    if (pokemon?.item?.id == 'litCoal' && this.canBurn && Math.random() < 0.1) {
+	    this.main.area.totalTrueDamageDealt += Math.min((this.hp + this.armor), amount);
+	    pokemon.trueDamageDealt	+= Math.min((this.hp + this.armor), amount); 
+
+	    let litCoalChance = Math.random();
+	    if (pokemon?.item?.id == 'litCoal' && this.canBurn && (litCoalChance < 0.1 || pokemon?.ability?.id == 'simple' && litCoalChance < 0.15)) {
 			this.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon); 
 		}
 
-	    // RESTORED: Vanilla heal logic - items only heal when not at full health, per-wave limits
-	    if (this.main.player.health[this.main.area.map.id] < 14) {
-			if (pokemon?.item?.id == 'leftovers' && Math.random() < 0.0005 && !this.main.area.leftoversWaveUsed) {
+		// HEALS
+		if (this.main.player.health[this.main.area.map.id] < 14 || !this.main.area.heartScale) {
+			if (pokemon?.item?.id == 'leftovers' && Math.random() < 0.01 && !this.main.area.leftoversWaveUsed) {
 				playSound('hit3', 'effect');
 				this.main.player.getHealed(1);
 				this.main.player.achievementProgress.heartRestore++;
@@ -762,22 +746,27 @@ export class Enemy extends Sprite {
 				this.main.area.clefairyDollUsed = true;
 				this.main.area.heartScale = true;
 			}
-		}
 		
-	    // RESTORED: Heal ability with per-pokemon limit
-	    if (
-	    	ability?.id === 'heal' && 
-	    	pokemon?.item?.id != 'lifeOrb' && 
-	    	Math.random() < 0.025 && 
-	    	!pokemon.healUsed
-	    ) {
-	        playSound('hit3', 'effect');
-	        const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
-	        this.main.player.getHealed(healValue);
-	        this.main.player.achievementProgress.heartRestore += healValue;
-	    	if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
-	    	pokemon.healUsed = true;
-	    	this.main.area.heartScale = true;
+			const uses = this.main.area.healUsed[pokemon.id] ?? 0;
+			const healChance = 0.05 / Math.pow(2, uses);
+
+		    if (
+			    ability?.id === 'heal' && 
+			    pokemon?.item?.id !== 'lifeOrb' && 
+			    uses < 3 &&
+			    Math.random() < healChance
+			) {
+		        playSound('hit3', 'effect');
+
+		        const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
+		        this.main.player.getHealed(healValue);
+		        this.main.player.achievementProgress.heartRestore += healValue;
+
+		    	if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+
+		    	this.main.area.healUsed[pokemon.id] = uses + 1;
+	   			this.main.area.heartScale = true;
+		    }
 	    }
 
 	    if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000) this.main.area.shellBellWaveUsed = true;
@@ -794,7 +783,7 @@ export class Enemy extends Sprite {
 
 	    if (this.invisible && source == 'physical') this.invisible = false;
 
-	    // daño a armadura
+	    // da├▒o a armadura
 	    if (this.armor && this.armor > 0) {
 	        const remainingArmor = this.armor - armorDamage;
 	        if (remainingArmor >= 0) {
@@ -812,8 +801,8 @@ export class Enemy extends Sprite {
 
 	    if (this.hp < this.hpMax * 0.5 && this.enemy.id == 'groudon' && !this.passiveActivated) {
 	    	this.passiveActivated = true;
-	    	this.armorMax = 50000;
-	    	this.armor = 50000;
+	    	this.armorMax = 75000;
+	    	this.armor = 75000;
 	    	this.sprite.src = this.enemy.sprite.primal;
 
 	    	this.passiveTimer = 3000;
@@ -832,9 +821,11 @@ export class Enemy extends Sprite {
 			    this.hp = 1;
 			    this.armorMax = 50000;
 	    		this.armor = 50000;
-			    // preparar resurrección
+			    // preparar resurrecci├│n
 			    this.isRegeneratorReviving = true;
 			    this.regeneratorReviveTimer = 5000; 
+
+			    this.statusEffects.length = 0;
 			    this.burnedBy = null;
 				this.poisonedBy = null;
 				this.nightmaredBy = null;
@@ -916,6 +907,11 @@ export class Enemy extends Sprite {
 	        this.main.area.enemies.forEach(e => {
 	            if (e !== this && e.cursed && e.hp > 0 && !alreadyCursed.has(e)) {
 	                e.getDamaged(cursedDamageSpread, source, ability, false, alreadyCursed, pokemon);
+	                if (pokemon?.item?.id === 'amuletCoin') {
+			            let cursedGold = Math.ceil(cursedDamageSpread * 0.001 * this.main.player.stars);
+			            this.main.area.goldWave += cursedGold;
+			            this.main.player.changeGold(cursedGold);
+			        }
 	            }
 	            if (ability?.id === 'willOWisp' && e.canBurn && e.cursed) {
 	            	if (pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, pokemon);
@@ -979,7 +975,7 @@ export class Enemy extends Sprite {
 	    // Filtrar efectos terminados
 	    this.statusEffects = this.statusEffects.filter(e => e.duration === undefined || e.duration > 0);
 
-	    // RECOMPUTAR velocidad según slows activos 
+	    // RECOMPUTAR velocidad seg├║n slows activos 
 	    const slowEffects = this.statusEffects.filter(e => e.type === 'slow' && e.duration !== 0);
 	    if (slowEffects.length === 0) {
 	        this.speed = this.baseSpeed;
@@ -1043,9 +1039,6 @@ export class Enemy extends Sprite {
 	        	this.nightmaredBy = pokemon;
 	            existing.stacks = (existing.stacks || 1) + 1;
 	        } 
-	        // else {
-	        //     existing.duration = Math.max(existing.duration || 0, effect.duration || 0);
-	        // }
 	    } else {
 	        this.statusEffects.push({
 	            ...effect,
@@ -1053,6 +1046,7 @@ export class Enemy extends Sprite {
 	            stacks: effect.type === 'poison' ? 1 : undefined
 	        });
 	        if (effect.type === 'stun') {
+	        	this.lightningRodSearch();
 	        	this.main.player.stats.appliedStuns++;
 	        	if (this.main.player.stats.appliedStuns >= 10000) this.main.player.unlockAchievement(13);
 	        }
@@ -1158,5 +1152,23 @@ export class Enemy extends Sprite {
 				}
 			}
 		});
+	}
+
+	lightningRodSearch() {
+	    const towers = this.main.area.towers;
+	    for (const tower of towers) {
+	        if (tower?.ability?.id !== 'lightningRod') continue;
+
+	        const radius = tower.range;
+	        const dx = tower.center.x - this.center.x;
+	        const dy = tower.center.y - this.center.y;
+	        const distance = Math.hypot(dx, dy);
+
+	        if (distance <= radius && tower.lightningRodChargeCD === 0 && tower.lightningRodCharge < 10) {
+	        	tower.lightningRodCharge++;
+				tower.lightningRodChargeCD = 1000;
+	            break;
+	        }
+	    }
 	}
 }

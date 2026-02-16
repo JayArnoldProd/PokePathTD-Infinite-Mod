@@ -1,14 +1,10 @@
 {
-  "version": "1.4.3",
-  "game_version": "1.4.3",
-  "release_date": "2026-02-08",
-  "changelog": [
-    "Compatible with PokePath TD v1.4.3",
-    "Merged 1.4.3 improvements including trueDamageDealt tracking and healUsed field",
-    "Preserved all endless mode features: continue past wave 100, checkpoints every 50 waves",
-    "Sub-stepping and 5x/10x speed preserved for high-speed accuracy",
-    "All shiny egg/starter features intact (1/30 chance)",
-    "Asymptotic stat scaling prevents negative attack speeds at high levels",
-    "Auto-continue option for endless mode preserved"
-  ]
+    "version": "1.4.4",
+    "game_version": "1.4.4",
+    "release_date": "2026-02-16",
+    "changes": [
+        "Updated for PokePath TD v1.4.4",
+        "Merged all vanilla 1.4.4 changes (Pokemon stat rebalancing, new abilities, item changes, pause improvements, bug fixes)",
+        "Preserved all mod features: endless mode, speed options, shiny system, level cap removal, box expansion, etc."
+    ]
 }

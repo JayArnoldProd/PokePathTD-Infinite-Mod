@@ -1,4 +1,4 @@
-import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
+﻿import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
 import { saveData } from '../../file/data.js';
 import { itemData, itemListData, itemBackup } from '../data/itemData.js';
 import { pokemonData } from '../data/pokemonData.js';
@@ -30,7 +30,7 @@ export class Shop {
 
 		this.itemBackup = Array.isArray(itemBackup) ? [...itemBackup] : [];
 		this.restoreItemBackup();
-		console.log(itemBackup)
+
 		this.generateStock();
 		this.removeOwnedItems();
 		this.removeGimmighoulIfGholdengo();
@@ -65,27 +65,12 @@ export class Shop {
 			pokemon = pk;
 		}
 
-		// MOD: 1/30 chance of shiny egg!
-		const isShinyEgg = Math.random() < (1/30);
-
 		if (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
-			const newPokemon = new Pokemon(pokemon, 1, null, this.main);
-			// MOD: Apply shiny status
-			if (isShinyEgg) {
-				newPokemon.isShiny = true;
-				newPokemon.setShiny();
-			}
-			this.main.team.addPokemon(newPokemon);
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShinyEgg)
+			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
 		} else {
-			const newPokemon = new Pokemon(pokemon, 1, null, this.main);
-			// MOD: Apply shiny status
-			if (isShinyEgg) {
-				newPokemon.isShiny = true;
-				newPokemon.setShiny();
-			}
-			this.main.box.addPokemon(newPokemon);
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShinyEgg)
+			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
 		}
 
 		this.main.player.stats.pokemonOwned++;
@@ -117,7 +102,7 @@ export class Shop {
 	    	this.main.player.itemAmount++;
 	    } 
 
-	    // Reemplazar el slot i con el siguiente elemento válido de itemList (no duplicado)
+	    // Reemplazar el slot i con el siguiente elemento v├ílido de itemList (no duplicado)
 	    this.itemStock[i] = this.getNextNonDuplicateFromList();
 
 	    this.main.shopScene.update();
@@ -134,7 +119,7 @@ export class Shop {
 	generateStock() {
 	    for (let i = 0; i < 5; i++) {
 	        if (!this.itemStock[i]) { 
-	            // tomamos el siguiente id válido desde itemList evitando duplicados
+	            // tomamos el siguiente id v├ílido desde itemList evitando duplicados
 	            this.itemStock[i] = this.getNextNonDuplicateFromList();
 	        }
 	    }
@@ -142,7 +127,7 @@ export class Shop {
 
 	dedupeInitialLists() {
 		const seen = new Set();
-		// dedupe itemStock: conservar primera aparición, poner null en duplicados
+		// dedupe itemStock: conservar primera aparici├│n, poner null en duplicados
 		for (let i = 0; i < this.itemStock.length; i++) {
 			const entry = this.itemStock[i];
 			if (!entry || !entry.id) {
@@ -156,7 +141,7 @@ export class Shop {
 				seen.add(id);
 			}
 		}
-		// dedupe itemList: eliminar ids que ya están en seen y eliminar duplicados dentro de itemList
+		// dedupe itemList: eliminar ids que ya est├ín en seen y eliminar duplicados dentro de itemList
 		const newList = [];
 		for (const id of this.itemList) {
 			if (!id) continue;
@@ -164,7 +149,7 @@ export class Shop {
 				seen.add(id);
 				newList.push(id);
 			}
-			// si estaba en seen (ya en stock o ya añadido), se omite => se elimina duplicado
+			// si estaba en seen (ya en stock o ya a├▒adido), se omite => se elimina duplicado
 		}
 		this.itemList = newList;
 	}
@@ -178,7 +163,7 @@ export class Shop {
 		return false;
 	}
 
-	// Extrae del itemList el primer id que no esté presente actualmente en itemStock.
+	// Extrae del itemList el primer id que no est├⌐ presente actualmente en itemStock.
 	// Devuelve el objeto itemData[id] o null si no hay ninguno.
 	getNextNonDuplicateFromList() {
 		while (this.itemList.length > 0) {
@@ -198,7 +183,7 @@ export class Shop {
 
 	        // Comprobar si el jugador ya posee este item
 	        if (this.main.player.hasItem(entry.id)) {
-	            // Reemplazar con el siguiente ítem no duplicado y que no tenga el jugador
+	            // Reemplazar con el siguiente ├¡tem no duplicado y que no tenga el jugador
 	            let newItem = null;
 	            while (this.itemList.length > 0) {
 	                const nextId = this.itemList.shift();
