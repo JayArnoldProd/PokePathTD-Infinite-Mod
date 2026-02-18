@@ -1,4 +1,4 @@
-﻿import { Projectile } from './Projectile.js';
+import { Projectile } from './Projectile.js';
 import { Sprite } from '../../utils/Sprite.js';
 import { playSound } from '../../file/audio.js';
 

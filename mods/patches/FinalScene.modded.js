@@ -1,4 +1,4 @@
-﻿import { GameScene } from '../../utils/GameScene.js';
+import { GameScene } from '../../utils/GameScene.js';
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { saveData } from '../../file/data.js';

@@ -1,4 +1,4 @@
-﻿import { Element } from '../utils/Element.js';
+import { Element } from '../utils/Element.js';
 import { text } from '../file/text.js';
 import { playSound, playMusic } from '../file/audio.js';
 import { GameScene } from '../utils/GameScene.js';
@@ -223,10 +223,10 @@ export class UI {
 			})
 		}
 
-		this.pokemon[6].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">Γ¡É</span>40`;
-		this.pokemon[7].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">Γ¡É</span>160`;
-		this.pokemon[8].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">Γ¡É</span>320`;
-		this.pokemon[9].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">Γ¡É</span>540`;
+		this.pokemon[6].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>40`;
+		this.pokemon[7].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>160`;
+		this.pokemon[8].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>320`;
+		this.pokemon[9].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>540`;
 
 		this.mapPanel = new Element(this.main.scene, { className: 'ui-map-panel' }).element;
 
@@ -369,7 +369,7 @@ export class UI {
 
 		if (
 			this.main.player.stars >= 540 &&
-			this.main.player.records[this.main.area.map.id] === 100 &&
+			this.main.player.records[this.main.area.map.id] >= 100 &&
 			(this.main.team.pokemon.length + this.main.box.pokemon.length) > 30
 		) {
 			this.section['challenge'].style.opacity = 1;
@@ -510,7 +510,7 @@ export class UI {
 		this.playerName.innerText = this.main.player.name.toUpperCase();
 		this.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;
 		// ENDLESS MODE: No cap on star display
-		this.playerStars.innerHTML = `<span class="msrre">Γ¡É</span>${this.main.player.stars}`;
+		this.playerStars.innerHTML = `<span class="msrre">⭐</span>${this.main.player.stars}`;
 		this.playerRibbonsText.innerHTML = `${this.main.player.ribbons}`;
 
 		this.playerHealth.innerHTML = '';
@@ -975,7 +975,7 @@ export class UI {
 
 	updateMap() {
 		// ENDLESS MODE: No cap on star display
-		this.mapRecord.innerHTML = `<span class="msrre">Γ¡É</span>${this.main.player.records[this.main.area.map.id]}`;
+		this.mapRecord.innerHTML = `<span class="msrre">⭐</span>${this.main.player.records[this.main.area.map.id]}`;
 
 		// ENDLESS MODE: Get wave data (use templates for waves > 100)
 		let waveData, wavePreview;

@@ -1,4 +1,4 @@
-﻿import { GameScene } from '../../utils/GameScene.js';
+import { GameScene } from '../../utils/GameScene.js';
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { playSound } from '../../file/audio.js';
@@ -140,7 +140,7 @@ class DisplayPokemon extends GameScene {
 
 	update() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt.innerText = this.isShinyReveal ? 'Γ¡É SHINY! Γ¡É' : text.shop.new[this.main.lang].toUpperCase();
+		this.prompt.innerText = this.isShinyReveal ? '⭐ SHINY! ⭐' : text.shop.new[this.main.lang].toUpperCase();
 		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
 		this.pokemonName.style.color = this.pokemon.specie.color;
 		

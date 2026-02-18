@@ -1,4 +1,4 @@
-﻿import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
+import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
 import { saveData } from '../../file/data.js';
 import { itemData, itemListData, itemBackup } from '../data/itemData.js';
 import { pokemonData } from '../data/pokemonData.js';

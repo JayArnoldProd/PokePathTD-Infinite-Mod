@@ -1,4 +1,4 @@
-﻿export class Tooltip {
+export class Tooltip {
     constructor(main) {
         this.main = main;
 

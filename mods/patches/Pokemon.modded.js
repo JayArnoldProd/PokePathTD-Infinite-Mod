@@ -1,4 +1,4 @@
-﻿import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
+import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Pokemon {

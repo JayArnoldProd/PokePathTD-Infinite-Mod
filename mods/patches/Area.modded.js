@@ -1,4 +1,4 @@
-﻿import { routeData } from '../data/routeData.js';
+import { routeData } from '../data/routeData.js';
 import { PlacementTile } from '../component/PlacementTile.js';
 import { Element } from '../../utils/Element.js';
 import { Enemy } from '../component/Enemy.js';

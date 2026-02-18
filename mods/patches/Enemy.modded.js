@@ -1,4 +1,4 @@
-﻿import { Sprite } from '../../utils/Sprite.js';
+import { Sprite } from '../../utils/Sprite.js';
 import { playSound } from '../../file/audio.js';
 
 export class Enemy extends Sprite {

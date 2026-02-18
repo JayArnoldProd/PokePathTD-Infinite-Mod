@@ -54,16 +54,42 @@ def find_paths():
         Path.home() / 'AppData' / 'Local' / 'Programs' / 'pokePathTD_Electron',
     ]
     
+    result = {'game_root': None, 'sprites': None, 'sprites_shiny': None, 'mod_shiny_sprites': None}
+    
+    # Check for mod's bundled sprites first (works in distributed installs)
+    mod_shiny_path = script_dir / 'patches' / 'shiny_sprites'
+    if mod_shiny_path.exists():
+        result['mod_shiny_sprites'] = mod_shiny_path
+    
+    mod_normal_path = script_dir / 'patches' / 'normal_sprites'
+    if mod_normal_path.exists():
+        result['sprites'] = mod_normal_path
+    
     for check_dir in check_dirs:
         if check_dir and (check_dir / 'resources').exists():
+            # Try extracted folder first (development)
             pokemon_base = check_dir / 'resources' / 'app_extracted' / 'src' / 'assets' / 'images' / 'pokemon'
             if pokemon_base.exists():
-                return {
-                    'game_root': check_dir,
-                    'sprites': pokemon_base / 'normal',
-                    'sprites_shiny': pokemon_base / 'shiny',
-                }
-    return {'game_root': None, 'sprites': None, 'sprites_shiny': None}
+                result['game_root'] = check_dir
+                result['sprites'] = pokemon_base / 'normal'
+                result['sprites_shiny'] = pokemon_base / 'shiny'
+                return result
+            
+            # For distributed installs, we need to extract sprites from asar on first run
+            asar_path = check_dir / 'resources' / 'app.asar'
+            if asar_path.exists():
+                result['game_root'] = check_dir
+                # Try to extract sprites to a cache folder
+                cache_dir = script_dir / 'sprite_cache'
+                if cache_dir.exists():
+                    result['sprites'] = cache_dir / 'normal'
+                    result['sprites_shiny'] = cache_dir / 'shiny'
+                else:
+                    # Will extract on first access
+                    result['asar_path'] = asar_path
+                return result
+    
+    return result
 
 PATHS = find_paths()
 SCRIPT_DIR = Path(__file__).parent
@@ -216,33 +242,43 @@ class PokemonData:
     }
     
     def get_sprite(self, key, size=48, is_shiny=False):
-        if not HAS_PIL or not PATHS.get('sprites'):
+        if not HAS_PIL:
             return None
         cache_key = f"{key}_{size}_{'shiny' if is_shiny else 'normal'}"
         if cache_key not in self.sprites:
             # Map special sprite names
             sprite_key = self.SPRITE_NAME_MAP.get(key, key)
             
-            # Try shiny path first if shiny, fallback to normal
-            if is_shiny and PATHS.get('sprites_shiny'):
-                shiny_path = PATHS['sprites_shiny'] / f"{sprite_key}.png"
-                if shiny_path.exists():
+            # Try shiny paths in order of priority
+            if is_shiny:
+                shiny_paths = []
+                # 1. Mod's bundled shiny sprites (always available in distributed installs)
+                if PATHS.get('mod_shiny_sprites'):
+                    shiny_paths.append(PATHS['mod_shiny_sprites'] / f"{sprite_key}.png")
+                # 2. Extracted shiny sprites folder
+                if PATHS.get('sprites_shiny'):
+                    shiny_paths.append(PATHS['sprites_shiny'] / f"{sprite_key}.png")
+                
+                for shiny_path in shiny_paths:
+                    if shiny_path.exists():
+                        try:
+                            # Use NEAREST for pixel art to keep crisp edges
+                            img = Image.open(shiny_path).resize((size, size), Image.Resampling.NEAREST)
+                            self.sprites[cache_key] = ImageTk.PhotoImage(img)
+                            return self.sprites[cache_key]
+                        except:
+                            pass
+            
+            # Normal sprite (or fallback if shiny not found)
+            if PATHS.get('sprites'):
+                path = PATHS['sprites'] / f"{sprite_key}.png"
+                if path.exists():
                     try:
                         # Use NEAREST for pixel art to keep crisp edges
-                        img = Image.open(shiny_path).resize((size, size), Image.Resampling.NEAREST)
+                        img = Image.open(path).resize((size, size), Image.Resampling.NEAREST)
                         self.sprites[cache_key] = ImageTk.PhotoImage(img)
-                        return self.sprites[cache_key]
                     except:
-                        pass
-            # Normal sprite (or fallback if shiny not found)
-            path = PATHS['sprites'] / f"{sprite_key}.png"
-            if path.exists():
-                try:
-                    # Use NEAREST for pixel art to keep crisp edges
-                    img = Image.open(path).resize((size, size), Image.Resampling.NEAREST)
-                    self.sprites[cache_key] = ImageTk.PhotoImage(img)
-                except:
-                    self.sprites[cache_key] = None
+                        self.sprites[cache_key] = None
             else:
                 self.sprites[cache_key] = None
         return self.sprites.get(cache_key)

@@ -1,4 +1,4 @@
-﻿import { Tower } from './component/Tower.js';
+import { Tower } from './component/Tower.js';
 import { text } from '../file/text.js';
 import { playSound } from '../file/audio.js';
 

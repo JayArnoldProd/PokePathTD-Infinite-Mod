@@ -5,5 +5,4 @@ mods/current_save.json
 package-lock.json
 mods/package-lock.json
 release_build/
-
-mods/node_modules/
+resources/
