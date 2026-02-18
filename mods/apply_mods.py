@@ -114,6 +114,12 @@ MOD_FEATURES = {
         'functions': ['apply_devtools'],
         'default': True,
     },
+    'challenge_fix': {
+        'name': 'Challenge Level Cap Fix',
+        'description': 'Fix vanilla bug where level cap boosts low-level Pokemon instead of only capping high-level ones',
+        'functions': ['apply_challenge_levelcap_fix'],
+        'default': True,
+    },
 }
 
 def log_success(name):
@@ -928,6 +934,30 @@ def apply_expanded_egg_list():
 # SELECTIVE MOD APPLICATION
 # ============================================================================
 # ============================================================================
+# CHALLENGESCENE.JS - Fix level cap boosting low-level Pokemon
+# ============================================================================
+def apply_challenge_levelcap_fix():
+    """Fix vanilla bug: level cap should cap high-level Pokemon, not boost low-level ones."""
+    path = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
+    content = read_file(path)
+
+    if 'poke.updateStats()' in content and 'setStatsLevel' not in content:
+        log_skip("ChallengeScene.js: Level cap fix")
+        return True
+
+    old = "pokemon.forEach(poke => poke.setStatsLevel(capLevel))"
+    new = "pokemon.forEach(poke => poke.updateStats())"
+
+    if old in content:
+        content = content.replace(old, new)
+        write_file(path, content)
+        log_success("ChallengeScene.js: Level cap fix (setStatsLevel -> updateStats)")
+        return True
+
+    log_fail("ChallengeScene.js: Level cap fix")
+    return False
+
+# ============================================================================
 # SCENES.CSS - Fix emoji rendering in pixel font
 # ============================================================================
 def apply_emoji_font_fix():
@@ -1136,6 +1166,9 @@ def main():
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
+    
+    # Fix challenge level cap bug
+    apply_challenge_levelcap_fix()
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()
