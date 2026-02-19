@@ -283,7 +283,10 @@ export class PokemonScene extends GameScene {
 		this.title.innerHTML = text.pokemon.title[this.main.lang].toUpperCase();
 		
 		if (!this.main.area.inChallenge.lvlCap) this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${this.pokemon.lvl}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${this.pokemon.lvl}]`;
-		else this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${this.main.area.inChallenge.lvlCap}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${this.main.area.inChallenge.lvlCap}]`;
+		else {
+			const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap);
+			this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${displayLvl}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${displayLvl}]`;
+		}
 
 		this.data['power'].value.innerHTML = `${this.pokemon.power}`;
 		this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s`;
@@ -467,24 +470,6 @@ export class PokemonScene extends GameScene {
 	}
 
 	updateLevelButton() {
-		if (typeof this.main.area.inChallenge.lvlCap == 'number') {
-			this.levelUp.innerHTML = `-`;
-			this.levelUp.style.filter = 'brightness(0.8)';
-			this.levelUp.style.pointerEvents = 'none';
-			this.levelUp.style.lineHeight = '28px';
-
-			this.levelUpFive.innerHTML = `-`;
-			this.levelUpFive.style.filter = 'brightness(0.8)';
-			this.levelUpFive.style.pointerEvents = 'none';
-			this.levelUpFive.style.lineHeight = '28px';
-
-			this.levelUpTen.innerHTML = `-`;
-			this.levelUpTen.style.filter = 'brightness(0.8)';
-			this.levelUpTen.style.pointerEvents = 'none';
-			this.levelUpTen.style.lineHeight = '28px';
-			return;
-		}
-
 		// Only shiny Pokemon can level past 100 (x1 would go to 101+)
 		if (this.pokemon.lvl >= 100 && !this.pokemon.isShiny) {
 			this.levelUp.innerHTML = `MAX`;

@@ -572,7 +572,7 @@ export class UI {
 			if (pokemon.id == 70) this.pokemon[i].dittoBg.style.display = 'revert-layer';
 	
 			if (typeof this.main.area.inChallenge.lvlCap == 'number') {
-				this.pokemon[i].level.innerText = `Lv ${this.main.area.inChallenge.lvlCap}`;
+				this.pokemon[i].level.innerText = `Lv ${Math.min(pokemon.lvl, this.main.area.inChallenge.lvlCap)}`;
 			} else this.pokemon[i].level.innerText = `Lv ${pokemon.lvl}`;
 			
 			this.pokemon[i].sprite.style.backgroundImage = `url("${pokemon.sprite.base}")`;
@@ -610,19 +610,17 @@ export class UI {
 			this.pokemon[i].item.style.display = 'revert-layer';
 			this.pokemon[i].item.style.pointerEvents = 'all';
 
-			if (typeof this.main.area.inChallenge.lvlCap !== 'number') {
-				// Only shiny Pokemon can level past 100
-				if (pokemon.lvl >= 100 && !pokemon.isShiny) {
-					this.pokemon[i].levelUp.style.display = 'none';
-					this.pokemon[i].levelUp.style.pointerEvents = 'none';
-				} else {
-					this.pokemon[i].levelUp.style.display = 'revert-layer';
-					if (this.main.player.gold >= pokemon.cost) {
-						this.pokemon[i].levelUp.style.pointerEvents = 'all';
-						this.pokemon[i].levelUp.style.filter = 'revert-layer';
-					}
+			// Level-up works during challenges too (cap only limits stats/display)
+			if (pokemon.lvl >= 100 && !pokemon.isShiny) {
+				this.pokemon[i].levelUp.style.display = 'none';
+				this.pokemon[i].levelUp.style.pointerEvents = 'none';
+			} else {
+				this.pokemon[i].levelUp.style.display = 'revert-layer';
+				if (this.main.player.gold >= pokemon.cost) {
+					this.pokemon[i].levelUp.style.pointerEvents = 'all';
+					this.pokemon[i].levelUp.style.filter = 'revert-layer';
 				}
-			}	
+			}
 
 			if (pokemon.isDeployed) {
 				// RESTORED: silphScope added back to vanilla disabled items list
