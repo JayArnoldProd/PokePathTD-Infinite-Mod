@@ -111,6 +111,17 @@ This document lists all mod features that MUST be present in the modded files. U
 ## UI.modded.js (challenge cap display)
 - [ ] Pokemon level display in team bar shows `Math.min(lvl, lvlCap)` during challenges instead of always showing cap level
 
+## Game.modded.js (pause micromanagement)
+- [ ] NO `if (this.stopped) return;` early exit at top of `animate()` — render loop must keep running during pause
+- [ ] `scaledDelta` / `totalScaledDelta` = 0 when `this.stopped` (sim freezes but rendering continues)
+- [ ] `switchPause()` only toggles `this.stopped` — does NOT call `stop()` or kill the `setInterval`
+- [ ] No `if (this.stopped) return;` guard in `tryDeployUnit()`
+- [ ] No `if (this.stopped) return;` guard in `moveUnitToTile()`
+- [ ] No `if (this.stopped) return;` guard in `swapUnits()`
+- [ ] No `if (this.stopped) return;` guard in canvas click handler
+- [ ] No `if (this.stopped) return;` guard in canvas pointerdown handler
+- [ ] Tile highlighting works during pause (PlacementTile.update() runs via animate loop)
+
 ---
 
 ## How to Use This Checklist
@@ -130,3 +141,4 @@ When updating to a new vanilla version:
 - **Level caps**: Vanilla has `if (this.lvl >= 100) return;`, mod removes this
 - **Speed options**: Vanilla has fewer speed options, mod adds 5x and 10x
 - **Endless mode**: ALL endless mode code is mod-only, easily lost in merges
+- **Pause micromanagement**: Vanilla blocks interactions during pause. Mod removes the `if (this.stopped) return;` early exit from `animate()` — this is the most critical line. If it reappears, pause micro breaks.
