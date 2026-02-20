@@ -295,10 +295,11 @@ class FeatureSelectionDialog(tk.Toplevel):
                 font=('Segoe UI', 9),
                 fg='#888888',
                 bg='#252540',
-                wraplength=360,
-                justify='left'
+                wraplength=340,
+                justify='left',
+                anchor='w'
             )
-            desc.pack(anchor='w', padx=20)
+            desc.pack(anchor='w', padx=(25, 10), fill='x')
         
         # Install button
         tk.Button(
