@@ -104,6 +104,13 @@ This document lists all mod features that MUST be present in the modded files. U
 ## ChallengeScene.js (via apply_mods.py patch)
 - [ ] `poke.updateStats()` instead of `poke.setStatsLevel(capLevel)` — fixes vanilla bug where level cap BOOSTS low-level Pokemon to cap instead of only capping high-level ones
 
+## itemData.js (via apply_mods.py patch)
+- [ ] `magmaStone` block uncommented (was commented out in vanilla)
+- [ ] `'magmaStone'` added to `itemListData` shop array
+- [ ] Price: 50000g, doubles burn duration to 20 seconds
+- [ ] Restriction: Pokemon IDs [0, 9, 52, 73, 96] only
+- [ ] Gameplay logic already exists in vanilla: Projectile.js (lines 396, 461) and Tower.js (line 939)
+
 ## PokemonScene.modded.js (challenge cap display)
 - [ ] Display level shows `Math.min(pokemon.lvl, lvlCap)` instead of always showing cap level
 - [ ] Level-up buttons remain enabled during challenges (players can still level up; levels bank for after challenge ends)

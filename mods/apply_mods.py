@@ -126,6 +126,12 @@ MOD_FEATURES = {
         'functions': ['apply_challenge_levelcap_fix'],
         'default': True,
     },
+    'hidden_items': {
+        'name': 'Unlock Hidden Item(s)',
+        'description': 'Unlocks 1 hidden item: Magma Stone (doubles burn duration to 20s, 50000g). The game code already supports it!',
+        'functions': ['apply_hidden_items'],
+        'default': True,
+    },
 }
 
 def log_success(name):
@@ -1039,6 +1045,51 @@ def apply_emoji_font_fix():
     log_fail("scenes.css: Emoji font fix")
     return False
 
+# ============================================================================
+# ITEMDATA.JS - Unlock hidden/WIP items (Magma Stone)
+# ============================================================================
+def apply_hidden_items():
+    """Uncomment Magma Stone in itemData.js and add it to the shop."""
+    path = JS_ROOT / "game" / "data" / "itemData.js"
+    content = read_file(path)
+
+    # Check if already applied
+    if "\tmagmaStone: {" in content and "// magmaStone" not in content:
+        log_skip("itemData.js: Hidden items (Magma Stone already unlocked)")
+        return True
+
+    # 1) Uncomment the magmaStone block
+    # Each line is like: \t// \tkey: value  ->  \tkey: value
+    lines = content.split('\n')
+    in_magma = False
+    new_lines = []
+    for line in lines:
+        if '// magmaStone: {' in line:
+            in_magma = True
+            # \t// magmaStone: { -> \tmagmaStone: {
+            new_lines.append('\tmagmaStone: {')
+        elif in_magma:
+            # Strip the "// " or "// \t" prefix after the leading tab
+            uncommented = re.sub(r'^(\t)// \t?', r'\t\t', line)
+            uncommented = re.sub(r'^(\t)// ?', r'\t', uncommented)
+            new_lines.append(uncommented)
+            if uncommented.strip() == '},' or uncommented.strip() == '}':
+                in_magma = False
+        else:
+            new_lines.append(line)
+    content = '\n'.join(new_lines)
+
+    # 2) Add magmaStone to itemListData shop array
+    # Find the itemListData array and add 'magmaStone' before its closing ]
+    match = re.search(r"(export const itemListData = \[.*?)(]\s*\n)", content, re.DOTALL)
+    if match and "'magmaStone'" not in match.group(1):
+        content = content[:match.end(1)] + "\t'magmaStone',\n" + content[match.start(2):]
+
+    write_file(path, content)
+    log_success("itemData.js: Magma Stone unlocked and added to shop")
+    return True
+
+
 def apply_selected_mods(selected_features: list, progress_callback=None):
     """
     Apply only selected mod features.
@@ -1220,6 +1271,9 @@ def main():
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()
+    
+    # Unlock hidden items (Magma Stone)
+    apply_hidden_items()
     
     print()
     print("=" * 50)
