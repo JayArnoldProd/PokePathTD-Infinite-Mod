@@ -1049,7 +1049,12 @@ def apply_emoji_font_fix():
 # ITEMDATA.JS - Unlock hidden/WIP items (Magma Stone)
 # ============================================================================
 def apply_hidden_items():
-    """Uncomment Magma Stone in itemData.js and add it to the shop."""
+    """Uncomment Magma Stone in itemData.js and add it to the shop.
+    
+    IMPORTANT: Uses brace-depth tracking to handle nested objects (e.g. restriction: {}).
+    Do NOT simplify to 'stop at first }' — that breaks nested blocks and causes gray screen.
+    See commit 0be5a3c for the bug this fixed.
+    """
     path = JS_ROOT / "game" / "data" / "itemData.js"
     content = read_file(path)
 
