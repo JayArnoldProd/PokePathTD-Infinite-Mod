@@ -1059,21 +1059,25 @@ def apply_hidden_items():
         return True
 
     # 1) Uncomment the magmaStone block
-    # Each line is like: \t// \tkey: value  ->  \tkey: value
+    # Each commented line is: \t// \tkey: value  or  \t// },
+    # We need to track brace depth to know when the top-level item closes
     lines = content.split('\n')
     in_magma = False
+    brace_depth = 0
     new_lines = []
     for line in lines:
         if '// magmaStone: {' in line:
             in_magma = True
-            # \t// magmaStone: { -> \tmagmaStone: {
+            brace_depth = 1
             new_lines.append('\tmagmaStone: {')
         elif in_magma:
             # Strip the "// " or "// \t" prefix after the leading tab
             uncommented = re.sub(r'^(\t)// \t?', r'\t\t', line)
             uncommented = re.sub(r'^(\t)// ?', r'\t', uncommented)
             new_lines.append(uncommented)
-            if uncommented.strip() == '},' or uncommented.strip() == '}':
+            # Track braces to find the real closing brace
+            brace_depth += uncommented.count('{') - uncommented.count('}')
+            if brace_depth <= 0:
                 in_magma = False
         else:
             new_lines.append(line)
