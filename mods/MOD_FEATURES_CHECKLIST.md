@@ -97,6 +97,16 @@ This document lists all mod features that MUST be present in the modded files. U
 ## pokemonData.js (via mod)
 - [ ] Expanded egg list with 17 hidden Pokemon
 
+## ChallengeScene.js (via apply_mods.py patch)
+- [ ] `poke.updateStats()` instead of `poke.setStatsLevel(capLevel)` — fixes vanilla bug where level cap BOOSTS low-level Pokemon to cap instead of only capping high-level ones
+
+## PokemonScene.modded.js (challenge cap display)
+- [ ] Display level shows `Math.min(pokemon.lvl, lvlCap)` instead of always showing cap level
+- [ ] Level-up buttons remain enabled during challenges (players can still level up; levels bank for after challenge ends)
+
+## UI.modded.js (challenge cap display)
+- [ ] Pokemon level display in team bar shows `Math.min(lvl, lvlCap)` during challenges instead of always showing cap level
+
 ---
 
 ## How to Use This Checklist
