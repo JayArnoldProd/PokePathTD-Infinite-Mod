@@ -18,6 +18,10 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Sub-stepping loop for accurate high-speed simulation (numSteps calculation)
 - [ ] Enhanced speed toggle: 1x, 1.5x, 2x, 3x, 5x, 10x options
 - [ ] Speed options display with gradient backgrounds
+- [ ] **PAUSE MICROMANAGEMENT**: `animate()` does NOT have `if (this.stopped) return;` at the start
+- [ ] **PAUSE MICROMANAGEMENT**: `totalScaledDelta = this.stopped ? 0 : ...` (game freezes but render continues)
+- [ ] **PAUSE MICROMANAGEMENT**: No `if (this.stopped)` guards in `tryDeployUnit()`, `moveUnitToTile()`, `swapUnits()`, `retireUnit()`
+- [ ] **PAUSE MICROMANAGEMENT**: No `if (this.stopped)` guards in canvas click/pointerdown handlers
 
 ## Pokemon.modded.js
 - [ ] `this.sprite = JSON.parse(JSON.stringify(specie.sprite));` - Deep copy sprite

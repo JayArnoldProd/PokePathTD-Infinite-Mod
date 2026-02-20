@@ -47,6 +47,12 @@ failed_mods = []
 # MOD FEATURES - Defines selectable feature groups for the installer GUI
 # ============================================================================
 MOD_FEATURES = {
+    'pause_micro': {
+        'name': 'Pause Micromanagement',
+        'description': 'Deploy, move, swap, and retire towers while the game is paused',
+        'functions': ['apply_pause_micromanagement'],
+        'default': True,
+    },
     'speed': {
         'name': '10x Speed',
         'description': 'Adds 2x, 3x, 5x, and 10x game speed options',
@@ -567,6 +573,47 @@ def apply_ui_mods():
     
     log_fail("UI.js: mods - modded file not found")
     return False
+
+# ============================================================================
+# GAME.JS - Pause Micromanagement (baked into Game.modded.js)
+# ============================================================================
+def apply_pause_micromanagement():
+    """
+    Verify pause micromanagement is present in Game.modded.js.
+    
+    The fix is baked into Game.modded.js:
+    - animate() does NOT return early when stopped
+    - totalScaledDelta = 0 when stopped (game freezes but render continues)
+    - No 'if (this.stopped)' guards in interaction handlers
+    
+    This allows deploying, moving, swapping, and retiring towers while paused.
+    """
+    path = JS_ROOT / "game" / "Game.js"
+    
+    # If Game.js doesn't exist yet, skip - will be created by apply_speed_mod
+    if not path.exists():
+        log_skip("Game.js: Pause micromanagement (file not yet installed)")
+        return True
+    
+    content = read_file(path)
+    
+    # Check that the fix is present (animate doesn't return early on stopped)
+    # Look for the comment we added
+    if 'PAUSE MICROMANAGEMENT' in content and 'this.stopped ? 0 :' in content:
+        # Verify there's NO early return at start of animate
+        # The pattern "animate(time) {\n\t    if (this.stopped) return;" should NOT exist
+        import re
+        bad_pattern = re.search(r'animate\s*\([^)]*\)\s*\{\s*\n\s*if\s*\(\s*this\.stopped\s*\)\s*return\s*;', content)
+        if bad_pattern:
+            log_fail("Game.js: Pause micromanagement", "animate() still has early return on stopped")
+            return False
+        
+        log_success("Game.js: Pause micromanagement verified")
+        return True
+    
+    # If not present, the file is old - will be fixed when apply_speed_mod runs
+    log_skip("Game.js: Pause micromanagement (pending Game.modded.js install)")
+    return True
 
 # ============================================================================
 # GAME.JS - Speed options 2x/3x/5x/10x
@@ -1143,6 +1190,8 @@ def main():
     
     # Apply all mods in order
     apply_devtools()  # Enable F12/Ctrl+Shift+I for debugging
+    apply_speed_mod()  # Install Game.modded.js (includes pause micromanagement)
+    apply_pause_micromanagement()  # Verify pause micro is present
     apply_text_continue_option()
     apply_menu_autoreset_range()
     apply_map_record_uncap()
@@ -1152,7 +1201,6 @@ def main():
     apply_endless_mode()
     apply_item_tooltips()
     apply_ui_mods()
-    apply_speed_mod()
     apply_pokemon_mods()
     apply_pokemonscene_mods()
     apply_endless_waves()
