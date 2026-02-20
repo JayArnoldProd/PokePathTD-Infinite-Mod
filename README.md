@@ -34,12 +34,12 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 - **Delta Time Accuracy** - High-speed attacks process correctly
 
-### 🐱New Pokémon & Evolutions
+### 🐱 Hidden Content Unlocked
 
-- 17 Previously Hidden Pokemon added to the Egg Shop:
-- bidoof, cacnea, greavard, stakataka, luvdisc, chatot
-- munna, hoothoot, wingull, archen, inkay, vulpix
-- tarountula, carbink, totodile, fennekin, turtwig
+- **17 Previously Hidden Pokémon** added to the Egg Shop:
+  - bidoof, cacnea, greavard, stakataka, luvdisc, chatot, munna, hoothoot, wingull, archen, inkay, vulpix, tarountula, carbink, totodile, fennekin, turtwig
+- **Hidden Item(s):** Unlocks cut/WIP items the developer left in the code but disabled
+  - **Magma Stone** (currently the only hidden item) — Doubles burn duration from 10s → 20s. Costs 50,000g in the shop. Restricted to fire-type burn Pokémon. The gameplay logic was already fully implemented in vanilla — it just wasn't obtainable!
 
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
