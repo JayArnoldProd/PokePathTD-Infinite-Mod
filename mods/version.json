@@ -1,10 +1,10 @@
-{
+﻿{
     "version": "1.4.4",
     "game_version": "1.4.4",
-    "release_date": "2026-02-16",
+    "release_date": "2026-02-20",
     "changes": [
-        "Updated for PokePath TD v1.4.4",
-        "Merged all vanilla 1.4.4 changes (Pokemon stat rebalancing, new abilities, item changes, pause improvements, bug fixes)",
-        "Preserved all mod features: endless mode, speed options, shiny system, level cap removal, box expansion, etc."
+        "NEW: Pause Micromanagement - deploy, move, swap, and retire towers while game is paused",
+        "Fixed animation loop to keep rendering during pause (tiles highlight, ranges show)",
+        "Game simulation freezes when paused but UI remains fully interactive"
     ]
 }
