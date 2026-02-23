@@ -3,11 +3,24 @@
 **Compatible with PokePath TD v1.4.4** ✅
 
 ### What's New in Latest Update
-- **Reworked challenge level cap** — Level cap now works as a true maximum: high-level Pokemon are capped down, low-level Pokemon keep their actual level. Players can still level up freely during challenges (stats/display capped, leveling banks for after)
-- **Fixed star emoji rendering** — Stars now display correctly in HUD (player panel & route indicator)
+
+#### 🔄 Restore Vanilla & Feature Toggling (NEW)
+- **Pick and choose features** — select only the mods you want from the installer
+- **Re-run anytime** — change your mod configuration without reinstalling the game
+- **Restore Vanilla** — deselect all features to fully uninstall the mod and restore original game files
+- **Safe & reliable** — the installer backs up your vanilla game files automatically and re-extracts from them every run, so mods never stack or corrupt
+- **Save data is never touched** — your progress is always safe
+
+#### Bug Fixes
+- **Fixed white/blank screen bug** — itemData.js syntax error (tinyMushroom) that caused crashes on some installs
+- **Double-install protection** — all mods now validate before writing to prevent game corruption
+- **Defensive checks across all inline mods** — prevents broken output even on edge-case file states
+
+#### Previous Updates
+- **Reworked challenge level cap** — Level cap now works as a true maximum: high-level Pokemon are capped down, low-level Pokemon keep their actual level
+- **Fixed star emoji rendering** — Stars now display correctly in HUD
 - **Fixed challenge unlock in endless mode** — Challenges no longer lock out after surpassing wave 100
 - Stripped UTF-8 BOM from all mod files to prevent encoding issues
-- Updated mod installer to prevent BOM-related encoding bugs in future
 
 ### What's New in v1.4.4
 - Updated for PokePath TD 1.4.4 compatibility
@@ -36,8 +49,9 @@
 ### Installation
 1. Extract zip and copy `mods` folder to your game directory
 2. Run `mods/PokePath_Mod_Installer.pyw`
-3. Click "Install Mods"
+3. Select features and click **"Install Selected"**
 4. Launch game!
+5. To change features or uninstall, just re-run the installer anytime
 
 ### Requirements
 - Python 3.7+ (with PATH)
