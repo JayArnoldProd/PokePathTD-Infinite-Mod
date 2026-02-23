@@ -1,10 +1,17 @@
 {
     "version": "1.4.4",
     "game_version": "1.4.4",
-    "release_date": "2026-02-20",
+    "release_date": "2026-02-23",
     "changes": [
         "NEW: Pause Micromanagement - deploy, move, swap, and retire towers while game is paused",
+        "NEW: Vanilla/modded save isolation - modded game uses separate save folder",
+        "NEW: Save editor auto-detects vanilla vs modded saves",
+        "NEW: One-click vanilla restore in installer",
         "Fixed animation loop to keep rendering during pause (tiles highlight, ranges show)",
-        "Game simulation freezes when paused but UI remains fully interactive"
+        "Fixed save migration using LevelDB API (prevents duplicate starter bug)",
+        "Fixed emoji rendering in pixel font (lock, rocket, sparkle, star icons)",
+        "Fixed shiny reveal text and egg shop sprite sizing",
+        "Fixed installer feature selection dialog",
+        "Fixed Shop.js shiny eggs pattern matching for v1.4.4"
     ]
 }

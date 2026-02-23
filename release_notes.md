@@ -2,27 +2,38 @@
 
 **Compatible with PokePath TD v1.4.4** ✅
 
-### What's New in Latest Update
+### What's New in Latest Update (v1.4.4)
 
-#### 🔄 Restore Vanilla & Feature Toggling (NEW)
+#### 💾 Save Management (NEW)
+- **Vanilla/modded save isolation** — modded game uses a completely separate save folder, so your vanilla progress is never at risk
+- **LevelDB API-based save migration** — saves are properly exported and imported using the game's own database format, preventing data corruption (e.g. duplicate starter Pokémon)
+- **Save editor auto-detection** — automatically detects whether you're running vanilla or modded and loads the correct save
+- **One-click vanilla restore** — restore button in installer to go back to unmodded game instantly
+
+#### 🎨 UI & Emoji Fixes
+- **Fixed emoji rendering in pixel font** — lock 🔒, rocket 🚀, sparkle ✨, and star ⭐ icons now render correctly instead of garbled text
+- **Fixed shiny reveal display** — "⭐ SHINY! ⭐" text renders properly with emoji font fallback
+- **Fixed egg shop sprite sizing** — Pokémon sprites in shop popup now display at proper 2.5x scale (100px)
+
+#### 🔧 Installer Improvements
+- **Restored feature selection dialog** — checklist UI for picking individual mod features works again
+- **Fixed Shop.js shiny eggs pattern** — pattern matching updated for v1.4.4 code changes
+
+#### 🔄 Restore Vanilla & Feature Toggling
 - **Pick and choose features** — select only the mods you want from the installer
 - **Re-run anytime** — change your mod configuration without reinstalling the game
 - **Restore Vanilla** — deselect all features to fully uninstall the mod and restore original game files
 - **Safe & reliable** — the installer backs up your vanilla game files automatically and re-extracts from them every run, so mods never stack or corrupt
-- **Save data is never touched** — your progress is always safe
 
-#### Bug Fixes
-- **Fixed white/blank screen bug** — itemData.js syntax error (tinyMushroom) that caused crashes on some installs
-- **Double-install protection** — all mods now validate before writing to prevent game corruption
-- **Defensive checks across all inline mods** — prevents broken output even on edge-case file states
+#### Previous Fixes
+- Fixed white/blank screen bug (itemData.js syntax error)
+- Double-install protection — all mods validate before writing
+- Reworked challenge level cap as true maximum
+- Fixed star emoji rendering in HUD
+- Fixed challenge unlock in endless mode
+- Stripped UTF-8 BOM from all mod files
 
-#### Previous Updates
-- **Reworked challenge level cap** — Level cap now works as a true maximum: high-level Pokemon are capped down, low-level Pokemon keep their actual level
-- **Fixed star emoji rendering** — Stars now display correctly in HUD
-- **Fixed challenge unlock in endless mode** — Challenges no longer lock out after surpassing wave 100
-- Stripped UTF-8 BOM from all mod files to prevent encoding issues
-
-### What's New in v1.4.4
+### Game Compatibility (v1.4.4)
 - Updated for PokePath TD 1.4.4 compatibility
 - Merged all 1.4.4 game improvements:
   - 30+ Pokemon stat rebalances (Skeledirge nerf, Torterra Grassy Terrain, etc.)
