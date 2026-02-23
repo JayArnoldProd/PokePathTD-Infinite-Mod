@@ -112,7 +112,7 @@ class DisplayPokemon extends GameScene {
 		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
 		// Scale up the Pokemon sprite 3x (120px = 40px * 3), 10px lower
-		this.image.style.cssText = 'width:100px;height:100px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
+		this.image.style.cssText = 'width:96px;height:96px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;

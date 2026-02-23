@@ -35,6 +35,18 @@ export class Shop {
 		this.removeOwnedItems();
 		this.removeGimmighoulIfGholdengo();
 
+		// MOD: Remove eggs for Pokemon already owned (prevents duplicate starter after save migration)
+		const ownedBaseKeys = new Set();
+		for (const poke of [...(this.main.team?.pokemon || []), ...(this.main.box?.pokemon || [])]) {
+			if (!poke?.specie) continue;
+			let base = poke.specie;
+			while (base.preEvolution && pokemonData[base.preEvolution]) base = pokemonData[base.preEvolution];
+			for (const key in pokemonData) { if (pokemonData[key] === base) { ownedBaseKeys.add(key); break; } }
+		}
+		if (ownedBaseKeys.size > 0) {
+			this.eggList = this.eggList.filter(egg => !ownedBaseKeys.has(egg));
+		}
+
 		if (this.eggList.length == 0) this.main.player.unlockAchievement(0);
 	}
 

@@ -25,10 +25,10 @@ export class Pokemon {
 		this.rangeType = specie.rangeType;
 		this.attackType = specie.attackType;
 
-		// MOD: ENDLESS MODE - Asymptotic speed scaling - approaches but never reaches 0
+		// MOD: ENDLESS MODE - Asymptotic/endless scaling for all stats
 		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, lvl);
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * lvl));
-		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * lvl));
+		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, lvl);
 
 		if (item) {
 			const indx = this.main.player.items.findIndex(i => i.id === item.id);
@@ -42,7 +42,7 @@ export class Pokemon {
 		this.ricochet = this.specie.ricochet ?? 0;
 		
 		this.innerRange = this.specie.range.inner;
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * lvl);
+		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, lvl);
 		this.setCost();
 
 		this.isDeployed = false;
@@ -114,6 +114,30 @@ export class Pokemon {
 		const asymptoticSpeed = minSpeed + (speed100 - minSpeed) * decayFactor;
 		
 		return Math.max(minSpeed, Math.floor(asymptoticSpeed));
+	}
+
+	// MOD: Endless crit scaling - asymptotic approach to 100%
+	// Every 100 levels past 100, close 50% of the remaining gap to 100%
+	calculateEndlessCrit(base, scale, level) {
+		if (level <= 100) {
+			return base + (scale * level);
+		}
+		const critAt100 = base + (scale * 100);
+		const periods = (level - 100) / 100;
+		const remainingGap = (100 - critAt100) * Math.pow(0.5, periods);
+		return 100 - remainingGap;
+	}
+
+	// MOD: Endless range scaling - logarithmic growth past level 100
+	// 1x at level 100, 3x at level 1000
+	calculateEndlessRange(base, scale, level) {
+		const baseRange = Math.floor(base + (scale * level));
+		if (level <= 100) {
+			return baseRange;
+		}
+		const scaleFactor = 2 / Math.log2(10);
+		const rangeMultiplier = 1 + Math.log2(level / 100) * scaleFactor;
+		return Math.floor(baseRange * rangeMultiplier);
 	}
 
 	getOriginalData() {
@@ -314,18 +338,18 @@ export class Pokemon {
 		let level = this.lvl;
 		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
 
-		// MOD: Use asymptotic speed scaling
+		// MOD: Use asymptotic/endless scaling for all stats
 		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level);
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
+		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level);
+		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, level);
 	}
 
 	setStatsLevel(level = 50) {
 		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level);
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
+		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level);
+		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, level);
 	}
 
 	updateSpecie(specieName) {
@@ -362,13 +386,13 @@ export class Pokemon {
 
 		this.speed = this.calculateAsymptoticSpeed(this.adn.speed.base, this.adn.speed.scale, level);
 		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
-		this.range = Math.floor(this.adn.range.base + (this.adn.range.scale * level));
+		this.range = this.calculateEndlessRange(this.adn.range.base, this.adn.range.scale, level);
 
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;
 		
 		this.innerRange = this.adn.range.inner;
-		this.critical = this.adn.critical.base + (this.adn.critical.scale * level);
+		this.critical = this.calculateEndlessCrit(this.adn.critical.base, this.adn.critical.scale, level);
 
 		this.damageDealt = 0;
 		this.trueDamageDealt = 0;
