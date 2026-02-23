@@ -31,12 +31,17 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Endless mode cost scaling in `setCost()` - costs continue past level 100
 - [ ] Endless mode cost scaling in `checkCost()` - check costs for multiple levels
 - [ ] Asymptotic speed in `updateStats()`, `setStatsLevel()`, `transformADN()`
+- [ ] `calculateEndlessCrit()` method - asymptotic crit scaling (approaches 100%, every 100 levels closes 50% of gap)
+- [ ] `calculateEndlessRange()` method - logarithmic range scaling (freezes linear at lv100, applies log multiplier: 1x at 100, 3x at 1000)
+- [ ] Endless crit in `updateStats()`, `setStatsLevel()`, `transformADN()`, and constructor
+- [ ] Endless range in `updateStats()`, `setStatsLevel()`, `transformADN()`, and constructor
 - [ ] `vigilantFrisk` ability checks alongside `frisk`
 
 ## Shop.modded.js
 - [ ] `const isShinyEgg = Math.random() < (1/30);` - 1/30 shiny egg chance
 - [ ] `newPokemon.isShiny = true; newPokemon.setShiny();` for shiny eggs
 - [ ] Pass `isShinyEgg` to `displayPokemon.open()`
+- [ ] `dedupeEggList()` in constructor - removes eggs for Pokemon already owned (prevents duplicate starters after save migration)
 
 ## FinalScene.modded.js
 - [ ] Constructor with taller height (280 instead of 230)
@@ -66,6 +71,7 @@ This document lists all mod features that MUST be present in the modded files. U
 ## ShopScene.modded.js
 - [ ] Custom shiny sprites support in `displayPokemon.open()`
 - [ ] Shiny reveal animation when `isShiny` parameter is true
+- [ ] Pokemon sprite scaled to 96px (2.4x of vanilla 40px) with `image-rendering:pixelated`
 
 ## Tooltip.modded.js
 - [ ] Item tooltips with stat displays
@@ -111,9 +117,12 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Restriction: Pokemon IDs [0, 9, 52, 73, 96] only
 - [ ] Gameplay logic already exists in vanilla: Projectile.js (lines 396, 461) and Tower.js (line 939)
 
-## PokemonScene.modded.js (challenge cap display)
+## PokemonScene.modded.js (challenge cap display + endless preview)
 - [ ] Display level shows `Math.min(pokemon.lvl, lvlCap)` instead of always showing cap level
 - [ ] Level-up buttons remain enabled during challenges (players can still level up; levels bank for after challenge ends)
+- [ ] `calculatePreviewCrit()` - asymptotic crit preview matching Pokemon.calculateEndlessCrit()
+- [ ] `calculatePreviewRange()` - log range preview matching Pokemon.calculateEndlessRange() (freezes linear at lv100)
+- [ ] `calculatePreviewSpeed()` - asymptotic speed preview matching Pokemon.calculateAsymptoticSpeed()
 
 ## UI.modded.js (challenge cap display)
 - [ ] Pokemon level display in team bar shows `Math.min(lvl, lvlCap)` during challenges instead of always showing cap level
@@ -136,11 +145,13 @@ This document lists all mod features that MUST be present in the modded files. U
 When updating to a new vanilla version:
 
 1. Extract the new vanilla files
-2. Run a 3-way merge with old-vanilla, old-modded, and new-vanilla
-3. **CRITICALLY**: Check each item in this list against the merged file
-4. If any feature is missing, restore it from the old-modded version
-5. Test the mod installer
-6. Test the game to verify all features work
+2. **DO NOT 3-way merge.** Start from existing .modded.js files and patch ONLY new vanilla changes into them.
+3. Diff old-vanilla vs new-vanilla to identify what changed
+4. Apply those vanilla changes into the modded files, preserving all mod code
+5. **CRITICALLY**: Check each item in this list against the updated modded file
+6. If any feature is missing, restore it from the old modded version
+7. Run `apply_mods.py` and verify 0 failures
+8. Test the game to verify all features work
 
 ## Common Merge Issues
 
@@ -149,3 +160,6 @@ When updating to a new vanilla version:
 - **Speed options**: Vanilla has fewer speed options, mod adds 5x and 10x
 - **Endless mode**: ALL endless mode code is mod-only, easily lost in merges
 - **Pause micromanagement**: Vanilla blocks interactions during pause. Mod removes the `if (this.stopped) return;` early exit from `animate()` — this is the most critical line. If it reappears, pause micro breaks.
+- **Stat scaling**: Crit and range use endless scaling methods (calculateEndlessCrit/Range). Linear formulas must NOT be used past level 100. Preview functions in PokemonScene must match actual stat functions in Pokemon.
+- **Save isolation**: Modded game uses separate userData folder. Save migration uses LevelDB API (save_helper.js export/import), NOT raw file copy.
+- **Emoji rendering**: All emoji in game UI must use `<span class="msrre">` wrapper for proper rendering in PressStart2P pixel font. CSS class has `font-family: 'Segoe UI Emoji'` fallback.
