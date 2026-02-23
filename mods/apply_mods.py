@@ -23,6 +23,8 @@ from pathlib import Path
 import re
 import shutil
 import json
+import subprocess
+import sys
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
@@ -36,8 +38,233 @@ def get_version():
 
 MOD_VERSION = get_version()
 GAME_ROOT = SCRIPT_DIR.parent
-APP_EXTRACTED = GAME_ROOT / "resources" / "app_extracted"
+RESOURCES = GAME_ROOT / "resources"
+APP_EXTRACTED = RESOURCES / "app_extracted"
+APP_ASAR = RESOURCES / "app.asar"
+APP_ASAR_VANILLA = RESOURCES / "app.asar.vanilla"
 JS_ROOT = APP_EXTRACTED / "src" / "js"
+
+# ============================================================================
+# VANILLA BACKUP & EXTRACTION - Clean-slate mod installation
+# ============================================================================
+# Mod markers to detect if game is already modded
+MOD_MARKERS = [
+    'speedFactor === 10',        # Speed mod in Game.js
+    'PAUSE MICROMANAGEMENT',      # Pause micro comment in Game.js
+    'calculateAsymptoticSpeed',   # Level uncap in Pokemon.js
+    'ENDLESS MODE',               # Endless mode markers
+    'isShinyEgg',                 # Shiny eggs in Shop.js
+    '// 1 in 30 chance',         # Shiny starters
+]
+
+def is_game_modded(check_asar=False):
+    """
+    Check if the game has mod markers (already modded).
+    
+    Args:
+        check_asar: If True and app_extracted doesn't exist, extract to temp and check.
+                    This is slower but more accurate.
+    
+    Returns:
+        bool: True if mod markers are detected.
+    """
+    # First check app_extracted if it exists
+    if APP_EXTRACTED.exists():
+        # Check Game.js for most reliable markers
+        game_js = JS_ROOT / "game" / "Game.js"
+        if game_js.exists():
+            try:
+                content = game_js.read_text(encoding='utf-8')
+                for marker in MOD_MARKERS[:3]:  # Check speed, pause, and asymptotic markers
+                    if marker in content:
+                        return True
+            except Exception:
+                pass
+        
+        # Check Pokemon.js
+        pokemon_js = JS_ROOT / "game" / "component" / "Pokemon.js"
+        if pokemon_js.exists():
+            try:
+                content = pokemon_js.read_text(encoding='utf-8')
+                if 'calculateAsymptoticSpeed' in content:
+                    return True
+            except Exception:
+                pass
+        
+        # Check Shop.js for shiny marker
+        shop_js = JS_ROOT / "game" / "core" / "Shop.js"
+        if shop_js.exists():
+            try:
+                content = shop_js.read_text(encoding='utf-8')
+                if 'isShinyEgg' in content:
+                    return True
+            except Exception:
+                pass
+    
+    # If app_extracted doesn't exist and we want to check asar, extract to temp
+    elif check_asar and APP_ASAR.exists():
+        import tempfile
+        temp_dir = Path(tempfile.mkdtemp(prefix="pokepath_check_"))
+        try:
+            # Quick extraction using asar module
+            creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            result = subprocess.run(
+                ['node', '-e', f'''
+const asar = require('@electron/asar');
+asar.extractAll({repr(str(APP_ASAR))}, {repr(str(temp_dir))});
+'''],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                creationflags=creationflags,
+                cwd=str(SCRIPT_DIR)
+            )
+            
+            if result.returncode == 0:
+                # Check extracted temp files for markers
+                temp_game_js = temp_dir / "src" / "js" / "game" / "Game.js"
+                if temp_game_js.exists():
+                    content = temp_game_js.read_text(encoding='utf-8')
+                    for marker in MOD_MARKERS[:3]:
+                        if marker in content:
+                            return True
+        except Exception:
+            pass
+        finally:
+            # Clean up temp dir
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception:
+                pass
+    
+    return False
+
+def ensure_vanilla_backup():
+    """
+    Ensure we have a vanilla backup of app.asar.
+    
+    Returns:
+        tuple: (success: bool, message: str)
+        
+    If app.asar.vanilla exists, returns True (we have a backup).
+    If it doesn't exist:
+      - Check if current app.asar appears modded (via app_extracted markers)
+      - If modded, return False with warning (don't backup a modded asar!)
+      - If vanilla, copy app.asar -> app.asar.vanilla
+    """
+    if APP_ASAR_VANILLA.exists():
+        print(f"  [OK] Vanilla backup exists: {APP_ASAR_VANILLA.name}")
+        return True, "Vanilla backup exists"
+    
+    if not APP_ASAR.exists():
+        return False, f"app.asar not found at {APP_ASAR}"
+    
+    # Check if game appears already modded (check extracted files or asar itself)
+    if is_game_modded(check_asar=True):
+        return False, (
+            "Cannot create vanilla backup - game appears already modded!\n"
+            "Please reinstall the vanilla game first, then run the mod installer.\n"
+            "Your save data is safe (stored separately in browser data)."
+        )
+    
+    # Create backup
+    print(f"  [*] Creating vanilla backup: {APP_ASAR_VANILLA.name}")
+    try:
+        shutil.copy2(APP_ASAR, APP_ASAR_VANILLA)
+        print(f"  [OK] Vanilla backup created ({APP_ASAR_VANILLA.stat().st_size // 1024 // 1024}MB)")
+        return True, "Vanilla backup created"
+    except Exception as e:
+        return False, f"Failed to create backup: {e}"
+
+def extract_from_vanilla(progress_callback=None):
+    """
+    Extract game files from app.asar.vanilla for a clean slate.
+    
+    Always extracts from .vanilla (not .asar) to ensure clean state.
+    Deletes app_extracted/ first if it exists.
+    
+    Args:
+        progress_callback: Optional callback(current, total, message)
+    
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    source = APP_ASAR_VANILLA if APP_ASAR_VANILLA.exists() else APP_ASAR
+    
+    if not source.exists():
+        return False, f"Source asar not found: {source}"
+    
+    source_name = "vanilla backup" if source == APP_ASAR_VANILLA else "app.asar (no vanilla backup)"
+    
+    # Delete existing extraction
+    if APP_EXTRACTED.exists():
+        print(f"  [*] Removing old extraction...")
+        if progress_callback:
+            progress_callback(0, 1, "Removing old extraction...")
+        try:
+            shutil.rmtree(APP_EXTRACTED)
+        except Exception as e:
+            return False, f"Failed to remove old extraction: {e}"
+    
+    # Extract from source
+    print(f"  [*] Extracting from {source_name}...")
+    if progress_callback:
+        progress_callback(0, 1, f"Extracting from {source_name}...")
+    
+    creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+    
+    # Try local extract script first
+    extract_script = SCRIPT_DIR / "extract_game.js"
+    if extract_script.exists():
+        try:
+            # Modify the script path for vanilla extraction
+            result = subprocess.run(
+                ['node', '-e', f'''
+const asar = require('@electron/asar');
+const path = require('path');
+const source = {repr(str(source))};
+const dest = {repr(str(APP_EXTRACTED))};
+asar.extractAll(source, dest);
+console.log('OK: Extracted to', dest);
+'''],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                creationflags=creationflags,
+                cwd=str(SCRIPT_DIR)
+            )
+            if result.returncode == 0 and 'OK:' in result.stdout:
+                print(f"  [OK] Extracted successfully from {source_name}")
+                return True, f"Extracted from {source_name}"
+        except Exception as e:
+            print(f"  [WARN] Node extraction failed, trying npx: {e}")
+    
+    # Fallback to npx
+    try:
+        if sys.platform == 'win32':
+            cmd = ['cmd', '/c', 'npx', 'asar', 'extract', str(source), str(APP_EXTRACTED)]
+        else:
+            cmd = ['npx', 'asar', 'extract', str(source), str(APP_EXTRACTED)]
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            creationflags=creationflags
+        )
+        
+        if result.returncode == 0:
+            print(f"  [OK] Extracted successfully from {source_name}")
+            return True, f"Extracted from {source_name}"
+        else:
+            return False, f"npx asar extract failed: {result.stderr}"
+    except subprocess.TimeoutExpired:
+        return False, "Extraction timed out after 5 minutes"
+    except FileNotFoundError:
+        return False, "npx not found - make sure Node.js is installed"
+    except Exception as e:
+        return False, f"Extraction failed: {e}"
 
 # Track applied mods
 applied_mods = []
@@ -1168,6 +1395,12 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     """
     Apply only selected mod features.
     
+    Flow:
+    1. Ensure vanilla backup exists (create from app.asar if needed)
+    2. Extract fresh from vanilla backup (clean slate every time)
+    3. Apply selected mod features
+    4. Repack into app.asar
+    
     Args:
         selected_features: List of feature keys from MOD_FEATURES
         progress_callback: Optional callback(current, total, message) for GUI progress
@@ -1179,8 +1412,23 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     applied_mods = []
     failed_mods = []
     
-    if not APP_EXTRACTED.exists():
-        return False, [], ["Game not extracted - run extraction first"]
+    # Step 1: Ensure vanilla backup
+    print("\n[*] Checking vanilla backup...")
+    if progress_callback:
+        progress_callback(0, 1, "Checking vanilla backup...")
+    
+    backup_ok, backup_msg = ensure_vanilla_backup()
+    if not backup_ok:
+        return False, [], [backup_msg]
+    
+    # Step 2: Extract fresh from vanilla
+    print("\n[*] Extracting vanilla game files...")
+    if progress_callback:
+        progress_callback(0, 1, "Extracting vanilla game files...")
+    
+    extract_ok, extract_msg = extract_from_vanilla(progress_callback)
+    if not extract_ok:
+        return False, [], [extract_msg]
     
     # Build list of functions to call
     functions_to_call = []
@@ -1198,6 +1446,9 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     
     total = len(unique_functions) + 1  # +1 for repack
     current = 0
+    
+    # Step 3: Apply selected mods
+    print("\n[*] Applying selected mods...")
     
     # Get function references from globals
     for func_name in unique_functions:
@@ -1224,9 +1475,6 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
 
 def _repack_game():
     """Repack the game asar. Returns True on success."""
-    import subprocess
-    import sys
-    
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
     
     # Try local repack script first (more reliable)
@@ -1296,13 +1544,6 @@ def main():
     print(f"    PokePath TD Mod Applier v{MOD_VERSION}")
     print("=" * 50 + "\n")
     
-    if not APP_EXTRACTED.exists():
-        print("ERROR: Game not extracted.")
-        print(f"Expected: {APP_EXTRACTED}")
-        print("\nRun extraction first:")
-        print('  npx asar extract "resources\\app.asar" "resources\\app_extracted"')
-        return
-    
     # Check for patches folder
     patches_dir = SCRIPT_DIR / "patches"
     if not patches_dir.exists():
@@ -1311,7 +1552,21 @@ def main():
         print("\nThe patches folder contains the modded game files.")
         return
     
-    print("[*] Applying all mods...\n")
+    # Step 1: Ensure vanilla backup
+    print("[*] Checking vanilla backup...")
+    backup_ok, backup_msg = ensure_vanilla_backup()
+    if not backup_ok:
+        print(f"\nERROR: {backup_msg}")
+        return
+    
+    # Step 2: Extract fresh from vanilla
+    print("\n[*] Extracting vanilla game files...")
+    extract_ok, extract_msg = extract_from_vanilla()
+    if not extract_ok:
+        print(f"\nERROR: {extract_msg}")
+        return
+    
+    print("\n[*] Applying all mods...\n")
     
     # Apply all mods in order
     apply_devtools()  # Enable F12/Ctrl+Shift+I for debugging
@@ -1362,10 +1617,6 @@ def main():
     
     # Repack
     print("\n[*] Repacking game...")
-    import subprocess
-    import sys
-    
-    # Use proper flags to prevent hanging on Windows
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
     
     try:

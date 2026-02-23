@@ -521,49 +521,17 @@ class ModInstaller(tk.Tk):
                 if not success:
                     raise Exception(f"Failed to install dependencies.\n\nRun manually in mods folder:\n  npm install\n\nError: {stderr[:200]}")
             
-            # Step 1: Check if game needs extraction
-            app_extracted = RESOURCES / "app_extracted"
+            # Verify app.asar exists
             app_asar = RESOURCES / "app.asar"
+            if not app_asar.exists():
+                raise Exception(f"app.asar not found!\n\nExpected at: {app_asar}\n\nMake sure the mods folder is inside the game directory.")
             
-            if not app_extracted.exists():
-                self.after(0, lambda: self.set_status("Extracting game files (this may take a minute)...", '#4ecca3'))
-                
-                # Verify app.asar exists first
-                if not app_asar.exists():
-                    raise Exception(f"app.asar not found!\n\nExpected at: {app_asar}\n\nMake sure the mods folder is inside the game directory.")
-                
-                # Use local extract_game.js script (more reliable than npx)
-                extract_script = SCRIPT_DIR / "extract_game.js"
-                if extract_script.exists():
-                    success, stdout, stderr = run_command(
-                        ['node', str(extract_script)],
-                        cwd=SCRIPT_DIR,
-                        timeout=300
-                    )
-                else:
-                    # Fallback to npx if script missing
-                    success, stdout, stderr = run_npx_command(
-                        ['asar', 'extract', 'app.asar', 'app_extracted'],
-                        cwd=RESOURCES,
-                        timeout=300
-                    )
-                
-                if not success:
-                    # Provide more helpful error messages
-                    combined = stdout + stderr
-                    if 'ENOENT' in combined or 'not found' in combined.lower():
-                        raise Exception(f"Extraction failed - file not found.\n\nMake sure:\n• The game is installed\n• Mods folder is in the game directory\n\nDetails: {combined[:200]}")
-                    elif 'permission' in combined.lower() or 'access' in combined.lower():
-                        raise Exception(f"Extraction failed - permission denied.\n\nTry:\n• Close the game completely\n• Run as Administrator\n\nDetails: {combined[:200]}")
-                    elif 'not installed' in combined.lower():
-                        raise Exception(f"Dependencies missing.\n\nRun in mods folder:\n  npm install\n\nDetails: {combined[:200]}")
-                    elif 'timeout' in combined.lower():
-                        raise Exception("Extraction timed out after 5 minutes.\n\nTry running the installer again.")
-                    else:
-                        raise Exception(f"Failed to extract game files.\n\nError: {combined[:300]}")
+            # Steps 1 & 2 are now handled by apply_selected_mods():
+            # - ensure_vanilla_backup() creates app.asar.vanilla if needed
+            # - extract_from_vanilla() re-extracts every time for clean slate
             
-            # Step 2: Apply selected mods
-            self.after(0, lambda: self.set_status("Applying selected mods...", '#4ecca3'))
+            # Apply selected mods (includes backup + extraction)
+            self.after(0, lambda: self.set_status("Preparing vanilla backup...", '#4ecca3'))
             
             # Import and run apply_selected_mods with selected features
             sys.path.insert(0, str(SCRIPT_DIR))
@@ -578,6 +546,13 @@ class ModInstaller(tk.Tk):
             )
             
             if not success:
+                # Check for specific error messages from backup/extract
+                if failed:
+                    first_error = failed[0]
+                    if "vanilla backup" in first_error.lower() or "reinstall" in first_error.lower():
+                        raise Exception(first_error)
+                    elif "extraction" in first_error.lower():
+                        raise Exception(first_error)
                 raise Exception(f"Failed to apply mods. Applied: {len(applied)}, Failed: {len(failed)}")
             
             # Check for failures
