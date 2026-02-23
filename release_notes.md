@@ -2,6 +2,8 @@
 
 **Compatible with PokePath TD v1.4.4**
 
+> :rotating_light: **Updating from a previous mod version?** You must install on a clean vanilla game. Uninstall PokePath TD, reinstall from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded copy — new features depend on clean game files. Your save data is preserved automatically.
+
 ### What's New in Latest Update (v1.4.4)
 
 #### :floppy_disk: Save Management (NEW)

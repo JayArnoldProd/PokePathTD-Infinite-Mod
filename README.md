@@ -8,6 +8,9 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 
 > **v1.4.4 Update:** Compatible with latest game version. Merged all 1.4.4 changes including Pokemon stat rebalancing (30+ Pokemon), new abilities (Grassy Terrain, Vigilant-Frisk, Armor Breaker Splash), item changes (Wide Lens, Leftovers, etc.), pause improvements, and bug fixes. All mod features preserved.
 
+> ### 🚨 Updating from a previous mod version? READ THIS!
+> **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
+
 ---
 
 ## 🎮 Features
@@ -115,6 +118,8 @@ A graphical save editor with full control over your game:
 > Both should show version numbers. If either says "not found", reinstall and make sure to add to PATH.
 >
 ## 📦 Installation
+
+> **🚨 If updating from a previous mod version:** Uninstall PokePath TD, reinstall the vanilla game, then install the mod fresh. Do NOT install over a previously modded copy.
 
 **⚠️ WARNING:** Back up your save prior to installation!
 
