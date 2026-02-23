@@ -328,8 +328,15 @@ class FeatureSelectionDialog(tk.Toplevel):
         selected = [key for key, var in self.feature_vars.items() if var.get()]
         
         if not selected:
-            messagebox.showwarning("No Selection", "Please select at least one feature to install.")
-            return
+            confirm = messagebox.askyesno(
+                "Restore Vanilla?", 
+                "No features selected.\n\n"
+                "This will restore the game to its original unmodded state.\n"
+                "Your save data is safe.\n\n"
+                "Continue?"
+            )
+            if not confirm:
+                return
         
         self.destroy()
         self.on_confirm(selected)
@@ -588,11 +595,18 @@ class ModInstaller(tk.Tk):
     
     def on_install_success(self):
         """Handle successful installation."""
-        self.set_status("✅ Mods installed successfully! Restart the game.", '#4ecca3')
-        messagebox.showinfo(
-            "Success!", 
-            "Mods installed successfully!\n\nRestart PokePath TD to play."
-        )
+        if hasattr(self, 'selected_features') and not self.selected_features:
+            self.set_status("✅ Game restored to vanilla! Restart the game.", '#4ecca3')
+            messagebox.showinfo(
+                "Restored!", 
+                "Game restored to vanilla (unmodded) state!\n\nRestart PokePath TD to play."
+            )
+        else:
+            self.set_status("✅ Mods installed successfully! Restart the game.", '#4ecca3')
+            messagebox.showinfo(
+                "Success!", 
+                "Mods installed successfully!\n\nRestart PokePath TD to play."
+            )
     
     def on_install_error(self, error_msg):
         """Handle installation error."""
