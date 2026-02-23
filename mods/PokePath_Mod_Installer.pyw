@@ -279,6 +279,7 @@ class FeatureSelectionDialog(tk.Toplevel):
                 frame, 
                 text=feature_info['name'],
                 variable=var,
+                command=self.update_install_button,
                 font=('Segoe UI', 11, 'bold'),
                 fg='#4ecca3',
                 bg='#252540',
@@ -302,7 +303,7 @@ class FeatureSelectionDialog(tk.Toplevel):
             desc.pack(anchor='w', padx=(25, 10), fill='x')
         
         # Install button
-        tk.Button(
+        self.install_btn = tk.Button(
             self,
             text="⚡ Install Selected",
             font=('Segoe UI', 14, 'bold'),
@@ -314,15 +315,26 @@ class FeatureSelectionDialog(tk.Toplevel):
             width=20,
             height=2,
             command=self.confirm_install
-        ).pack(pady=15)
+        )
+        self.install_btn.pack(pady=15)
     
     def select_all(self):
         for var in self.feature_vars.values():
             var.set(True)
+        self.update_install_button()
     
     def deselect_all(self):
         for var in self.feature_vars.values():
             var.set(False)
+        self.update_install_button()
+    
+    def update_install_button(self):
+        """Update install button text based on selection state."""
+        any_selected = any(var.get() for var in self.feature_vars.values())
+        if any_selected:
+            self.install_btn.config(text="⚡ Install Selected", bg='#4ecca3', fg='#1a1a2e')
+        else:
+            self.install_btn.config(text="🔄 Restore Vanilla", bg='#e94560', fg='white')
     
     def confirm_install(self):
         selected = [key for key, var in self.feature_vars.items() if var.get()]
