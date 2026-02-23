@@ -55,6 +55,67 @@ RESOURCES = GAME_ROOT / 'resources'
 MOD_FLAG = RESOURCES / '.modded'
 
 
+def _migrate_save_via_api():
+    """
+    Migrate vanilla save to modded location using save_helper.js export/import.
+    
+    This reads the save through LevelDB's proper API (export from vanilla),
+    then writes it through the API (import to modded). This avoids raw file
+    copy issues where LevelDB write-ahead logs may not replay correctly,
+    which can cause subtle data corruption (e.g. starter not removed from egg shop).
+    
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    save_helper = SCRIPT_DIR / 'save_helper.js'
+    if not save_helper.exists():
+        return False, "save_helper.js not found"
+    
+    creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    temp_save = SCRIPT_DIR / 'current_save.json'
+    
+    # Step 1: Export from vanilla save
+    try:
+        result = subprocess.run(
+            ['node', str(save_helper), 'export'],  # no --modded = vanilla
+            capture_output=True, text=True, timeout=30,
+            creationflags=creationflags, cwd=str(SCRIPT_DIR)
+        )
+        if result.returncode != 0 or 'OK:' not in result.stdout:
+            return False, f"Export failed: {result.stderr.strip() or result.stdout.strip()}"
+    except subprocess.TimeoutExpired:
+        return False, "Export timed out"
+    except FileNotFoundError:
+        return False, "Node.js not found"
+    
+    # Verify export produced a file
+    if not temp_save.exists():
+        return False, "Export succeeded but no save file produced"
+    
+    # Step 2: Ensure modded userData directory exists
+    _mkdir_native(MODDED_SAVE.parent)
+    
+    # Step 3: Import to modded save
+    try:
+        result = subprocess.run(
+            ['node', str(save_helper), 'import', '--modded'],
+            capture_output=True, text=True, timeout=30,
+            creationflags=creationflags, cwd=str(SCRIPT_DIR)
+        )
+        if result.returncode != 0 or 'OK:' not in result.stdout:
+            return False, f"Import failed: {result.stderr.strip() or result.stdout.strip()}"
+    except subprocess.TimeoutExpired:
+        return False, "Import timed out"
+    
+    # Clean up temp file
+    try:
+        temp_save.unlink()
+    except Exception:
+        pass
+    
+    return True, "Vanilla save migrated to modded location via LevelDB API"
+
+
 def _copy_dir_native(src, dest):
     """
     Copy a directory using cmd.exe robocopy to bypass Microsoft Store Python's
@@ -180,19 +241,28 @@ def setup_modded_saves():
         print("  [OK] Modded save already exists with game data, keeping existing progress")
         return True, "Modded save already exists"
     
-    # If vanilla save exists, copy it to modded location
+    # If vanilla save exists, migrate it to modded location via LevelDB API
+    # Using save_helper.js export/import ensures data integrity (no raw file copy issues)
     if vanilla_has_data:
-        print("  [*] Copying vanilla save to modded location...")
+        print("  [*] Migrating vanilla save to modded location via LevelDB API...")
         try:
-            success = _copy_dir_native(VANILLA_SAVE, MODDED_SAVE)
+            success, msg = _migrate_save_via_api()
             if success:
                 set_mod_flag()
-                print("  [OK] Vanilla save copied to modded location")
-                return True, "Save data copied to modded location"
+                print(f"  [OK] {msg}")
+                return True, msg
             else:
-                return False, "Failed to copy save via native command"
+                print(f"  [WARN] API migration failed: {msg}")
+                # Fallback to raw copy
+                print("  [*] Falling back to raw file copy...")
+                copy_ok = _copy_dir_native(VANILLA_SAVE, MODDED_SAVE)
+                if copy_ok:
+                    set_mod_flag()
+                    print("  [OK] Vanilla save copied to modded location (raw copy)")
+                    return True, "Save data copied (raw fallback)"
+                return False, f"Both migration methods failed: {msg}"
         except Exception as e:
-            return False, f"Failed to copy save: {e}"
+            return False, f"Failed to migrate save: {e}"
     
     # No vanilla save (fresh install) - just create directory and set flag
     print("  [SKIP] No vanilla save found (fresh install)")

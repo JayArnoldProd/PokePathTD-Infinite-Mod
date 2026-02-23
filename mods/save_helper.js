@@ -19,8 +19,13 @@ async function main() {
     const cmd = process.argv.filter(a => !a.startsWith('--'))[2];
     
     if (!fs.existsSync(LEVELDB_PATH)) {
-        console.error('ERROR: Game save not found at', LEVELDB_PATH);
-        process.exit(1);
+        if (cmd === 'import') {
+            // Create directory for import (first-time modded save setup)
+            fs.mkdirSync(LEVELDB_PATH, { recursive: true });
+        } else {
+            console.error('ERROR: Game save not found at', LEVELDB_PATH);
+            process.exit(1);
+        }
     }
     
     const db = new Level(LEVELDB_PATH, { valueEncoding: 'buffer' });
