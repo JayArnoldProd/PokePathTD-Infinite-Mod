@@ -119,7 +119,7 @@ A graphical save editor with full control over your game:
 **⚠️ WARNING:** Back up your save prior to installation!
 
 ### Steps
-1. **Download** — Click the green **Code** button → **Download ZIP**, or download from [Releases](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases)
+1. **Download** from [Releases](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases) (recommended) or click **Code → Download ZIP**
 
 2. **Extract the zip** anywhere, then copy the `mods` folder into your game directory:
    ```
@@ -139,9 +139,16 @@ A graphical save editor with full control over your game:
 
 4. **Run `mods\PokePath_Mod_Installer.pyw`** (double-click it)
 
-5. **Click "Install Mods"**
+5. **Select your features** and click **"Install Selected"**
 
 6. **Restart the game** — enjoy!
+
+### 🔄 Restore Vanilla / Change Features
+You can **re-run the installer at any time** to change your mod configuration:
+- **Add/remove individual features** — just check/uncheck and reinstall
+- **Fully uninstall the mod** — deselect all features and the button changes to **"Restore Vanilla"**, which restores your game to its original unmodded state
+- **Your save data is always safe** — saves are stored separately and never touched by the installer
+- **No need to reinstall the game** — the installer keeps a backup of your vanilla game files and re-extracts from it every time, so you can freely switch between modded and unmodded
 
 ---
 
