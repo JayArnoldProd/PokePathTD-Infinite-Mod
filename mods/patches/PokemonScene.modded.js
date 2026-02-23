@@ -606,16 +606,17 @@ export class PokemonScene extends GameScene {
 	}
 
 	// Range calculation with logarithmic scaling past level 100
+	// Freezes linear component at level 100, then applies log multiplier
 	// 1x at 100, 3x at 1000
 	calculatePreviewRange(base, scale, level) {
-		const baseRange = Math.floor(base + (scale * level));
 		if (level <= 100) {
-			return baseRange;
+			return Math.floor(base + (scale * level));
 		}
-		// Logarithmic scaling: 1x at 100, 3x at 1000
+		// Freeze linear growth at level 100 value
+		const range100 = base + (scale * 100);
 		const scaleFactor = 2 / Math.log2(10); // ~0.602
 		const rangeMultiplier = 1 + Math.log2(level / 100) * scaleFactor;
-		return Math.floor(baseRange * rangeMultiplier);
+		return Math.floor(range100 * rangeMultiplier);
 	}
 
 	// Crit calculation with asymptotic approach to 100%
