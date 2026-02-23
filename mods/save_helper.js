@@ -9,12 +9,14 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const LEVELDB_PATH = path.join(os.homedir(), 'AppData/Roaming/pokePathTD_Electron/Local Storage/leveldb');
+const isModded = process.argv.includes('--modded');
+const APP_FOLDER = isModded ? 'pokePathTD_Electron_modded' : 'pokePathTD_Electron';
+const LEVELDB_PATH = path.join(os.homedir(), `AppData/Roaming/${APP_FOLDER}/Local Storage/leveldb`);
 const SAVE_KEY = '_file://\x00\x01data';
 const TEMP_FILE = path.join(__dirname, 'current_save.json');
 
 async function main() {
-    const cmd = process.argv[2];
+    const cmd = process.argv.filter(a => !a.startsWith('--'))[2];
     
     if (!fs.existsSync(LEVELDB_PATH)) {
         console.error('ERROR: Game save not found at', LEVELDB_PATH);

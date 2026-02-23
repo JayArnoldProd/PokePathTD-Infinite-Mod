@@ -97,6 +97,18 @@ TEMP_SAVE = SCRIPT_DIR / 'current_save.json'
 POKEMON_DATA_FILE = SCRIPT_DIR / 'dev' / 'pokemon_data.json'
 SAVE_HELPER = SCRIPT_DIR / 'save_helper.js'
 
+# Auto-detect if game is modded (uses separate save location)
+def _is_game_modded():
+    try:
+        from save_manager import is_modded
+        return is_modded()
+    except Exception:
+        # Fallback: check for .modded flag directly
+        flag = SCRIPT_DIR.parent / 'resources' / '.modded'
+        return flag.exists()
+
+IS_MODDED = _is_game_modded()
+
 # ============================================================================
 # SAVE DATA
 # ============================================================================
@@ -110,8 +122,11 @@ class SaveData:
         if not SAVE_HELPER.exists():
             return False
         try:
+            cmd = ['node', str(SAVE_HELPER), 'export']
+            if IS_MODDED:
+                cmd.append('--modded')
             result = subprocess.run(
-                ['node', str(SAVE_HELPER), 'export'],
+                cmd,
                 capture_output=True, text=True, cwd=str(SCRIPT_DIR),
                 encoding='utf-8', errors='replace'
             )
@@ -131,8 +146,11 @@ class SaveData:
         try:
             with open(TEMP_SAVE, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f)
+            cmd = ['node', str(SAVE_HELPER), 'import']
+            if IS_MODDED:
+                cmd.append('--modded')
             result = subprocess.run(
-                ['node', str(SAVE_HELPER), 'import'],
+                cmd,
                 capture_output=True, text=True, cwd=str(SCRIPT_DIR),
                 encoding='utf-8', errors='replace'
             )

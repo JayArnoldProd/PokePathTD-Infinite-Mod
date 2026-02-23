@@ -422,6 +422,18 @@ class ModInstaller(tk.Tk):
         )
         self.mod_btn.pack(pady=8)
         
+        # Restore Vanilla button (red) - only shown when modded
+        self.restore_btn = tk.Button(
+            btn_frame,
+            text="🔄 Restore Vanilla",
+            bg='#e94560',
+            fg='white',
+            activebackground='#d83550',
+            activeforeground='white',
+            command=self.restore_vanilla_async,
+            **btn_style
+        )
+        
         # Save Editor button (blue)
         self.editor_btn = tk.Button(
             btn_frame,
@@ -448,6 +460,9 @@ class ModInstaller(tk.Tk):
         )
         self.exit_btn.pack(pady=8)
         
+        # Show/hide restore button based on mod state
+        self.update_restore_button()
+        
         # Status label
         self.status = tk.Label(
             self,
@@ -458,6 +473,57 @@ class ModInstaller(tk.Tk):
             wraplength=380
         )
         self.status.pack(side='bottom', pady=15)
+    
+    def update_restore_button(self):
+        """Show restore button only when game is modded."""
+        try:
+            sys.path.insert(0, str(SCRIPT_DIR))
+            from save_manager import is_modded
+            if is_modded():
+                self.restore_btn.pack(pady=8, before=self.editor_btn)
+                self.geometry("400x420")
+            else:
+                self.restore_btn.pack_forget()
+                self.geometry("400x350")
+        except Exception:
+            self.restore_btn.pack_forget()
+    
+    def restore_vanilla_async(self):
+        """Restore game to vanilla state."""
+        if self.is_working:
+            return
+        
+        confirm = messagebox.askyesno(
+            "Restore Vanilla?",
+            "This will restore the game to its original unmodded state.\n\n"
+            "Your modded save data will be kept for future use.\n\n"
+            "Continue?"
+        )
+        if not confirm:
+            return
+        
+        self.is_working = True
+        self.set_buttons_enabled(False)
+        self.set_status("Restoring vanilla...", '#e94560')
+        
+        def worker():
+            try:
+                from save_manager import restore_vanilla
+                success, msg = restore_vanilla()
+                if success:
+                    self.after(0, lambda: self.set_status("✅ Game restored to vanilla!", '#4ecca3'))
+                    self.after(0, lambda: messagebox.showinfo("Restored!", "Game restored to vanilla.\nRestart PokePath TD to play."))
+                    self.after(0, self.update_restore_button)
+                else:
+                    self.after(0, lambda: self.set_status(f"❌ {msg}", '#e94560'))
+                    self.after(0, lambda m=msg: messagebox.showerror("Error", m))
+            except Exception as e:
+                self.after(0, lambda: self.set_status(f"❌ {e}", '#e94560'))
+            finally:
+                self.is_working = False
+                self.after(0, lambda: self.set_buttons_enabled(True))
+        
+        threading.Thread(target=worker, daemon=True).start()
     
     def check_requirements_async(self):
         """Check requirements in background thread."""
@@ -498,9 +564,11 @@ class ModInstaller(tk.Tk):
         state = 'normal' if enabled else 'disabled'
         bg_mod = '#4ecca3' if enabled else '#666666'
         bg_editor = '#4a90d9' if enabled else '#666666'
+        bg_restore = '#e94560' if enabled else '#666666'
         
         self.mod_btn.config(state=state, bg=bg_mod)
         self.editor_btn.config(state=state, bg=bg_editor)
+        self.restore_btn.config(state=state, bg=bg_restore)
     
     def install_mods_async(self):
         """Open feature selection dialog, then run mod installation."""
@@ -619,6 +687,7 @@ class ModInstaller(tk.Tk):
                 "Success!", 
                 "Mods installed successfully!\n\nRestart PokePath TD to play."
             )
+        self.update_restore_button()
     
     def on_install_error(self, error_msg):
         """Handle installation error."""

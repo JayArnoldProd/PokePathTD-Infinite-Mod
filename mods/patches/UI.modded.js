@@ -223,10 +223,10 @@ export class UI {
 			})
 		}
 
-		this.pokemon[6].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>40`;
-		this.pokemon[7].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>160`;
-		this.pokemon[8].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>320`;
-		this.pokemon[9].stars.innerHTML = `<span class="lock">≡ƒöÆ</span><br><span class="msrre">⭐</span>540`;
+		this.pokemon[6].stars.innerHTML = `<span class="lock">🔒</span><br><span class="msrre">⭐</span>40`;
+		this.pokemon[7].stars.innerHTML = `<span class="lock">🔒</span><br><span class="msrre">⭐</span>160`;
+		this.pokemon[8].stars.innerHTML = `<span class="lock">🔒</span><br><span class="msrre">⭐</span>320`;
+		this.pokemon[9].stars.innerHTML = `<span class="lock">🔒</span><br><span class="msrre">⭐</span>540`;
 
 		this.mapPanel = new Element(this.main.scene, { className: 'ui-map-panel' }).element;
 
@@ -296,7 +296,7 @@ export class UI {
 		this.autoWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
 		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());
 
-		this.speedWave = new Element(this.mapPanel, { className: 'ui-speed-wave', text: '≡ƒÜÇ' }).element;
+		this.speedWave = new Element(this.mapPanel, { className: 'ui-speed-wave', text: '🚀' }).element;
 		this.speedWave.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 		this.speedWave.addEventListener('click', () => { this.main.game.toggleSpeed() });
 

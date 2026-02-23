@@ -320,7 +320,7 @@ MOD_FEATURES = {
     'ui': {
         'name': 'UI Improvements',
         'description': 'Item tooltips, save/load tooltips, and visual polish',
-        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix'],
+        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix'],
         'default': True,
     },
     'box_expansion': {
@@ -663,10 +663,12 @@ def apply_shiny_reveal():
 		this.prompt = new Element(this.container, { className: 'dp-scene-prompt' }).element;
 		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
+		// Scale up the Pokemon sprite 2.5x (100px = 40px * 2.5)
+		this.image.style.cssText = 'width:100px;height:100px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
-		this.shinySymbol.innerHTML = 'âœ¨';
+		this.shinySymbol.innerHTML = '<span class="msrre">✨</span>';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
 		
 		// Add pulse animation keyframe if not exists
@@ -692,7 +694,11 @@ def apply_shiny_reveal():
     
     new_update = """	update() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt.innerText = this.isShinyReveal ? 'â­ SHINY! â­' : text.shop.new[this.main.lang].toUpperCase();
+		if (this.isShinyReveal) {
+			this.prompt.innerHTML = '<span class="msrre">\u2b50</span> SHINY! <span class="msrre">\u2b50</span>';
+		} else {
+			this.prompt.innerText = text.shop.new[this.main.lang].toUpperCase();
+		}
 		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
 		this.pokemonName.style.color = this.pokemon.specie.color;
 		this.image.style.backgroundImage = `url("${this.pokemon.sprite.base}")`;
@@ -1285,6 +1291,53 @@ def apply_emoji_font_fix():
     return False
 
 # ============================================================================
+# UI.CSS - Fix emoji rendering for lock icon and speed button
+# ============================================================================
+def apply_ui_emoji_font_fix():
+    """Add emoji font-family to .lock and .ui-speed-wave so 🔒 and 🚀 render correctly."""
+    path = APP_EXTRACTED / "src" / "css" / "ui.css"
+    content = read_file(path)
+    
+    emoji_font = "font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;"
+    changes = 0
+    
+    # Fix .lock class
+    if '.lock {' in content and "'Segoe UI Emoji'" not in content.split('.lock {')[1].split('}')[0]:
+        old_lock = ".lock {\n\tfilter: grayscale(50%);\n\topacity: 0.8;\n\tline-height: 66px;\n\tfont-size: 30px;\n}"
+        new_lock = f".lock {{\n\tfilter: grayscale(50%);\n\topacity: 0.8;\n\tline-height: 66px;\n\tfont-size: 30px;\n\t{emoji_font}\n}}"
+        if old_lock in content:
+            content = content.replace(old_lock, new_lock)
+            changes += 1
+        else:
+            # Regex fallback
+            pattern = r'(\.lock\s*\{[^}]*)(})'
+            match = re.search(pattern, content)
+            if match and "'Segoe UI Emoji'" not in match.group(1):
+                content = content[:match.end(1)] + f"\n\t{emoji_font}\n" + content[match.start(2):]
+                changes += 1
+    
+    # Fix .ui-speed-wave class
+    speed_section = content.split('.ui-speed-wave,')[0] if '.ui-speed-wave,' in content else ''
+    # The speed-wave shares a rule with pause-wave, then has its own. Add to shared rule.
+    shared_pattern = r'(\.ui-speed-wave,\s*\.ui-pause-wave\s*\{[^}]*)(})'
+    match = re.search(shared_pattern, content)
+    if match and "'Segoe UI Emoji'" not in match.group(1):
+        content = content[:match.end(1)] + f"\n\t{emoji_font}\n" + content[match.start(2):]
+        changes += 1
+    
+    if changes > 0:
+        write_file(path, content)
+        log_success(f"ui.css: Emoji font fix ({changes} rules)")
+        return True
+    
+    if "'Segoe UI Emoji'" in content:
+        log_skip("ui.css: Emoji font fix")
+        return True
+    
+    log_fail("ui.css: Emoji font fix")
+    return False
+
+# ============================================================================
 # ITEMDATA.JS - Unlock hidden/WIP items (Magma Stone)
 # ============================================================================
 def apply_hidden_items():
@@ -1391,6 +1444,59 @@ def apply_hidden_items():
     return True
 
 
+def apply_modded_userdata_redirect():
+    """Inject app.setPath('userData', ...) into Electron main.js to redirect saves to modded location."""
+    path = APP_EXTRACTED / "main.js"
+    content = read_file(path)
+    
+    # Idempotency check
+    if 'pokePathTD_Electron_modded' in content:
+        log_skip("main.js: userData redirect (already applied)")
+        return True
+    
+    # Inject after app import / at the top of the file, after require statements
+    # Find the first app.on or app.whenReady or BrowserWindow creation
+    inject_code = """
+// === MODDED USERDATA REDIRECT ===
+// Redirect userData to separate modded location to preserve vanilla saves
+const { app } = require('electron');
+const moddedPath = require('path').join(app.getPath('appData'), 'pokePathTD_Electron_modded');
+app.setPath('userData', moddedPath);
+// === END REDIRECT ===
+"""
+    
+    # Insert after the first line (shebang or 'use strict' or first require)
+    # Find a safe insertion point - after existing require('electron') or at top
+    if "require('electron')" in content or 'require("electron")' in content:
+        # Insert the setPath call after existing electron require
+        # Find the line with require('electron') and insert after it
+        lines = content.split('\n')
+        insert_idx = 0
+        for i, line in enumerate(lines):
+            if 'require' in line and 'electron' in line:
+                insert_idx = i + 1
+                break
+        
+        # Just inject the setPath line (electron already imported)
+        redirect_line = "\n// === MODDED USERDATA REDIRECT ===\nconst __moddedPath = require('path').join(app.getPath('appData'), 'pokePathTD_Electron_modded');\napp.setPath('userData', __moddedPath);\n// === END REDIRECT ===\n"
+        
+        # Check if 'app' is destructured from require('electron')
+        electron_line = lines[insert_idx - 1]
+        if 'app' not in electron_line:
+            # app might be accessed differently, use full require
+            redirect_line = "\n// === MODDED USERDATA REDIRECT ===\nconst { app: __modApp } = require('electron');\nconst __moddedPath = require('path').join(__modApp.getPath('appData'), 'pokePathTD_Electron_modded');\n__modApp.setPath('userData', __moddedPath);\n// === END REDIRECT ===\n"
+        
+        lines.insert(insert_idx, redirect_line)
+        content = '\n'.join(lines)
+    else:
+        # No electron require found, prepend the full injection
+        content = inject_code + "\n" + content
+    
+    write_file(path, content)
+    log_success("main.js: userData redirect to pokePathTD_Electron_modded")
+    return True
+
+
 def apply_selected_mods(selected_features: list, progress_callback=None):
     """
     Apply only selected mod features.
@@ -1465,11 +1571,37 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         else:
             failed_mods.append(f"{func_name}: function not found")
     
-    # Repack
+    # Step 4: Always apply userData redirect when any mod is selected
+    if selected_features:
+        if progress_callback:
+            progress_callback(current + 1, total, "Applying userData redirect...")
+        try:
+            apply_modded_userdata_redirect()
+        except Exception as e:
+            failed_mods.append(f"userData redirect: {str(e)}")
+    
+    # Step 5: Repack
     if progress_callback:
         progress_callback(total, total, "Repacking game...")
     
     repack_success = _repack_game()
+    
+    # Step 6: Set up modded saves (after repack, so game files are ready)
+    if selected_features and repack_success:
+        if progress_callback:
+            progress_callback(total, total, "Setting up modded saves...")
+        try:
+            import importlib
+            import save_manager
+            importlib.reload(save_manager)
+            save_ok, save_msg = save_manager.setup_modded_saves()
+            print(f"  [INFO] Save setup result: success={save_ok}, msg={save_msg}")
+            if not save_ok:
+                print(f"  [WARN] Save setup: {save_msg}")
+        except Exception as e:
+            import traceback
+            print(f"  [WARN] Save manager error: {e}")
+            traceback.print_exc()
     
     return repack_success, applied_mods.copy(), failed_mods.copy()
 
@@ -1600,6 +1732,7 @@ def main():
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()
+    apply_ui_emoji_font_fix()
     
     # Unlock hidden items (Magma Stone)
     apply_hidden_items()

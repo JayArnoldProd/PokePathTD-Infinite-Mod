@@ -35,7 +35,7 @@ export class BoxScene extends GameScene {
 			this.nameChange.open(this.selected);
 		})
 
-		this.favoriteButton = new Element(this.container, { className: 'box-scene-favorite-button', text: 'â­' }).element;
+		this.favoriteButton = new Element(this.container, { className: 'box-scene-favorite-button', text: '⭐' }).element;
 
 		this.favoriteButton.addEventListener('click', () => {
 			playSound('hover2', 'ui')
@@ -204,7 +204,7 @@ export class BoxScene extends GameScene {
 			const poke = this.searchPokemon[i];
 
 			if (poke) {
-				if (poke.favorite) this.units[i].fav.innerHTML = "â­"; 
+				if (poke.favorite) this.units[i].fav.innerHTML = "⭐"; 
 				else this.units[i].fav.innerHTML = "";
 
 				if (poke?.item?.id == 'inverter') this.units[i].style.transform = `scale(1, -1)`;

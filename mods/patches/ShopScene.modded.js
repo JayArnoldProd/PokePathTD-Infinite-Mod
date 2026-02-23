@@ -112,11 +112,11 @@ class DisplayPokemon extends GameScene {
 		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
 		// Scale up the Pokemon sprite 3x (120px = 40px * 3), 10px lower
-		this.image.style.cssText = 'width:120px;height:120px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
+		this.image.style.cssText = 'width:100px;height:100px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
-		this.shinySymbol.innerHTML = 'Γ£¿';
+		this.shinySymbol.innerHTML = '<span class="msrre">✨</span>';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
 		
 		// Add pulse animation keyframe if not exists
@@ -140,7 +140,11 @@ class DisplayPokemon extends GameScene {
 
 	update() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt.innerText = this.isShinyReveal ? '⭐ SHINY! ⭐' : text.shop.new[this.main.lang].toUpperCase();
+		if (this.isShinyReveal) {
+			this.prompt.innerHTML = '<span class="msrre">⭐</span> SHINY! <span class="msrre">⭐</span>';
+		} else {
+			this.prompt.innerText = text.shop.new[this.main.lang].toUpperCase();
+		}
 		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
 		this.pokemonName.style.color = this.pokemon.specie.color;
 		
