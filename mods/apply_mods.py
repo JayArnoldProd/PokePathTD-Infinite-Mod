@@ -359,6 +359,14 @@ def apply_shiny_starters():
         log_skip("NewGameScene.js: Shiny starters")
         return True
     
+    # Use modded file if available (safer, idempotent)
+    modded_file = SCRIPT_DIR / "patches" / "NewGameScene.modded.js"
+    if modded_file.exists():
+        copy_modded_file(modded_file, path)
+        log_success("NewGameScene.js: Shiny starters (full file replacement)")
+        return True
+    
+    # Fallback: inline patch
     old_pattern = """	close() {
 		super.close();
 		this.main.team.addPokemon(new Pokemon(STARTER[this.starterSelected], 1, null, this.main));
@@ -971,10 +979,14 @@ def apply_expanded_egg_list():
         return True
     
     # Try a more flexible match - just find and replace the eggListData export
-    import re
     pattern = r"export const eggListData = \[[^\]]+\]"
     match = re.search(pattern, content, re.DOTALL)
     if match:
+        # DEFENSIVE: Check if already expanded (new Pokemon present in existing list)
+        existing_list = match.group(0)
+        if "'bidoof'" in existing_list and "'vulpix'" in existing_list:
+            log_skip("pokemonData.js: Egg list already expanded (regex check)")
+            return True
         content = content[:match.start()] + new_egg_list + content[match.end():]
         write_file(path, content)
         log_success("pokemonData.js: Egg list expanded (+17 Pokemon) (regex)")
@@ -1054,14 +1066,25 @@ def apply_hidden_items():
     IMPORTANT: Uses brace-depth tracking to handle nested objects (e.g. restriction: {}).
     Do NOT simplify to 'stop at first }' — that breaks nested blocks and causes gray screen.
     See commit 0be5a3c for the bug this fixed.
+    
+    DEFENSIVE: Validates output before writing to prevent syntax errors (e.g. missing comma
+    before next item). If uncomment produces invalid JS, the original file is preserved.
     """
     path = JS_ROOT / "game" / "data" / "itemData.js"
     content = read_file(path)
 
-    # Check if already applied
+    # Check if already applied — magmaStone exists uncommented
     if "\tmagmaStone: {" in content and "// magmaStone" not in content:
         log_skip("itemData.js: Hidden items (Magma Stone already unlocked)")
         return True
+
+    # If there's no commented magmaStone at all, nothing to do
+    if "// magmaStone" not in content:
+        log_skip("itemData.js: No hidden magmaStone block found in this version")
+        return True
+
+    # Save original content for rollback on failure
+    original_content = content
 
     # 1) Uncomment the magmaStone block
     # Each commented line is: \t// \tkey: value  or  \t// },
@@ -1070,10 +1093,13 @@ def apply_hidden_items():
     in_magma = False
     brace_depth = 0
     new_lines = []
-    for line in lines:
+    magma_start_idx = -1
+    magma_end_idx = -1
+    for i, line in enumerate(lines):
         if '// magmaStone: {' in line:
             in_magma = True
             brace_depth = 1
+            magma_start_idx = len(new_lines)
             new_lines.append('\tmagmaStone: {')
         elif in_magma:
             # Strip the "// " or "// \t" prefix after the leading tab
@@ -1084,15 +1110,54 @@ def apply_hidden_items():
             brace_depth += uncommented.count('{') - uncommented.count('}')
             if brace_depth <= 0:
                 in_magma = False
+                magma_end_idx = len(new_lines) - 1
         else:
             new_lines.append(line)
+
+    # DEFENSIVE: Validate the uncommented block
+    if magma_start_idx < 0 or magma_end_idx < 0:
+        log_fail("itemData.js: Hidden items", "Could not find magmaStone block boundaries")
+        return False
+
+    # Check that the closing line ends with '},' (trailing comma required before next item)
+    closing_line = new_lines[magma_end_idx].strip()
+    if closing_line == '}':
+        # Missing trailing comma — add it
+        new_lines[magma_end_idx] = new_lines[magma_end_idx].rstrip()
+        new_lines[magma_end_idx] = new_lines[magma_end_idx][:-1] + '},'
+
+    # Validate: the line AFTER the magmaStone block should be a valid JS identifier or closing brace
+    if magma_end_idx + 1 < len(new_lines):
+        next_line = new_lines[magma_end_idx + 1].strip()
+        if next_line and not next_line.startswith(('/', '}', '*', '\t')):
+            # Next line is an identifier (like 'tinyMushroom:') — verify our block ends with },
+            final_closing = new_lines[magma_end_idx].strip()
+            if not final_closing.endswith('},'):
+                log_fail("itemData.js: Hidden items", 
+                         f"Uncommented block doesn't end with '}},', would break next item '{next_line[:30]}...'")
+                return False
+
+    # Additional validation: count total braces in the uncommented block
+    block_text = '\n'.join(new_lines[magma_start_idx:magma_end_idx + 1])
+    open_braces = block_text.count('{')
+    close_braces = block_text.count('}')
+    if open_braces != close_braces:
+        log_fail("itemData.js: Hidden items",
+                 f"Brace mismatch in uncommented block: {open_braces} open vs {close_braces} close")
+        return False
+
     content = '\n'.join(new_lines)
 
-    # 2) Add magmaStone to itemListData shop array
-    # Find the itemListData array and add 'magmaStone' before its closing ]
+    # 2) Add magmaStone to itemListData shop array (only if not already there)
     match = re.search(r"(export const itemListData = \[.*?)(]\s*\n)", content, re.DOTALL)
     if match and "'magmaStone'" not in match.group(1):
         content = content[:match.end(1)] + "\t'magmaStone',\n" + content[match.start(2):]
+
+    # Final validation: make sure the file still has the expected structure
+    if '\tmagmaStone: {' not in content:
+        log_fail("itemData.js: Hidden items", "magmaStone block missing after uncomment — rollback")
+        write_file(path, original_content)
+        return False
 
     write_file(path, content)
     log_success("itemData.js: Magma Stone unlocked and added to shop")
