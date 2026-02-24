@@ -12,6 +12,7 @@
         "Fixed emoji rendering in pixel font (lock, rocket, sparkle, star icons)",
         "Fixed shiny reveal text and egg shop sprite sizing",
         "Fixed installer feature selection dialog",
-        "Fixed Shop.js shiny eggs pattern matching for v1.4.4"
+        "Fixed Shop.js shiny eggs pattern matching for v1.4.4",
+        "Removed Expanded Egg Shop feature - all 17 Pokemon are obtainable through vanilla gameplay (secrets and route challenges)"
     ]
 }

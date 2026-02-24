@@ -17,6 +17,9 @@
 - **Fixed shiny reveal display** - "SHINY!" text renders properly with emoji font fallback
 - **Fixed egg shop sprite sizing** - Pokemon sprites in shop popup now display at proper 2.5x scale (100px)
 
+#### :no_entry_sign: Removed: Expanded Egg Shop
+- **Removed 17 "hidden" Pokemon from egg shop** - all 17 were discoverable through vanilla gameplay (secret clicks, audio codes, route challenges). Adding them to the shop undermined the developer's intended unlock experience and could cause duplicates. They can still be added via the save editor if desired.
+
 #### :wrench: Installer Improvements
 - **Restored feature selection dialog** - checklist UI for picking individual mod features works again
 - **Fixed Shop.js shiny eggs pattern** - pattern matching updated for v1.4.4 code changes
@@ -54,7 +57,7 @@
 - **Shiny Eggs & Starters** - 1/30 chance (~3.3%)
 - **212 Custom Shiny Sprites** - Pre-packaged for non-evolved Pokemon
 - **Auto-Continue Option** - 4th auto-reset mode for endless grinding
-- **Expanded Egg Shop** - 17 previously hidden Pokemon added
+- ~~Expanded Egg Shop~~ - Removed (all 17 are vanilla-obtainable)
 - **Box Expansion** - 200 slots (up from 120)
 - **Item Tooltips** - Hover for descriptions
 - **Wave Record Uncapped** - Display records above 100

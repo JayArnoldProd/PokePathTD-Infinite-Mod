@@ -104,8 +104,8 @@ This document lists all mod features that MUST be present in the modded files. U
 ## NewGameScene.modded.js
 - [ ] Shiny starter chance
 
-## pokemonData.js (via mod)
-- [ ] Expanded egg list with 17 hidden Pokemon
+## pokemonData.js
+- [x] ~~Expanded egg list~~ — REMOVED in v1.4.4b (all 17 Pokemon are obtainable through vanilla secrets/challenges)
 
 ## ChallengeScene.js (via apply_mods.py patch)
 - [ ] `poke.updateStats()` instead of `poke.setStatsLevel(capLevel)` — fixes vanilla bug where level cap BOOSTS low-level Pokemon to cap instead of only capping high-level ones

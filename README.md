@@ -39,8 +39,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 
 ### 🐱 Hidden Content Unlocked
 
-- **17 Previously Hidden Pokémon** added to the Egg Shop:
-  - bidoof, cacnea, greavard, stakataka, luvdisc, chatot, munna, hoothoot, wingull, archen, inkay, vulpix, tarountula, carbink, totodile, fennekin, turtwig
 - **Hidden Item(s):** Unlocks cut/WIP items the developer left in the code but disabled
   - **Magma Stone** (currently the only hidden item) — Doubles burn duration from 10s → 20s. Costs 50,000g in the shop. Restricted to fire-type burn Pokémon.
 

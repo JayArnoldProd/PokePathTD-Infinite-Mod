@@ -329,12 +329,9 @@ MOD_FEATURES = {
         'functions': ['apply_box_expansion'],
         'default': True,
     },
-    'egg_shop': {
-        'name': 'Expanded Egg Shop',
-        'description': 'Add 17 previously missing Pokemon to the egg shop',
-        'functions': ['apply_expanded_egg_list'],
-        'default': True,
-    },
+    # 'egg_shop' feature REMOVED in v1.4.4b — all 17 Pokemon are obtainable
+    # through vanilla gameplay (secret clicks, audio codes, route challenges).
+    # Keeping them in the shop would create duplicates. See transcript guide.
     'deltatime': {
         'name': 'Delta Time Fixes',
         'description': 'Smoother animations and accurate projectile timing',
@@ -1722,7 +1719,7 @@ def main():
     apply_projectile_scaling()
     apply_box_expansion()
     apply_profile_endless_stats()
-    apply_expanded_egg_list()
+    # apply_expanded_egg_list()  # REMOVED v1.4.4b — all 17 were vanilla-obtainable
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
