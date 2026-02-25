@@ -599,8 +599,10 @@ class ModInstaller(tk.Tk):
             if not node_modules.exists() or not (node_modules / "@electron" / "asar").exists():
                 self.after(0, lambda: self.set_status("Installing dependencies (first run only)...", '#4ecca3'))
                 
+                # Use cmd /c on Windows - npm is a .cmd batch file, not an .exe
+                npm_cmd = ['cmd', '/c', 'npm', 'install', '--production'] if sys.platform == 'win32' else ['npm', 'install', '--production']
                 success, stdout, stderr = run_command(
-                    ['npm', 'install', '--production'],
+                    npm_cmd,
                     cwd=SCRIPT_DIR,
                     timeout=120
                 )
