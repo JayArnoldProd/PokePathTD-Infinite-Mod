@@ -134,13 +134,15 @@ class SaveData:
         self.data = None
         self.source = None
     
-    def load_from_game(self) -> bool:
+    def load_from_game(self, modded=None) -> bool:
+        if modded is None:
+            modded = IS_MODDED
         if not SAVE_HELPER.exists():
             return False
         self.last_error = None
         try:
             cmd = ['node', str(SAVE_HELPER), 'export']
-            if IS_MODDED:
+            if modded:
                 cmd.append('--modded')
             result = subprocess.run(
                 cmd,
@@ -163,7 +165,9 @@ class SaveData:
             print(f"Load error: {e}")
         return False
     
-    def save_to_game(self) -> bool:
+    def save_to_game(self, modded=None) -> bool:
+        if modded is None:
+            modded = IS_MODDED
         if not self.data or not SAVE_HELPER.exists():
             return False
         self.last_error = None
@@ -171,7 +175,7 @@ class SaveData:
             with open(TEMP_SAVE, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f)
             cmd = ['node', str(SAVE_HELPER), 'import']
-            if IS_MODDED:
+            if modded:
                 cmd.append('--modded')
             result = subprocess.run(
                 cmd,
@@ -347,9 +351,19 @@ class PokemonData:
             return evos[key]['evolves_to']
         return key
     
+    # Form alternates that should resolve to their main form for evolution purposes
+    FORM_TO_MAIN = {
+        'aegislashSword': 'aegislash',
+        'lycanrocNight': 'lycanrocDay',
+    }
+    
     def get_prev_evo(self, key):
-        """Get the previous evolution (one step back) of a Pokemon."""
+        """Get the previous evolution (one step back) of a Pokemon.
+        For form alternates (e.g. aegislashSword), resolve to the main form first."""
         evos = self.data.get('evolutions', {})
+        # If this is a form alternate, resolve to main form first
+        if key in self.FORM_TO_MAIN:
+            key = self.FORM_TO_MAIN[key]
         reverse = {v['evolves_to']: k for k, v in evos.items()}
         return reverse.get(key, key)
     
@@ -511,6 +525,14 @@ class App(tk.Tk):
         ttk.Button(toolbar, text="Load File", command=self.load_file).pack(side='left', padx=2)
         ttk.Button(toolbar, text="Save to Game", command=self.save_game).pack(side='left', padx=2)
         ttk.Button(toolbar, text="Export", command=self.export).pack(side='left', padx=2)
+        
+        ttk.Separator(toolbar, orient='vertical').pack(side='left', fill='y', padx=10)
+        
+        # Vanilla/Modded toggle
+        self.save_mode_var = tk.StringVar(value="modded" if IS_MODDED else "vanilla")
+        ttk.Label(toolbar, text="Save:").pack(side='left', padx=(0, 2))
+        ttk.Radiobutton(toolbar, text="Vanilla", variable=self.save_mode_var, value="vanilla").pack(side='left')
+        ttk.Radiobutton(toolbar, text="Modded", variable=self.save_mode_var, value="modded").pack(side='left', padx=(0, 5))
         
         ttk.Separator(toolbar, orient='vertical').pack(side='left', fill='y', padx=10)
         self.source_label = ttk.Label(toolbar, text="No save loaded", font=('Arial', 10, 'bold'))
@@ -722,8 +744,12 @@ class App(tk.Tk):
         self.status.config(text="Loading...")
         self.update()
         
-        if self.save.load_from_game():
-            self.source_label.config(text="Game Save")
+        use_modded = self.save_mode_var.get() == "modded"
+        if self.save.load_from_game(modded=use_modded):
+            mode_str = "Modded" if use_modded else "Vanilla"
+            team_count = len([p for p in self.save.team if p])
+            box_count = len([p for p in self.save.box if p])
+            self.source_label.config(text=f"Game Save ({mode_str}) - {team_count} team, {box_count} box")
             self._inject_missing_eggs()
             self.refresh_grid()
             self.status.config(text="Loaded!")
@@ -764,8 +790,10 @@ class App(tk.Tk):
             return
         self.status.config(text="Saving...")
         self.update()
-        if self.save.save_to_game():
-            messagebox.showinfo("Saved", "Save written! Restart game.")
+        use_modded = self.save_mode_var.get() == "modded"
+        if self.save.save_to_game(modded=use_modded):
+            mode_str = "modded" if use_modded else "vanilla"
+            messagebox.showinfo("Saved", f"Save written to {mode_str}! Restart game.")
             self.status.config(text="Saved!")
         else:
             messagebox.showerror("Error", "Failed to save")
