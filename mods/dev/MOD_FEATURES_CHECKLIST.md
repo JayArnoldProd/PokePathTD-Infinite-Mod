@@ -81,9 +81,13 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Tower.modded.js
 - [ ] Delta time fix for accurate projectile timing
+- [ ] `vigilantFrisk` alongside `frisk` in `revealInvisible` check (constructor)
+- [ ] `vigilantFrisk` alongside `vigilant` in mountain range bonus (2 locations: updateStats + recalculate)
+- [ ] `vigilantFrisk` alongside `frisk` in SilphScope range bonus (2 locations: updateStats + recalculate)
 
 ## Projectile.modded.js
 - [ ] Endless scaling for projectile damage
+- [ ] `findClosestEnemy()` checks `this.tower?.revealInvisible` before filtering invisible enemies (ricochet fix)
 
 ## ProfileScene.modded.js
 - [ ] Uncapped wave record display (shows 100+ instead of capping at 100)
@@ -117,12 +121,17 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Restriction: Pokemon IDs [0, 9, 52, 73, 96] only
 - [ ] Gameplay logic already exists in vanilla: Projectile.js (lines 396, 461) and Tower.js (line 939)
 
-## PokemonScene.modded.js (challenge cap display + endless preview)
+## PokemonScene.modded.js (challenge cap display + endless preview + form switching)
 - [ ] Display level shows `Math.min(pokemon.lvl, lvlCap)` instead of always showing cap level
 - [ ] Level-up buttons remain enabled during challenges (players can still level up; levels bank for after challenge ends)
 - [ ] `calculatePreviewCrit()` - asymptotic crit preview matching Pokemon.calculateEndlessCrit()
 - [ ] `calculatePreviewRange()` - log range preview matching Pokemon.calculateEndlessRange() (freezes linear at lv100)
 - [ ] `calculatePreviewSpeed()` - asymptotic speed preview matching Pokemon.calculateAsymptoticSpeed()
+- [ ] `vigilantFrisk` alongside `frisk` in target mode invisible check (changeAttackType)
+- [ ] `vigilantFrisk` alongside `frisk` in target mode cycling indexMax (changeAttackType)
+- [ ] `vigilantFrisk` alongside `frisk` in SilphScope stat preview
+- [ ] `vigilantFrisk` alongside `vigilant` in mountain range preview
+- [ ] Form switch button: `lvl >= 100` (NOT `lvl == 100`) for lycanroc shiny form switching
 
 ## UI.modded.js (challenge cap display)
 - [ ] Pokemon level display in team bar shows `Math.min(lvl, lvlCap)` during challenges instead of always showing cap level
@@ -163,3 +172,10 @@ When updating to a new vanilla version:
 - **Stat scaling**: Crit and range use endless scaling methods (calculateEndlessCrit/Range). Linear formulas must NOT be used past level 100. Preview functions in PokemonScene must match actual stat functions in Pokemon.
 - **Save isolation**: Modded game uses separate userData folder. Save migration uses LevelDB API (save_helper.js export/import), NOT raw file copy.
 - **Emoji rendering**: All emoji in game UI must use `<span class="msrre">` wrapper for proper rendering in PressStart2P pixel font. CSS class has `font-family: 'Segoe UI Emoji'` fallback.
+- **vigilantFrisk ability**: Xatu's ability is `vigilantFrisk`, NOT just `frisk`. Every place that checks `frisk` for invisible targeting, SilphScope synergy, or mountain range bonus MUST also check `vigilantFrisk`. This affects Tower.modded.js (5 locations) and PokemonScene.modded.js (4 locations). The mod previously stripped all `vigilantFrisk` references — this MUST NOT happen again.
+- **Form switching**: Lycanroc form switch uses `lvl >= 100`, NOT `lvl == 100`. Strict equality breaks at level 101+.
+- **File encoding**: apply_mods.py MUST be valid UTF-8. Game strings contain Japanese/Korean/accented characters — never roundtrip through Windows-1252. If editing string literals with international chars, verify with `py_compile.compile(path, doraise=True)`.
+- **Internal scripts location**: Internal scripts (apply_mods.py, save_helper.js, extract_game.js, repack_game.js, save_manager.py) live in `mods/lib/`. User-facing files (ModManager.bat, PokePath_Mod_Installer.pyw, save_editor.py) stay in `mods/` root. Path references in these files use SCRIPT_DIR (lib/) and MODS_DIR (mods/) — do NOT break these when updating.
+- **save_helper.js temp file**: `current_save.json` is created in `mods/lib/` (same dir as save_helper.js via `__dirname`). save_editor.py reads from `SCRIPT_DIR / 'lib' / 'current_save.json'`. These must stay in sync.
+- **Team slots**: Game supports up to 10 team slots (unlockable), not 6. Save editor uses TEAM_SLOTS=10.
+- **Python detection**: ModManager.bat tries `py` launcher first (system-wide), then `python`. This avoids admin-mode PATH issues with per-user Python installs.
