@@ -357,7 +357,7 @@ export class PokemonScene extends GameScene {
 			this.pokemon.changeTargetMode(TARGET_MODES[20]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
 		} else if (
-			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk'
+			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk' && this.pokemon.ability.id != 'vigilantFrisk'
 		) {
 			this.pokemon.changeTargetMode(TARGET_MODES[0]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
@@ -458,7 +458,7 @@ export class PokemonScene extends GameScene {
 
 	changeAttackType(dir) {
 		let index = TARGET_MODES.findIndex((targetMode) => targetMode == this.pokemon.targetMode);
-		let indexMax = (this.pokemon.ability.id == 'frisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
+		let indexMax = (this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
 		let indexMin = 0;
 
 		index += dir;
@@ -678,7 +678,7 @@ export class PokemonScene extends GameScene {
 	        	break;
 
 	        case 'silphScope':
-	            if (this.pokemon.ability.id === 'frisk') {
+	            if (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk') {
 	            	flatRange += 15;
 	            	flatPower += 60; 
 	            }
@@ -969,7 +969,7 @@ export class PokemonScene extends GameScene {
 	            if (
 	            	tile && 
 	            	(tile.land === 4 || tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && 
-	            	(towerAbility === 'vigilant' || towerAbility === 'castform')
+	            	(towerAbility === 'vigilant' || towerAbility === 'vigilantFrisk' || towerAbility === 'castform')
 	            ) {
 	                mulRange *= 2;
 	            }

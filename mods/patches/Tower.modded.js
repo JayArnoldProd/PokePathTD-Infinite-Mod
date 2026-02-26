@@ -30,7 +30,7 @@ export class Tower extends Sprite {
 
         // HABILIDADES
         this.ricochet = pokemon.ricochet;
-        this.revealInvisible = (this.ability.id === 'frisk' || pokemon?.item?.id == 'silphScope') ? true : false;
+        this.revealInvisible = (this.ability.id === 'frisk' || this.ability.id === 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? true : false;
         this.damageBoost = 0;
         this.speedBoost = 0;
         this.teleport = 0;
@@ -205,7 +205,7 @@ export class Tower extends Sprite {
         if (
             this.tile && 
             (this.tile.land === 4 || this.tile.land == 1 && this.pokemon?.item?.id == 'hikingKit') && 
-            (this.pokemon.ability.id === 'vigilant' || this.pokemon.ability.id === 'castform')
+            (this.pokemon.ability.id === 'vigilant' || this.pokemon.ability.id === 'vigilantFrisk' || this.pokemon.ability.id === 'castform')
         ) {
             this.range = this.pokemon.range * 2;
         }
@@ -239,7 +239,7 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'helixFossil') this.range += this.main.player.fossilInTeam * 10;
         if (this.pokemon?.item?.id == 'oldRod') this.range += 75;
-        if (this.pokemon?.item?.id == 'silphScope' && this.pokemon.ability.id === 'frisk') this.range += 15;
+        if (this.pokemon?.item?.id == 'silphScope' && (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk')) this.range += 15;
         if (this.pokemon?.item?.id == 'revelationAroma') this.range += 25;
         if (this.pokemon?.item?.id == 'sunflowerPetal') this.range -= 50;
         if (this.pokemon?.item?.id == 'wrestlingMask') this.range -= 75;
@@ -309,7 +309,7 @@ export class Tower extends Sprite {
         // terreno
         if (this.tile && (this.tile.land === 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser')) && (this.pokemon.ability.id === 'ambusher' || this.pokemon.ability.id === 'castform'))
             this.power = Math.ceil(this.power * 2);
-        if (this.tile && (this.tile.land === 4 || this.tile.land == 1 && this.pokemon?.item?.id == 'hikingKit') && (this.pokemon.ability.id === 'vigilant' || this.pokemon.ability.id === 'castform'))
+        if (this.tile && (this.tile.land === 4 || this.tile.land == 1 && this.pokemon?.item?.id == 'hikingKit') && (this.pokemon.ability.id === 'vigilant' || this.pokemon.ability.id === 'vigilantFrisk' || this.pokemon.ability.id === 'castform'))
             this.range = this.pokemon.range * 2;
         if (this.tile && (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle')) && (this.pokemon.ability.id === 'swimmer' || this.pokemon.ability.id === 'castform'))
             this.speed /= 2;
@@ -356,7 +356,7 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'helixFossil') this.range += this.main.player.fossilInTeam * 10;
         if (this.pokemon?.item?.id == 'oldRod') this.range += 75;
-        if (this.pokemon?.item?.id == 'silphScope' && this.pokemon.ability.id === 'frisk') this.range += 15;
+        if (this.pokemon?.item?.id == 'silphScope' && (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk')) this.range += 15;
         if (this.pokemon?.item?.id == 'wrestlingMask') this.range -= 75;
         if (this.pokemon?.item?.id == 'condensedBlizzard') this.range /= 2;
         if (this.pokemon?.item?.id == 'spindaCocktail') {

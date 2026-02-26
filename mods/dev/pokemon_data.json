@@ -637,54 +637,53 @@
     "charmander",
     "treecko",
     "froaki",
-    "spoink",
     "natu",
+    "spoink",
+    "murkrow",
     "voltorb",
-    "ekans",
     "machop",
     "mankey",
     "chimchar",
     "yamask",
-    "riolu",
-    "bidoof",
-    "mareep",
-    "gulpin",
     "cryogonal",
     "sableye",
-    "drudiggon",
     "meowth",
-    "sunkern",
     "tangela",
     "chikorita",
-    "hoppip",
-    "cottonee",
-    "petilil",
     "spinarak",
-    "maractus",
     "shroomish",
     "barboach",
-    "clauncher",
+    "drudiggon",
     "remoraid",
-    "oshawott",
-    "staryu",
-    "lapras",
+    "clauncher",
     "seel",
+    "staryu",
     "psyduck",
-    "murkrow",
-    "sandshrew",
-    "trapinch",
-    "noibat",
-    "sneasel",
-    "drilbur",
-    "shuckle",
-    "hawlucha",
-    "aron",
-    "cubone",
-    "pidgey",
-    "binacle",
-    "surskit",
+    "gulpin",
+    "lapras",
     "ferroseed",
+    "shuckle",
+    "maractus",
+    "sunkern",
+    "aron",
+    "hawlucha",
+    "cubone",
+    "binacle",
     "absol",
+    "oshawott",
+    "sandshrew",
+    "sneasel",
+    "trapinch",
+    "pidgey",
+    "noibat",
+    "riolu",
+    "mareep",
+    "surskit",
+    "cottonee",
+    "petilil",
+    "hoppip",
+    "drilbur",
+    "ekans",
     "girafarig",
     "torkoal",
     "spinda",
@@ -711,40 +710,447 @@
     "larvesta",
     "cherubi",
     "rockruff",
-    "lycanrocNight",
     "pawniard",
     "sandile",
     "wimpod",
     "honedge",
-    "aegislashSword",
     "sobble",
     "rowlet",
     "comfey",
     "smeargle",
-    "cacnea",
-    "greavard",
-    "stakataka",
-    "luvdisc",
-    "chatot",
-    "carvanha",
-    "munna",
-    "hoothoot",
-    "wingull",
-    "archen",
-    "inkay",
-    "vulpix",
-    "tarountula",
-    "totodile",
-    "fennekin",
-    "turtwig",
-    "carbink",
-    "gholdengo",
-    "missingNo"
+    "carvanha"
   ],
-  "formAlternates": {
-    "lycanrocDay": "lycanrocNight",
-    "lycanrocNight": "lycanrocDay",
-    "aegislash": "aegislashSword",
-    "aegislashSword": "aegislash"
-  }
+  "finalForms": [
+    "charizard",
+    "sceptile",
+    "greninja",
+    "xatu",
+    "grumpig",
+    "honchkrow",
+    "electrode",
+    "machamp",
+    "primeape",
+    "infernape",
+    "cofagrigus",
+    "cryogonal",
+    "sableye",
+    "persian",
+    "tangrowth",
+    "meganium",
+    "ariados",
+    "breloom",
+    "whiscash",
+    "drudiggon",
+    "octillery",
+    "clawitzer",
+    "dewgong",
+    "starmie",
+    "golduck",
+    "swalot",
+    "lapras",
+    "ferrothorn",
+    "shuckle",
+    "maractus",
+    "sunflora",
+    "aggron",
+    "hawlucha",
+    "marowak",
+    "barbaracle",
+    "absol",
+    "samurott",
+    "sandslash",
+    "weavile",
+    "flygon",
+    "pidgeot",
+    "noivern",
+    "lucario",
+    "ampharos",
+    "masquerain",
+    "whimsicott",
+    "lilligant",
+    "jumpluff",
+    "excadrill",
+    "arbok",
+    "girafarig",
+    "torkoal",
+    "spinda",
+    "dunsparce",
+    "gardevoir",
+    "weezing",
+    "farfetchd",
+    "omastar",
+    "kabutops",
+    "corsola",
+    "castform",
+    "clefable",
+    "armaldo",
+    "cradily",
+    "bastiodon",
+    "rampardos",
+    "staraptor",
+    "alakazam",
+    "gengar",
+    "ditto",
+    "gyarados",
+    "raichu",
+    "skeledirge",
+    "volcarona",
+    "cherrim",
+    "lycanrocDay",
+    "bisharp",
+    "krookodile",
+    "golisopod",
+    "aegislash",
+    "inteleon",
+    "decidueye",
+    "comfey",
+    "smeargle",
+    "sharpedo"
+  ],
+  "chains": {
+    "charmander": [
+      "charmander",
+      "charmeleon",
+      "charizard"
+    ],
+    "treecko": [
+      "treecko",
+      "grovyle",
+      "sceptile"
+    ],
+    "froaki": [
+      "froaki",
+      "frogadier",
+      "greninja"
+    ],
+    "natu": [
+      "natu",
+      "xatu"
+    ],
+    "spoink": [
+      "spoink",
+      "grumpig"
+    ],
+    "murkrow": [
+      "murkrow",
+      "honchkrow"
+    ],
+    "voltorb": [
+      "voltorb",
+      "electrode"
+    ],
+    "machop": [
+      "machop",
+      "machoke",
+      "machamp"
+    ],
+    "mankey": [
+      "mankey",
+      "primeape"
+    ],
+    "chimchar": [
+      "chimchar",
+      "monferno",
+      "infernape"
+    ],
+    "yamask": [
+      "yamask",
+      "cofagrigus"
+    ],
+    "cryogonal": [
+      "cryogonal"
+    ],
+    "sableye": [
+      "sableye"
+    ],
+    "meowth": [
+      "meowth",
+      "persian"
+    ],
+    "tangela": [
+      "tangela",
+      "tangrowth"
+    ],
+    "chikorita": [
+      "chikorita",
+      "bayleef",
+      "meganium"
+    ],
+    "spinarak": [
+      "spinarak",
+      "ariados"
+    ],
+    "shroomish": [
+      "shroomish",
+      "breloom"
+    ],
+    "barboach": [
+      "barboach",
+      "whiscash"
+    ],
+    "drudiggon": [
+      "drudiggon"
+    ],
+    "remoraid": [
+      "remoraid",
+      "octillery"
+    ],
+    "clauncher": [
+      "clauncher",
+      "clawitzer"
+    ],
+    "seel": [
+      "seel",
+      "dewgong"
+    ],
+    "staryu": [
+      "staryu",
+      "starmie"
+    ],
+    "psyduck": [
+      "psyduck",
+      "golduck"
+    ],
+    "gulpin": [
+      "gulpin",
+      "swalot"
+    ],
+    "lapras": [
+      "lapras"
+    ],
+    "ferroseed": [
+      "ferroseed",
+      "ferrothorn"
+    ],
+    "shuckle": [
+      "shuckle"
+    ],
+    "maractus": [
+      "maractus"
+    ],
+    "sunkern": [
+      "sunkern",
+      "sunflora"
+    ],
+    "aron": [
+      "aron",
+      "lairon",
+      "aggron"
+    ],
+    "hawlucha": [
+      "hawlucha"
+    ],
+    "cubone": [
+      "cubone",
+      "marowak"
+    ],
+    "binacle": [
+      "binacle",
+      "barbaracle"
+    ],
+    "absol": [
+      "absol"
+    ],
+    "oshawott": [
+      "oshawott",
+      "dewott",
+      "samurott"
+    ],
+    "sandshrew": [
+      "sandshrew",
+      "sandslash"
+    ],
+    "sneasel": [
+      "sneasel",
+      "weavile"
+    ],
+    "trapinch": [
+      "trapinch",
+      "vibrava",
+      "flygon"
+    ],
+    "pidgey": [
+      "pidgey",
+      "pidgeotto",
+      "pidgeot"
+    ],
+    "noibat": [
+      "noibat",
+      "noivern"
+    ],
+    "riolu": [
+      "riolu",
+      "lucario"
+    ],
+    "mareep": [
+      "mareep",
+      "flaaffy",
+      "ampharos"
+    ],
+    "surskit": [
+      "surskit",
+      "masquerain"
+    ],
+    "cottonee": [
+      "cottonee",
+      "whimsicott"
+    ],
+    "petilil": [
+      "petilil",
+      "lilligant"
+    ],
+    "hoppip": [
+      "hoppip",
+      "skiploom",
+      "jumpluff"
+    ],
+    "drilbur": [
+      "drilbur",
+      "excadrill"
+    ],
+    "ekans": [
+      "ekans",
+      "arbok"
+    ],
+    "girafarig": [
+      "girafarig"
+    ],
+    "torkoal": [
+      "torkoal"
+    ],
+    "spinda": [
+      "spinda"
+    ],
+    "dunsparce": [
+      "dunsparce"
+    ],
+    "ralts": [
+      "ralts",
+      "kirlia",
+      "gardevoir"
+    ],
+    "koffing": [
+      "koffing",
+      "weezing"
+    ],
+    "farfetchd": [
+      "farfetchd"
+    ],
+    "omanyte": [
+      "omanyte",
+      "omastar"
+    ],
+    "kabuto": [
+      "kabuto",
+      "kabutops"
+    ],
+    "corsola": [
+      "corsola"
+    ],
+    "castform": [
+      "castform"
+    ],
+    "clefairy": [
+      "clefairy",
+      "clefable"
+    ],
+    "anorith": [
+      "anorith",
+      "armaldo"
+    ],
+    "lileep": [
+      "lileep",
+      "cradily"
+    ],
+    "shieldon": [
+      "shieldon",
+      "bastiodon"
+    ],
+    "cranidos": [
+      "cranidos",
+      "rampardos"
+    ],
+    "starly": [
+      "starly",
+      "staravia",
+      "staraptor"
+    ],
+    "abra": [
+      "abra",
+      "kadabra",
+      "alakazam"
+    ],
+    "gastly": [
+      "gastly",
+      "haunter",
+      "gengar"
+    ],
+    "ditto": [
+      "ditto"
+    ],
+    "magikarp": [
+      "magikarp",
+      "gyarados"
+    ],
+    "pikachu": [
+      "pikachu",
+      "raichu"
+    ],
+    "fuecoco": [
+      "fuecoco",
+      "crocalor",
+      "skeledirge"
+    ],
+    "larvesta": [
+      "larvesta",
+      "volcarona"
+    ],
+    "cherubi": [
+      "cherubi",
+      "cherrim"
+    ],
+    "rockruff": [
+      "rockruff",
+      "lycanrocDay"
+    ],
+    "pawniard": [
+      "pawniard",
+      "bisharp"
+    ],
+    "sandile": [
+      "sandile",
+      "krokorok",
+      "krookodile"
+    ],
+    "wimpod": [
+      "wimpod",
+      "golisopod"
+    ],
+    "honedge": [
+      "honedge",
+      "doublade",
+      "aegislash"
+    ],
+    "sobble": [
+      "sobble",
+      "drizzile",
+      "inteleon"
+    ],
+    "rowlet": [
+      "rowlet",
+      "dartrix",
+      "decidueye"
+    ],
+    "comfey": [
+      "comfey"
+    ],
+    "smeargle": [
+      "smeargle"
+    ],
+    "carvanha": [
+      "carvanha",
+      "sharpedo"
+    ]
+  },
+  "spritePath": "./src/assets/images/pokemon/"
 }
