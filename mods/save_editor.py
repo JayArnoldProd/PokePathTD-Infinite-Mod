@@ -287,6 +287,9 @@ class PokemonData:
     # Sprite filename mappings for Pokemon with non-standard names
     SPRITE_NAME_MAP = {
         'aegislash': 'aegislashShield',
+        'cherrim': 'cherrim1',
+        'lycanrocDay': 'lycanroc1',
+        'lycanrocNight': 'lycanroc2',
     }
     
     def get_sprite(self, key, size=48, is_shiny=False):
