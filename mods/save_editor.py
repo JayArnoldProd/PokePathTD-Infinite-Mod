@@ -340,6 +340,19 @@ class PokemonData:
     def get_base_forms(self):
         return self.data.get('baseForms', [])
     
+    def get_next_evo(self, key):
+        """Get the next evolution (one step) of a Pokemon."""
+        evos = self.data.get('evolutions', {})
+        if key in evos:
+            return evos[key]['evolves_to']
+        return key
+    
+    def get_prev_evo(self, key):
+        """Get the previous evolution (one step back) of a Pokemon."""
+        evos = self.data.get('evolutions', {})
+        reverse = {v['evolves_to']: k for k, v in evos.items()}
+        return reverse.get(key, key)
+    
     def get_final_evo(self, key):
         """Get the final evolution of a Pokemon."""
         evos = self.data.get('evolutions', {})
@@ -350,12 +363,21 @@ class PokemonData:
     def get_base_form(self, key):
         """Get the base form of a Pokemon by reversing the evolution chain."""
         evos = self.data.get('evolutions', {})
-        # Build reverse lookup: evolved_form -> base_form
         reverse = {v['evolves_to']: k for k, v in evos.items()}
-        # Walk backwards to find the base
         while key in reverse:
             key = reverse[key]
         return key
+    
+    def get_chain(self, key):
+        """Get all species keys in an evolution chain (from base to final)."""
+        base = self.get_base_form(key)
+        chain = [base]
+        evos = self.data.get('evolutions', {})
+        current = base
+        while current in evos:
+            current = evos[current]['evolves_to']
+            chain.append(current)
+        return chain
     
     def create_new_pokemon(self, species_key):
         return {
@@ -871,11 +893,11 @@ class App(tk.Tk):
             self.refresh_grid()
     
     def evolve_pokemon(self):
-        """Evolve selected Pokemon to its final form."""
+        """Evolve selected Pokemon one step in its evolution chain."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
         if poke:
             old_key = poke.get('specieKey', '')
-            new_key = self.poke_data.get_final_evo(old_key)
+            new_key = self.poke_data.get_next_evo(old_key)
             if old_key != new_key:
                 poke['specieKey'] = new_key
                 self.refresh_grid()
@@ -884,11 +906,11 @@ class App(tk.Tk):
                 self.status.config(text="Already fully evolved!")
     
     def devolve_pokemon(self):
-        """Devolve selected Pokemon to its base form."""
+        """Devolve selected Pokemon one step back in its evolution chain."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
         if poke:
             old_key = poke.get('specieKey', '')
-            new_key = self.poke_data.get_base_form(old_key)
+            new_key = self.poke_data.get_prev_evo(old_key)
             if old_key != new_key:
                 poke['specieKey'] = new_key
                 self.refresh_grid()
@@ -978,20 +1000,31 @@ class App(tk.Tk):
     def unlock_all(self):
         if not self.save.data:
             return
-        existing = set()
+        # Collect ALL existing species keys (any form in any chain counts)
+        existing_keys = set()
         for p in self.save.team + self.save.box:
             if p:
-                existing.add(p.get('specieKey'))
+                existing_keys.add(p.get('specieKey'))
+        
+        # Build set of chains already represented (by any member)
+        covered_chains = set()
+        for key in existing_keys:
+            base = self.poke_data.get_base_form(key)
+            covered_chains.add(base)
         
         count = 0
         for key in self.poke_data.get_base_forms():
-            if key not in existing and not key.startswith('mega'):
-                new_poke = self.poke_data.create_new_pokemon(key)
-                self.save.box.append(new_poke)
-                count += 1
+            if key.startswith('mega'):
+                continue
+            # Skip if any Pokemon in this chain is already owned
+            if key in covered_chains:
+                continue
+            new_poke = self.poke_data.create_new_pokemon(key)
+            self.save.box.append(new_poke)
+            count += 1
         
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Added {count} Pokemon!")
+        messagebox.showinfo("Done", f"Added {count} new Pokemon!")
     
     def make_all_shiny(self):
         """Make all Pokemon in team and box shiny."""
