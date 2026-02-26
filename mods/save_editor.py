@@ -338,8 +338,21 @@ class PokemonData:
                 self.sprites[cache_key] = None
         return self.sprites.get(cache_key)
     
+    # Display name overrides for Pokemon with unclear internal keys
+    DISPLAY_NAMES = {
+        'aegislash': 'Aegislash Shield',
+        'aegislashSword': 'Aegislash Sword',
+        'lycanrocDay': 'Lycanroc Day',
+        'lycanrocNight': 'Lycanroc Night',
+    }
+    
     def get_display_name(self, key):
-        return key.replace('-', ' ').title()
+        if key in self.DISPLAY_NAMES:
+            return self.DISPLAY_NAMES[key]
+        # Split camelCase into words (e.g. 'mrMime' -> 'Mr Mime')
+        import re
+        name = re.sub(r'([a-z])([A-Z])', r'\1 \2', key)
+        return name.replace('-', ' ').title()
     
     def get_base_forms(self):
         return self.data.get('baseForms', [])
