@@ -364,10 +364,14 @@ class PokemonData:
             return evos[key]['evolves_to']
         return key
     
-    # Form alternates that should resolve to their main form for evolution purposes
+    # Form alternates and mega evolutions that should resolve to their main form
     FORM_TO_MAIN = {
         'aegislashSword': 'aegislash',
         'lycanrocNight': 'lycanrocDay',
+        'megaAbsol': 'absol',
+        'megaCharizardX': 'charizard',
+        'megaSceptile': 'sceptile',
+        'megaAlakazam': 'alakazam',
     }
     
     def get_prev_evo(self, key):
@@ -388,7 +392,16 @@ class PokemonData:
         return key
     
     def get_base_form(self, key):
-        """Get the base form of a Pokemon by reversing the evolution chain."""
+        """Get the base form of a Pokemon by reversing the evolution chain.
+        Resolves form alternates and mega evolutions first."""
+        # Resolve form alternates / megas to main form
+        if key in self.FORM_TO_MAIN:
+            key = self.FORM_TO_MAIN[key]
+        # Also handle any mega not in the explicit map (megaX -> strip 'mega' prefix)
+        if key.startswith('mega') and key != 'meganium':
+            possible_base = key[4].lower() + key[5:]
+            if possible_base in self.data.get('allKeys', []):
+                key = possible_base
         evos = self.data.get('evolutions', {})
         reverse = {v['evolves_to']: k for k, v in evos.items()}
         while key in reverse:
