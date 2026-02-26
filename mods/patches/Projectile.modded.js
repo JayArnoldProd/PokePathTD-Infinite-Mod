@@ -529,8 +529,9 @@ export class Projectile extends Sprite {
     findClosestEnemy(fromEnemy, maxDist = 200) {
         let closest = null;
         let minDist = maxDist;
+        const canSeeInvisible = this.tower?.revealInvisible || false;
         for (const e of this.tower.main.area.enemies) {
-            if (!e || e === fromEnemy || e.hp <= 0 || e.invisible) continue;
+            if (!e || e === fromEnemy || e.hp <= 0 || (e.invisible && !canSeeInvisible)) continue;
             const dx = e.center.x - fromEnemy.center.x;
             const dy = e.center.y - fromEnemy.center.y;
             const d = Math.hypot(dx, dy);

@@ -100,8 +100,8 @@ export class Area {
 		this.waveNumber = this.routeWaves[routeNumber];
 		this.waveActive = false;
 
-		// MOD: Set endless mode flag if wave > 100
-		this.endlessMode = this.waveNumber > 100;
+		// MOD: Set endless mode flag if wave > 100 OR player has reached past 100 on this route
+		this.endlessMode = this.waveNumber > 100 || (this.main.player.records[routeNumber] || 0) > 100;
 
 		if (!keepTowers) {
 			this.placementTiles = [];
@@ -404,15 +404,13 @@ export class Area {
 		playSound('option', 'ui');
 
 		let nextWave = this.waveNumber + i;
-		// MOD: Allow wave selection in endless mode (cycle 1-100)
-		if (this.endlessMode) {
-			// In endless mode, allow cycling through all reached waves
-			if (nextWave <= 0) nextWave = this.main.player.records[this.routeNumber] || 100;
-			else if (nextWave > this.main.player.records[this.routeNumber]) nextWave = 1;
-		} else {
-			if (nextWave <= 0) nextWave = 100;
-			else if (nextWave >= 101) nextWave = 1;
-		}
+		// MOD: Allow wave selection up to player's record (supports endless mode past 100)
+		const maxWave = Math.max(this.main.player.records[this.routeNumber] || 0, 100);
+		if (nextWave <= 0) nextWave = maxWave;
+		else if (nextWave > maxWave) nextWave = 1;
+		
+		// MOD: Enable endless mode if we've navigated past 100
+		if (nextWave > 100) this.endlessMode = true;
 
 		this.waveStartTime = null;
 		this.goldWave = 0;

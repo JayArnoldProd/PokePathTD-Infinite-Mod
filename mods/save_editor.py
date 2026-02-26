@@ -27,7 +27,15 @@ try:
     from PIL import Image, ImageTk
     HAS_PIL = True
 except ImportError:
+    # Auto-install Pillow if missing
     HAS_PIL = False
+    try:
+        import subprocess as _sp
+        _sp.check_call(['pip', 'install', 'Pillow', '-q'], creationflags=0x08000000)  # CREATE_NO_WINDOW
+        from PIL import Image, ImageTk
+        HAS_PIL = True
+    except Exception:
+        pass  # Will show warning in UI
 
 # ============================================================================
 # CONSTANTS
@@ -57,6 +65,7 @@ def find_paths():
     result = {'game_root': None, 'sprites': None, 'sprites_shiny': None, 'mod_shiny_sprites': None}
     
     # Check for mod's bundled sprites first (works in distributed installs)
+    # These are the MOST RELIABLE source — never overwrite them with extracted paths
     mod_shiny_path = script_dir / 'patches' / 'shiny_sprites'
     if mod_shiny_path.exists():
         result['mod_shiny_sprites'] = mod_shiny_path
@@ -67,25 +76,32 @@ def find_paths():
     
     for check_dir in check_dirs:
         if check_dir and (check_dir / 'resources').exists():
-            # Try extracted folder first (development)
+            result['game_root'] = check_dir
+            
+            # Try extracted folder (development environment)
             pokemon_base = check_dir / 'resources' / 'app_extracted' / 'src' / 'assets' / 'images' / 'pokemon'
             if pokemon_base.exists():
-                result['game_root'] = check_dir
-                result['sprites'] = pokemon_base / 'normal'
-                result['sprites_shiny'] = pokemon_base / 'shiny'
-                return result
+                # Only use extracted sprites if bundled ones weren't found,
+                # and verify the extracted path actually has sprite files
+                extracted_normal = pokemon_base / 'normal'
+                extracted_shiny = pokemon_base / 'shiny'
+                if not result['sprites'] and extracted_normal.exists() and any(extracted_normal.glob('*.png')):
+                    result['sprites'] = extracted_normal
+                if not result.get('sprites_shiny') and extracted_shiny.exists() and any(extracted_shiny.glob('*.png')):
+                    result['sprites_shiny'] = extracted_shiny
+                if result['sprites']:
+                    return result
             
-            # For distributed installs, we need to extract sprites from asar on first run
+            # For distributed installs, check sprite_cache as fallback
             asar_path = check_dir / 'resources' / 'app.asar'
             if asar_path.exists():
-                result['game_root'] = check_dir
-                # Try to extract sprites to a cache folder
                 cache_dir = script_dir / 'sprite_cache'
                 if cache_dir.exists():
-                    result['sprites'] = cache_dir / 'normal'
-                    result['sprites_shiny'] = cache_dir / 'shiny'
+                    if not result['sprites']:
+                        result['sprites'] = cache_dir / 'normal'
+                    if not result.get('sprites_shiny'):
+                        result['sprites_shiny'] = cache_dir / 'shiny'
                 else:
-                    # Will extract on first access
                     result['asar_path'] = asar_path
                 return result
     
@@ -121,6 +137,7 @@ class SaveData:
     def load_from_game(self) -> bool:
         if not SAVE_HELPER.exists():
             return False
+        self.last_error = None
         try:
             cmd = ['node', str(SAVE_HELPER), 'export']
             if IS_MODDED:
@@ -128,7 +145,8 @@ class SaveData:
             result = subprocess.run(
                 cmd,
                 capture_output=True, text=True, cwd=str(SCRIPT_DIR),
-                encoding='utf-8', errors='replace'
+                encoding='utf-8', errors='replace',
+                timeout=30
             )
             if result.returncode == 0 and 'OK:' in result.stdout:
                 if TEMP_SAVE.exists():
@@ -136,13 +154,19 @@ class SaveData:
                         self.data = json.load(f)
                     self.source = 'game'
                     return True
+            # Store error details for display
+            self.last_error = result.stderr.strip() or result.stdout.strip() or "Unknown error"
+        except subprocess.TimeoutExpired:
+            self.last_error = "Save helper timed out (possible stale lock)"
         except Exception as e:
+            self.last_error = str(e)
             print(f"Load error: {e}")
         return False
     
     def save_to_game(self) -> bool:
         if not self.data or not SAVE_HELPER.exists():
             return False
+        self.last_error = None
         try:
             with open(TEMP_SAVE, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f)
@@ -152,10 +176,16 @@ class SaveData:
             result = subprocess.run(
                 cmd,
                 capture_output=True, text=True, cwd=str(SCRIPT_DIR),
-                encoding='utf-8', errors='replace'
+                encoding='utf-8', errors='replace',
+                timeout=30
             )
-            return result.returncode == 0 and 'OK:' in result.stdout
+            if result.returncode == 0 and 'OK:' in result.stdout:
+                return True
+            self.last_error = result.stderr.strip() or result.stdout.strip() or "Unknown error"
+        except subprocess.TimeoutExpired:
+            self.last_error = "Save helper timed out (possible stale lock)"
         except Exception as e:
+            self.last_error = str(e)
             print(f"Save error: {e}")
         return False
     
@@ -651,6 +681,11 @@ class App(tk.Tk):
         self.update_editor()
     
     def auto_load(self):
+        # Warn if sprites won't load
+        if not HAS_PIL:
+            self.status.config(text="Warning: Pillow not installed — no sprites. Run: pip install Pillow")
+        elif not PATHS.get('sprites'):
+            self.status.config(text="Warning: Sprite folder not found — Pokemon images won't display")
         self.load_game()
     
     def load_game(self):
@@ -663,8 +698,29 @@ class App(tk.Tk):
             self.refresh_grid()
             self.status.config(text="Loaded!")
         else:
-            self.status.config(text="Failed to load")
-            messagebox.showwarning("Load Failed", "Could not load. Is game closed?")
+            error_detail = getattr(self.save, 'last_error', '') or 'Unknown error'
+            self.status.config(text=f"Failed: {error_detail[:80]}")
+            
+            if 'lock' in error_detail.lower() or 'running' in error_detail.lower():
+                messagebox.showwarning("Load Failed",
+                    f"Save database is locked.\n\n"
+                    f"The editor tried to clear the stale lock automatically but couldn't.\n\n"
+                    f"Try these steps:\n"
+                    f"1. Make sure PokePath TD is fully closed\n"
+                    f"2. Check Task Manager for 'node.exe' processes and end them\n"
+                    f"3. Try loading again\n\n"
+                    f"Error: {error_detail}")
+            elif 'timed out' in error_detail.lower():
+                messagebox.showwarning("Load Failed",
+                    f"The save helper process timed out.\n\n"
+                    f"This usually means the database is stuck.\n"
+                    f"Try closing the game and loading again.\n\n"
+                    f"Error: {error_detail}")
+            else:
+                messagebox.showwarning("Load Failed",
+                    f"Could not load save data.\n\n"
+                    f"Make sure the game is closed and try again.\n\n"
+                    f"Error: {error_detail}")
     
     def load_file(self):
         path = filedialog.askopenfilename(filetypes=[("Save files", "*.json *.txt")])
@@ -939,10 +995,12 @@ class App(tk.Tk):
                 old_key = p.get('specieKey', '')
                 new_key = self.poke_data.get_final_evo(old_key)
                 p['specieKey'] = new_key
-                p['lvl'] = 100
+                # Only raise level to 100, never lower Pokemon already above 100
+                if p.get('lvl', 1) < 100:
+                    p['lvl'] = 100
                 count += 1
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Maxed {count} Pokemon to Lv100 and fully evolved!")
+        messagebox.showinfo("Done", f"Maxed {count} Pokemon to Lv100+ and fully evolved!")
     
     def evolve_all(self):
         """Evolve all Pokemon to their final evolution without changing level."""
@@ -1136,7 +1194,7 @@ class App(tk.Tk):
         messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} eggs\nEgg price reset to: ${starting_price}")
 
     def complete_all_stages(self):
-        """Set all stage records to 100 (grants 1200 stars total for 12 routes)."""
+        """Complete all stages — raises records to at least 100, never lowers existing progress."""
         if not self.save.data:
             return
         
@@ -1147,21 +1205,21 @@ class App(tk.Tk):
         while len(records) < 9:
             records.append(0)
         
-        # Set all to 100
+        # Only raise records to 100, never lower records already above 100
         for i in range(len(records)):
-            records[i] = 100
+            if records[i] < 100:
+                records[i] = 100
         
         # Update records
         if 'save' in self.save.data:
             self.save.data['save']['player']['records'] = records
-            # Also update stars to match
             self.save.data['save']['player']['stars'] = sum(records)
         else:
             self.save.data['player']['records'] = records
             self.save.data['player']['stars'] = sum(records)
         
         self.refresh_grid()
-        messagebox.showinfo("Done", f"All stages completed!\n\nRecords set to 100 for all routes.\nTotal stars: {sum(records)}")
+        messagebox.showinfo("Done", f"All stages completed!\n\nAll routes at 100+ stars.\nTotal stars: {sum(records)}")
 
 if __name__ == "__main__":
     App().mainloop()

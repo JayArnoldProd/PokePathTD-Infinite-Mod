@@ -1,18 +1,16 @@
 {
-    "version": "1.4.4",
+    "version": "1.4.5",
     "game_version": "1.4.4",
-    "release_date": "2026-02-23",
+    "release_date": "2026-02-25",
     "changes": [
-        "NEW: Pause Micromanagement - deploy, move, swap, and retire towers while game is paused",
-        "NEW: Vanilla/modded save isolation - modded game uses separate save folder",
-        "NEW: Save editor auto-detects vanilla vs modded saves",
-        "NEW: One-click vanilla restore in installer",
-        "Fixed animation loop to keep rendering during pause (tiles highlight, ranges show)",
-        "Fixed save migration using LevelDB API (prevents duplicate starter bug)",
-        "Fixed emoji rendering in pixel font (lock, rocket, sparkle, star icons)",
-        "Fixed shiny reveal text and egg shop sprite sizing",
-        "Fixed installer feature selection dialog",
-        "Fixed Shop.js shiny eggs pattern matching for v1.4.4",
-        "Removed Expanded Egg Shop feature - all 17 Pokemon are obtainable through vanilla gameplay (secrets and route challenges)"
+        "Fixed save editor 'game still open' false positive - auto-clears stale LevelDB locks",
+        "Fixed save editor error messages - shows actual error instead of generic 'Is game closed?'",
+        "Fixed 'Max All Levels' reducing Pokemon above Lv100 back to 100",
+        "Fixed 'Complete All Stages' reducing stars above 1200 back to 1200",
+        "Fixed wave manager unable to skip past wave 100 even with unlocked endless waves",
+        "Fixed sprite loading breaking after first use - bundled sprites now take priority",
+        "Fixed ricochet projectiles skipping invisible enemies for towers with Frisk",
+        "Added auto-install for Pillow dependency (sprites work on fresh installs)",
+        "Added subprocess timeouts to prevent hung save operations"
     ]
 }
