@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 PokePath TD Mod Applier v4.0
 Comprehensive mod that handles ALL game modifications:
@@ -330,7 +331,7 @@ MOD_FEATURES = {
         'functions': ['apply_box_expansion'],
         'default': True,
     },
-    # 'egg_shop' feature REMOVED in v1.4.4b � all 17 Pokemon are obtainable
+    # 'egg_shop' feature REMOVED in v1.4.4b -- all 17 Pokemon are obtainable
     # through vanilla gameplay (secret clicks, audio codes, route challenges).
     # Keeping them in the shop would create duplicates. See transcript guide.
     'deltatime': {
@@ -425,13 +426,13 @@ def apply_text_continue_option():
     
     # Find the reset object and add option 3
     old_pattern = """reset: {
-				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关闭', 'Wył.'],
+				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关é--­', 'Wył.'],
 				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
 				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
 			}"""
     
     new_pattern = """reset: {
-				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关闭', 'Wył.'],
+				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关é--­', 'Wył.'],
 				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
 				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
 				3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],
@@ -1342,7 +1343,7 @@ def apply_hidden_items():
     """Uncomment Magma Stone in itemData.js and add it to the shop.
     
     IMPORTANT: Uses brace-depth tracking to handle nested objects (e.g. restriction: {}).
-    Do NOT simplify to 'stop at first }' � that breaks nested blocks and causes gray screen.
+    Do NOT simplify to 'stop at first }' -- that breaks nested blocks and causes gray screen.
     See commit 0be5a3c for the bug this fixed.
     
     DEFENSIVE: Validates output before writing to prevent syntax errors (e.g. missing comma
@@ -1351,7 +1352,7 @@ def apply_hidden_items():
     path = JS_ROOT / "game" / "data" / "itemData.js"
     content = read_file(path)
 
-    # Check if already applied � magmaStone exists uncommented
+    # Check if already applied -- magmaStone exists uncommented
     if "\tmagmaStone: {" in content and "// magmaStone" not in content:
         log_skip("itemData.js: Hidden items (Magma Stone already unlocked)")
         return True
@@ -1400,7 +1401,7 @@ def apply_hidden_items():
     # Check that the closing line ends with '},' (trailing comma required before next item)
     closing_line = new_lines[magma_end_idx].strip()
     if closing_line == '}':
-        # Missing trailing comma � add it
+        # Missing trailing comma -- add it
         new_lines[magma_end_idx] = new_lines[magma_end_idx].rstrip()
         new_lines[magma_end_idx] = new_lines[magma_end_idx][:-1] + '},'
 
@@ -1408,7 +1409,7 @@ def apply_hidden_items():
     if magma_end_idx + 1 < len(new_lines):
         next_line = new_lines[magma_end_idx + 1].strip()
         if next_line and not next_line.startswith(('/', '}', '*', '\t')):
-            # Next line is an identifier (like 'tinyMushroom:') � verify our block ends with },
+            # Next line is an identifier (like 'tinyMushroom:') -- verify our block ends with },
             final_closing = new_lines[magma_end_idx].strip()
             if not final_closing.endswith('},'):
                 log_fail("itemData.js: Hidden items", 
@@ -1433,7 +1434,7 @@ def apply_hidden_items():
 
     # Final validation: make sure the file still has the expected structure
     if '\tmagmaStone: {' not in content:
-        log_fail("itemData.js: Hidden items", "magmaStone block missing after uncomment � rollback")
+        log_fail("itemData.js: Hidden items", "magmaStone block missing after uncomment -- rollback")
         write_file(path, original_content)
         return False
 
@@ -1720,7 +1721,7 @@ def main():
     apply_projectile_scaling()
     apply_box_expansion()
     apply_profile_endless_stats()
-    # apply_expanded_egg_list()  # REMOVED v1.4.4b � all 17 were vanilla-obtainable
+    # apply_expanded_egg_list()  # REMOVED v1.4.4b -- all 17 were vanilla-obtainable
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
