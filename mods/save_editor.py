@@ -42,7 +42,7 @@ except ImportError:
 # ============================================================================
 
 GRID_COLS = 7
-TEAM_SLOTS = 6
+TEAM_SLOTS = 10
 BOX_SLOTS = 200  # Increased from 64 to support unlock all
 CELL_SIZE = 58  # Fixed cell size
 
@@ -833,7 +833,7 @@ class App(tk.Tk):
         # Update status
         team_count = len(self.save.team)
         box_count = len(self.save.box)
-        self.status.config(text=f"Team: {team_count}/6 | Box: {box_count}/200 | Total: {team_count + box_count}")
+        self.status.config(text=f"Team: {team_count}/{TEAM_SLOTS} | Box: {box_count}/{BOX_SLOTS} | Total: {team_count + box_count}")
         
         # Update editor if something selected
         if self.selected_slot is not None:
