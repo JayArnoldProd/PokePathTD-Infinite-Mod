@@ -833,7 +833,8 @@ class App(tk.Tk):
         # Update status
         team_count = len(self.save.team)
         box_count = len(self.save.box)
-        self.status.config(text=f"Team: {team_count}/{TEAM_SLOTS} | Box: {box_count}/{BOX_SLOTS} | Total: {team_count + box_count}")
+        player_team_slots = self.save.player.get('teamSlots', TEAM_SLOTS)
+        self.status.config(text=f"Team: {team_count}/{player_team_slots} | Box: {box_count}/{BOX_SLOTS} | Total: {team_count + box_count}")
         
         # Update editor if something selected
         if self.selected_slot is not None:
