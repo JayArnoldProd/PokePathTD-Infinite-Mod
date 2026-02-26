@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 PokePath TD Mod Applier v4.0
 Comprehensive mod that handles ALL game modifications:
@@ -27,17 +27,18 @@ import subprocess
 import sys
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
+MODS_DIR = SCRIPT_DIR.parent  # mods/ root (one level up from lib/)
 
 # Load version from version.json
 def get_version():
-    version_file = SCRIPT_DIR / "version.json"
+    version_file = MODS_DIR / "version.json"
     if version_file.exists():
         with open(version_file, 'r') as f:
             return json.load(f).get('version', '1.4.1')
     return '1.4.1'
 
 MOD_VERSION = get_version()
-GAME_ROOT = SCRIPT_DIR.parent
+GAME_ROOT = MODS_DIR.parent
 RESOURCES = GAME_ROOT / "resources"
 APP_EXTRACTED = RESOURCES / "app_extracted"
 APP_ASAR = RESOURCES / "app.asar"
@@ -117,7 +118,7 @@ asar.extractAll({repr(str(APP_ASAR))}, {repr(str(temp_dir))});
                 text=True,
                 timeout=60,
                 creationflags=creationflags,
-                cwd=str(SCRIPT_DIR)
+                cwd=str(MODS_DIR)
             )
             
             if result.returncode == 0:
@@ -231,7 +232,7 @@ console.log('OK: Extracted to', dest);
                 text=True,
                 timeout=300,
                 creationflags=creationflags,
-                cwd=str(SCRIPT_DIR)
+                cwd=str(MODS_DIR)
             )
             if result.returncode == 0 and 'OK:' in result.stdout:
                 print(f"  [OK] Extracted successfully from {source_name}")
@@ -329,7 +330,7 @@ MOD_FEATURES = {
         'functions': ['apply_box_expansion'],
         'default': True,
     },
-    # 'egg_shop' feature REMOVED in v1.4.4b — all 17 Pokemon are obtainable
+    # 'egg_shop' feature REMOVED in v1.4.4b � all 17 Pokemon are obtainable
     # through vanilla gameplay (secret clicks, audio codes, route challenges).
     # Keeping them in the shop would create duplicates. See transcript guide.
     'deltatime': {
@@ -387,7 +388,7 @@ def apply_shiny_sprites():
     """Copy pre-generated shiny sprites for non-max evolution Pokemon."""
     print("\n[*] Installing custom shiny sprites...")
     
-    shiny_src = SCRIPT_DIR / "patches" / "shiny_sprites"
+    shiny_src = MODS_DIR / "patches" / "shiny_sprites"
     shiny_dest = APP_EXTRACTED / "src" / "assets" / "images" / "pokemon" / "shiny"
     
     if not shiny_src.exists():
@@ -424,16 +425,16 @@ def apply_text_continue_option():
     
     # Find the reset object and add option 3
     old_pattern = """reset: {
-				0: ['Off', 'Apagado', 'ArrÃªt', 'Desligado', 'Spento', 'Aus', 'ã‚ªãƒ•', 'ë„ê¸°', 'å…³é—­', 'WyÅ‚.'],
-				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'ãƒªã‚¹ã‚¿ãƒ¼ãƒˆ', 'ìž¬ì‹œìž‘', 'é‡æ–°å¼€å§‹', 'Restart'],
-				2: ['Retry', 'Reintentar', 'RÃ©essayer', 'Tentar', 'Riprova', 'Wiederholen', 'ãƒªãƒˆãƒ©ã‚¤', 'ìž¬ì‹œë„', 'é‡è¯•', 'PonÃ³w'],
+				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关闭', 'Wył.'],
+				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
+				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
 			}"""
     
     new_pattern = """reset: {
-				0: ['Off', 'Apagado', 'ArrÃªt', 'Desligado', 'Spento', 'Aus', 'ã‚ªãƒ•', 'ë„ê¸°', 'å…³é—­', 'WyÅ‚.'],
-				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'ãƒªã‚¹ã‚¿ãƒ¼ãƒˆ', 'ìž¬ì‹œìž‘', 'é‡æ–°å¼€å§‹', 'Restart'],
-				2: ['Retry', 'Reintentar', 'RÃ©essayer', 'Tentar', 'Riprova', 'Wiederholen', 'ãƒªãƒˆãƒ©ã‚¤', 'ìž¬ì‹œë„', 'é‡è¯•', 'PonÃ³w'],
-				3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'ã¤ã¥ã', 'ê³„ì†', 'ç»§ç»­', 'Kontynuuj'],
+				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关闭', 'Wył.'],
+				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
+				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
+				3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],
 			}"""
     
     if old_pattern in content:
@@ -447,7 +448,7 @@ def apply_text_continue_option():
     pattern = r"(reset:\s*\{\s*\n\s*0:\s*\[[^\]]+\],\s*\n\s*1:\s*\[[^\]]+\],\s*\n\s*2:\s*\[[^\]]+\],)(\s*\n\s*\},?)"
     match = re.search(pattern, content)
     if match:
-        new_line = "\n\t\t\t\t3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'ã¤ã¥ã', 'ê³„ì†', 'ç»§ç»­', 'Kontynuuj'],"
+        new_line = "\n\t\t\t\t3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],"
         content = content[:match.end(1)] + new_line + content[match.start(2):]
         write_file(path, content)
         log_success("text.js: Continue option added (regex)")
@@ -561,7 +562,7 @@ def apply_shiny_eggs():
         return True
     
     # Use full file replacement from patches/Shop.modded.js
-    modded_path = SCRIPT_DIR / "patches" / "Shop.modded.js"
+    modded_path = MODS_DIR / "patches" / "Shop.modded.js"
     if modded_path.exists():
         copy_modded_file(modded_path, path)
         log_success("Shop.js: Shiny eggs (full file replacement)")
@@ -584,7 +585,7 @@ def apply_shiny_starters():
         return True
     
     # Use modded file if available (safer, idempotent)
-    modded_file = SCRIPT_DIR / "patches" / "NewGameScene.modded.js"
+    modded_file = MODS_DIR / "patches" / "NewGameScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("NewGameScene.js: Shiny starters (full file replacement)")
@@ -665,7 +666,7 @@ def apply_shiny_reveal():
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
-		this.shinySymbol.innerHTML = '<span class="msrre">✨</span>';
+		this.shinySymbol.innerHTML = '<span class="msrre">?</span>';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
 		
 		// Add pulse animation keyframe if not exists
@@ -763,7 +764,7 @@ def apply_endless_mode():
         return True
     
     # This requires extensive changes - use the modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "FinalScene.modded.js"
+    modded_file = MODS_DIR / "patches" / "FinalScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("FinalScene.js: Endless mode (full file replacement)")
@@ -786,7 +787,7 @@ def apply_item_tooltips():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "Tooltip.modded.js"
+    modded_file = MODS_DIR / "patches" / "Tooltip.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Tooltip.js: Item tooltips (full file replacement)")
@@ -809,7 +810,7 @@ def apply_ui_mods():
         return True
     
     # Use modded file directly (too many changes)
-    modded_file = SCRIPT_DIR / "patches" / "UI.modded.js"
+    modded_file = MODS_DIR / "patches" / "UI.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("UI.js: All mods (full file replacement)")
@@ -873,7 +874,7 @@ def apply_speed_mod():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "Game.modded.js"
+    modded_file = MODS_DIR / "patches" / "Game.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Game.js: Speed mod (full file replacement)")
@@ -896,7 +897,7 @@ def apply_pokemon_mods():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "Pokemon.modded.js"
+    modded_file = MODS_DIR / "patches" / "Pokemon.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Pokemon.js: All mods (full file replacement)")
@@ -919,7 +920,7 @@ def apply_pokemonscene_mods():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "PokemonScene.modded.js"
+    modded_file = MODS_DIR / "patches" / "PokemonScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("PokemonScene.js: Level cap removal (full file replacement)")
@@ -942,7 +943,7 @@ def apply_endless_waves():
         return True
     
     # Use modded file directly (256 lines added!)
-    modded_file = SCRIPT_DIR / "patches" / "Area.modded.js"
+    modded_file = MODS_DIR / "patches" / "Area.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Area.js: Endless waves (full file replacement)")
@@ -965,7 +966,7 @@ def apply_endless_checkpoints():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "DefeatScene.modded.js"
+    modded_file = MODS_DIR / "patches" / "DefeatScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("DefeatScene.js: Endless checkpoints (full file replacement)")
@@ -988,7 +989,7 @@ def apply_enemy_scaling():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "Enemy.modded.js"
+    modded_file = MODS_DIR / "patches" / "Enemy.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Enemy.js: Endless scaling (full file replacement)")
@@ -1011,7 +1012,7 @@ def apply_tower_deltatime():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "Tower.modded.js"
+    modded_file = MODS_DIR / "patches" / "Tower.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Tower.js: Delta time fix (full file replacement)")
@@ -1029,7 +1030,7 @@ def apply_projectile_scaling():
     content = read_file(path)
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "Projectile.modded.js"
+    modded_file = MODS_DIR / "patches" / "Projectile.modded.js"
     if modded_file.exists():
         # Check if different
         if read_file(path) != read_file(modded_file):
@@ -1056,7 +1057,7 @@ def apply_devtools():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "main.modded.js"
+    modded_file = MODS_DIR / "patches" / "main.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("main.js: DevTools enabled (F12 / Ctrl+Shift+I)")
@@ -1084,7 +1085,7 @@ def apply_box_expansion():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "BoxScene.modded.js"
+    modded_file = MODS_DIR / "patches" / "BoxScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("BoxScene.js: Box expanded to 200 slots")
@@ -1119,7 +1120,7 @@ def apply_profile_endless_stats():
         return True
     
     # Use modded file directly
-    modded_file = SCRIPT_DIR / "patches" / "ProfileScene.modded.js"
+    modded_file = MODS_DIR / "patches" / "ProfileScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("ProfileScene.js: Endless stats (full file replacement)")
@@ -1291,7 +1292,7 @@ def apply_emoji_font_fix():
 # UI.CSS - Fix emoji rendering for lock icon and speed button
 # ============================================================================
 def apply_ui_emoji_font_fix():
-    """Add emoji font-family to .lock and .ui-speed-wave so 🔒 and 🚀 render correctly."""
+    """Add emoji font-family to .lock and .ui-speed-wave so ?? and ?? render correctly."""
     path = APP_EXTRACTED / "src" / "css" / "ui.css"
     content = read_file(path)
     
@@ -1341,7 +1342,7 @@ def apply_hidden_items():
     """Uncomment Magma Stone in itemData.js and add it to the shop.
     
     IMPORTANT: Uses brace-depth tracking to handle nested objects (e.g. restriction: {}).
-    Do NOT simplify to 'stop at first }' — that breaks nested blocks and causes gray screen.
+    Do NOT simplify to 'stop at first }' � that breaks nested blocks and causes gray screen.
     See commit 0be5a3c for the bug this fixed.
     
     DEFENSIVE: Validates output before writing to prevent syntax errors (e.g. missing comma
@@ -1350,7 +1351,7 @@ def apply_hidden_items():
     path = JS_ROOT / "game" / "data" / "itemData.js"
     content = read_file(path)
 
-    # Check if already applied — magmaStone exists uncommented
+    # Check if already applied � magmaStone exists uncommented
     if "\tmagmaStone: {" in content and "// magmaStone" not in content:
         log_skip("itemData.js: Hidden items (Magma Stone already unlocked)")
         return True
@@ -1399,7 +1400,7 @@ def apply_hidden_items():
     # Check that the closing line ends with '},' (trailing comma required before next item)
     closing_line = new_lines[magma_end_idx].strip()
     if closing_line == '}':
-        # Missing trailing comma — add it
+        # Missing trailing comma � add it
         new_lines[magma_end_idx] = new_lines[magma_end_idx].rstrip()
         new_lines[magma_end_idx] = new_lines[magma_end_idx][:-1] + '},'
 
@@ -1407,7 +1408,7 @@ def apply_hidden_items():
     if magma_end_idx + 1 < len(new_lines):
         next_line = new_lines[magma_end_idx + 1].strip()
         if next_line and not next_line.startswith(('/', '}', '*', '\t')):
-            # Next line is an identifier (like 'tinyMushroom:') — verify our block ends with },
+            # Next line is an identifier (like 'tinyMushroom:') � verify our block ends with },
             final_closing = new_lines[magma_end_idx].strip()
             if not final_closing.endswith('},'):
                 log_fail("itemData.js: Hidden items", 
@@ -1432,7 +1433,7 @@ def apply_hidden_items():
 
     # Final validation: make sure the file still has the expected structure
     if '\tmagmaStone: {' not in content:
-        log_fail("itemData.js: Hidden items", "magmaStone block missing after uncomment — rollback")
+        log_fail("itemData.js: Hidden items", "magmaStone block missing after uncomment � rollback")
         write_file(path, original_content)
         return False
 
@@ -1589,7 +1590,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             progress_callback(total, total, "Setting up modded saves...")
         try:
             import importlib
-            import save_manager
+            from lib import save_manager
             importlib.reload(save_manager)
             save_ok, save_msg = save_manager.setup_modded_saves()
             print(f"  [INFO] Save setup result: success={save_ok}, msg={save_msg}")
@@ -1674,7 +1675,7 @@ def main():
     print("=" * 50 + "\n")
     
     # Check for patches folder
-    patches_dir = SCRIPT_DIR / "patches"
+    patches_dir = MODS_DIR / "patches"
     if not patches_dir.exists():
         print("ERROR: patches folder not found!")
         print(f"Expected: {patches_dir}")
@@ -1719,7 +1720,7 @@ def main():
     apply_projectile_scaling()
     apply_box_expansion()
     apply_profile_endless_stats()
-    # apply_expanded_egg_list()  # REMOVED v1.4.4b — all 17 were vanilla-obtainable
+    # apply_expanded_egg_list()  # REMOVED v1.4.4b � all 17 were vanilla-obtainable
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()

@@ -111,12 +111,12 @@ PATHS = find_paths()
 SCRIPT_DIR = Path(__file__).parent
 TEMP_SAVE = SCRIPT_DIR / 'current_save.json'
 POKEMON_DATA_FILE = SCRIPT_DIR / 'dev' / 'pokemon_data.json'
-SAVE_HELPER = SCRIPT_DIR / 'save_helper.js'
+SAVE_HELPER = SCRIPT_DIR / 'lib' / 'save_helper.js'
 
 # Auto-detect if game is modded (uses separate save location)
 def _is_game_modded():
     try:
-        from save_manager import is_modded
+        from lib.save_manager import is_modded
         return is_modded()
     except Exception:
         # Fallback: check for .modded flag directly

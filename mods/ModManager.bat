@@ -4,9 +4,18 @@
 
 cd /d "%~dp0"
 
-:: Check for Python
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
+:: Check for Python (try py launcher first, then python on PATH)
+set PYTHON_CMD=
+py --version >nul 2>&1
+if %errorlevel% equ 0 (
+    set PYTHON_CMD=py
+) else (
+    python --version >nul 2>&1
+    if %errorlevel% equ 0 (
+        set PYTHON_CMD=python
+    )
+)
+if "%PYTHON_CMD%"=="" (
     echo.
     echo ============================================
     echo  Python not found!
@@ -55,19 +64,19 @@ if "%choice%"=="4" exit /b 0
 goto menu
 
 :installer
-:: Launch GUI installer (pythonw runs without console)
-start "" pythonw "%~dp0PokePath_Mod_Installer.pyw"
+:: Launch GUI installer
+start "" %PYTHON_CMD% "%~dp0PokePath_Mod_Installer.pyw"
 goto menu
 
 :diagnose
 echo.
 echo Running diagnostics...
 echo.
-python "%~dp0diagnose.py"
+%PYTHON_CMD% "%~dp0diagnose.py"
 goto menu
 
 :editor
 echo.
 echo Opening Save Editor...
-start "" pythonw "%~dp0save_editor.py"
+start "" %PYTHON_CMD% "%~dp0save_editor.py"
 goto menu

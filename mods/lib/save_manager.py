@@ -50,7 +50,8 @@ MODDED_SAVE = MODDED_USERDATA / 'Local Storage' / 'leveldb'
 
 # .modded flag lives next to app.asar in the game's resources folder
 SCRIPT_DIR = Path(__file__).parent.resolve()
-GAME_ROOT = SCRIPT_DIR.parent
+MODS_DIR = SCRIPT_DIR.parent  # mods/ root
+GAME_ROOT = MODS_DIR.parent
 RESOURCES = GAME_ROOT / 'resources'
 MOD_FLAG = RESOURCES / '.modded'
 

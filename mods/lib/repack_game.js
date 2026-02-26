@@ -18,7 +18,7 @@ try {
 }
 
 const SCRIPT_DIR = __dirname;
-const RESOURCES = path.join(SCRIPT_DIR, '..', 'resources');
+const RESOURCES = path.join(SCRIPT_DIR, '..', '..', 'resources');
 const APP_ASAR = path.join(RESOURCES, 'app.asar');
 const APP_EXTRACTED = path.join(RESOURCES, 'app_extracted');
 

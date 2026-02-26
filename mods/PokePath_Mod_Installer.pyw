@@ -197,7 +197,7 @@ class FeatureSelectionDialog(tk.Toplevel):
         # Import MOD_FEATURES
         try:
             sys.path.insert(0, str(SCRIPT_DIR))
-            from apply_mods import MOD_FEATURES
+            from lib.apply_mods import MOD_FEATURES
             self.mod_features = MOD_FEATURES
         except ImportError as e:
             messagebox.showerror("Error", f"Could not load mod features:\n{e}")
@@ -478,7 +478,7 @@ class ModInstaller(tk.Tk):
         """Show restore button only when game is modded."""
         try:
             sys.path.insert(0, str(SCRIPT_DIR))
-            from save_manager import is_modded
+            from lib.save_manager import is_modded
             if is_modded():
                 self.restore_btn.pack(pady=8, before=self.editor_btn)
                 self.geometry("400x420")
@@ -508,7 +508,7 @@ class ModInstaller(tk.Tk):
         
         def worker():
             try:
-                from save_manager import restore_vanilla
+                from lib.save_manager import restore_vanilla
                 success, msg = restore_vanilla()
                 if success:
                     self.after(0, lambda: self.set_status("✅ Game restored to vanilla!", '#4ecca3'))
@@ -624,7 +624,7 @@ class ModInstaller(tk.Tk):
             
             # Import and run apply_selected_mods with selected features
             sys.path.insert(0, str(SCRIPT_DIR))
-            from apply_mods import apply_selected_mods
+            from lib.apply_mods import apply_selected_mods
             
             def progress_callback(current, total, message):
                 self.after(0, lambda m=message: self.set_status(m, '#4ecca3'))
