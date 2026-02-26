@@ -1055,31 +1055,39 @@ class App(tk.Tk):
     def unlock_all(self):
         if not self.save.data:
             return
-        # Collect ALL existing species keys (any form in any chain counts)
+        # Collect ALL existing species keys from team AND box (any form/mega counts)
         existing_keys = set()
         for p in self.save.team + self.save.box:
             if p:
-                existing_keys.add(p.get('specieKey'))
+                key = p.get('specieKey', '')
+                if key:
+                    existing_keys.add(key)
         
-        # Build set of chains already represented (by any member)
+        # Build set of base-form chains already represented
+        # Each owned Pokemon resolves to its chain's base form
         covered_chains = set()
         for key in existing_keys:
             base = self.poke_data.get_base_form(key)
             covered_chains.add(base)
+            # Also cover the key itself and all chain members
+            for chain_key in self.poke_data.get_chain(key):
+                covered_chains.add(chain_key)
         
         count = 0
+        skipped = 0
         for key in self.poke_data.get_base_forms():
             if key.startswith('mega'):
                 continue
             # Skip if any Pokemon in this chain is already owned
             if key in covered_chains:
+                skipped += 1
                 continue
             new_poke = self.poke_data.create_new_pokemon(key)
             self.save.box.append(new_poke)
             count += 1
         
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Added {count} new Pokemon!")
+        messagebox.showinfo("Done", f"Added {count} new Pokemon!\n({skipped} chains already owned)")
     
     def make_all_shiny(self):
         """Make all Pokemon in team and box shiny."""
