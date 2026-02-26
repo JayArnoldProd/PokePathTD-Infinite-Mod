@@ -659,6 +659,11 @@ class App(tk.Tk):
         ttk.Button(action_row1, text="Devolve", command=self.devolve_pokemon).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(action_row1, text="Toggle Shiny", command=self.toggle_shiny).pack(side='left', expand=True, fill='x', padx=1)
         
+        # Row 1b: Switch Form (for Pokemon with alternate forms like Lycanroc, Aegislash)
+        action_row1b = ttk.Frame(slot_actions)
+        action_row1b.pack(fill='x', pady=2)
+        ttk.Button(action_row1b, text="Switch Form", command=self.switch_form).pack(side='left', expand=True, fill='x', padx=1)
+        
         # Row 2: Add Pokemon
         action_row2 = ttk.Frame(slot_actions)
         action_row2.pack(fill='x', pady=2)
@@ -890,6 +895,27 @@ class App(tk.Tk):
                 self.status.config(text=f"Devolved to {self.poke_data.get_display_name(new_key)}!")
             else:
                 self.status.config(text="Already base form!")
+    
+    # Form switching map: key -> alternate form key (matches in-game updateSpecie calls)
+    FORM_SWITCHES = {
+        'lycanrocDay': 'lycanrocNight',
+        'lycanrocNight': 'lycanrocDay',
+        'aegislash': 'aegislashSword',
+        'aegislashSword': 'aegislash',
+    }
+    
+    def switch_form(self):
+        """Switch a Pokemon to its alternate form (Lycanroc Day/Night, Aegislash Shield/Sword, etc.)."""
+        poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
+        if poke:
+            old_key = poke.get('specieKey', '')
+            new_key = self.FORM_SWITCHES.get(old_key)
+            if new_key:
+                poke['specieKey'] = new_key
+                self.refresh_grid()
+                self.status.config(text=f"Switched form to {self.poke_data.get_display_name(new_key)}!")
+            else:
+                self.status.config(text="This Pokemon has no alternate form.")
     
     def add_pokemon(self):
         if self.selected_slot is None or not self.save.data:

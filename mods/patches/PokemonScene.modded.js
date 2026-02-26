@@ -403,7 +403,7 @@ export class PokemonScene extends GameScene {
 		} else this.buttonDNA.style.display = 'none';
 
 		if (
-			(this.pokemon.id == 76 && this.pokemon.lvl == 100) ||
+			(this.pokemon.id == 76 && this.pokemon.lvl >= 100) ||
 			this.pokemon.id == 80
 		) {
 			this.buttonChangeForm.style.display = 'block';
