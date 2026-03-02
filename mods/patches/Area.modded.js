@@ -447,12 +447,12 @@ export class Area {
 		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
 		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
 		const wavesPast100 = wave - 100;
-		const baseBudget = 180000; // MOD: Modest bump from 160k
+		const baseBudget = 160000; // Original balanced value
 		let hpMult;
 		if (wavesPast100 <= 900) {
-			hpMult = Math.pow(1.01, wavesPast100); // MOD: Slightly steeper exponent (was 1.0095)
+			hpMult = Math.pow(1.0095, wavesPast100); // Original exponent — HP was balanced, speed+regen add difficulty
 		} else {
-			const base = Math.pow(1.01, 900); // anchor at wave 1000
+			const base = Math.pow(1.0095, 900); // ~5050x anchor at wave 1000
 			const extra = wavesPast100 - 900;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
