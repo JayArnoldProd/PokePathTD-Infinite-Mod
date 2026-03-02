@@ -521,24 +521,13 @@ export class Area {
 		const slotGap = Math.max(10, 25 - Math.floor(wavesPast100 / 40));
 		
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
-		const totalSlots = Math.ceil(enemies.length / stackSize);
 		
 		enemies.forEach((entry, i) => {
 			if (!entry || !entry.template) return;
 			
 			const { template, isElite, isChampion } = entry;
 			
-			// Enemies within the same stack share the same spawn slot (same x position)
-			const slotIndex = Math.floor(i / stackSize);
-			
-			// MOD: Positional HP scaling — enemies further back in the train get more HP
-			// to compensate for the extra time towers have to shoot at earlier enemies.
-			// Front of wave: 1.0x, back of wave: up to 2.0x HP (scales with wave progression)
-			const slotFraction = totalSlots > 1 ? slotIndex / (totalSlots - 1) : 0;
-			const maxPositionalBonus = Math.min(2.0, 1.0 + wavesPast100 / 200);  // 1.5x at wave 200, 2.0x at wave 500+
-			const positionalMult = 1.0 + slotFraction * (maxPositionalBonus - 1.0);
-			
-			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor) * positionalMult);
+			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor));
 			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.05 * wavesPast100));
 			
 			if (isElite) {
@@ -550,14 +539,15 @@ export class Area {
 				scaledArmor = Math.floor(scaledArmor * 2) || Math.floor(scaledHp * 0.2);
 			}
 			
-			// Gold scales with positional HP so back-of-wave enemies are worth more
 			const scaledEnemy = {
 				...template,
 				hp: scaledHp,
 				armor: scaledArmor,
-				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11) * positionalMult)
+				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
 			};
 			
+			// Enemies within the same stack share the same spawn slot (same x position)
+			const slotIndex = Math.floor(i / stackSize);
 			const xOffset = slotIndex * slotGap;
 			// Small y jitter within a stack so stacked enemies don't perfectly overlap
 			const stackPos = i % stackSize;
