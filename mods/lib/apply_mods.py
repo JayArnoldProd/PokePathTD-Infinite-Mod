@@ -312,8 +312,8 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving across sessions, challenge mode preserves party lineup/items/positions',
-        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve'],
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box',
+        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort'],
         'default': True,
     },
     'box_expansion': {
@@ -1792,6 +1792,38 @@ def apply_challenge_levelcap_fix():
     return True
 
 
+def apply_attacktype_sort():
+    """Add attack type sorting option to the box scene.
+    
+    Adds 'attackType' text label to text.js so BoxScene.modded.js can display it.
+    BoxScene.modded.js already has the sort logic baked in.
+    """
+    path = JS_ROOT / "file" / "text.js"
+    content = read_file(path)
+    
+    if 'attackType:' in content and 'Attack Type' in content:
+        log_skip("text.js: Attack type sort label")
+        return True
+    
+    # Add after the shiny sort label
+    old_shiny = 'shiny: ["Shiny","Variocolor","Chromatique","Shiny","Shiny","Schillernd"'
+    
+    if old_shiny in content:
+        # Find the full shiny line and add attackType after it
+        import re
+        match = re.search(r'(shiny: \[.*?\])', content)
+        if match:
+            old_line = match.group(0)
+            new_line = old_line + ',\n\t\tattackType: ["Attack Type","Tipo Ataque","Type Attaque","Tipo Ataque","Tipo Attacco","Angriffstyp","\u653b\u6483\u30bf\u30a4\u30d7","\uacf5\uaca9 \ud0c0\uc785","\u653b\u64ca\u985e\u578b","Typ ataku"]'
+            content = content.replace(old_line, new_line)
+            write_file(path, content)
+            log_success("text.js: Attack type sort label added")
+            return True
+    
+    log_fail("text.js: Attack type sort label", "shiny label pattern not found")
+    return False
+
+
 def apply_challenge_party_preserve():
     """Preserve team lineup, items, and tile positions when starting a challenge.
     
@@ -2669,6 +2701,9 @@ def main():
     
     # QoL: Preserve party lineup when starting challenges
     apply_challenge_party_preserve()
+    
+    # QoL: Attack type sort in box
+    apply_attacktype_sort()
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()

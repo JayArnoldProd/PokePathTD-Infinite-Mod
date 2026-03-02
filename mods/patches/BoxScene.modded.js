@@ -6,7 +6,7 @@ import { abilityData } from '../data/abilityData.js';
 import { Input } from '../../utils/Input.js';
 import { ChangePokemonName } from './ChangePokemonName.js';
 
-const sort = ['team', 'alphabetical', 'level', 'ability', 'grass', 'water', 'mountain', 'power', 'speed', 'range', 'shiny']
+const sort = ['team', 'alphabetical', 'level', 'ability', 'grass', 'water', 'mountain', 'power', 'speed', 'range', 'shiny', 'attackType']
 const TAB_CONTENT = ['allTab', 'grassTab', 'waterTab', 'mountainTab', 'fossilTab']
 
 export class BoxScene extends GameScene {
@@ -212,7 +212,7 @@ export class BoxScene extends GameScene {
 
 				this.units[i].shiny.style.display = (poke.isShiny) ? 'revert-layer' : 'none';
 				this.units[i].text.innerHTML = "";
-				if (this.sorted <= 1 || this.sorted == 10) this.units[i].text.innerHTML = poke.name[this.main.lang];
+				if (this.sorted <= 1 || this.sorted == 10 || this.sorted == 11) this.units[i].text.innerHTML = poke.name[this.main.lang];
 				else if (this.sorted == 2) {
 					if (this.main.area.inChallenge.lvlCap === 'number') this.units[i].text.innerHTML = `Lv ${this.main.area.inChallenge.lvlCap}`;
 					else this.units[i].text.innerHTML = `Lv ${poke.lvl}`;
@@ -466,13 +466,21 @@ export class BoxScene extends GameScene {
 		            return b.isShiny - a.isShiny;
 		        });
 		        break;
+		    case 'attackType':
+		        const typeOrder = { 'area': 0, 'aura': 1, 'single': 2 };
+		        this.searchPokemon.sort((a, b) => {
+		            if (a.favorite && !b.favorite) return -1;
+		            if (!a.favorite && b.favorite) return 1;
+		            return (typeOrder[a.attackType] ?? 3) - (typeOrder[b.attackType] ?? 3);
+		        });
+		        break;
 		}
 	}
 
 	changesort(value) {
 		this.sorted += value;
-		if (this.sorted > 10) this.sorted = 0;
-		else if (this.sorted < 0) this.sorted = 10;
+		if (this.sorted > 11) this.sorted = 0;
+		else if (this.sorted < 0) this.sorted = 11;
 		this.main.player.sortedBox = this.sorted;
 		this.update();
 		playSound('option', 'ui');
