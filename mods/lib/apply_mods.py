@@ -278,8 +278,8 @@ failed_mods = []
 MOD_FEATURES = {
     'pause_micro': {
         'name': 'Pause Micromanagement',
-        'description': 'Deploy, move, swap, and retire towers while the game is paused. Render loop keeps running during pause so tile highlighting and clicks work',
-        'functions': ['apply_pause_micromanagement'],
+        'description': 'Deploy, move, swap, and retire towers while the game is paused. Installs the enhanced game loop (shared with 10x Speed) since vanilla pause kills the render loop entirely',
+        'functions': ['apply_speed_mod', 'apply_pause_micromanagement'],
         'default': True,
     },
     'speed': {
