@@ -295,7 +295,7 @@ MOD_FEATURES = {
                       'apply_enemy_scaling', 'apply_profile_endless_stats',
                       'apply_text_continue_option', 'apply_menu_autoreset_range',
                       'apply_map_record_uncap', 'apply_wave_manager_fix',
-                      'apply_endless_stat_safety'],
+                      'apply_endless_stat_safety', 'apply_endless_levelbutton_safety'],
         'default': True,
     },
     'infinite_levels': {
@@ -1322,6 +1322,52 @@ def apply_endless_stat_safety():
     write_file(path, content)
     log_success("Pokemon.js: Endless stat safety (stats capped at level 100, min speed 200ms)")
     return True
+
+
+def apply_endless_levelbutton_safety():
+    """Fix level-up buttons for levels past 100 when Infinite Levels isn't installed.
+    
+    Vanilla PokemonScene.js checks === 100 / > 95 / > 90 for MAX display.
+    With Endless saves past 100, these don't match and buttons appear clickable.
+    Patch to >= 100 so all three buttons show MAX for any level >= 100.
+    Skipped when PokemonScene.modded.js is installed (has its own level handling).
+    """
+    path = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
+    content = read_file(path)
+    
+    # Don't patch if modded file is installed
+    if 'calculateAsymptoticSpeed' in content or 'isShiny' in content and 'inLvlCapChallenge' in content:
+        log_skip("PokemonScene.js: Endless level button safety (modded file installed)")
+        return True
+    
+    if '// MOD: Level-up allowed during challenge' in content:
+        # Our vanilla bugfix patch is present — the lvlCap block is already removed
+        # Now fix the level 100 checks to >= 100
+        pass
+    
+    patched = False
+    
+    # x1 button: === 100 -> >= 100
+    old_x1 = "if (this.pokemon.lvl === 100) {"
+    new_x1 = "if (this.pokemon.lvl >= 100) {"
+    if old_x1 in content:
+        content = content.replace(old_x1, new_x1)
+        patched = True
+    
+    # x5 button: > 95 -> >= 96 (same meaning) — actually this already catches 96+
+    # But level 1000 > 95 is true, so x5 already shows MAX. Same for x10 (> 90).
+    # Only x1 (=== 100) is broken for levels past 100.
+    
+    if patched:
+        write_file(path, content)
+        log_success("PokemonScene.js: Endless level button safety (MAX at >= 100)")
+        return True
+    elif '>= 100) {' in content:
+        log_skip("PokemonScene.js: Endless level button safety")
+        return True
+    else:
+        log_fail("PokemonScene.js: Endless level button safety", "level 100 check not found")
+        return False
 
 
 def apply_wave_manager_fix():
