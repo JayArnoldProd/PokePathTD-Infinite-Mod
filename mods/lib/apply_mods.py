@@ -312,7 +312,7 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving across sessions',
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving across sessions, challenge mode preserves party lineup/items/positions',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve'],
         'default': True,
     },

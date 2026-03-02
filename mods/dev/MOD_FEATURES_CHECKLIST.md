@@ -191,6 +191,14 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] Tower redeployment with tile compatibility checks at end of `loadArea()` (Area.modded.js)
 - [ ] `recalculateAuras()` and `checkWeather()` called after redeploy
 
+## Feature: Challenge Party Preserve (part of Quality of Life)
+- [ ] Team lineup, items, and tile positions saved before challenge wipe (ChallengeScene.js)
+- [ ] Team restored after loadArea on challenge start (skip for draft mode)
+- [ ] Team restored after surrender/cancelChallenge
+- [ ] Tower import added to ChallengeScene.js for programmatic redeployment
+- [ ] Tile compatibility checked before redeployment (poke.tiles.includes(tile.land))
+- [ ] tilesCountNum updated for redeployed towers
+
 ## Feature: Projectile Range Fix (part of Vanilla Bug Fixes)
 - [ ] Retargeting searches from tower position within tower's range (Tower.modded.js, Projectile.modded.js)
 - [ ] Projectiles targeting off-screen enemies are deleted (Projectile.modded.js)
