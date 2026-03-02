@@ -403,11 +403,19 @@ export class Area {
 			return;
 		}
 		
-		// === HP SCALING (polynomial power budget - semi-exponential with natural dampening) ===
-		// ~200x at wave 200, ~23k at wave 1000, ~118k at wave 2000, ~4.4M at wave 10000
+		// === HP SCALING (exponential early, polynomial tail) ===
+		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
+		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
 		const wavesPast100 = wave - 100;
 		const baseBudget = 160000;
-		const hpMult = 1 + Math.pow(wavesPast100, 2.2) * 0.008;
+		let hpMult;
+		if (wavesPast100 <= 900) {
+			hpMult = Math.pow(1.0095, wavesPast100);
+		} else {
+			const base = Math.pow(1.0095, 900); // ~5050x anchor at wave 1000
+			const extra = wavesPast100 - 900;
+			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
+		}
 		const powerBudget = Math.floor(baseBudget * hpMult);
 		
 		// === ENEMY COUNT (matches UI display) ===
