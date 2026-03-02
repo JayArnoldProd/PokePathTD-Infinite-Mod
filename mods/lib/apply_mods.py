@@ -294,7 +294,8 @@ MOD_FEATURES = {
         'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
                       'apply_enemy_scaling', 'apply_profile_endless_stats',
                       'apply_text_continue_option', 'apply_menu_autoreset_range',
-                      'apply_map_record_uncap', 'apply_wave_manager_fix'],
+                      'apply_map_record_uncap', 'apply_wave_manager_fix',
+                      'apply_endless_stat_safety'],
         'default': True,
     },
     'infinite_levels': {
@@ -1216,6 +1217,111 @@ def apply_endless_waves():
     
     log_fail("Area.js: Endless waves - modded file not found")
     return False
+
+
+def apply_endless_stat_safety():
+    """Clamp vanilla stat formulas for levels past 100 when Infinite Levels isn't installed.
+    
+    Without Infinite Levels, vanilla Pokemon.js uses linear formulas that break at high levels:
+    - Speed goes negative (e.g. -0.40s recharge at level 1000)
+    - Costs use Math.pow(1.12, level) which explodes past 100
+    
+    This patches updateStats() and setStatsLevel() to clamp the effective level at 100
+    for stat calculation, and clamps cost calculation level at 100.
+    The Pokemon's actual level is preserved — only the formulas are capped.
+    """
+    path = JS_ROOT / "game" / "component" / "Pokemon.js"
+    content = read_file(path)
+    
+    # Don't patch if Pokemon.modded.js is installed (has asymptotic scaling)
+    if 'calculateAsymptoticSpeed' in content:
+        log_skip("Pokemon.js: Endless stat safety (infinite levels installed)")
+        return True
+    
+    if '// MOD: Clamp stat level at 100' in content:
+        log_skip("Pokemon.js: Endless stat safety")
+        return True
+    
+    # Patch updateStats: clamp level for formulas at 100
+    # After our lvlCap fix, the line reads: level = Math.min(this.lvl, ...)
+    # We need to also clamp at 100 for vanilla formulas
+    old_update = """this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
+		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
+		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
+	}
+
+	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
+		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
+		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);"""
+    
+    new_update = """// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
+		const statLevel = Math.min(level, 100);
+		this.speed = Math.max(200, Math.floor(this.specie.speed.base + (this.specie.speed.scale * statLevel)));
+		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * statLevel));
+		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * statLevel));
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * statLevel);
+	}
+
+	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+		// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
+		const statLevel = Math.min(level, 100);
+		this.speed = Math.max(200, Math.floor(this.specie.speed.base + (this.specie.speed.scale * statLevel)));
+		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * statLevel));
+		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * statLevel));
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * statLevel);"""
+    
+    if old_update in content:
+        content = content.replace(old_update, new_update)
+    else:
+        log_fail("Pokemon.js: Endless stat safety", "updateStats/setStatsLevel pattern not found")
+        return False
+    
+    # Patch cost: clamp level at 100 in checkCost loop
+    old_cost = "Math.ceil(27 * Math.pow(1.12, this.lvl+i))"
+    new_cost = "Math.ceil(27 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"
+    content = content.replace(old_cost, new_cost)
+    
+    old_cost2 = "Math.ceil(35 * Math.pow(1.12, this.lvl+i))"
+    new_cost2 = "Math.ceil(35 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"
+    content = content.replace(old_cost2, new_cost2)
+    
+    old_cost3 = "Math.ceil(51 * Math.pow(1.12, this.lvl+i))"
+    new_cost3 = "Math.ceil(51 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"
+    content = content.replace(old_cost3, new_cost3)
+    
+    # Patch transformADN (Ditto) — same linear formulas
+    old_adn = """this.speed = Math.floor(this.adn.speed.base + (this.adn.speed.scale * level));
+		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
+		this.range = Math.floor(this.adn.range.base + (this.adn.range.scale * level));
+
+		//HABILIDADES
+		this.ricochet = this.adn.ricochet ?? 0;
+		
+		this.innerRange = this.adn.range.inner;
+		this.critical = this.adn.critical.base + (this.adn.critical.scale * level);"""
+    
+    new_adn = """// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
+		const adnStatLevel = Math.min(level, 100);
+		this.speed = Math.max(200, Math.floor(this.adn.speed.base + (this.adn.speed.scale * adnStatLevel)));
+		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * adnStatLevel));
+		this.range = Math.floor(this.adn.range.base + (this.adn.range.scale * adnStatLevel));
+
+		//HABILIDADES
+		this.ricochet = this.adn.ricochet ?? 0;
+		
+		this.innerRange = this.adn.range.inner;
+		this.critical = this.adn.critical.base + (this.adn.critical.scale * adnStatLevel);"""
+    
+    if old_adn in content:
+        content = content.replace(old_adn, new_adn)
+        write_file(path, content)
+    
+    write_file(path, content)
+    log_success("Pokemon.js: Endless stat safety (stats capped at level 100, min speed 200ms)")
+    return True
 
 
 def apply_wave_manager_fix():
