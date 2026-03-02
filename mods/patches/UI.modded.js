@@ -875,12 +875,7 @@ export class UI {
 			// Match spawnEndlessWave calculation exactly
 			const wavesPast100 = wave - 100;
 			const baseBudget = 160000;
-			let hpMult;
-			if (wave < 200) {
-				hpMult = 1 + wavesPast100 * 0.115;
-			} else {
-				hpMult = wave / 16;
-			}
+			const hpMult = 1 + Math.pow(wavesPast100, 2.2) * 0.008;
 			const powerBudget = Math.floor(baseBudget * hpMult);
 			const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
 			

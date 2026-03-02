@@ -402,15 +402,11 @@ export class Area {
 			return;
 		}
 		
-		// === HP SCALING (power budget system - matches UI display) ===
+		// === HP SCALING (polynomial power budget - semi-exponential with natural dampening) ===
+		// ~200x at wave 200, ~23k at wave 1000, ~118k at wave 2000, ~4.4M at wave 10000
 		const wavesPast100 = wave - 100;
 		const baseBudget = 160000;
-		let hpMult;
-		if (wave < 200) {
-			hpMult = 1 + wavesPast100 * 0.115;
-		} else {
-			hpMult = wave / 16;
-		}
+		const hpMult = 1 + Math.pow(wavesPast100, 2.2) * 0.008;
 		const powerBudget = Math.floor(baseBudget * hpMult);
 		
 		// === ENEMY COUNT (matches UI display) ===
