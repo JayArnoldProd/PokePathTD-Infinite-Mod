@@ -125,6 +125,24 @@ def _is_game_modded():
 
 IS_MODDED = _is_game_modded()
 
+def _get_installed_features():
+    """Read which mod features are currently installed."""
+    try:
+        import json
+        features_path = SCRIPT_DIR / 'installed_features.json'
+        if features_path.exists():
+            with open(features_path, 'r') as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return []
+
+INSTALLED_FEATURES = _get_installed_features()
+
+def _has_feature(key):
+    """Check if a specific mod feature is installed."""
+    return key in INSTALLED_FEATURES
+
 # ============================================================================
 # SAVE DATA
 # ============================================================================
@@ -582,7 +600,7 @@ class App(tk.Tk):
         self.gold_entry = ttk.Entry(stats, textvariable=self.gold_var, width=12)
         self.gold_entry.grid(row=0, column=3, padx=5, sticky='w')
         ttk.Button(stats, text="Set", command=self.set_gold, width=5).grid(row=0, column=4, padx=2)
-        ttk.Button(stats, text="Max Gold", command=lambda: self.set_gold_value(9007199254740991)).grid(row=0, column=5, padx=5)
+        ttk.Button(stats, text="Max Gold", command=lambda: self.set_gold_value(9007199254740991 if _has_feature('qol') else 99999999999)).grid(row=0, column=5, padx=5)
         
         # Stars (display only - calculated from records)
         ttk.Label(stats, text="Stars:").grid(row=0, column=6, padx=5, sticky='e')
@@ -1097,12 +1115,12 @@ class App(tk.Tk):
         if not self.save.data:
             return
         
-        is_vanilla = not self.loaded_as_modded
+        has_shiny_mod = _has_feature('shiny')
         count = 0
         skipped = 0
         for poke in self.save.team + self.save.box:
             if poke and not poke.get('isShiny', False):
-                if is_vanilla and not self._is_max_evo(poke):
+                if not has_shiny_mod and not self._is_max_evo(poke):
                     skipped += 1
                     continue
                 poke['isShiny'] = True
@@ -1111,7 +1129,7 @@ class App(tk.Tk):
         self.refresh_grid()
         msg = f"Made {count} Pokemon shiny!"
         if skipped:
-            msg += f"\n({skipped} non-max evolutions skipped — vanilla has no shiny sprites for them)"
+            msg += f"\n({skipped} non-max evolutions skipped — Shiny mod not installed, no sprites for them)"
         messagebox.showinfo("Done", msg)
     
     def max_all(self):
@@ -1186,17 +1204,17 @@ class App(tk.Tk):
         all_poke = [p for p in self.save.team + self.save.box if p]
         if not all_poke:
             return
-        is_vanilla = not self.loaded_as_modded
+        has_shiny_mod = _has_feature('shiny')
         # If any are not shiny, make all shiny; otherwise make all normal
-        eligible = [p for p in all_poke if not is_vanilla or self._is_max_evo(p)]
+        eligible = [p for p in all_poke if has_shiny_mod or self._is_max_evo(p)]
         any_not_shiny = any(not p.get('isShiny', False) for p in eligible)
         new_state = any_not_shiny
         for p in eligible:
             p['isShiny'] = new_state
         self.refresh_grid()
         state_text = "shiny" if new_state else "normal"
-        count_msg = f" ({len(eligible)} max evolutions)" if is_vanilla and len(eligible) < len(all_poke) else ""
-        messagebox.showinfo("Done", f"All{count_msg} Pokemon are now {state_text}!")
+        no_mod_msg = f" ({len(eligible)} max evolutions — Shiny mod not installed)" if not has_shiny_mod and len(eligible) < len(all_poke) else ""
+        messagebox.showinfo("Done", f"All{no_mod_msg} Pokemon are now {state_text}!")
     
     def delete_all(self):
         if not self.save.data:
@@ -1224,7 +1242,7 @@ class App(tk.Tk):
     
     def max_gold(self):
         if self.save.data:
-            self.save.set_player('gold', 9007199254740991)
+            self.save.set_player('gold', 9007199254740991 if _has_feature('qol') else 99999999999)
             self.refresh_grid()
     
     def set_gold(self):

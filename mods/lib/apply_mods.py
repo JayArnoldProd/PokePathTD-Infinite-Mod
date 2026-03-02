@@ -2715,6 +2715,11 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             importlib.reload(save_manager)
             save_ok, save_msg = save_manager.setup_modded_saves()
             save_manager.set_mod_flag()
+            # Write installed features manifest for save editor
+            import json
+            features_path = MODS_DIR / 'installed_features.json'
+            with open(features_path, 'w') as f:
+                json.dump(selected_features, f)
             print(f"  [INFO] Save setup result: success={save_ok}, msg={save_msg}")
             if not save_ok:
                 print(f"  [WARN] Save setup: {save_msg}")
@@ -2921,6 +2926,15 @@ def main():
             try:
                 from lib import save_manager
                 save_manager.set_mod_flag()
+            except Exception:
+                pass
+            # Write installed features manifest (all features when using main())
+            try:
+                import json
+                all_features = list(MOD_FEATURES.keys())
+                features_path = MODS_DIR / 'installed_features.json'
+                with open(features_path, 'w') as f:
+                    json.dump(all_features, f)
             except Exception:
                 pass
         else:
