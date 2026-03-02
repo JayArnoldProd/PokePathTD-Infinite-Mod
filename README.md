@@ -38,7 +38,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Enemy Regeneration** - Enemies regenerate HP in endless mode, scaling asymptotically (never reaches cap)
 - **Boss Wave Balancing** - Boss HP scales at half the rate of regular enemies
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
-- **Delta Time Accuracy** - High-speed attacks process correctly
 
 ### 🐱 Hidden Content Unlocked
 
@@ -58,6 +57,17 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Improved UI** - Level-up buttons work at any level
 - **Tower Placement Persistence** - Tower positions are saved and restored on load
 - **Off-Screen Projectile Fix** - Projectiles no longer chase enemies that have left the screen
+
+### ⚡ Performance Optimizations
+- **Delta Time Accuracy** - High-speed attacks process correctly at 5x/10x speed
+- **Squared Distance Checks** - Replaces expensive sqrt calculations in range detection, targeting, and aura checks
+- **Optimized Game Loop** - Cached references, batch enemy removal, and eliminated redundant array scans
+- **Reduced Garbage Collection** - Object reuse for enemy/projectile positions instead of creating new objects every frame
+- **Single-Pass Aura Detection** - Tower aura checks consolidated from multiple passes to one
+- **Throttled UI Updates** - Damage display updates every 5 frames instead of every frame
+- **Sub-Step Draw Skipping** - Enemies only draw on the final sub-step, not every physics tick
+- **Cached Tower Rendering** - Reuses temp canvases for tinted tower sprites instead of creating new ones each frame
+- **Power Recalculation Throttling** - Tower stats recalculate once per frame instead of every sub-step
 
 ---
 
