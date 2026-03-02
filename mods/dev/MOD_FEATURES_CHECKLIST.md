@@ -55,6 +55,9 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] `calculateEndlessRange()` method - logarithmic range scaling (freezes linear at lv100, applies log multiplier: 1x at 100, 3x at 1000)
 - [ ] Endless crit in `updateStats()`, `setStatsLevel()`, `transformADN()`, and constructor
 - [ ] Endless range in `updateStats()`, `setStatsLevel()`, `transformADN()`, and constructor
+- [ ] AOE nerf: `isAOE = attackType === 'area'` passed to speed/range in constructor, updateStats, setStatsLevel, transformADN
+- [ ] AOE speed decay 4x slower: decayRate 0.00125 (vs 0.005 for single-target)
+- [ ] AOE range growth halved: scaleFactor `1/log2(10)` (vs `2/log2(10)` for single-target)
 
 ## Shop.modded.js
 - [ ] `const isShinyEgg = Math.random() < (1/30);` - 1/30 shiny egg chance
@@ -83,11 +86,15 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] `waveInfoPanel` element for bottom-left corner
 - [ ] Tooltips for save/load team buttons
 - [ ] Drag-and-drop Ditto transform matches vanilla: updates when slot 1 changes (only if not deployed)
-- [ ] UI scaling values match Area.modded.js: HP exponent 1.0056, boss /187.5, armor 0.04
+- [ ] UI scaling values match Area.modded.js: HP exponent 1.00558, boss /335, armor 0.03
 
 ## BoxScene.modded.js
 - [ ] 200 box slots: `for (let i = 0; i < 200; i++)`
 - [ ] (Note: vanilla 1.4.4 may use `allPokemon.length` instead)
+- [ ] Attack type sort option: `'attackType'` in sort array (index 11)
+- [ ] Attack type sort case in `sortUnits()`: area > aura > single ordering
+- [ ] Attack type labels under Pokemon sprites: AOE (red), Aura (purple), Single (blue)
+- [ ] Sort wrap-around updated to 11 (was 10)
 
 ## ShopScene.modded.js
 - [ ] Custom shiny sprites support in `displayPokemon.open()`
@@ -158,11 +165,14 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Level-up buttons remain enabled during challenges (players can still level up; levels bank for after challenge ends)
 - [ ] `calculatePreviewCrit()` - asymptotic crit preview matching Pokemon.calculateEndlessCrit()
 - [ ] `calculatePreviewRange()` - log range preview matching Pokemon.calculateEndlessRange() (freezes linear at lv100)
-- [ ] `calculatePreviewSpeed()` - asymptotic speed preview matching Pokemon.calculateAsymptoticSpeed()
+- [ ] `calculatePreviewSpeed()` - asymptotic speed preview matching Pokemon.calculateAsymptoticSpeed() (includes isAOE param)
+- [ ] `calculatePreviewRange()` includes isAOE param for halved AOE range growth
+- [ ] `showLevelUpEffect()` passes `isAOE = this.pokemon.attackType === 'area'` to preview functions
 - [ ] Form switch button: `lvl >= 100` (NOT `lvl == 100`) for lycanroc shiny form switching
 
-## UI.modded.js (challenge cap display)
+## UI.modded.js (challenge cap display + scaling)
 - [ ] Pokemon level display in team bar shows `Math.min(lvl, lvlCap)` during challenges instead of always showing cap level
+- [ ] UI scaling values match Area.modded.js: HP exponent 1.00558, boss /335, armor 0.03
 
 ## Pause Micromanagement (surgical patches via apply_pause_micromanagement)
 All pause micro is now injected surgically — NOT baked into Game.modded.js.
@@ -222,11 +232,11 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] Minimum HP floor per enemy: `powerBudget / totalEnemyCount` — prevents difficulty dips on cycle reset
 
 ## Feature: Endless Scaling (always-on)
-- [ ] Regular enemy HP: `Math.pow(1.0056, wavesPast100)` exponent, baseBudget=160000, polynomial tail at wavesPast100>1100
-- [ ] Boss HP: `Math.pow(2, wavesPast100 / 187.5)` — stretched so old wave 900 ≈ new wave 1100
-- [ ] Speed scaling: `1 + Math.log2(1 + wavesPast100 / 2000)`
-- [ ] Regen scaling: `0.05 * wavesPast100 / (wavesPast100 + 2500)` — asymptotically approaches 5% max HP/sec
-- [ ] Armor scaling: `(1 + 0.04 * wavesPast100)` with 4% HP minimum armor if base is 0
+- [ ] Regular enemy HP: `Math.pow(1.00558, wavesPast100)` exponent, baseBudget=160000, polynomial tail at wavesPast100>1300
+- [ ] Boss HP: `Math.pow(2, wavesPast100 / 335)` — tuned so level N Pokemon ≈ wave N
+- [ ] Speed scaling: `1 + Math.log2(1 + wavesPast100 / 2500)`
+- [ ] Regen scaling: `0.05 * wavesPast100 / (wavesPast100 + 3000)` — asymptotically approaches 5% max HP/sec
+- [ ] Armor scaling: `(1 + 0.03 * wavesPast100)` with 3% HP minimum armor if base is 0
 - [ ] Deterministic escort selection via `getEscortTypes(wave, count)` — preview matches spawns
 - [ ] Escort enemies at boss waves 300+ with modular count distribution in UI
 
