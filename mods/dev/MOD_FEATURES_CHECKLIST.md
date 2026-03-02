@@ -232,13 +232,32 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] Minimum HP floor per enemy: `powerBudget / totalEnemyCount` — prevents difficulty dips on cycle reset
 
 ## Feature: Endless Scaling (always-on)
-- [ ] Regular enemy HP: `Math.pow(1.00558, wavesPast100)` exponent, baseBudget=160000, polynomial tail at wavesPast100>1300
-- [ ] Boss HP: `Math.pow(2, wavesPast100 / 335)` — tuned so level N Pokemon ≈ wave N
-- [ ] Speed scaling: `1 + Math.log2(1 + wavesPast100 / 2500)`
-- [ ] Regen scaling: `0.05 * wavesPast100 / (wavesPast100 + 3000)` — asymptotically approaches 5% max HP/sec
-- [ ] Armor scaling: `(1 + 0.03 * wavesPast100)` with 3% HP minimum armor if base is 0
+- [ ] `getEffectiveWP(wavesPast100)` — linear up to wave 1000 (wp=900), then 4x compressed: `900 + (wp - 900) / 4`
+- [ ] ALL scaling formulas use `ewp` (effective wp), NOT raw `wavesPast100` — HP, armor, speed, regen, boss HP
+- [ ] Regular enemy HP: `Math.pow(1.00558, ewp)` exponent, baseBudget=160000, polynomial tail at ewp>1300
+- [ ] Boss HP: `Math.pow(2, ewp / 335)` divided by `Math.sqrt(bossCount)` — prevents late-game boss swarms being impossible
+- [ ] Speed scaling: `1 + Math.log2(1 + ewp / 2500)`
+- [ ] Regen scaling: `0.05 * ewp / (ewp + 3000)` — asymptotically approaches 5% max HP/sec
+- [ ] Armor scaling: `(1 + 0.03 * ewp)` with 5% HP minimum armor if base is 0
+- [ ] Invisible enemy cap: `1000 * wavesPast100 / (wavesPast100 + 6000)` — excess invisible enemies spawn visible
+- [ ] Enemy count and gold use RAW `wavesPast100` (not effective wp) — rewards scale with actual wave
 - [ ] Deterministic escort selection via `getEscortTypes(wave, count)` — preview matches spawns
 - [ ] Escort enemies at boss waves 300+ with modular count distribution in UI
+- [ ] UI.modded.js scaling MUST match Area.modded.js — uses same `ewp` formula, same boss sqrt divisor
+
+## Feature: Gold Cap & Display (part of Quality of Life)
+- [ ] `apply_gold_cap_increase()` — Player.js gold cap raised to 9,007,199,254,740,991 (MAX_SAFE_INTEGER)
+- [ ] `apply_gold_display_format_player()` — Player.js HUD: BILLION (100B+), TRILLION (1T+), QUADRILLION (1Q+)
+- [ ] `apply_gold_display_format_ui()` — UI.js same abbreviated format
+- [ ] `apply_profile_live_update()` — ProfileScene.js auto-refreshes stats every 500ms while open
+
+## Feature: installed_features.json Manifest
+- [ ] `apply_mods.py` writes `installed_features.json` to mods/ dir after successful mod application
+- [ ] Contains list of selected feature keys (e.g. `["pause_micro", "speed", "endless", ...]`)
+- [ ] Written in BOTH `apply_selected_mods()` (GUI installer) and `main()` (CLI)
+- [ ] Save editor reads this to determine feature-specific behavior:
+  - Max Gold: 9 quadrillion only with `qol`, else vanilla 99.9B
+  - Shiny toggle for non-max-evo: only with `shiny` feature (not generic is_modded)
 
 ---
 
