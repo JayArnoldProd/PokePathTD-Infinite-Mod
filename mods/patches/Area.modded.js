@@ -444,25 +444,23 @@ export class Area {
 		}
 		
 		// === HP SCALING (exponential early, polynomial tail) ===
-		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
-		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
+		// Stretched so old wave 900 difficulty lands at wave 1100
 		const wavesPast100 = wave - 100;
 		const baseBudget = 160000;
 		let hpMult;
-		// MOD: Stretched scaling — old wave 775 difficulty lands at wave 1000
-		if (wavesPast100 <= 900) {
-			hpMult = Math.pow(1.007, wavesPast100);
+		if (wavesPast100 <= 1100) {
+			hpMult = Math.pow(1.0056, wavesPast100);
 		} else {
-			const base = Math.pow(1.007, 900); // anchor at wave 1000
-			const extra = wavesPast100 - 900;
+			const base = Math.pow(1.0056, 1100); // anchor at wave 1200
+			const extra = wavesPast100 - 1100;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
 		const powerBudget = Math.floor(baseBudget * hpMult);
 		
-		// MOD: Speed scaling — gentle: 1.2x at wave 500, 1.5x at 1000, 2.5x at 10000
-		const speedMult = 1 + Math.log2(1 + wavesPast100 / 1600);
+		// MOD: Speed scaling — gentle logarithmic curve
+		const speedMult = 1 + Math.log2(1 + wavesPast100 / 2000);
 		// MOD: Regeneration scaling — asymptotically approaches 5% of max HP/sec
-		const regenScale = 0.05 * wavesPast100 / (wavesPast100 + 2000);
+		const regenScale = 0.05 * wavesPast100 / (wavesPast100 + 2500);
 		
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
@@ -542,7 +540,7 @@ export class Area {
 			
 			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy));
 			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
-			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.05 * wavesPast100));
+			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.04 * wavesPast100));
 			if (scaledArmor === 0) {
 				scaledArmor = Math.floor(scaledHp * 0.05);
 			}
@@ -657,7 +655,7 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 150); // MOD: Stretched boss scaling (old wave 700 = new wave 1000)
+		bossHpMult *= Math.pow(2, wavesPast100 / 187.5); // MOD: Stretched boss scaling (old wave 900 = new wave 1100)
 		
 		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
 		const bossHp = Math.floor(boss.hp * bossHpMult * 2);
@@ -665,7 +663,7 @@ export class Area {
 		const scaledBoss = {
 			...boss,
 			hp: bossHp,
-			armor: Math.floor((boss.armor || 0) * (1 + 0.05 * wavesPast100)),
+			armor: Math.floor((boss.armor || 0) * (1 + 0.04 * wavesPast100)),
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
 		
@@ -696,7 +694,7 @@ export class Area {
 				const scaledEscort = {
 					...escortTemplate,
 					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
-					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.05 * wavesPast100)),
+					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.04 * wavesPast100)),
 					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
 				};
 				

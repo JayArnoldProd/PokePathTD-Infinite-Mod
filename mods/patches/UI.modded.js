@@ -881,12 +881,12 @@ export class UI {
 			const wavesPast100 = wave - 100;
 			const baseBudget = 160000; // Matches Area.modded.js
 			let hpMult;
-			// MOD: Stretched scaling — matches Area.modded.js
-			if (wavesPast100 <= 900) {
-				hpMult = Math.pow(1.007, wavesPast100);
+			// MOD: Stretched scaling — matches Area.modded.js (old wave 900 = new wave 1100)
+			if (wavesPast100 <= 1100) {
+				hpMult = Math.pow(1.0056, wavesPast100);
 			} else {
-				const base = Math.pow(1.007, 900);
-				const extra = wavesPast100 - 900;
+				const base = Math.pow(1.0056, 1100);
+				const extra = wavesPast100 - 1100;
 				hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 			}
 			const powerBudget = Math.floor(baseBudget * hpMult);
@@ -918,9 +918,9 @@ export class UI {
 			// MOD: Exact per-type stats matching what spawns in Area.modded.js
 			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
 			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * wavesPast100));
+			armor = Math.floor((enemy.armor || 0) * (1 + 0.04 * wavesPast100));
 			if (armor === 0) {
-				armor = Math.floor(hp * 0.05);
+				armor = Math.floor(hp * 0.04);
 			}
 			
 			// Gold scales linearly: 100x at wave 1000
@@ -928,9 +928,9 @@ export class UI {
 		} else if (wave % 100 === 0 && wave > 100) {
 			// MOD: Boss waves — each boss gets full scaled HP (half scaling rate)
 			let hpMult = 1 + 0.02 * bonusSteps;
-			hpMult *= Math.pow(2, (wave - 100) / 150); // MOD: Stretched boss scaling — matches Area.modded.js
+			hpMult *= Math.pow(2, (wave - 100) / 187.5); // MOD: Stretched boss scaling — matches Area.modded.js
 			hp = Math.floor(enemy.hp * hpMult * 2);
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * (wave - 100)));
+			armor = Math.floor((enemy.armor || 0) * (1 + 0.04 * (wave - 100)));
 			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
 		} else if (bonusSteps > 0) {
 			// Waves 1-100: Original scaling

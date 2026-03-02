@@ -540,7 +540,7 @@ export class Pokemon {
 	}
 
 	setShiny() {
-		if (this.id == 70 && this.adn?.id != 70) return;
+		if (this.id == 70 && this.adn && this.adn.id != 70) return;
 	    const replacePath = (p) => {
 	        if (typeof p !== 'string') return p;
 
