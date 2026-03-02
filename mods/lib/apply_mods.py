@@ -878,11 +878,11 @@ def apply_pause_micromanagement():
     """
     Surgically patch Game.js to enable pause micromanagement.
     
-    Two changes:
-    1. Remove 'if (this.stopped) return;' at top of animate() so render loop keeps running
-    2. Change totalScaledDelta to use ternary (= 0 when stopped) so sim freezes but render continues
+    Removes 'if (this.stopped) return;' at top of animate() so the render loop
+    keeps running during pause. The ternary (scaledDelta = 0 when stopped) already
+    exists in both vanilla and modded Game.js, so sim freezes but render continues.
     
-    This allows deploying, moving, swapping, and retiring towers while paused.
+    Works on both vanilla Game.js and Game.modded.js (different whitespace patterns).
     """
     path = JS_ROOT / "game" / "Game.js"
     
@@ -892,40 +892,36 @@ def apply_pause_micromanagement():
     
     content = read_file(path)
     
-    # Check if already applied (no early return + ternary present)
-    has_early_return = '  	animate(time) {\n\t    if (this.stopped) return;' in content
-    has_ternary = 'this.stopped ? 0 : this.frameDuration' in content
-    
-    if not has_early_return and has_ternary:
+    # Check if already applied — no early return pattern exists
+    if 'PAUSE MICROMANAGEMENT' in content:
         log_skip("Game.js: Pause micromanagement")
         return True
     
-    changes = 0
+    # Use regex to match the early return regardless of whitespace style
+    # Matches: animate(time) { <newline> <whitespace> if (this.stopped) return;
+    pattern = r'(animate\s*\(time\)\s*\{)\s*\n(\s*)if\s*\(\s*this\.stopped\s*\)\s*return\s*;'
+    match = re.search(pattern, content)
     
-    # 1. Remove the early return on stopped at top of animate()
-    old_animate = '  \tanimate(time) {\n\t    if (this.stopped) return;\n\t    if (!this.lastTime)'
-    new_animate = '  \tanimate(time) {\n\t    // MOD: PAUSE MICROMANAGEMENT - No early return when stopped\n\t    if (!this.lastTime)'
-    
-    if old_animate in content:
-        content = content.replace(old_animate, new_animate)
-        changes += 1
-    
-    # 2. Add ternary so totalScaledDelta = 0 when stopped
-    old_delta = '\t    const totalScaledDelta = this.frameDuration * this.speedFactor;'
-    new_delta = '\t    // MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped, render continues\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
-    
-    if old_delta in content:
-        content = content.replace(old_delta, new_delta)
-        changes += 1
-    
-    if changes > 0:
+    if match:
+        # Replace the early return with a comment
+        old_text = match.group(0)
+        indent = match.group(2)
+        new_text = f"{match.group(1)}\n{indent}// MOD: PAUSE MICROMANAGEMENT - No early return when stopped"
+        content = content.replace(old_text, new_text)
+        
+        # For Game.modded.js: also patch totalScaledDelta if it lacks the ternary
+        old_delta = 'const totalScaledDelta = this.frameDuration * this.speedFactor;'
+        new_delta = '// MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
+        if old_delta in content:
+            content = content.replace(old_delta, new_delta)
+        
         write_file(path, content)
-        log_success(f"Game.js: Pause micromanagement ({changes} patches)")
+        log_success("Game.js: Pause micromanagement (early return removed)")
         return True
     
-    # If patterns didn't match, check if it's already good
-    if not has_early_return and has_ternary:
-        log_skip("Game.js: Pause micromanagement")
+    # Check if it's already good (no early return exists at all)
+    if not re.search(r'animate\s*\(time\)\s*\{\s*\n\s*if\s*\(\s*this\.stopped\s*\)\s*return', content):
+        log_skip("Game.js: Pause micromanagement (already applied)")
         return True
     
     log_fail("Game.js: Pause micromanagement", "patterns not found in animate()")
@@ -1407,6 +1403,85 @@ def apply_ui_emoji_font_fix():
     return False
 
 # ============================================================================
+# AREA.JS - Clamp wave numbers to 100 (when Endless Mode is NOT installed)
+# ============================================================================
+def apply_wave_clamp():
+    """
+    Surgically patch Area.js to clamp waveNumber to 100.
+    
+    This prevents crashes when a save has wave > 100 but Endless Mode is not installed.
+    The clamp applies to both waveNumber and routeWaves so the clamped value persists.
+    Also patches spawnEnemies and other methods that access waves[waveNumber] directly.
+    
+    Only runs when Endless Mode is NOT selected — if Endless is installed, Area.modded.js
+    handles waves > 100 natively.
+    """
+    path = JS_ROOT / "game" / "core" / "Area.js"
+    
+    if not path.exists():
+        log_skip("Area.js: Wave clamp (file not found)")
+        return True
+    
+    content = read_file(path)
+    
+    # If this is Area.modded.js (has ENDLESS MODE markers), don't clamp
+    if 'ENDLESS MODE' in content or 'endlessMode' in content or 'spawnEndlessWave' in content:
+        log_skip("Area.js: Wave clamp (Endless Mode detected, not needed)")
+        return True
+    
+    # Check if already applied
+    if '// MOD: WAVE CLAMP' in content:
+        log_skip("Area.js: Wave clamp")
+        return True
+    
+    changes = 0
+    
+    # 1. Clamp waveNumber after it's read from routeWaves in loadArea
+    old_wave_assign = 'this.waveNumber = this.routeWaves[routeNumber];\n\t\tthis.waveActive = false;'
+    new_wave_assign = ('this.waveNumber = this.routeWaves[routeNumber];\n'
+                       '\t\t// MOD: WAVE CLAMP - Cap at 100 when Endless Mode is not installed\n'
+                       '\t\tif (this.waveNumber > 100) {\n'
+                       '\t\t\tthis.waveNumber = 100;\n'
+                       '\t\t\tthis.routeWaves[routeNumber] = 100;\n'
+                       '\t\t}\n'
+                       '\t\tthis.waveActive = false;')
+    
+    if old_wave_assign in content:
+        content = content.replace(old_wave_assign, new_wave_assign)
+        changes += 1
+    
+    # 2. Clamp in changeWave (wave selector) — prevent jumping past 100
+    old_change = 'this.waveNumber = nextWave;\n\t\tthis.routeWaves[this.routeNumber] = nextWave;'
+    new_change = ('// MOD: WAVE CLAMP\n'
+                  '\t\tthis.waveNumber = Math.min(100, nextWave);\n'
+                  '\t\tthis.routeWaves[this.routeNumber] = Math.min(100, nextWave);')
+    
+    if old_change in content:
+        content = content.replace(old_change, new_change)
+        changes += 1
+    
+    # 3. Guard waves[waveNumber] accesses with optional chaining where possible
+    # Pattern: this.waves[this.waveNumber].preview[0]
+    content = content.replace(
+        'this.waves[this.waveNumber].preview[0]',
+        '(this.waves[this.waveNumber]?.preview?.[0] || this.waves[1]?.preview?.[0])'
+    )
+    
+    # Pattern: this.waves[this.waveNumber].offSet
+    content = content.replace(
+        "this.waves[this.waveNumber].offSet || 50",
+        "(this.waves[this.waveNumber]?.offSet || this.waves[((this.waveNumber - 1) % 100) + 1]?.offSet || 50)"
+    )
+    
+    if changes > 0:
+        write_file(path, content)
+        log_success(f"Area.js: Wave clamp to 100 ({changes} clamp points + safe accessors)")
+        return True
+    
+    log_fail("Area.js: Wave clamp", "patterns not found")
+    return False
+
+# ============================================================================
 # ITEMDATA.JS - Unlock hidden/WIP items (Magma Stone)
 # ============================================================================
 def apply_hidden_items():
@@ -1648,6 +1723,14 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             apply_modded_userdata_redirect()
         except Exception as e:
             failed_mods.append(f"userData redirect: {str(e)}")
+    
+    # Step 4b: Apply wave clamp if Endless Mode is NOT selected
+    # Prevents crashes when a save has wave > 100 but Endless isn't installed
+    if 'endless' not in selected_features:
+        try:
+            apply_wave_clamp()
+        except Exception as e:
+            failed_mods.append(f"wave clamp: {str(e)}")
     
     # Step 5: Repack
     if progress_callback:
