@@ -54,7 +54,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### 🔧 Quality of Life
 - **Item Tooltips** - Hover over items in the selection panel to see descriptions
 - **Save/Load Tooltips** - Hover over team save/load buttons for labels
-- **Improved UI** - Level-up buttons work at any level
 
 ### 🐛 Vanilla Bug Fixes
 - **Tower Placement Persistence** - Tower positions are saved and restored on load
