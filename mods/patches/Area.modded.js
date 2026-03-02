@@ -271,7 +271,7 @@ export class Area {
 			const previewEnemy = this.getWavePreview(this.waveNumber);
 			if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
 
-			const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 99) + 1;
+			const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 100) + 1;
 			const futureWave = this.waves[displayWaveNum]?.preview || [];
 			const invisibles = [e.ditto, e.kecleon, e.absol, e.lunala, e.froslass];
 
@@ -393,7 +393,7 @@ export class Area {
 		}
 		
 		// === GET WAVE PREVIEW ENEMIES ===
-		const templateWaveNum = ((wave - 1) % 99) + 1;
+		const templateWaveNum = ((wave - 1) % 100) + 1;
 		const waveData = this.waves[templateWaveNum] || this.waves[1];
 		const wavePreview = waveData?.preview || [];
 		
@@ -671,7 +671,7 @@ export class Area {
 			const bossKey = BOSS_KEYS[this.routeNumber] || 'shaymin';
 			return e[bossKey];
 		}
-		const templateWaveNum = ((waveNum - 1) % 99) + 1;
+		const templateWaveNum = ((waveNum - 1) % 100) + 1;
 		return this.waves[templateWaveNum]?.preview?.[0];
 	}
 

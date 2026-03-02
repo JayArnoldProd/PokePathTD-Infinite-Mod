@@ -348,7 +348,7 @@ export class UI {
 			wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
 		} else {
 			// Endless mode - use template
-			const templateWaveNum = ((this.main.area.waveNumber - 1) % 99) + 1;
+			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
 			wavePreview = this.main.area.waves[templateWaveNum]?.preview || this.main.area.waves[1].preview;
 		}
 		this.displayEnemyInfo(wavePreview[this.enemyPositionDisplay], this.enemyPositionDisplay);
@@ -885,7 +885,7 @@ export class UI {
 			const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
 			
 			// Get wave preview (same as spawning)
-			const templateWaveNum = ((wave - 1) % 99) + 1;
+			const templateWaveNum = ((wave - 1) % 100) + 1;
 			const waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
 			const endlessPreview = waveData?.preview || [enemy];
 			
@@ -982,7 +982,7 @@ export class UI {
 			wavePreview = waveData.preview;
 		} else {
 			// Endless mode - use template wave
-			const templateWaveNum = ((this.main.area.waveNumber - 1) % 99) + 1;
+			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
 			waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
 			wavePreview = waveData.preview;
 			
