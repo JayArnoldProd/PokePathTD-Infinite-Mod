@@ -344,18 +344,20 @@ export class UI {
 
 		// ENDLESS MODE: Get wave preview safely for any wave number
 		let wavePreview;
-		if (this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
+		if (this.main.area.waves && this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
 			wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
-		} else {
+		} else if (this.main.area.waves) {
 			// Endless mode - use template
 			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
-			wavePreview = this.main.area.waves[templateWaveNum]?.preview || this.main.area.waves[1].preview;
+			wavePreview = this.main.area.waves[templateWaveNum]?.preview || this.main.area.waves[1]?.preview;
 		}
 		// MOD: Guard against out-of-bounds index (e.g. boss wave with fewer preview entries than template)
-		const safeEnemyPos = Math.min(this.enemyPositionDisplay, wavePreview.length - 1);
-		if (wavePreview[safeEnemyPos]) {
-			this.displayEnemyInfo(wavePreview[safeEnemyPos], safeEnemyPos);
-			this.enemyPositionDisplay = safeEnemyPos;
+		if (wavePreview && wavePreview.length > 0) {
+			const safeEnemyPos = Math.min(this.enemyPositionDisplay, wavePreview.length - 1);
+			if (wavePreview[safeEnemyPos]) {
+				this.displayEnemyInfo(wavePreview[safeEnemyPos], safeEnemyPos);
+				this.enemyPositionDisplay = safeEnemyPos;
+			}
 		}
 
 		this.waveSelectorContainer.style.display = 'none';
@@ -875,7 +877,8 @@ export class UI {
 
 	displayEnemyInfo(enemy, pos) {
 		if (pos >= this.mapWavePokemon.length) {
-			const wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
+			const wavePreview = this.main.area.waves?.[this.main.area.waveNumber]?.preview;
+			if (!wavePreview || wavePreview.length === 0) return;
 			enemy = wavePreview[0];
 			pos = 0;
 		}
@@ -1006,14 +1009,14 @@ export class UI {
 
 		// ENDLESS MODE: Get wave data (use templates for waves > 100)
 		let waveData, wavePreview;
-		if (this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
+		if (this.main.area.waves && this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
 			waveData = this.main.area.waves[this.main.area.waveNumber];
 			wavePreview = waveData.preview;
-		} else {
+		} else if (this.main.area.waves) {
 			// Endless mode - use template wave
 			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
 			waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
-			wavePreview = waveData.preview;
+			wavePreview = waveData?.preview;
 			
 			// Boss wave override (every 100 waves)
 			if (this.main.area.waveNumber % 100 === 0 && this.main.area.waveNumber > 100) {
@@ -1031,11 +1034,11 @@ export class UI {
 				}
 			}
 		}
-		let pokemonCount = this.countPokemon(waveData);
+		let pokemonCount = waveData ? this.countPokemon(waveData) : {};
 		
 		// ENDLESS MODE: Override enemy count for waves > 100
 		const wave = this.main.area.waveNumber;
-		if (wave > 100) {
+		if (wave > 100 && wavePreview) {
 			const wavesPast100 = wave - 100;
 			// Boss waves (200, 300, etc.) show boss count + escort counts
 			if (wave % 100 === 0) {
@@ -1064,6 +1067,7 @@ export class UI {
 
 		this.mapWavePokemonContainer.innerHTML = "";
 		this.mapWavePokemon = [];
+		if (!wavePreview) return;
 		wavePreview.forEach((pokemon, i) => {
 			this.mapWavePokemon[i] = new Element(this.mapWavePokemonContainer, { className: 'ui-map-wave-pokemon', image: pokemon.sprite.base }).element;
 			this.mapWavePokemon[i].addEventListener('click', () => { 
