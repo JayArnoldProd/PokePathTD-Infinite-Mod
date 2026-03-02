@@ -402,10 +402,16 @@ export class Area {
 			return;
 		}
 		
-		// === EXPONENTIAL HP SCALING ===
-		// Growth rate: 1.0095^waves gives ~75k at 700, ~1M at 1600
+		// === HP SCALING (power budget system - matches UI display) ===
 		const wavesPast100 = wave - 100;
-		const hpMult = Math.pow(1.0095, wavesPast100);
+		const baseBudget = 160000;
+		let hpMult;
+		if (wave < 200) {
+			hpMult = 1 + wavesPast100 * 0.115;
+		} else {
+			hpMult = wave / 16;
+		}
+		const powerBudget = Math.floor(baseBudget * hpMult);
 		
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
@@ -426,6 +432,13 @@ export class Area {
 		const inverseHp = hpValues.map(hp => 1 / hp);
 		const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
 		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+		
+		// Calculate HP scale factor from power budget (matches UI exactly)
+		let totalBaseHp = 0;
+		wavePreview.forEach((p, idx) => {
+			totalBaseHp += (p.hp || 100) * enemyCounts[idx];
+		});
+		const hpScaleFactor = powerBudget / totalBaseHp;
 		
 		// Split each type's count into base/elite/champion for variety
 		const tankiest = wavePreview.reduce((a, b) => ((a.hp || 0) + (a.armor || 0) > (b.hp || 0) + (b.armor || 0)) ? a : b);
@@ -464,8 +477,8 @@ export class Area {
 			
 			const { template, isElite, isChampion } = entry;
 			
-			let scaledHp = Math.floor(template.hp * hpMult);
-			let scaledArmor = template.armor || 0;
+			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor));
+			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.05 * wavesPast100));
 			
 			if (isElite) {
 				scaledHp = Math.floor(scaledHp * 2);
@@ -480,7 +493,7 @@ export class Area {
 				...template,
 				hp: scaledHp,
 				armor: scaledArmor,
-				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.08))
+				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
 			};
 			
 			const clusterIndex = Math.floor(i / clusterSize);
@@ -544,13 +557,15 @@ export class Area {
 		}
 		
 		const wavesPast100 = wave - 100;
-		const hpMult = Math.pow(1.0095, wavesPast100);
+		const bonusSteps = Math.floor((wave - 1) / 5);
+		let bossHpMult = 1 + 0.02 * bonusSteps;
+		bossHpMult *= Math.pow(2, wavesPast100 / 50);
 		
 		const scaledBoss = {
 			...boss,
-			hp: Math.floor(boss.hp * hpMult * 2),
-			armor: Math.floor((boss.armor || 0) * hpMult) || Math.floor(boss.hp * hpMult * 0.3),
-			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.1))
+			hp: Math.floor(boss.hp * bossHpMult * 2),
+			armor: Math.floor((boss.armor || 0) * (1 + 0.05 * wavesPast100)),
+			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
 		
 		const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
@@ -580,9 +595,9 @@ export class Area {
 				const escortTemplate = escorts[Math.floor(Math.random() * escorts.length)];
 				const scaledEscort = {
 					...escortTemplate,
-					hp: Math.floor(escortTemplate.hp * hpMult * 1.5),
-					armor: Math.floor((escortTemplate.armor || 0) * hpMult) || Math.floor(escortTemplate.hp * hpMult * 0.15),
-					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.08))
+					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
+					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.05 * wavesPast100)),
+					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
 				};
 				
 				const xOffset = (bossCount + 1) * bossSpacing + (i + 1) * 25;
