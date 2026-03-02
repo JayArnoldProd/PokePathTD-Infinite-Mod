@@ -40,23 +40,11 @@ export class Projectile extends Sprite {
         const frameFactor = simDelta / (1000 / 60);
         const secs = simDelta / 1000;
 
-        // MOD: If target is dead, retarget to closest enemy near the PROJECTILE
-        // but delete if projectile has left the tower's range
+        // MOD: If target is dead, retarget within tower's range from tower position
+        // Note: Tower.modded.js updateProjectiles also handles this BEFORE update() is called
         if ((!this.enemy || this.enemy.hp <= 0) && this.tower) {
-            // Check if projectile is still within tower's range
             const towerRange = this.tower.range || 100;
-            const px = this.position.x + (this.width ? this.width / 2 : 0);
-            const py = this.position.y + (this.height ? this.height / 2 : 0);
-            const dx = px - this.tower.center.x;
-            const dy = py - this.tower.center.y;
-            if (dx * dx + dy * dy > towerRange * towerRange) {
-                this.markedForDeletion = true;
-                return;
-            }
-            // Retarget from projectile position — closest enemy to where the projectile IS
-            if (!this.center) this.center = { x: px, y: py };
-            else { this.center.x = px; this.center.y = py; }
-            const newTarget = this.findClosestEnemy(this, 200);
+            const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);
             if (newTarget) {
                 this.enemy = newTarget;
             } else {

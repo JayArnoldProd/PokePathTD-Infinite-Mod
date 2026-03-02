@@ -520,6 +520,14 @@ export class Area {
 			[enemies[i], enemies[j]] = [enemies[j], enemies[i]];
 		}
 		
+		// MOD: Invisible enemy cap — asymptotically approaches 1000 but starts low
+		// Prevents all-invisible waves from being unbeatable
+		// Formula: cap = 1000 * wavesPast100 / (wavesPast100 + 6000)
+		// Wave 200: 16 | Wave 500: 62 | Wave 1000: 130 | Wave 1175: 151
+		// Wave 2000: 240 | Wave 5000: 449 | Wave 10000: 622
+		const invisCap = Math.floor(1000 * wavesPast100 / (wavesPast100 + 6000));
+		let invisCount = 0;
+		
 		// === SPACING ===
 		// MOD: Stack multiple enemies at the same spawn point so they arrive as packs.
 		// "stackSize" = how many enemies share one spawn slot (increases with wave).
@@ -558,11 +566,22 @@ export class Area {
 			const scaledSpeed = template.speed * speedMult;
 			const scaledRegen = Math.floor(scaledHp * regenScale); // HP/sec proportional to max HP
 			
+			// MOD: Cap invisible enemies per wave — excess become visible
+			let isInvisible = template.invisible || false;
+			if (isInvisible) {
+				if (invisCount < invisCap) {
+					invisCount++;
+				} else {
+					isInvisible = false;
+				}
+			}
+			
 			const scaledEnemy = {
 				...template,
 				hp: scaledHp,
 				armor: scaledArmor,
 				speed: scaledSpeed,
+				invisible: isInvisible,
 				regeneration: Math.max(template.regeneration || 0, scaledRegen),
 				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
 			};
