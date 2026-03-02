@@ -510,12 +510,15 @@ export class Area {
 		}
 		
 		// === SPACING ===
-		// MOD: Progressively tighter spacing so late-game waves don't take forever
-		// Wave 101: 30px apart, wave 200: ~18px, wave 500: ~6px, wave 1000+: 3px minimum
-		const baseOffset = 30;
-		const waveOffset = Math.max(3, baseOffset - Math.floor(wavesPast100 / 12));
-		const clusterSize = Math.min(40, 5 + Math.floor(wavesPast100 / 15));
-		const clusterGap = Math.max(5, Math.floor(waveOffset * 0.8));
+		// MOD: Stack multiple enemies at the same spawn point so they arrive as packs.
+		// "stackSize" = how many enemies share one spawn slot (increases with wave).
+		// "slotGap" = pixels between each spawn slot (stays readable).
+		// Wave 101: 1 per slot, 25px gap (vanilla feel)
+		// Wave 200: 2 per slot, 20px gap (pairs arrive together)
+		// Wave 500: 5 per slot, 14px gap (dense packs)
+		// Wave 1000+: 10 per slot, 10px gap (swarms)
+		const stackSize = Math.min(10, 1 + Math.floor(wavesPast100 / 50));
+		const slotGap = Math.max(10, 25 - Math.floor(wavesPast100 / 40));
 		
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
 		
@@ -543,14 +546,17 @@ export class Area {
 				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
 			};
 			
-			const clusterIndex = Math.floor(i / clusterSize);
-			const posInCluster = i % clusterSize;
-			const xOffset = (clusterIndex * clusterSize * waveOffset) + (clusterIndex * clusterGap) + (posInCluster * waveOffset);
+			// Enemies within the same stack share the same spawn slot (same x position)
+			const slotIndex = Math.floor(i / stackSize);
+			const xOffset = slotIndex * slotGap;
+			// Small y jitter within a stack so stacked enemies don't perfectly overlap
+			const stackPos = i % stackSize;
+			const yJitter = (stackPos - Math.floor(stackSize / 2)) * 2;
 			
 			this.enemies.push(
 				new Enemy(
 					waypointEnemy[0].x - xOffset - 50,
-					waypointEnemy[0].y,
+					waypointEnemy[0].y + yJitter,
 					scaledEnemy,
 					waypointEnemy,
 					this.main,
