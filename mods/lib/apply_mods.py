@@ -346,28 +346,16 @@ MOD_FEATURES = {
         'functions': ['apply_devtools'],
         'default': True,
     },
-    'challenge_fix': {
-        'name': 'Challenge Level Cap Fix',
-        'description': 'Fix vanilla bug where level cap boosts low-level Pokemon instead of only capping high-level ones',
-        'functions': ['apply_challenge_levelcap_fix'],
+    'vanilla_fixes': {
+        'name': 'Vanilla Bug Fixes & QoL',
+        'description': 'Fixes vanilla bugs and adds QoL: Ditto dynamic transform (auto-copies slot 1, reverts in slot 1, shiny fix), challenge level cap fix, tower placement persistence, projectile retargeting fix, off-screen targeting fix',
+        'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Pokemon/Area/Tower/Projectile/BoxScene/UI)
         'default': True,
     },
     'hidden_items': {
         'name': 'Unlock Hidden Item(s)',
         'description': 'Unlocks 1 hidden item: Magma Stone (doubles burn duration to 20s, 50000g). The game code already supports it!',
         'functions': ['apply_hidden_items'],
-        'default': True,
-    },
-    'save_tower_positions': {
-        'name': 'Save Tower Positions',
-        'description': 'Tower placements persist in save data — towers are redeployed when you load a map',
-        'functions': [],  # Always-on: baked into Pokemon.modded.js and Area.modded.js (core mod files)
-        'default': True,
-    },
-    'projectile_retarget_fix': {
-        'name': 'Projectile Range Fix',
-        'description': 'Projectiles only retarget on-screen enemies within the firing tower\'s range; off-screen targets are deleted',
-        'functions': [],  # Always-on: baked into Tower.modded.js and Projectile.modded.js (core mod files)
         'default': True,
     },
 }

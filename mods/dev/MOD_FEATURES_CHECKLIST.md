@@ -154,7 +154,7 @@ This document lists all mod features that MUST be present in the modded files. U
 ## pokemonData.js
 - [x] ~~Expanded egg list~~ — REMOVED in v1.4.4b (all 17 Pokemon are obtainable through vanilla secrets/challenges)
 
-## ChallengeScene.js (via apply_mods.py patch)
+## ChallengeScene.js (via apply_mods.py patch, part of Vanilla Bug Fixes)
 - [ ] `poke.updateStats()` instead of `poke.setStatsLevel(capLevel)` — fixes vanilla bug where level cap BOOSTS low-level Pokemon to cap instead of only capping high-level ones
 
 ## itemData.js (via apply_mods.py patch)
@@ -186,7 +186,11 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] No `if (this.stopped) return;` guard in canvas pointerdown handler
 - [ ] Tile highlighting works during pause (PlacementTile.update() runs via animate loop)
 
-## Feature: Ditto Dynamic Transform (always-on)
+## Feature: Vanilla Bug Fixes & QoL (installer checkbox: `vanilla_fixes`)
+Consolidates all vanilla bug fixes and QoL improvements that don't add new gameplay mechanics.
+Baked into core modded files — always present when any mod is installed.
+
+## Feature: Ditto Dynamic Transform (part of Vanilla Bug Fixes)
 - [ ] `transformADN()` dynamically looks up slot 1 specie (Pokemon.modded.js)
 - [ ] `refreshDittoTransforms()` static method on Pokemon class
 - [ ] Refresh on game load: Area.modded.js constructor calls `Pokemon.refreshDittoTransforms(this.main)` after `loadArea()`
@@ -196,13 +200,13 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Shiny Ditto: `setShiny()` guard allows shiny for standalone Ditto (`this.adn && this.adn.id != 70` — no optional chaining)
 - [ ] Tower sprite update: deployed Ditto towers refresh sprite when transform changes
 
-## Feature: Save Tower Positions (always-on)
+## Feature: Save Tower Positions (part of Vanilla Bug Fixes)
 - [ ] `tilePosition` in `getOriginalData()` both branches (Pokemon.modded.js)
 - [ ] `tilePosition` restored in `fromOriginalData()` (Pokemon.modded.js)
 - [ ] Tower redeployment with tile compatibility checks at end of `loadArea()` (Area.modded.js)
 - [ ] `recalculateAuras()` and `checkWeather()` called after redeploy
 
-## Feature: Projectile Range Fix (always-on)
+## Feature: Projectile Range Fix (part of Vanilla Bug Fixes)
 - [ ] Retargeting searches from tower position within tower's range (Tower.modded.js, Projectile.modded.js)
 - [ ] Projectiles targeting off-screen enemies are deleted (Projectile.modded.js)
 - [ ] Retarget search skips off-screen enemies (Tower.modded.js findClosestEnemy)
