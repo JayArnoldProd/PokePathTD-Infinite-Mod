@@ -449,9 +449,9 @@ export class Area {
 		const baseBudget = 160000;
 		let hpMult;
 		if (wavesPast100 <= 1300) {
-			hpMult = Math.pow(1.0048, wavesPast100);
+			hpMult = Math.pow(1.0052, wavesPast100);
 		} else {
-			const base = Math.pow(1.0048, 1300); // anchor at wave 1400
+			const base = Math.pow(1.0052, 1300); // anchor at wave 1400
 			const extra = wavesPast100 - 1300;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
