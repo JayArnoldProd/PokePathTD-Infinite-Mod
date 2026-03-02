@@ -312,8 +312,8 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box',
-        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort'],
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap 999T, abbreviated gold display, live profile stats',
+        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_live_update'],
         'default': True,
     },
     'box_expansion': {
@@ -1672,6 +1672,138 @@ def apply_expanded_egg_list():
     return False
 
 # ============================================================================
+# PLAYER.JS - Gold cap increase to 999 trillion
+# ============================================================================
+def apply_gold_cap_increase():
+    """Raise gold cap from 99,999,999,999 to 999,999,999,999,999 (999 trillion)."""
+    path = JS_ROOT / "game" / "core" / "Player.js"
+    content = read_file(path)
+
+    if '999999999999999' in content:
+        log_skip("Player.js: Gold cap increase")
+        return True
+
+    old = 'if (this.gold >= 99999999999) this.gold = 99999999999;'
+    new = 'if (this.gold >= 999999999999999) this.gold = 999999999999999;'
+
+    if old in content:
+        content = content.replace(old, new)
+        write_file(path, content)
+        log_success("Player.js: Gold cap raised to 999 trillion")
+        return True
+
+    log_fail("Player.js: Gold cap increase", "gold cap pattern not found")
+    return False
+
+# ============================================================================
+# PLAYER.JS - Gold display abbreviated format (HUD)
+# ============================================================================
+def apply_gold_display_format_player():
+    """Patch Player.js gold display to use abbreviated format for large amounts."""
+    path = JS_ROOT / "game" / "core" / "Player.js"
+    content = read_file(path)
+
+    if 'Trillion' in content or 'Billion' in content:
+        log_skip("Player.js: Gold display format")
+        return True
+
+    old = "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;"
+    new = ("const g = this.main.player.gold; "
+           "this.main.UI.playerGold.innerText = g >= 1e12 "
+           "? `$${(g/1e12).toFixed(2)} Trillion` "
+           ": g >= 1e11 "
+           "? `$${(g/1e9).toFixed(2)} Billion` "
+           ": `$${this.main.utility.numberDot(g)}`;")
+
+    if old in content:
+        content = content.replace(old, new)
+        write_file(path, content)
+        log_success("Player.js: Gold display abbreviated (Billion/Trillion)")
+        return True
+
+    log_fail("Player.js: Gold display format", "playerGold.innerText pattern not found")
+    return False
+
+# ============================================================================
+# UI.JS - Gold display abbreviated format (UI update)
+# ============================================================================
+def apply_gold_display_format_ui():
+    """Patch UI.js gold display to use abbreviated format for large amounts."""
+    path = JS_ROOT / "game" / "UI.js"
+    content = read_file(path)
+
+    if 'Trillion' in content and 'playerGold' in content:
+        log_skip("UI.js: Gold display format")
+        return True
+
+    old = "this.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;"
+    new = ("const _g = this.main.player.gold; "
+           "this.playerGold.innerText = _g >= 1e12 "
+           "? `$${(_g/1e12).toFixed(2)} Trillion` "
+           ": _g >= 1e11 "
+           "? `$${(_g/1e9).toFixed(2)} Billion` "
+           ": `$${this.main.utility.numberDot(_g)}`;")
+
+    if old in content:
+        content = content.replace(old, new)
+        write_file(path, content)
+        log_success("UI.js: Gold display abbreviated (Billion/Trillion)")
+        return True
+
+    log_fail("UI.js: Gold display format", "playerGold.innerText pattern not found")
+    return False
+
+# ============================================================================
+# PROFILESCENE.JS - Live auto-updating stats while open
+# ============================================================================
+def apply_profile_live_update():
+    """Add setInterval refresh to ProfileScene so stats update live while open."""
+    path = JS_ROOT / "game" / "scenes" / "ProfileScene.js"
+    content = read_file(path)
+
+    if '_refreshInterval' in content:
+        log_skip("ProfileScene.js: Live update")
+        return True
+
+    # Patch open() to add refresh interval
+    old_open = """\topen() {
+\t\tsuper.open();
+\t\tthis.update();
+\t}"""
+
+    new_open = """\topen() {
+\t\tsuper.open();
+\t\tthis.update();
+\t\tthis._refreshInterval = setInterval(() => this.update(), 500);
+\t}"""
+
+    if old_open not in content:
+        log_fail("ProfileScene.js: Live update", "open() pattern not found")
+        return False
+
+    content = content.replace(old_open, new_open)
+
+    # Patch close() to clear interval
+    old_close = """\tclose() {
+\t\tthis.main.tooltip.hide();
+\t\tsuper.close();"""
+
+    new_close = """\tclose() {
+\t\tif (this._refreshInterval) { clearInterval(this._refreshInterval); this._refreshInterval = null; }
+\t\tthis.main.tooltip.hide();
+\t\tsuper.close();"""
+
+    if old_close in content:
+        content = content.replace(old_close, new_close)
+    else:
+        log_fail("ProfileScene.js: Live update", "close() pattern not found")
+        return False
+
+    write_file(path, content)
+    log_success("ProfileScene.js: Live auto-updating stats (500ms refresh)")
+    return True
+
+# ============================================================================
 # SELECTIVE MOD APPLICATION
 # ============================================================================
 # ============================================================================
@@ -2704,6 +2836,14 @@ def main():
     
     # QoL: Attack type sort in box
     apply_attacktype_sort()
+    
+    # QoL: Gold cap and display
+    apply_gold_cap_increase()
+    apply_gold_display_format_player()
+    apply_gold_display_format_ui()
+    
+    # QoL: Live profile stats
+    apply_profile_live_update()
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()
