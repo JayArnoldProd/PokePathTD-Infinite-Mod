@@ -56,6 +56,7 @@ export class Area {
 		return {
 			routeNumber: this.routeNumber,
 			routeWaves: this.routeWaves,
+			endlessMode: this.endlessMode, // Save endless state
 		};
 	}
 

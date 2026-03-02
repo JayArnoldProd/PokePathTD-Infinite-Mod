@@ -40,8 +40,17 @@ export class Projectile extends Sprite {
         const frameFactor = simDelta / (1000 / 60);
         const secs = simDelta / 1000;
 
-        // If target is dead, destroy projectile (no retargeting — prevents chain reactions outside tower range)
-        if (!this.enemy || this.enemy.hp <= 0) {
+        // If target is dead, try to retarget within tower's range (from tower position, not projectile)
+        if ((!this.enemy || this.enemy.hp <= 0) && this.tower) {
+            const towerRange = this.tower.range || 100;
+            const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);
+            if (newTarget) {
+                this.enemy = newTarget;
+            } else {
+                this.markedForDeletion = true;
+                return;
+            }
+        } else if (!this.enemy || this.enemy.hp <= 0) {
             this.markedForDeletion = true;
             return;
         }
