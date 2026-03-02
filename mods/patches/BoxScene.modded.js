@@ -212,7 +212,14 @@ export class BoxScene extends GameScene {
 
 				this.units[i].shiny.style.display = (poke.isShiny) ? 'revert-layer' : 'none';
 				this.units[i].text.innerHTML = "";
-				if (this.sorted <= 1 || this.sorted == 10 || this.sorted == 11) this.units[i].text.innerHTML = poke.name[this.main.lang];
+				if (this.sorted <= 1 || this.sorted == 10) this.units[i].text.innerHTML = poke.name[this.main.lang];
+				else if (this.sorted == 11) {
+					const typeLabels = { 'area': 'AOE', 'aura': 'Aura', 'single': 'Single' };
+					const typeColors = { 'area': '#e94560', 'aura': '#a855f7', 'single': '#38bdf8' };
+					const label = typeLabels[poke.attackType] || poke.attackType;
+					const color = typeColors[poke.attackType] || '#fff';
+					this.units[i].text.innerHTML = `<span style="color: ${color}; font-size: 7px;">${label}</span>`;
+				}
 				else if (this.sorted == 2) {
 					if (this.main.area.inChallenge.lvlCap === 'number') this.units[i].text.innerHTML = `Lv ${this.main.area.inChallenge.lvlCap}`;
 					else this.units[i].text.innerHTML = `Lv ${poke.lvl}`;
