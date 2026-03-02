@@ -1,4 +1,4 @@
-import { routeData } from '../data/routeData.js';
+﻿import { routeData } from '../data/routeData.js';
 import { PlacementTile } from '../component/PlacementTile.js';
 import { Tower } from '../component/Tower.js';
 import { Element } from '../../utils/Element.js';
@@ -187,7 +187,7 @@ export class Area {
 			}
 			this.recalculateAuras();
 			this.checkWeather();
-			// Defer UI update — during constructor, UI.update() may reference
+			// Defer UI update â€” during constructor, UI.update() may reference
 			// properties not yet initialized. Main.js calls UI.update() after all
 			// constructors complete (Main.js line 86).
 		}
@@ -444,23 +444,23 @@ export class Area {
 		}
 		
 		// === HP SCALING (exponential early, polynomial tail) ===
-		// Stretched so old wave 900 difficulty lands at wave 1100
+		// Balanced so level N Pokemon can roughly reach wave N
 		const wavesPast100 = wave - 100;
 		const baseBudget = 160000;
 		let hpMult;
-		if (wavesPast100 <= 1100) {
-			hpMult = Math.pow(1.0056, wavesPast100);
+		if (wavesPast100 <= 1300) {
+			hpMult = Math.pow(1.0048, wavesPast100);
 		} else {
-			const base = Math.pow(1.0056, 1100); // anchor at wave 1200
-			const extra = wavesPast100 - 1100;
+			const base = Math.pow(1.0048, 1300); // anchor at wave 1400
+			const extra = wavesPast100 - 1300;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
 		const powerBudget = Math.floor(baseBudget * hpMult);
 		
-		// MOD: Speed scaling — gentle logarithmic curve
-		const speedMult = 1 + Math.log2(1 + wavesPast100 / 2000);
-		// MOD: Regeneration scaling — asymptotically approaches 5% of max HP/sec
-		const regenScale = 0.05 * wavesPast100 / (wavesPast100 + 2500);
+		// MOD: Speed scaling â€” gentle logarithmic curve
+		const speedMult = 1 + Math.log2(1 + wavesPast100 / 2500);
+		// MOD: Regeneration scaling â€” asymptotically approaches 5% of max HP/sec
+		const regenScale = 0.05 * wavesPast100 / (wavesPast100 + 3000);
 		
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
@@ -489,7 +489,7 @@ export class Area {
 		});
 		const hpScaleFactor = powerBudget / totalBaseHp;
 		
-		// MOD: Minimum per-enemy HP floor — ensures difficulty never drops when the
+		// MOD: Minimum per-enemy HP floor â€” ensures difficulty never drops when the
 		// wave cycle resets (e.g. wave 201 template 1 enemies must be at least as
 		// tough as wave 200 template 100 enemies). Floor = budget / enemy count,
 		// so a cycle-start swarm of Rattata each has comparable HP to a single
@@ -540,7 +540,7 @@ export class Area {
 			
 			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy));
 			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
-			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.04 * wavesPast100));
+			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.03 * wavesPast100));
 			if (scaledArmor === 0) {
 				scaledArmor = Math.floor(scaledHp * 0.05);
 			}
@@ -655,7 +655,7 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 187.5); // MOD: Stretched boss scaling (old wave 900 = new wave 1100)
+		bossHpMult *= Math.pow(2, wavesPast100 / 225); // MOD: Stretched boss scaling (level N â‰ˆ wave N)
 		
 		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
 		const bossHp = Math.floor(boss.hp * bossHpMult * 2);
@@ -663,7 +663,7 @@ export class Area {
 		const scaledBoss = {
 			...boss,
 			hp: bossHp,
-			armor: Math.floor((boss.armor || 0) * (1 + 0.04 * wavesPast100)),
+			armor: Math.floor((boss.armor || 0) * (1 + 0.03 * wavesPast100)),
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
 		
@@ -694,7 +694,7 @@ export class Area {
 				const scaledEscort = {
 					...escortTemplate,
 					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
-					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.04 * wavesPast100)),
+					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.03 * wavesPast100)),
 					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
 				};
 				
