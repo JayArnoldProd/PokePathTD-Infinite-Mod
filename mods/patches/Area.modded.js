@@ -655,7 +655,7 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 305); // MOD: Stretched boss scaling (level N â‰ˆ wave N)
+		bossHpMult *= Math.pow(2, wavesPast100 / 335); // MOD: Stretched boss scaling (level N â‰ˆ wave N)
 		
 		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
 		const bossHp = Math.floor(boss.hp * bossHpMult * 2);
