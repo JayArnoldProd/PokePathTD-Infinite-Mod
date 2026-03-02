@@ -5,13 +5,11 @@ This document lists all mod features that MUST be present in the modded files. U
 ## Area.modded.js
 - [ ] `this.endlessMode = false;` in constructor
 - [ ] `this.endlessMode = this.waveNumber > 100;` in loadArea()
-- [ ] `import { Tower }` for tower redeployment from save
-- [ ] MOD: `this.main.area = this;` before `loadArea()` call in constructor (Tower constructors need main.area during redeployment)
-- [ ] MOD: Tower redeployment from saved tilePositions at end of `loadArea()` (with tile-type compatibility checks)
-- [ ] MOD: NO `this.main.UI.update()` in redeployment block (Main.js handles UI update after all constructors)
-- [ ] MOD: Stack-based endless wave spawning — `stackSize` increases with wave, enemies share spawn slots
-- [ ] MOD: Minimum HP floor per enemy — `minHpPerEnemy = powerBudget / totalEnemyCount` ensures difficulty never drops on cycle reset
-- [ ] MOD: `scaledHp` uses `Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy)`
+- [ ] `import { Tower }` at top of file
+- [ ] `this.main.area = this;` before `loadArea()` in constructor
+- [ ] Tower redeployment from saved `tilePositions` at end of `loadArea()` with tile-type compatibility checks
+- [ ] Stack-based endless wave spawning: `stackSize` scales with wave, enemies share spawn slots
+- [ ] Minimum HP floor: `minHpPerEnemy = powerBudget / totalEnemyCount`, applied via `Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy)`
 - [ ] MOD: Record handling - uncapped records past wave 100
 - [ ] MOD: Stars only awarded for waves 1-100
 - [ ] `enableEndlessMode()` method - sets endlessMode=true, waveNumber=101
@@ -89,12 +87,12 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Tower.modded.js
 - [ ] Delta time fix for accurate projectile timing
-- [ ] MOD: Projectile retargeting uses tower position + tower range (not hardcoded 200 from projectile)
+- [ ] Projectile retargeting in `updateProjectiles()`: search from tower position with tower's range
 
 ## Projectile.modded.js
 - [ ] Endless scaling for projectile damage
-- [ ] MOD: Retarget in update() uses tower position + tower range (backup path — Tower.js retargets first)
-- [ ] MOD: `findClosestEnemy()` for ricochets: 200px from enemy position (do NOT limit to tower range — ricochet chains freely by design)
+- [ ] Retarget in `update()`: search from tower position with tower's range
+- [ ] Ricochet `findClosestEnemy()`: 200px from enemy position, NOT limited to tower range
 
 ## ProfileScene.modded.js
 - [ ] Uncapped wave record display (shows 100+ instead of capping at 100)
@@ -150,17 +148,19 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] No `if (this.stopped) return;` guard in canvas pointerdown handler
 - [ ] Tile highlighting works during pause (PlacementTile.update() runs via animate loop)
 
-## Feature: Save Tower Positions (always-on, core mod files)
-- [ ] `tilePosition: this.tilePosition` in `getOriginalData()` both branches (Pokemon.modded.js)
-- [ ] `pokemon.tilePosition = data.tilePosition ?? -1;` in `fromOriginalData()` (Pokemon.modded.js)
-- [ ] Tower redeployment from `savedTilePositions` map at end of `loadArea()` (Area.modded.js)
-- [ ] Tile compatibility checks (airBalloon, heavyDutyBoots, assaultVest, dampMulch) during redeploy
+## Feature: Save Tower Positions (always-on)
+- [ ] `tilePosition` in `getOriginalData()` both branches (Pokemon.modded.js)
+- [ ] `tilePosition` restored in `fromOriginalData()` (Pokemon.modded.js)
+- [ ] Tower redeployment with tile compatibility checks at end of `loadArea()` (Area.modded.js)
 - [ ] `recalculateAuras()` and `checkWeather()` called after redeploy
 
-## Feature: Projectile Range Fix (always-on, core mod files)
-- [ ] Projectile retargeting uses tower position + tower range instead of hardcoded 200 (Tower.modded.js)
-- [ ] `findClosestEnemy()` for ricochets searches 200px from enemy position (intentionally unlimited — ricochet is MEANT to chain freely)
-- [ ] Retarget in `update()` uses tower position + tower range (Projectile.modded.js) — backup path, Tower.js handles retarget first
+## Feature: Projectile Range Fix (always-on)
+- [ ] Retargeting searches from tower position within tower's range (Tower.modded.js, Projectile.modded.js)
+- [ ] Ricochet chaining is 200px from enemy position — NOT tower-range-limited
+
+## Feature: Endless Wave Density (always-on)
+- [ ] Stack-based spawning: multiple enemies per spawn slot, `stackSize` scales with wave
+- [ ] Minimum HP floor per enemy: `powerBudget / totalEnemyCount` — prevents difficulty dips on cycle reset
 
 ---
 
