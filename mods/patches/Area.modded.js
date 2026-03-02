@@ -623,7 +623,7 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 50);
+		bossHpMult *= Math.pow(2, wavesPast100 / 100); // MOD: Boss scaling half as fast as regular enemies
 		
 		// MOD: Spread total boss HP across all bosses so difficulty scales smoothly
 		// Total HP budget stays the same regardless of boss count
