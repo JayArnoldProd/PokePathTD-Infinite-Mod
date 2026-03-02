@@ -1091,25 +1091,26 @@ class App(tk.Tk):
         messagebox.showinfo("Done", f"Added {count} new Pokemon!\n({skipped} chains already owned)")
     
     def make_all_shiny(self):
-        """Make all Pokemon in team and box shiny."""
+        """Make all Pokemon in team and box shiny. On vanilla saves, only max evolutions."""
         if not self.save.data:
             return
         
+        is_vanilla = self.save_mode_var.get() == "vanilla"
         count = 0
-        # Process team
-        for poke in self.save.team:
+        skipped = 0
+        for poke in self.save.team + self.save.box:
             if poke and not poke.get('isShiny', False):
-                poke['isShiny'] = True
-                count += 1
-        
-        # Process box
-        for poke in self.save.box:
-            if poke and not poke.get('isShiny', False):
+                if is_vanilla and not self._is_max_evo(poke):
+                    skipped += 1
+                    continue
                 poke['isShiny'] = True
                 count += 1
         
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Made {count} Pokemon shiny!")
+        msg = f"Made {count} Pokemon shiny!"
+        if skipped:
+            msg += f"\n({skipped} non-max evolutions skipped — vanilla has no shiny sprites for them)"
+        messagebox.showinfo("Done", msg)
     
     def max_all(self):
         if not self.save.data:
@@ -1158,21 +1159,31 @@ class App(tk.Tk):
         self.refresh_grid()
         messagebox.showinfo("Done", f"Devolved {count} Pokemon to base form!")
     
+    def _is_max_evo(self, poke):
+        """Check if a Pokemon is at its max evolution."""
+        key = poke.get('specieKey') or poke.get('specie', {}).get('key', '')
+        if not key:
+            return True  # Unknown — allow shiny
+        return self.poke_data.get_final_evo(key) == key
+
     def toggle_all_shiny(self):
-        """Toggle shiny status for all Pokemon."""
+        """Toggle shiny status for all Pokemon. On vanilla saves, only affects max evolutions."""
         if not self.save.data:
             return
         all_poke = [p for p in self.save.team + self.save.box if p]
         if not all_poke:
             return
+        is_vanilla = self.save_mode_var.get() == "vanilla"
         # If any are not shiny, make all shiny; otherwise make all normal
-        any_not_shiny = any(not p.get('isShiny', False) for p in all_poke)
+        eligible = [p for p in all_poke if not is_vanilla or self._is_max_evo(p)]
+        any_not_shiny = any(not p.get('isShiny', False) for p in eligible)
         new_state = any_not_shiny
-        for p in all_poke:
+        for p in eligible:
             p['isShiny'] = new_state
         self.refresh_grid()
         state_text = "shiny" if new_state else "normal"
-        messagebox.showinfo("Done", f"All Pokemon are now {state_text}!")
+        count_msg = f" ({len(eligible)} max evolutions)" if is_vanilla and len(eligible) < len(all_poke) else ""
+        messagebox.showinfo("Done", f"All{count_msg} Pokemon are now {state_text}!")
     
     def delete_all(self):
         if not self.save.data:
