@@ -34,8 +34,13 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### ⚖️ Balanced Endless Scaling
 - **Upgrade Costs** - Cost = (previous × 1.02) + 8000 past level 100 (caps at 1 Billion)
 - **Enemy HP/Armor** - Scales smoothly with power budget system
+- **Enemy Speed Scaling** - Enemies gradually get faster in endless mode (logarithmic curve)
+- **Enemy Regeneration** - Enemies regenerate HP in endless mode, scaling asymptotically (never reaches cap)
+- **Boss Wave Balancing** - Boss HP scales at half the rate of regular enemies; boss waves include escort enemies at wave 300+
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 - **Delta Time Accuracy** - High-speed attacks process correctly
+- **Tower Placement Persistence** - Tower positions are saved and restored on load
+- **Off-Screen Projectile Fix** - Projectiles no longer chase enemies that have left the screen
 
 ### 🐱 Hidden Content Unlocked
 
@@ -164,7 +169,7 @@ You can **re-run the installer at any time** to change your mod configuration:
 | `Pokemon.js` | Level cap removed, asymptotic speed scaling, cost formula |
 | `UI.js` | Level-up button works past 100, item/save tooltips |
 | `PokemonScene.js` | +1/+5/+10 buttons work at any level, no MAX display |
-| `Area.js` | Endless mode flag, power budget wave spawning |
+| `Area.js` | Endless mode flag, power budget wave spawning, boss/escort waves, tower placement persistence |
 | `DefeatScene.js` | Checkpoints every 50 waves in endless |
 | `FinalScene.js` | Continue/Restart buttons, auto-continue logic |
 | `Shop.js` | 1/30 shiny egg chance |
@@ -172,9 +177,9 @@ You can **re-run the installer at any time** to change your mod configuration:
 | `NewGameScene.js` | 1/30 shiny starter chance |
 | `MenuScene.js` | Auto-reset has 4 options (Off/Restart/Retry/Continue) |
 | `text.js` | "Continue" text in all languages |
-| `Enemy.js` | Endless HP/armor scaling |
+| `Enemy.js` | Endless HP/armor scaling, speed scaling, regeneration |
 | `Tower.js` | Delta time accuracy for high-speed attacks |
-| `Projectile.js` | Endless damage calculations |
+| `Projectile.js` | Endless damage calculations, off-screen targeting fix |
 | `Tooltip.js` | Enhanced tooltip for items |
 
 ### Shiny Sprite Generation
