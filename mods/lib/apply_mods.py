@@ -1603,6 +1603,60 @@ def apply_ui_emoji_font_fix():
 # ============================================================================
 # AREA.JS - Clamp wave numbers to 100 (when Endless Mode is NOT installed)
 # ============================================================================
+def apply_star_display_cap():
+    """
+    Surgically patch UI.js to cap the star display when Endless Mode is not installed.
+    
+    Without Endless, each route's record should count as at most 100 for the displayed star total.
+    The raw player.stars (sum of all records) may be inflated from previous endless play.
+    This replaces the star display line to compute a capped total from records.
+    """
+    # Try UI.modded.js first, fall back to vanilla UI.js
+    path = JS_ROOT / "game" / "UI.js"
+    content = read_file(path)
+    
+    # Check if already applied
+    if 'cappedStars' in content:
+        log_skip("UI.js: Star display cap")
+        return True
+    
+    # Find and replace the star display line
+    # Vanilla: this.playerStars.innerHTML = `<span class="msrre">⭐</span>${Math.min(1200, this.main.player.stars)}`;
+    # We need to compute capped stars: sum of min(100, record) for each route
+    old_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{Math\.min\(1200,\s*this\.main\.player\.stars\)\}`;'
+    match = re.search(old_pattern, content)
+    
+    if match:
+        new_line = 'const cappedStars = this.main.player.records.reduce((sum, r) => sum + Math.min(100, r), 0); this.playerStars.innerHTML = `<span class="msrre">\u2b50</span>${cappedStars}`;'
+        content = content.replace(match.group(0), new_line)
+        write_file(path, content)
+        log_success("UI.js: Star display capped (100 per route without Endless)")
+        return True
+    
+    # Try matching the modded UI.js pattern (shows raw stars without Math.min)
+    modded_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{this\.main\.player\.stars\}`;'
+    match2 = re.search(modded_pattern, content)
+    if match2:
+        new_line = 'const cappedStars = this.main.player.records.reduce((sum, r) => sum + Math.min(100, r), 0); this.playerStars.innerHTML = `<span class="msrre">\u2b50</span>${cappedStars}`;'
+        content = content.replace(match2.group(0), new_line)
+        write_file(path, content)
+        log_success("UI.js: Star display capped (100 per route without Endless)")
+        return True
+    
+    # Fallback: try simple string replacement
+    if 'Math.min(1200' in content and 'playerStars' in content:
+        content = content.replace(
+            'Math.min(1200, this.main.player.stars)',
+            'this.main.player.records.reduce((sum, r) => sum + Math.min(100, r), 0)'
+        )
+        write_file(path, content)
+        log_success("UI.js: Star display capped (100 per route without Endless)")
+        return True
+    
+    log_fail("UI.js: Star display cap", "star display pattern not found")
+    return False
+
+
 def apply_wave_clamp():
     """
     Surgically patch Area.js to clamp waveNumber to 100.
@@ -1922,13 +1976,18 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         except Exception as e:
             failed_mods.append(f"userData redirect: {str(e)}")
     
-    # Step 4b: Apply wave clamp if Endless Mode is NOT selected
+    # Step 4b: Apply wave clamp + star display cap if Endless Mode is NOT selected
     # Prevents crashes when a save has wave > 100 but Endless isn't installed
+    # Also caps star display so endless records don't inflate the total
     if 'endless' not in selected_features:
         try:
             apply_wave_clamp()
         except Exception as e:
             failed_mods.append(f"wave clamp: {str(e)}")
+        try:
+            apply_star_display_cap()
+        except Exception as e:
+            failed_mods.append(f"star display cap: {str(e)}")
     
     # Step 5: Repack
     if progress_callback:
