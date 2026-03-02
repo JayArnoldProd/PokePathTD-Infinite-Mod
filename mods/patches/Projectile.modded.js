@@ -40,18 +40,7 @@ export class Projectile extends Sprite {
         const frameFactor = simDelta / (1000 / 60);
         const secs = simDelta / 1000;
 
-        // si no hay objetivo  buscar uno 
-        if ((!this.enemy || this.enemy.hp <= 0) && this.tower) {
-            const fallbackSource = { center: this.position || { x: this.position?.x ?? 0, y: this.position?.y ?? 0 } };
-            const newTarget = this.tower.findClosestEnemy(fallbackSource, 200);
-            if (newTarget) {
-                this.enemy = newTarget;
-            } else {
-                this.markedForDeletion = true;
-                return;
-            }
-        }
-
+        // If target is dead, destroy projectile (no retargeting — prevents chain reactions outside tower range)
         if (!this.enemy || this.enemy.hp <= 0) {
             this.markedForDeletion = true;
             return;
