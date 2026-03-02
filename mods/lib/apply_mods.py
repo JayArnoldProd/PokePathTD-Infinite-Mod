@@ -319,7 +319,7 @@ MOD_FEATURES = {
     'box_expansion': {
         'name': 'Box Expansion (200 slots)',
         'description': 'Expand Pokemon storage from 120 to 200 slots',
-        'functions': ['apply_box_expansion'],
+        'functions': ['apply_box_expansion', 'apply_attacktype_sort'],
         'default': True,
     },
     # 'egg_shop' feature REMOVED in v1.4.4b -- all 17 Pokemon are obtainable

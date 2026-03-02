@@ -161,7 +161,7 @@ export class BoxScene extends GameScene {
 		this.addUnit.innerHTML = text.box.add[this.main.lang].toUpperCase();
 		this.removeUnit.innerHTML = text.box.remove[this.main.lang].toUpperCase();
 		this.removeAll.innerHTML = text.box.removeAll[this.main.lang].toUpperCase();
-		this.sortValue.innerHTML = text.box[sort[this.sorted]][this.main.lang].toUpperCase();
+		this.sortValue.innerHTML = (text.box[sort[this.sorted]]?.[this.main.lang] || sort[this.sorted]).toUpperCase();
 
 		this.tabs.forEach((tab, i) => {
 			tab.innerHTML = text.box[TAB_CONTENT[i]][this.main.lang].toUpperCase();
