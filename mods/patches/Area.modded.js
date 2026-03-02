@@ -607,6 +607,28 @@ export class Area {
 		return { swarm, elite };
 	}
 
+	// MOD: Deterministic escort type selection for boss waves (same result for spawn + preview)
+	getEscortTypes(wave, count) {
+		const pool = this.getEndlessEnemyPool(wave);
+		const escorts = pool.elite;
+		if (escorts.length === 0) return [];
+		
+		// Seeded selection: pick evenly spaced from the sorted pool based on wave number
+		const step = Math.max(1, Math.floor(escorts.length / count));
+		const offset = wave % step;
+		const selected = [];
+		const seen = new Set();
+		for (let i = 0; i < escorts.length && selected.length < count; i++) {
+			const idx = (offset + i * step) % escorts.length;
+			const esc = escorts[idx];
+			if (!seen.has(esc.id)) {
+				seen.add(esc.id);
+				selected.push(esc);
+			}
+		}
+		return selected;
+	}
+
 	// ENDLESS MODE: Spawn multiple bosses with escort enemies
 	spawnEndlessBossWave() {
 		const wave = this.waveNumber;
@@ -655,11 +677,10 @@ export class Area {
 		// MOD: Add scaled escort enemies at wave 300+
 		if (wave >= 300) {
 			const escortCount = Math.floor((wave - 200) / 50) * 5;
-			const pool = this.getEndlessEnemyPool(wave);
-			const escorts = pool.elite;
+			const escortTypes = this.getEscortTypes(wave, 3);
 			
-			for (let i = 0; i < escortCount && escorts.length > 0; i++) {
-				const escortTemplate = escorts[Math.floor(Math.random() * escorts.length)];
+			for (let i = 0; i < escortCount && escortTypes.length > 0; i++) {
+				const escortTemplate = escortTypes[i % escortTypes.length];
 				const scaledEscort = {
 					...escortTemplate,
 					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),

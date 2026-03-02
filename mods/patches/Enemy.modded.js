@@ -651,7 +651,7 @@ export class Enemy extends Sprite {
 
 	getDamaged(amount, source = 'physical', ability = null, isCritical = false, alreadyCursed = new Set(), pokemon, tower) {
 	    if (this.hp <= 0 || this.invulnerable) return;
-	   
+	    
 	    let cursedDamageSpread = amount;
 
 	    // RESTORED: Vanilla Strange Idol - 50% bonus minus 1% per cursed enemy

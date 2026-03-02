@@ -351,7 +351,12 @@ export class UI {
 			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
 			wavePreview = this.main.area.waves[templateWaveNum]?.preview || this.main.area.waves[1].preview;
 		}
-		this.displayEnemyInfo(wavePreview[this.enemyPositionDisplay], this.enemyPositionDisplay);
+		// MOD: Guard against out-of-bounds index (e.g. boss wave with fewer preview entries than template)
+		const safeEnemyPos = Math.min(this.enemyPositionDisplay, wavePreview.length - 1);
+		if (wavePreview[safeEnemyPos]) {
+			this.displayEnemyInfo(wavePreview[safeEnemyPos], safeEnemyPos);
+			this.enemyPositionDisplay = safeEnemyPos;
+		}
 
 		this.waveSelectorContainer.style.display = 'none';
 		this.waveSelectorLabel.innerText = text.ui.waveManager[this.main.lang].toUpperCase();
@@ -1002,19 +1007,8 @@ export class UI {
 					wavePreview = [boss];
 					// MOD: Show escort enemies in preview at wave 300+
 					if (this.main.area.waveNumber >= 300) {
-						const e = this.main.area.main.area.waves;
-						const pool = this.main.area.getEndlessEnemyPool(this.main.area.waveNumber);
-						const escorts = pool.elite;
-						// Pick up to 3 unique escort types to show in preview
-						const shown = new Set();
-						const escortPreviews = [];
-						for (const esc of escorts) {
-							if (!shown.has(esc.id) && escortPreviews.length < 3) {
-								shown.add(esc.id);
-								escortPreviews.push(esc);
-							}
-						}
-						wavePreview = [boss, ...escortPreviews];
+						const escortTypes = this.main.area.getEscortTypes(this.main.area.waveNumber, 3);
+						wavePreview = [boss, ...escortTypes];
 					}
 				}
 			}
