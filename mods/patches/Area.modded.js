@@ -187,7 +187,9 @@ export class Area {
 			}
 			this.recalculateAuras();
 			this.checkWeather();
-			this.main.UI.update();
+			// Defer UI update — during constructor, UI.update() may reference
+			// properties not yet initialized. Main.js calls UI.update() after all
+			// constructors complete (Main.js line 86).
 		}
 	}
 
