@@ -145,6 +145,18 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] No `if (this.stopped) return;` guard in canvas pointerdown handler
 - [ ] Tile highlighting works during pause (PlacementTile.update() runs via animate loop)
 
+## Feature: Save Tower Positions (always-on, core mod files)
+- [ ] `tilePosition: this.tilePosition` in `getOriginalData()` both branches (Pokemon.modded.js)
+- [ ] `pokemon.tilePosition = data.tilePosition ?? -1;` in `fromOriginalData()` (Pokemon.modded.js)
+- [ ] Tower redeployment from `savedTilePositions` map at end of `loadArea()` (Area.modded.js)
+- [ ] Tile compatibility checks (airBalloon, heavyDutyBoots, assaultVest, dampMulch) during redeploy
+- [ ] `recalculateAuras()` and `checkWeather()` called after redeploy
+
+## Feature: Projectile Range Fix (always-on, core mod files)
+- [ ] Projectile retargeting uses tower position + tower range instead of hardcoded 200 (Tower.modded.js)
+- [ ] `findClosestEnemy()` for ricochets searches from tower position within tower range (Projectile.modded.js)
+- [ ] Retarget in `update()` uses tower position + tower range (Projectile.modded.js)
+
 ---
 
 ## How to Use This Checklist

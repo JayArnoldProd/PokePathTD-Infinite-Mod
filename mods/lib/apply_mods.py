@@ -358,6 +358,18 @@ MOD_FEATURES = {
         'functions': ['apply_hidden_items'],
         'default': True,
     },
+    'save_tower_positions': {
+        'name': 'Save Tower Positions',
+        'description': 'Tower placements persist in save data — towers are redeployed when you load a map',
+        'functions': [],  # Always-on: baked into Pokemon.modded.js and Area.modded.js (core mod files)
+        'default': True,
+    },
+    'projectile_retarget_fix': {
+        'name': 'Projectile Range Fix',
+        'description': 'Projectiles only retarget enemies within the firing tower\'s range (fixes infinite chaining bug)',
+        'functions': [],  # Always-on: baked into Tower.modded.js and Projectile.modded.js (core mod files)
+        'default': True,
+    },
 }
 
 def log_success(name):
