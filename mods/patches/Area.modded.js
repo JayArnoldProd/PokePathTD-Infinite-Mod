@@ -460,8 +460,8 @@ export class Area {
 		
 		// MOD: Speed scaling — gentle: 1.2x at wave 500, 1.5x at 1000, 2.5x at 10000
 		const speedMult = 1 + Math.log2(1 + wavesPast100 / 1600);
-		// MOD: Regeneration scaling — 0.5% of max HP/sec base, grows slowly, caps at 50%
-		const regenScale = Math.min(0.5, 0.005 + wavesPast100 * 0.00005);
+		// MOD: Regeneration scaling — asymptotically approaches 5% of max HP/sec
+		const regenScale = 0.05 * wavesPast100 / (wavesPast100 + 2000);
 		
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
