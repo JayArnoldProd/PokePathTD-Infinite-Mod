@@ -625,9 +625,14 @@ export class Area {
 		let bossHpMult = 1 + 0.02 * bonusSteps;
 		bossHpMult *= Math.pow(2, wavesPast100 / 50);
 		
+		// MOD: Spread total boss HP across all bosses so difficulty scales smoothly
+		// Total HP budget stays the same regardless of boss count
+		const totalBossHp = Math.floor(boss.hp * bossHpMult * 2);
+		const perBossHp = Math.floor(totalBossHp / bossCount);
+		
 		const scaledBoss = {
 			...boss,
-			hp: Math.floor(boss.hp * bossHpMult * 2),
+			hp: perBossHp,
 			armor: Math.floor((boss.armor || 0) * (1 + 0.05 * wavesPast100)),
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};

@@ -920,11 +920,12 @@ export class UI {
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
 		} else if (wave % 100 === 0 && wave > 100) {
-			// Boss waves: show boss HP with multiplier
+			// MOD: Boss waves — total HP spread across all bosses
 			const bossCount = Math.floor(wave / 100);
 			let hpMult = 1 + 0.02 * bonusSteps;
 			hpMult *= Math.pow(2, (wave - 100) / 50);
-			hp = Math.floor(enemy.hp * hpMult * 2); // Boss bonus
+			const totalBossHp = Math.floor(enemy.hp * hpMult * 2);
+			hp = Math.floor(totalBossHp / bossCount);
 			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * (wave - 100)));
 			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
 		} else if (bonusSteps > 0) {
