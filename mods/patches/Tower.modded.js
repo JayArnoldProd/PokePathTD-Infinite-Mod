@@ -1039,11 +1039,12 @@ export class Tower extends Sprite {
             }
 
             if (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible'))) {
-                // MOD: Delete projectile if it's outside the tower's range
-                const towerRange = p.tower ? (p.tower.range || 100) : 200;
+                // MOD: Compute projectile center once for range check + retarget
+                const px = p.position.x + (p.width ? p.width / 2 : 0);
+                const py = p.position.y + (p.height ? p.height / 2 : 0);
+                // MOD: Delete projectile if it's outside the tower's range (squared distance)
                 if (p.tower) {
-                    const px = p.position.x + (p.width ? p.width / 2 : 0);
-                    const py = p.position.y + (p.height ? p.height / 2 : 0);
+                    const towerRange = p.tower.range || 100;
                     const dx = px - p.tower.center.x;
                     const dy = py - p.tower.center.y;
                     if (dx * dx + dy * dy > towerRange * towerRange) {
