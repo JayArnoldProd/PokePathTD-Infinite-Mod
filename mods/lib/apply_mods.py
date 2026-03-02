@@ -321,7 +321,7 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Item tooltips, save/load tooltips, tower placement persistence, and visual polish',
+        'description': 'Hover tooltips for held items in the team selection screen',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix'],
         'default': True,
     },
@@ -348,7 +348,7 @@ MOD_FEATURES = {
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix, projectile retargeting fix, off-screen targeting fix, shiny Ditto fix',
+        'description': 'Challenge level cap fix, tower placement persistence, projectile retargeting fix, off-screen targeting fix, shiny Ditto fix',
         'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Pokemon/Area/Tower/Projectile)
         'default': True,
     },
