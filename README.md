@@ -52,7 +52,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Save/Load Tooltips** - Hover over team save/load buttons for labels
 - **Challenge Party Preserve** - Team lineup, items, and tower positions are saved and restored when entering/leaving challenges
 - **Attack Type Sorting** - Sort your box by Attack Type (AOE, Aura, Single) with colored labels
-- **AOE Balancing** - AOE Pokemon attack speed scales 4x slower and range grows half as fast past level 100, preventing them from dominating endgame waves
 
 ### 🐛 Vanilla Bug Fixes
 - **Tower Placement Persistence** - Tower positions are saved and restored on load
