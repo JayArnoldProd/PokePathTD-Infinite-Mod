@@ -123,10 +123,12 @@ export class Projectile extends Sprite {
         this.position.x += vx * secs;
         this.position.y += vy * secs;
 
-        this.center = {
-            x: this.position.x + (this.width ? this.width / 2 : 0),
-            y: this.position.y + (this.height ? this.height / 2 : 0)
-        };
+        // PERF: Mutate center instead of creating new object every frame
+        if (!this.center) {
+            this.center = { x: 0, y: 0 };
+        }
+        this.center.x = this.position.x + (this.width ? this.width / 2 : 0);
+        this.center.y = this.position.y + (this.height ? this.height / 2 : 0);
 
         // DELTA TIME FIX: Skip drawing during sub-step simulation
         if (!this.tower?._skipDraw) this.draw();
@@ -540,15 +542,18 @@ export class Projectile extends Sprite {
     // MOD: Ricochet finds nearest enemy within 200px of impact point (NOT tower-range-limited)
     findClosestEnemy(fromEnemy, maxDist = 200) {
         let closest = null;
-        let minDist = maxDist;
+        // PERF: Use squared distance to avoid Math.hypot per enemy
+        let minDistSq = maxDist * maxDist;
         const canSeeInvisible = this.tower?.revealInvisible || false;
-        for (const e of this.tower.main.area.enemies) {
+        const enemies = this.tower.main.area.enemies;
+        for (let i = 0; i < enemies.length; i++) {
+            const e = enemies[i];
             if (!e || e === fromEnemy || e.hp <= 0 || (e.invisible && !canSeeInvisible)) continue;
             const dx = e.center.x - fromEnemy.center.x;
             const dy = e.center.y - fromEnemy.center.y;
-            const d = Math.hypot(dx, dy);
-            if (d < minDist) {
-                minDist = d;
+            const dSq = dx * dx + dy * dy;
+            if (dSq < minDistSq) {
+                minDistSq = dSq;
                 closest = e;
             }
         }

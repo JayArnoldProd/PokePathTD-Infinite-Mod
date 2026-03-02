@@ -85,56 +85,70 @@ export class Game {
 		}
 
 	    // --- MOD: SUB-STEPPING LOOP for accurate high-speed simulation ---
+	    // PERF: Cache frequently accessed properties outside the loop
+	    const area = this.main.area;
+	    const enemies = area.enemies;
+	    const towers = area.towers;
+	    const canvasW = this.canvas.width;
+	    const canvasH = this.canvas.height;
+
 	    for (let step = 0; step < numSteps; step++) {
 	        const isLastStep = (step === numSteps - 1);
 	        
 	        // Only render on last step (clear and draw background)
 	        if (isLastStep && this.ctx) {
 	            if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
-	                this.ctx.drawImage(this.canvasBackground, 0, 0, this.canvas.width, this.canvas.height);
+	                this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
 	            } else {
-	                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	                this.ctx.clearRect(0, 0, canvasW, canvasH);
 	            }
 	        }
 
 	        // Update enemies
-	        for (let i = this.main.area.enemies.length - 1; i >= 0; i--) {
-	          const enemy = this.main.area.enemies[i];
+	        for (let i = enemies.length - 1; i >= 0; i--) {
+	          const enemy = enemies[i];
+	          // PERF: Check if enemy was removed during its own update by comparing array element
 	          enemy.update(stepDelta);
-	          if (this.main.area.enemies.indexOf(enemy) === -1) continue;
+	          if (enemies[i] !== enemy) continue;
 
 	          // Enemy exits the canvas
 	          if (enemy.waypoints.length === enemy.waypointIndex + 1) {
 	            if (
-	              enemy.position.x > this.canvas.width ||
+	              enemy.position.x > canvasW ||
 	              enemy.position.x < -30 ||
-	              enemy.position.y - 20 > this.canvas.height ||
+	              enemy.position.y - 20 > canvasH ||
 	              enemy.position.y < -20
 	            ) {
 	              playSound('hit2', 'effect');
 	              this.main.player.getDamaged(enemy.power);
-	              const idx = this.main.area.enemies.indexOf(enemy);
-	              if (idx !== -1) this.main.area.enemies.splice(idx, 1);
+	              // PERF: Use loop index directly instead of indexOf
+	              enemies.splice(i, 1);
 	              continue;
 	            }
 	          }
 	        }
 
 	        // Update towers
-	        this.main.area.towers.forEach((tower) => {
-	          let enemiesInRange = this.main.area.enemies.filter((enemy) => {
-	            const insideCanvas = (
-	              enemy.center.x >= 0 && enemy.center.x <= this.canvas.width &&
-	              enemy.center.y >= 0 && enemy.center.y <= this.canvas.height
-	            );
-	            return insideCanvas && this.isEnemyInRange(tower, enemy) && !enemy.dying;
-	          });
+	        // PERF: Build enemiesInRange with for-loop instead of .filter() to avoid array allocation per tower
+	        for (let t = 0; t < towers.length; t++) {
+	          const tower = towers[t];
+	          const enemiesInRange = [];
+	          for (let e = 0; e < enemies.length; e++) {
+	            const enemy = enemies[e];
+	            if (enemy.dying) continue;
+	            const cx = enemy.center.x;
+	            const cy = enemy.center.y;
+	            if (cx < 0 || cx > canvasW || cy < 0 || cy > canvasH) continue;
+	            if (this.isEnemyInRange(tower, enemy)) {
+	              enemiesInRange.push(enemy);
+	            }
+	          }
 	          tower.update(enemiesInRange, stepDelta);
-	        });
+	        }
 
 	        // Check wave end condition
-	        if (this.main.area.waveActive && this.main.area.enemies.length === 0) {
-	          this.main.area.endWave();
+	        if (area.waveActive && enemies.length === 0) {
+	          area.endWave();
 	        }
 	    }
 	    // --- END SUB-STEPPING LOOP ---
@@ -296,13 +310,23 @@ export class Game {
   	isEnemyInRange(tower, enemy) {
 	    const dx = enemy.center.x - tower.center.x;
 	    const dy = enemy.center.y - tower.center.y;
-	    const distance = Math.hypot(dx, dy);
 	    const r = tower.range;
-	    switch (tower.pokemon.rangeType) {
-	      	case 'circle':
-	        	return distance <= r;
+	    // PERF: Use squared distance for circle/default to avoid Math.hypot
+	    const rangeType = tower.pokemon.rangeType;
+	    if (rangeType === 'circle') {
+	        return dx * dx + dy * dy <= r * r;
+	    }
+	    if (rangeType === 'horizontalLine') {
+	        return ( Math.abs(dy) <= 24 && Math.abs(dx) <= r );
+	    }
+	    if (rangeType === 'verticalLine') {
+	        return ( Math.abs(dx) <= 24 && Math.abs(dy) <= r );
+	    }
+	    // Other range types need actual distance
+	    const distance = Math.hypot(dx, dy);
+	    switch (rangeType) {
 	      	case 'donut':
-	        	return distance >= tower.innerRange && distance <= tower.range;
+	        	return distance >= tower.innerRange && distance <= r;
 	      	case 'cross':
 		        if (tower.pokemon?.item?.id == 'starPiece') {
 		          return ( (Math.abs(Math.abs(dx) - Math.abs(dy)) < 24 && distance <= r) || ((Math.abs(dx) <= 24 && Math.abs(dy) <= r) || (Math.abs(dy) <= 24 && Math.abs(dx) <= r)) )
@@ -321,10 +345,6 @@ export class Game {
 		        } else {
 		          return ( Math.abs(Math.abs(dx) - Math.abs(dy)) < 24 && distance <= r );
 		        }
-	      	case 'horizontalLine':
-	        	return ( Math.abs(dy) <= 24 && Math.abs(dx) <= r );
-	      	case 'verticalLine':
-	        	return ( Math.abs(dx) <= 24 && Math.abs(dy) <= r );
 	      	default:
 	        	return distance <= r;
 	    }

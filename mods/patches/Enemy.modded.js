@@ -474,12 +474,14 @@ export class Enemy extends Sprite {
 					if (Math.round(Math.sin(angle)) === -1) this.frames.direction = 4;
 				}
 
-				this.center = {
-					x: this.position.x + this.width / 2,
-					y: this.position.y + this.height / 2
-				};
+				// PERF: Mutate center instead of creating new object
+				this.center.x = this.position.x + this.width / 2;
+				this.center.y = this.position.y + this.height / 2;
 
-				const distance = Math.hypot(waypoint.x - this.center.x, waypoint.y - this.center.y);
+				// PERF: Use squared distance comparison to avoid Math.hypot
+				const wpDx = waypoint.x - this.center.x;
+				const wpDy = waypoint.y - this.center.y;
+				const distance = Math.sqrt(wpDx * wpDx + wpDy * wpDy);
 
 				if (distance < this.speed * frameFactor && this.waypointIndex < this.waypoints.length - 1) {
 					this.waypointIndex++;
@@ -976,19 +978,21 @@ export class Enemy extends Sprite {
 	        }
 	    });
 
-	    // Filtrar efectos terminados
-	    this.statusEffects = this.statusEffects.filter(e => e.duration === undefined || e.duration > 0);
-
-	    // RECOMPUTAR velocidad seg├║n slows activos 
-	    const slowEffects = this.statusEffects.filter(e => e.type === 'slow' && e.duration !== 0);
-	    if (slowEffects.length === 0) {
-	        this.speed = this.baseSpeed;
-	    } else {
-	        // multiplicar factores de slow 
-	        let factor = 1;
-	        slowEffects.forEach(e => factor *= (e.slowPercent ?? 1));
-	        this.speed = this.baseSpeed * factor;
+	    // PERF: Single-pass filter + slow recomputation (avoids two .filter() allocations)
+	    let slowFactor = 1;
+	    let hasSlows = false;
+	    let writeIdx = 0;
+	    for (let i = 0; i < this.statusEffects.length; i++) {
+	        const e = this.statusEffects[i];
+	        if (e.duration !== undefined && e.duration <= 0) continue; // remove expired
+	        this.statusEffects[writeIdx++] = e;
+	        if (e.type === 'slow' && e.duration !== 0) {
+	            slowFactor *= (e.slowPercent ?? 1);
+	            hasSlows = true;
+	        }
 	    }
+	    this.statusEffects.length = writeIdx;
+	    this.speed = hasSlows ? this.baseSpeed * slowFactor : this.baseSpeed;
 	}
 
 

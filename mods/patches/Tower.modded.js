@@ -365,39 +365,37 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'ancientShield') this.range = this.range * 1.2;
         if (this.pokemon?.item?.id == 'starCandy') this.range += (this.main.player.stars * 0.1);
        
-        const nearbyPowerAuras = this.main.area.towers.filter(t =>
-            t.ability?.id === 'powerAura' &&
-            t !== this &&
-            Math.hypot(
-                t.center.x - this.center.x,
-                t.center.y - this.center.y
-            ) <= t.range + (t.pokemon?.item?.id === "revelationAroma" ? 25 : 0) + (t.pokemon?.item?.id === "sunflowerPetal" ? -25 : 0)
-        );
+        // PERF: Single-pass aura detection instead of 4 separate .filter() calls
+        let foundPowerAura = null;
+        let foundTriageAura = false;
+        let foundCriticalAura = false;
+        let foundCriticalDamageAura = false;
+        const allTowers = this.main.area.towers;
+        const myCx = this.center.x;
+        const myCy = this.center.y;
+        for (let i = 0; i < allTowers.length; i++) {
+            const t = allTowers[i];
+            if (t === this || !t.ability) continue;
+            const aid = t.ability.id;
+            if (aid !== 'powerAura' && aid !== 'triage' && aid !== 'criticalAura' && aid !== 'criticalDamageAura') continue;
+            const dx = t.center.x - myCx;
+            const dy = t.center.y - myCy;
+            const distSq = dx * dx + dy * dy;
+            if (aid === 'powerAura') {
+                let auraR = t.range + (t.pokemon?.item?.id === "revelationAroma" ? 25 : 0) + (t.pokemon?.item?.id === "sunflowerPetal" ? -25 : 0);
+                if (distSq <= auraR * auraR && !foundPowerAura) foundPowerAura = t;
+            } else if (aid === 'triage') {
+                let auraR = t.range + (t.pokemon?.item?.id === "revelationAroma" ? 25 : 0);
+                if (distSq <= auraR * auraR) foundTriageAura = true;
+            } else if (aid === 'criticalAura') {
+                if (distSq <= t.range * t.range) foundCriticalAura = true;
+            } else if (aid === 'criticalDamageAura') {
+                if (distSq <= t.range * t.range) foundCriticalDamageAura = true;
+            }
+        }
 
-        const nearbyTriageAuras = this.main.area.towers.filter(t =>
-            t.ability?.id === 'triage' &&
-            t !== this &&
-            Math.hypot(
-                t.center.x - this.center.x,
-                t.center.y - this.center.y
-            ) <= t.range + (t.pokemon?.item?.id === "revelationAroma" ? 25 : 0) 
-        );
-
-        const nearbyCriticalAuras = this.main.area.towers.filter(t =>
-            t.ability && t.ability.id === 'criticalAura' &&
-            t !== this &&
-            Math.hypot(t.center.x - this.center.x, t.center.y - this.center.y) <= t.range
-        );
-
-        const nearbyCriticalDamageAuras = this.main.area.towers.filter(t =>
-            t.ability && t.ability.id === 'criticalDamageAura' &&
-            t !== this &&
-            Math.hypot(t.center.x - this.center.x, t.center.y - this.center.y) <= t.range
-        );
-
-
-        if (nearbyPowerAuras.length > 0) {
-            this.powerAura = (nearbyPowerAuras[0]?.pokemon?.item?.id == 'sunflowerPetal') ? 1.3 : 1.2;
+        if (foundPowerAura) {
+            this.powerAura = (foundPowerAura.pokemon?.item?.id == 'sunflowerPetal') ? 1.3 : 1.2;
             this.power = Math.ceil(this.power * this.powerAura);
 
             if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && !this.cherrimForm) {
@@ -412,24 +410,15 @@ export class Tower extends Sprite {
             }
         }
 
-        if (nearbyTriageAuras.length > 0) {
+        if (foundTriageAura) {
             this.speed -= (this.speed * 0.15);
             this.triageAura = true;
         } else {
             this.triageAura = false;
         }
 
-        if (nearbyCriticalAuras.length > 0) {
-            this.criticalAura = true;
-        } else {
-            this.criticalAura = false;
-        }
-
-        if (nearbyCriticalDamageAuras.length > 0) {
-            this.criticalDamageAura = true;
-        } else {
-            this.criticalDamageAura = false;
-        }
+        this.criticalAura = foundCriticalAura;
+        this.criticalDamageAura = foundCriticalDamageAura;
 
         this.projectile.power = this.power;
     }
@@ -638,40 +627,25 @@ export class Tower extends Sprite {
 
         this.recalculatePower();
 
-        // articuno
-       if (!this.snowCloakNear) {
-            for (const e of this.main.area.enemies) {
+        // PERF: Single-pass snowCloak check (was two separate iterations)
+        {
+            let foundSnowCloak = false;
+            const enemies = this.main.area.enemies;
+            const scThreshSq = 160 * 160; // PERF: squared distance
+            for (let i = 0; i < enemies.length; i++) {
+                const e = enemies[i];
                 if (!e || e.hp <= 0 || e.invulnerable) continue;
                 if (e.passive?.id === 'snowCloak') {
                     const dx = e.center.x - this.center.x;
                     const dy = e.center.y - this.center.y;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist <= 160) {
-                        this.snowCloakNear = true;
+                    if (dx * dx + dy * dy <= scThreshSq) {
+                        foundSnowCloak = true;
                         break;
                     }
                 }
             }
+            this.snowCloakNear = foundSnowCloak;
         }
-
-        if (this.snowCloakNear) {
-            let stillNear = false;
-            for (const e of this.main.area.enemies) {
-                if (!e || e.hp <= 0 || e.invulnerable) continue;
-                if (e.passive?.id === 'snowCloak') {
-                    const dx = e.center.x - this.center.x;
-                    const dy = e.center.y - this.center.y;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist <= 160) {
-                        stillNear = true;
-                        break;
-                    }
-                }
-            }
-            if (!stillNear) this.snowCloakNear = false;
-        }
-
-        // end articuno
 
         if (this.frames.elapsed === undefined) this.frames.elapsed = 0;
         this.frames.elapsed += frameFactor;
@@ -690,21 +664,24 @@ export class Tower extends Sprite {
 
         if (this.pokemon.id == 70 && this.pokemon.adn.id == 70) return;
 
+        // PERF: Use squared distance for aura range checks
         if (this.ability && this.ability.id === 'powerAura') {
             let auraRange = this.range;
             if (this.pokemon?.item?.id == 'revelationAroma') auraRange += 25;
             if (this.pokemon?.item?.id == 'sunflowerPetal') auraRange -= 50;
+            const auraRangeSq = auraRange * auraRange;
             let numAllies = 0;
-            this.main.area.towers.forEach(tower => {
-                if (tower === this) return;
+            const towers = this.main.area.towers;
+            for (let i = 0; i < towers.length; i++) {
+                const tower = towers[i];
+                if (tower === this) continue;
                 const dx = tower.center.x - this.center.x;
                 const dy = tower.center.y - this.center.y;
-                const distance = Math.hypot(dx, dy);
-                if (distance <= auraRange) {
+                if (dx * dx + dy * dy <= auraRangeSq) {
                     numAllies++;
                     tower.auraBuffActive = true;
                 }
-            });
+            }
             if (numAllies === 9) this.main.player.unlockAchievement(20)
             return;
         }
@@ -712,49 +689,53 @@ export class Tower extends Sprite {
         if (this.ability && this.ability.id === 'triage') {
             let auraRange = this.range;
             if (this.pokemon?.item?.id == 'revelationAroma') auraRange += 25;
+            const auraRangeSq = auraRange * auraRange;
             let numAllies = 0;
-            this.main.area.towers.forEach(tower => {
-                if (tower === this) return;
+            const towers = this.main.area.towers;
+            for (let i = 0; i < towers.length; i++) {
+                const tower = towers[i];
+                if (tower === this) continue;
                 const dx = tower.center.x - this.center.x;
                 const dy = tower.center.y - this.center.y;
-                const distance = Math.hypot(dx, dy);
-                if (distance <= auraRange) {
+                if (dx * dx + dy * dy <= auraRangeSq) {
                     numAllies++;
                     tower.auraBuffActive = true;
                 }
-            });
+            }
             return;
         }
 
         if (this.ability && this.ability.id === 'criticalAura') {
-            const auraRange = this.range;
+            const auraRangeSq = this.range * this.range;
             let numAllies = 0;
-            this.main.area.towers.forEach(tower => {
-                if (tower === this) return;
+            const towers = this.main.area.towers;
+            for (let i = 0; i < towers.length; i++) {
+                const tower = towers[i];
+                if (tower === this) continue;
                 const dx = tower.center.x - this.center.x;
                 const dy = tower.center.y - this.center.y;
-                const distance = Math.hypot(dx, dy);
-                if (distance <= auraRange) {
+                if (dx * dx + dy * dy <= auraRangeSq) {
                     numAllies++;
                     tower.criticalBuffActive = true;
                 }
-            });
+            }
             return;
         }
 
         if (this.ability && this.ability.id === 'criticalDamageAura') {
-            const auraRange = this.range;
+            const auraRangeSq = this.range * this.range;
             let numAllies = 0;
-            this.main.area.towers.forEach(tower => {
-                if (tower === this) return;
+            const towers = this.main.area.towers;
+            for (let i = 0; i < towers.length; i++) {
+                const tower = towers[i];
+                if (tower === this) continue;
                 const dx = tower.center.x - this.center.x;
                 const dy = tower.center.y - this.center.y;
-                const distance = Math.hypot(dx, dy);
-                if (distance <= auraRange) {
+                if (dx * dx + dy * dy <= auraRangeSq) {
                     numAllies++;
                     tower.criticalDamageBuffActive = true;
                 }
-            });
+            }
         }
 
         // --- FILTRAR ENEMIGOS segun invis (solo filtrar si la torre NO puede ver invis y el modo no es invi)
@@ -822,8 +803,8 @@ export class Tower extends Sprite {
                     if (enemy?.passive?.id === 'static') {
                         const dx = enemy.center.x - this.center.x;
                         const dy = enemy.center.y - this.center.y;
-                        const dist = Math.hypot(dx, dy);
-                        if (dist <= 115 && Math.random() < 0.25) {  // RESTORED: Vanilla values (was 140/0.33)
+                        // PERF: squared distance comparison
+                        if (dx * dx + dy * dy <= 13225 && Math.random() < 0.25) {  // 115*115=13225. RESTORED: Vanilla values (was 140/0.33)
                             playSound('paralyzed', 'effect');
                             this.attackCooldown += areaAttackSpeed;
                             areaStunned = true;
@@ -998,8 +979,8 @@ export class Tower extends Sprite {
                 if (cand?.passive?.id === 'static') {
                     const dx = cand.center.x - this.center.x;
                     const dy = cand.center.y - this.center.y;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist <= 115 && Math.random() < 0.25) {  // RESTORED: Vanilla values (was 140/0.33)
+                    // PERF: squared distance comparison
+                    if (dx * dx + dy * dy <= 13225 && Math.random() < 0.25) {  // 115*115=13225. RESTORED: Vanilla values (was 140/0.33)
                         playSound('paralyzed', 'effect');
                         skipAttack = true;
                         break;
@@ -1072,18 +1053,23 @@ export class Tower extends Sprite {
     // MOD: Tower retarget helper - searches from given position (tower center) within maxDist
     findClosestEnemy(fromEnemy, maxDist = 1000) {
         let closest = null;
-        let minDist = maxDist;
+        // PERF: Use squared distance to avoid Math.hypot per enemy
+        let minDistSq = maxDist * maxDist;
         const cw = this.main.game.canvas.width;
         const ch = this.main.game.canvas.height;
-        for (const e of this.main.area.enemies) {
+        const enemies = this.main.area.enemies;
+        for (let i = 0; i < enemies.length; i++) {
+            const e = enemies[i];
             if (!e || e === fromEnemy || e.hp <= 0) continue;
             // MOD: Skip off-screen enemies
-            if (e.center.x < 0 || e.center.x > cw || e.center.y < 0 || e.center.y > ch) continue;
-            const dx = e.center.x - fromEnemy.center.x;
-            const dy = e.center.y - fromEnemy.center.y;
-            const d = Math.hypot(dx, dy);
-            if (d < minDist) {
-                minDist = d;
+            const ex = e.center.x;
+            const ey = e.center.y;
+            if (ex < 0 || ex > cw || ey < 0 || ey > ch) continue;
+            const dx = ex - fromEnemy.center.x;
+            const dy = ey - fromEnemy.center.y;
+            const dSq = dx * dx + dy * dy;
+            if (dSq < minDistSq) {
+                minDistSq = dSq;
                 closest = e;
             }
         }
