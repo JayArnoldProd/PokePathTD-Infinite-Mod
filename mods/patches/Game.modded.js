@@ -100,24 +100,8 @@ export class Game {
 	        }
 	    }
 
-	    // MOD: PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped
-	    // Only the draw/render code below runs, so tiles highlight and clicks work
-	    const _simSteps = this.stopped ? 0 : numSteps;
-
-	    // When paused, still redraw background + entities so canvas doesn't smear
-	    if (this.stopped && this.ctx) {
-	        if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
-	            this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
-	        } else {
-	            this.ctx.clearRect(0, 0, canvasW, canvasH);
-	        }
-	        // Redraw enemies and towers in place (no update, just draw)
-	        for (let i = 0; i < enemies.length; i++) { enemies[i]._skipDraw = false; enemies[i].draw(); }
-	        for (let t = 0; t < towers.length; t++) { towers[t]._skipDraw = false; towers[t].draw(); }
-	    }
-
-	    for (let step = 0; step < _simSteps; step++) {
-	        const isLastStep = (step === _simSteps - 1);
+	    for (let step = 0; step < numSteps; step++) {
+	        const isLastStep = (step === numSteps - 1);
 	        
 	        // PERF: Tell towers/enemies/projectiles to skip draw on non-last steps
 	        if (!isLastStep) {
@@ -244,6 +228,7 @@ export class Game {
 	}
 
   	tryDeployUnit(pos, ui) {
+  		if (this.stopped) return playSound('pop0', 'ui');
 	    if (this.deployingUnit != undefined) return this.cancelDeployUnit();
 	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
 	    this.deployingUnit = this.main.team.pokemon[pos];
@@ -689,13 +674,47 @@ export class Game {
 
 	switchPause() {
 	    playSound('option', 'ui');
+
+	    // Clean up any active drag clone
+	    const activeClone = document.querySelector('.map-drag-clone');
+	    if (activeClone) activeClone.remove();
+
 	    if (!this.stopped) {
-	      	this.stopped = true;
-	      	this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)`
+	        // PAUSE: stop loop and block canvas
+	        this.stopped = true;
+
+	        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+
+	        // Stop the game loop interval
+	        if (this.loopId) {
+	            clearInterval(this.loopId);
+	            this.loopId = null;
+	        }
+
+	        // Block canvas interaction
+	        this.canvas.style.pointerEvents = 'none';
+	        // Clear interaction state
+	        this.deployingUnit = undefined;
+	        this.mapDragging = false;
+	        this.activeTile = null;
+	        this.mouse.x = undefined;
+	        this.mouse.y = undefined;
+
+	        this.showPauseOverlay();
+
+	        this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)`;
 	    } else {
-	    	this.stopped = false;
-	    	this.lastTime = performance.now();
-	    	this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+	        // RESUME: restart loop and enable canvas
+	        this.stopped = false;
+	        this.lastTime = performance.now();
+
+	        if (this.loopId) clearInterval(this.loopId);
+	        this.loopId = setInterval(() => this.animate(performance.now()), this.frameDuration);
+
+	        this.hidePauseOverlay();
+
+	        this.canvas.style.pointerEvents = 'auto';
+	        this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
 	    }
 	}
 
@@ -705,6 +724,7 @@ export class Game {
 	      	clearInterval(this.loopId);
 	      	this.loopId = null;
 	    }
+	    this.canvas.style.pointerEvents = 'none';
 	}
 
   	resume() {
@@ -713,6 +733,7 @@ export class Game {
 	    this.lastTime = performance.now();
 	    if (this.loopId) clearInterval(this.loopId);
 	    this.loopId = setInterval(() => this.animate(performance.now()), this.frameDuration);
+	    this.canvas.style.pointerEvents = 'auto';
   	}
 
   	toggleRanges() {
@@ -737,6 +758,44 @@ export class Game {
 	    this.canvasShake.intensity = intensity;
 	    this.canvasShake.duration = duration;
 	    this.canvasShake.elapsed = 0;
+	}
+
+	showPauseOverlay() {
+	    if (this.pauseOverlay) return;
+
+	    const overlay = document.createElement('div');
+	    overlay.id = 'pause-overlay';
+	    overlay.textContent = 'GAME PAUSED';
+
+	    overlay.style.position = 'absolute';
+	    overlay.style.left = '50%';
+	    overlay.style.top = '50%';
+	    overlay.style.transform = 'translate(-50%, -50%)';
+
+	    overlay.style.padding = '20px 40px';
+	    overlay.style.fontSize = '32px';
+	    overlay.style.fontWeight = 'bold';
+	    overlay.style.letterSpacing = '2px';
+	    overlay.style.textShadow = '2px 2px black';
+	    overlay.style.color = '#fff';
+
+	    overlay.style.background = 'rgba(0, 0, 0, 0.8)';
+	    overlay.style.border = '2px solid rgba(0, 0, 0, 0.3)';
+	    overlay.style.boxShadow = '0 0 10px black';
+	    overlay.style.borderRadius = '8px';
+
+	    overlay.style.pointerEvents = 'none';
+
+	    const screen = document.getElementById('screen');
+	    if (screen) screen.appendChild(overlay);
+
+	    this.pauseOverlay = overlay;
+	}
+
+	hidePauseOverlay() {
+	    if (!this.pauseOverlay) return;
+	    this.pauseOverlay.remove();
+	    this.pauseOverlay = null;
 	}
 
 }

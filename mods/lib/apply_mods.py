@@ -878,9 +878,12 @@ def apply_pause_micromanagement():
     """
     Surgically patch Game.js to enable pause micromanagement.
     
-    Removes 'if (this.stopped) return;' at top of animate() so the render loop
-    keeps running during pause. The ternary (scaledDelta = 0 when stopped) already
-    exists in both vanilla and modded Game.js, so sim freezes but render continues.
+    Changes made:
+    1. Remove 'if (this.stopped) return;' from animate() so render loop continues
+    2. Add stopped ternary to totalScaledDelta so sim freezes but render continues
+    3. Remove deploy guard so Pokemon can be deployed/moved while paused
+    4. Modify switchPause() to not block canvas or show overlay (allow interaction)
+    5. Keep game loop running during pause (don't clear interval)
     
     Works on both vanilla Game.js and Game.modded.js (different whitespace patterns).
     """
@@ -897,26 +900,133 @@ def apply_pause_micromanagement():
         log_skip("Game.js: Pause micromanagement")
         return True
     
-    # Use regex to match the early return regardless of whitespace style
-    # Matches: animate(time) { <newline> <whitespace> if (this.stopped) return;
+    changes = 0
+    
+    # 1. Remove early return from animate()
     pattern = r'(animate\s*\(time\)\s*\{)\s*\n(\s*)if\s*\(\s*this\.stopped\s*\)\s*return\s*;'
     match = re.search(pattern, content)
-    
     if match:
-        # Replace the early return with a comment
         old_text = match.group(0)
         indent = match.group(2)
         new_text = f"{match.group(1)}\n{indent}// MOD: PAUSE MICROMANAGEMENT - No early return when stopped"
         content = content.replace(old_text, new_text)
-        
-        # For Game.modded.js: also patch totalScaledDelta if it lacks the ternary
-        old_delta = 'const totalScaledDelta = this.frameDuration * this.speedFactor;'
-        new_delta = '// MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
-        if old_delta in content:
-            content = content.replace(old_delta, new_delta)
-        
+        changes += 1
+    
+    # 2. Patch totalScaledDelta if it lacks the ternary
+    old_delta = 'const totalScaledDelta = this.frameDuration * this.speedFactor;'
+    new_delta = '// MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
+    if old_delta in content:
+        content = content.replace(old_delta, new_delta)
+        changes += 1
+    
+    # 3. Remove deploy guard (allow deploying while paused)
+    # Matches both: "if (this.stopped) return playSound('pop0', 'ui');" patterns
+    deploy_pattern = r"\s*if\s*\(this\.stopped\)\s*return\s+playSound\('pop0',\s*'ui'\);"
+    if re.search(deploy_pattern, content):
+        content = re.sub(deploy_pattern, '\n  \t\t// MOD: PAUSE MICROMANAGEMENT - deploy allowed while paused', content)
+        changes += 1
+    
+    # 4. Inject _simSteps override and stopped redraw block (for Game.modded.js sub-stepping loop)
+    old_loop_start = '\t    for (let step = 0; step < numSteps; step++) {'
+    new_loop_start = """\t    // MOD: PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped
+\t    // Only the draw/render code below runs, so tiles highlight and clicks work
+\t    const _simSteps = this.stopped ? 0 : numSteps;
+
+\t    // When paused, still redraw background + entities so canvas doesn't smear
+\t    if (this.stopped && this.ctx) {
+\t        if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
+\t            this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
+\t        } else {
+\t            this.ctx.clearRect(0, 0, canvasW, canvasH);
+\t        }
+\t        // Redraw enemies and towers in place (no update, just draw)
+\t        for (let i = 0; i < enemies.length; i++) { enemies[i]._skipDraw = false; enemies[i].draw(); }
+\t        for (let t = 0; t < towers.length; t++) { towers[t]._skipDraw = false; towers[t].draw(); }
+\t    }
+
+\t    for (let step = 0; step < _simSteps; step++) {"""
+    if old_loop_start in content:
+        content = content.replace(old_loop_start, new_loop_start, 1)
+        # Also update isLastStep to use _simSteps
+        content = content.replace('step === numSteps - 1', 'step === _simSteps - 1')
+        changes += 1
+    
+    # 5. Modify switchPause() — remove canvas blocking, overlay, and interval clearing
+    # Replace the pause branch to keep loop running and allow interaction
+    # Match the full switchPause for Game.modded.js pattern
+    old_switch_modded = """	switchPause() {
+	    playSound('option', 'ui');
+
+	    // Clean up any active drag clone
+	    const activeClone = document.querySelector('.map-drag-clone');
+	    if (activeClone) activeClone.remove();
+
+	    if (!this.stopped) {
+	        // PAUSE: stop loop and block canvas
+	        this.stopped = true;
+
+	        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+
+	        // Stop the game loop interval
+	        if (this.loopId) {
+	            clearInterval(this.loopId);
+	            this.loopId = null;
+	        }
+
+	        // Block canvas interaction
+	        this.canvas.style.pointerEvents = 'none';
+	        // Clear interaction state
+	        this.deployingUnit = undefined;
+	        this.mapDragging = false;
+	        this.activeTile = null;
+	        this.mouse.x = undefined;
+	        this.mouse.y = undefined;
+
+	        this.showPauseOverlay();
+
+	        this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)`;
+	    } else {
+	        // RESUME: restart loop and enable canvas
+	        this.stopped = false;
+	        this.lastTime = performance.now();
+
+	        if (this.loopId) clearInterval(this.loopId);
+	        this.loopId = setInterval(() => this.animate(performance.now()), this.frameDuration);
+
+	        this.hidePauseOverlay();
+
+	        this.canvas.style.pointerEvents = 'auto';
+	        this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+	    }
+	}"""
+    
+    new_switch = """	// MOD: PAUSE MICROMANAGEMENT — pause freezes sim but allows Pokemon interaction
+	switchPause() {
+	    playSound('option', 'ui');
+	    if (!this.stopped) {
+	      	this.stopped = true;
+	      	this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)`;
+	    } else {
+	    	this.stopped = false;
+	    	this.lastTime = performance.now();
+	    	this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+	    }
+	}"""
+    
+    if old_switch_modded in content:
+        content = content.replace(old_switch_modded, new_switch)
+        changes += 1
+    else:
+        # Try vanilla switchPause pattern (regex for flexibility)
+        vanilla_switch_pattern = r'(\tswitchPause\(\) \{.*?// Habilitar interacci.*?\n\s*this\.main\.UI\.pauseWave\.style\.background.*?;\s*\n\s*\})'
+        vanilla_match = re.search(vanilla_switch_pattern, content, re.DOTALL)
+        if vanilla_match:
+            content = content.replace(vanilla_match.group(0), new_switch.lstrip())
+            changes += 1
+    
+    if changes > 0:
         write_file(path, content)
-        log_success("Game.js: Pause micromanagement (early return removed)")
+        log_success(f"Game.js: Pause micromanagement ({changes} patches)")
         return True
     
     # Check if it's already good (no early return exists at all)
@@ -935,8 +1045,8 @@ def _ensure_game_modded():
     path = JS_ROOT / "game" / "Game.js"
     content = read_file(path)
     
-    # Check if already modded (has sub-stepping loop or pause micro markers)
-    if '_simSteps' in content or 'SUB-STEPPING' in content:
+    # Check if already modded (has sub-stepping loop)
+    if 'SUB-STEPPING' in content:
         return True
     
     modded_file = MODS_DIR / "patches" / "Game.modded.js"
@@ -2045,4 +2155,35 @@ def main():
     print("\n=== All done! Launch the game. ===")
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description='PokePath TD Mod Applier')
+    parser.add_argument('--features', type=str, help='Comma-separated feature keys to install (e.g. speed,devtools,pause_micro)')
+    parser.add_argument('--reset', action='store_true', help='Reset game to vanilla')
+    parser.add_argument('--list', action='store_true', help='List available feature keys')
+    args = parser.parse_args()
+    
+    if args.list:
+        print("Available features:")
+        for key, feat in MOD_FEATURES.items():
+            print(f"  {key:20s} - {feat['name']}")
+        sys.exit(0)
+    elif args.reset:
+        print("\n[*] Resetting to vanilla...")
+        extract_ok, msg = extract_from_vanilla()
+        if extract_ok:
+            # Repack
+            import subprocess as _sp
+            creationflags = _sp.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            cmd = ['cmd', '/c', 'npx', 'asar', 'pack', str(APP_EXTRACTED), str(GAME_ROOT / 'resources' / 'app.asar')] if sys.platform == 'win32' else ['npx', 'asar', 'pack', str(APP_EXTRACTED), str(GAME_ROOT / 'resources' / 'app.asar')]
+            result = _sp.run(cmd, capture_output=True, text=True, timeout=300, creationflags=creationflags)
+            if result.returncode == 0:
+                print("  [OK] Game reset to vanilla and repacked!")
+            else:
+                print(f"  [ERROR] Repack failed: {result.stderr}")
+        else:
+            print(f"  [ERROR] {msg}")
+    elif args.features:
+        features = [f.strip() for f in args.features.split(',')]
+        apply_selected_mods(features)
+    else:
+        main()
