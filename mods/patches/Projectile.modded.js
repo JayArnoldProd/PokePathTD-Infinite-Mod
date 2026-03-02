@@ -525,6 +525,7 @@ export class Projectile extends Sprite {
         }
     }
 
+    // MOD: Ricochet finds nearest enemy within 200px of impact point (NOT tower-range-limited)
     findClosestEnemy(fromEnemy, maxDist = 200) {
         let closest = null;
         let minDist = maxDist;

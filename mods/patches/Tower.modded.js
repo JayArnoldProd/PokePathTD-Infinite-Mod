@@ -1069,6 +1069,7 @@ export class Tower extends Sprite {
         }
     }
 
+    // MOD: Tower retarget helper - searches from given position (tower center) within maxDist
     findClosestEnemy(fromEnemy, maxDist = 1000) {
         let closest = null;
         let minDist = maxDist;

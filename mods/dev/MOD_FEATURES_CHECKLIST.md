@@ -17,6 +17,12 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Auto-stop boss check with endless mode exception
 - [ ] Wave selection for endless mode in changeWave()
 - [ ] spawnEnemies uses `falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;`
+- [ ] `BOSS_KEYS` constant at top of file for route-specific bosses
+- [ ] `spawnEndlessWave()` - power budget system for waves 101+ with HP scaling, stack-based spawning, elite/champion promotion
+- [ ] `spawnEndlessBossWave()` - multi-boss waves every 100 waves with escort enemies at 300+
+- [ ] `spawnWave100Boss()` - single boss spawn for wave 100 using BOSS_KEYS
+- [ ] `getEndlessEnemyPool()` - categorized enemy pools for endless wave generation
+- [ ] `getWavePreview()` - preview enemies for endless waves (cycles wave templates)
 
 ## Game.modded.js
 - [ ] `this.mapDragging = false;` in constructor
@@ -88,6 +94,7 @@ This document lists all mod features that MUST be present in the modded files. U
 ## Tower.modded.js
 - [ ] Delta time fix for accurate projectile timing
 - [ ] Projectile retargeting in `updateProjectiles()`: search from tower position with tower's range
+- [ ] `findClosestEnemy()` method on Tower: searches from given position within maxDist
 
 ## Projectile.modded.js
 - [ ] Endless scaling for projectile damage
