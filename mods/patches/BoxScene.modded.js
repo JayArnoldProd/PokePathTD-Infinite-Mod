@@ -5,7 +5,6 @@ import { playSound } from '../../file/audio.js';
 import { abilityData } from '../data/abilityData.js';
 import { Input } from '../../utils/Input.js';
 import { ChangePokemonName } from './ChangePokemonName.js';
-import { Pokemon } from '../component/Pokemon.js';
 
 const sort = ['team', 'alphabetical', 'level', 'ability', 'grass', 'water', 'mountain', 'power', 'speed', 'range', 'shiny']
 const TAB_CONTENT = ['allTab', 'grassTab', 'waterTab', 'mountainTab', 'fossilTab']
@@ -97,7 +96,6 @@ export class BoxScene extends GameScene {
 					}
 					this.main.box.addPokemon(this.selected);
 					this.main.team.removePokemon(this.selected);
-					Pokemon.refreshDittoTransforms(this.main); // MOD: Update Ditto when team changes
 					this.update();
 					this.main.area.checkWeather();
 					this.main.UI.update();
@@ -112,7 +110,6 @@ export class BoxScene extends GameScene {
 					playSound('equip', 'ui');
 					this.main.team.addPokemon(this.selected);
 					this.main.box.removePokemon(this.selected);
-					Pokemon.refreshDittoTransforms(this.main); // MOD: Update Ditto when team changes
 					this.update();
 					this.main.UI.update();
 				}
@@ -330,7 +327,6 @@ export class BoxScene extends GameScene {
 		}
 		this.main.team.addPokemon(this.selected);
 		this.main.box.removePokemon(this.selected);
-		Pokemon.refreshDittoTransforms(this.main); // MOD: Update Ditto when team changes
 		this.update();
 		this.main.UI.updatePokemon();
 	}
@@ -348,7 +344,6 @@ export class BoxScene extends GameScene {
 
 		this.main.box.addPokemon(this.selected);
 		this.main.team.removePokemon(this.selected);
-		Pokemon.refreshDittoTransforms(this.main); // MOD: Update Ditto when team changes
 		this.main.area.checkWeather();
 		this.update();
 		this.main.UI.update();
@@ -374,7 +369,6 @@ export class BoxScene extends GameScene {
 			this.main.team.removePokemon(pokemon);
 		}
 
-		Pokemon.refreshDittoTransforms(this.main); // MOD: Update Ditto when team changes
 		if (this.isOpen) this.update();
 		this.main.UI.update();
 	}

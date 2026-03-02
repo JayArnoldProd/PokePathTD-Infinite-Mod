@@ -6,9 +6,7 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] `this.endlessMode = false;` in constructor
 - [ ] `this.endlessMode = this.waveNumber > 100;` in loadArea()
 - [ ] `import { Tower }` at top of file
-- [ ] `import { Pokemon }` at top of file
 - [ ] `this.main.area = this;` before `loadArea()` in constructor
-- [ ] `Pokemon.refreshDittoTransforms(this.main)` after `loadArea()` in constructor — refreshes Ditto on game load
 - [ ] Tower redeployment from saved `tilePositions` at end of `loadArea()` with tile-type compatibility checks
 - [ ] Stack-based endless wave spawning: `stackSize` scales with wave, enemies share spawn slots
 - [ ] Minimum HP floor: `minHpPerEnemy = powerBudget / totalEnemyCount`, applied via `Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy)`
@@ -48,11 +46,8 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] `tilePosition` included in `getOriginalData()` (both branches) for save persistence
 - [ ] `fromOriginalData()` restores `tilePosition` from save data
 - [ ] `this.form = (this.specie.form) ? this.specie.key : false;`
-- [ ] `static refreshDittoTransforms(main)` — refreshes all team Dittos when team changes (updates adn to slot 1, reverts to base if Ditto is slot 1)
-- [ ] `transformADN()` dynamically looks up `this.main.team.pokemon[0].specie` instead of using stale saved adn
-- [ ] `transformADN()` returns early (stays base Ditto) if Ditto is in slot 1 or team is empty
-- [ ] `transformADN()` deep copies sprite: `JSON.parse(JSON.stringify(this.adn.sprite))`
-- [ ] `setShiny()` guard: `if (this.id == 70 && this.adn && this.adn.id != 70) return;` — allows shiny for standalone Ditto (no adn), blocks shiny only when transformed into non-Ditto
+- [ ] `transformADN()` matches vanilla behavior (uses `this.adn`, no dynamic slot 1 lookup)
+- [ ] `setShiny()` guard matches vanilla: `if (this.id == 70 && this.adn?.id != 70) return;`
 - [ ] `calculateAsymptoticSpeed()` method - asymptotic speed scaling for levels 100+
 - [ ] NO level cap check in `levelUp()` method
 - [ ] Endless mode cost scaling in `setCost()` - costs continue past level 100
@@ -89,16 +84,12 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] `this.waveInfoDisplay = false;` in constructor
 - [ ] `waveInfoPanel` element for bottom-left corner
 - [ ] Tooltips for save/load team buttons
-- [ ] Drag-and-drop Ditto transform: when slot 1 changes, find Ditto and update (works even when deployed)
-- [ ] Ditto slot 1 revert: if Ditto is dragged to slot 1, reverts to base form (sprite, ability, tiles, etc.)
-- [ ] Tower sprite update after Ditto transform change when deployed
+- [ ] Drag-and-drop Ditto transform matches vanilla: updates when slot 1 changes (only if not deployed)
 - [ ] UI scaling values match Area.modded.js: HP exponent 1.0056, boss /187.5, armor 0.04
 
 ## BoxScene.modded.js
-- [ ] `import { Pokemon }` at top of file
 - [ ] 200 box slots: `for (let i = 0; i < 200; i++)`
 - [ ] (Note: vanilla 1.4.4 may use `allPokemon.length` instead)
-- [ ] `Pokemon.refreshDittoTransforms(this.main)` after every team add/remove (5 locations: click handler team→box, click handler box→team, addButton, removeButton, removeAllButton)
 
 ## ShopScene.modded.js
 - [ ] Custom shiny sprites support in `displayPokemon.open()`
@@ -189,16 +180,7 @@ This document lists all mod features that MUST be present in the modded files. U
 ## Feature: Vanilla Bug Fixes & QoL (installer checkbox: `vanilla_fixes`)
 Consolidates all vanilla bug fixes and QoL improvements that don't add new gameplay mechanics.
 Baked into core modded files — always present when any mod is installed.
-
-## Feature: Ditto Dynamic Transform (part of Vanilla Bug Fixes)
-- [ ] `transformADN()` dynamically looks up slot 1 specie (Pokemon.modded.js)
-- [ ] `refreshDittoTransforms()` static method on Pokemon class
-- [ ] Refresh on game load: Area.modded.js constructor calls `Pokemon.refreshDittoTransforms(this.main)` after `loadArea()`
-- [ ] Refresh on team change: BoxScene.modded.js calls `Pokemon.refreshDittoTransforms(this.main)` after add/remove (5 locations)
-- [ ] Refresh on drag-swap: UI.modded.js drag-and-drop handler updates Ditto when slot 1 changes, even when deployed
-- [ ] Slot 1 revert: Ditto in slot 1 reverts to base form (sprite, ability, tiles reset to specie defaults)
-- [ ] Shiny Ditto: `setShiny()` guard allows shiny for standalone Ditto (`this.adn && this.adn.id != 70` — no optional chaining)
-- [ ] Tower sprite update: deployed Ditto towers refresh sprite when transform changes
+Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no modifications needed).
 
 ## Feature: Save Tower Positions (part of Vanilla Bug Fixes)
 - [ ] `tilePosition` in `getOriginalData()` both branches (Pokemon.modded.js)

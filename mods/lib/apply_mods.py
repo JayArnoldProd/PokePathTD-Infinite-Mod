@@ -348,8 +348,8 @@ MOD_FEATURES = {
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes & QoL',
-        'description': 'Fixes vanilla bugs and adds QoL: Ditto dynamic transform (auto-copies slot 1, reverts in slot 1, shiny fix), challenge level cap fix, tower placement persistence, projectile retargeting fix, off-screen targeting fix',
-        'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Pokemon/Area/Tower/Projectile/BoxScene/UI)
+        'description': 'Challenge level cap fix, tower placement persistence, projectile retargeting fix, off-screen targeting fix',
+        'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Pokemon/Area/Tower/Projectile)
         'default': True,
     },
     'hidden_items': {
