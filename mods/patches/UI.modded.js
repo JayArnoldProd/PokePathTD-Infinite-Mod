@@ -879,7 +879,7 @@ export class UI {
 		if (wave > 100 && wave % 100 !== 0) {
 			// Match spawnEndlessWave calculation exactly
 			const wavesPast100 = wave - 100;
-			const baseBudget = 160000;
+			const baseBudget = 320000; // MOD: Doubled from 160k — matches Area.modded.js
 			let hpMult;
 			if (wavesPast100 <= 900) {
 				hpMult = Math.pow(1.0095, wavesPast100);

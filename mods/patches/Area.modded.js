@@ -447,7 +447,7 @@ export class Area {
 		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
 		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
 		const wavesPast100 = wave - 100;
-		const baseBudget = 160000;
+		const baseBudget = 320000; // MOD: Doubled from 160k for stronger enemies past 300
 		let hpMult;
 		if (wavesPast100 <= 900) {
 			hpMult = Math.pow(1.0095, wavesPast100);
@@ -457,6 +457,11 @@ export class Area {
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
 		const powerBudget = Math.floor(baseBudget * hpMult);
+		
+		// MOD: Speed scaling — 1.5x at wave 500, 2x at 1000, 4x at 10000
+		const speedMult = 1 + Math.log2(1 + wavesPast100 / 800);
+		// MOD: Regeneration scaling — proportional to scaled HP, capped at hpMax/sec
+		const regenScale = Math.min(1.0, 0.01 + wavesPast100 * 0.0001); // 1% at 101, 10% at 1000, caps at 100%
 		
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
@@ -550,10 +555,16 @@ export class Area {
 				scaledArmor = Math.floor(scaledArmor * 2);
 			}
 			
+			// MOD: Speed and regeneration scale with wave
+			const scaledSpeed = template.speed * speedMult;
+			const scaledRegen = Math.floor(scaledHp * regenScale); // HP/sec proportional to max HP
+			
 			const scaledEnemy = {
 				...template,
 				hp: scaledHp,
 				armor: scaledArmor,
+				speed: scaledSpeed,
+				regeneration: Math.max(template.regeneration || 0, scaledRegen),
 				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
 			};
 			
