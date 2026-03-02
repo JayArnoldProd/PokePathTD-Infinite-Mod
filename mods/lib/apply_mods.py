@@ -1572,6 +1572,43 @@ def apply_challenge_levelcap_fix():
     else:
         log_fail("PokemonScene.js: Challenge level cap display fix", "lvlCap display pattern not found")
     
+    # --- Fix 5: PokemonScene.js level-up buttons disabled during challenge ---
+    # Vanilla completely disables +1/+5/+10 buttons when lvlCap is set.
+    # Fix: remove the early return so players can still level up Pokemon.
+    # Stats/display are already capped by Math.min in updateStats() and display fixes.
+    # Without endless mode, vanilla level 100 cap still applies from the existing button logic.
+    # With endless mode, PokemonScene.modded.js replaces this file entirely (no cap).
+    content_ps = read_file(path_ps)  # re-read in case Fix 4 wrote
+    
+    old_btn_block = """if (typeof this.main.area.inChallenge.lvlCap == 'number') {
+			this.levelUp.innerHTML = `-`;
+			this.levelUp.style.filter = 'brightness(0.8)';
+			this.levelUp.style.pointerEvents = 'none';
+			this.levelUp.style.lineHeight = '28px';
+
+			this.levelUpFive.innerHTML = `-`;
+			this.levelUpFive.style.filter = 'brightness(0.8)';
+			this.levelUpFive.style.pointerEvents = 'none';
+			this.levelUpFive.style.lineHeight = '28px';
+
+			this.levelUpTen.innerHTML = `-`;
+			this.levelUpTen.style.filter = 'brightness(0.8)';
+			this.levelUpTen.style.pointerEvents = 'none';
+			this.levelUpTen.style.lineHeight = '28px';
+			return;
+		}"""
+    
+    if old_btn_block in content_ps:
+        # Remove the entire block — level-up works normally, stats are capped by updateStats()
+        content_ps = content_ps.replace(old_btn_block, '// MOD: Level-up allowed during challenge (stats capped by updateStats)')
+        write_file(path_ps, content_ps)
+        log_success("PokemonScene.js: Level-up buttons enabled during challenge mode")
+    elif '// MOD: Level-up allowed during challenge' in content_ps or "inChallenge.lvlCap == 'number'" not in content_ps:
+        # Already patched, or modded file that never had the block
+        log_skip("PokemonScene.js: Level-up buttons during challenge")
+    else:
+        log_fail("PokemonScene.js: Level-up buttons during challenge", "lvlCap button-disable block not found")
+    
     return True
 
 
