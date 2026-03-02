@@ -1039,9 +1039,22 @@ export class Tower extends Sprite {
             }
 
             if (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible'))) {
-                // MOD: Retarget within tower's range from tower position, not hardcoded 200 from projectile
+                // MOD: Delete projectile if it's outside the tower's range
                 const towerRange = p.tower ? (p.tower.range || 100) : 200;
-                const newTarget = p.tower ? p.tower.findClosestEnemy(p.tower, towerRange) : null;
+                if (p.tower) {
+                    const px = p.position.x + (p.width ? p.width / 2 : 0);
+                    const py = p.position.y + (p.height ? p.height / 2 : 0);
+                    const dx = px - p.tower.center.x;
+                    const dy = py - p.tower.center.y;
+                    if (dx * dx + dy * dy > towerRange * towerRange) {
+                        this.projectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+                // MOD: Retarget from projectile position — find closest enemy to the projectile
+                if (!p.center) p.center = { x: px, y: py };
+                else { p.center.x = px; p.center.y = py; }
+                const newTarget = p.findClosestEnemy ? p.findClosestEnemy(p, 200) : null;
                 if (newTarget) {
                     p.enemy = newTarget;
                 } else {
