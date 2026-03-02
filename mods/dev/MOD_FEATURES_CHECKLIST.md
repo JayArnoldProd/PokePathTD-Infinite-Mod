@@ -88,8 +88,7 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Projectile.modded.js
 - [ ] Endless scaling for projectile damage
-- [ ] MOD: Retarget in update() uses tower position + tower range
-- [ ] MOD: findClosestEnemy() (ricochets) searches from tower position within tower range
+- [ ] MOD: Retarget in update() uses tower position + tower range (ricochets intentionally chain 200px from enemy)
 
 ## ProfileScene.modded.js
 - [ ] Uncapped wave record display (shows 100+ instead of capping at 100)

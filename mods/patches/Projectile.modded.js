@@ -527,15 +527,12 @@ export class Projectile extends Sprite {
 
     findClosestEnemy(fromEnemy, maxDist = 200) {
         let closest = null;
-        // MOD: Use tower range, search from tower position for range-limited retargeting
-        const searchRange = this.tower?.range || maxDist;
-        const searchOrigin = this.tower ? { center: { x: this.tower.center.x, y: this.tower.center.y } } : fromEnemy;
-        let minDist = searchRange;
+        let minDist = maxDist;
         const canSeeInvisible = this.tower?.revealInvisible || false;
         for (const e of this.tower.main.area.enemies) {
             if (!e || e === fromEnemy || e.hp <= 0 || (e.invisible && !canSeeInvisible)) continue;
-            const dx = e.center.x - searchOrigin.center.x;
-            const dy = e.center.y - searchOrigin.center.y;
+            const dx = e.center.x - fromEnemy.center.x;
+            const dy = e.center.y - fromEnemy.center.y;
             const d = Math.hypot(dx, dy);
             if (d < minDist) {
                 minDist = d;
