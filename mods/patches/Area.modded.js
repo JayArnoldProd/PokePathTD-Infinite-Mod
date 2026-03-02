@@ -652,7 +652,34 @@ export class Area {
 			);
 		}
 		
-		// Boss waves are bosses only — no escort enemies
+		// MOD: Add scaled escort enemies at wave 300+
+		if (wave >= 300) {
+			const escortCount = Math.floor((wave - 200) / 50) * 5;
+			const pool = this.getEndlessEnemyPool(wave);
+			const escorts = pool.elite;
+			
+			for (let i = 0; i < escortCount && escorts.length > 0; i++) {
+				const escortTemplate = escorts[Math.floor(Math.random() * escorts.length)];
+				const scaledEscort = {
+					...escortTemplate,
+					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
+					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.05 * wavesPast100)),
+					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
+				};
+				
+				const xOffset = (bossCount + 1) * bossSpacing + (i + 1) * 25;
+				this.enemies.push(
+					new Enemy(
+						waypointEnemy[0].x - xOffset,
+						waypointEnemy[0].y,
+						scaledEscort,
+						waypointEnemy,
+						this.main,
+						this.main.game.ctx,
+					)
+				);
+			}
+		}
 	}
 
 	// WAVE 100: Spawn single boss

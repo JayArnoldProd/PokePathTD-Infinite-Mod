@@ -997,8 +997,26 @@ export class UI {
 				const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon', 
 					'registeel', 'regice', 'regigigas', 'zapdos', 'hooh', 'articuno'];
 				const bossKey = BOSS_KEYS[this.main.area.routeNumber] || 'shaymin';
-				const boss = this.main.area.main.area.waves[100]?.preview?.[0]; // Use wave 100 boss
-				if (boss) wavePreview = [boss];
+				const boss = this.main.area.main.area.waves[100]?.preview?.[0];
+				if (boss) {
+					wavePreview = [boss];
+					// MOD: Show escort enemies in preview at wave 300+
+					if (this.main.area.waveNumber >= 300) {
+						const e = this.main.area.main.area.waves;
+						const pool = this.main.area.getEndlessEnemyPool(this.main.area.waveNumber);
+						const escorts = pool.elite;
+						// Pick up to 3 unique escort types to show in preview
+						const shown = new Set();
+						const escortPreviews = [];
+						for (const esc of escorts) {
+							if (!shown.has(esc.id) && escortPreviews.length < 3) {
+								shown.add(esc.id);
+								escortPreviews.push(esc);
+							}
+						}
+						wavePreview = [boss, ...escortPreviews];
+					}
+				}
 			}
 		}
 		let pokemonCount = this.countPokemon(waveData);
@@ -1007,10 +1025,16 @@ export class UI {
 		const wave = this.main.area.waveNumber;
 		if (wave > 100) {
 			const wavesPast100 = wave - 100;
-			// Boss waves (200, 300, etc.) show boss count
+			// Boss waves (200, 300, etc.) show boss count + escort counts
 			if (wave % 100 === 0) {
 				const bossCount = Math.floor(wave / 100);
-				pokemonCount = wavePreview.map(() => bossCount);
+				const escortTotal = wave >= 300 ? Math.floor((wave - 200) / 50) * 5 : 0;
+				const escortTypes = wavePreview.length - 1; // first entry is boss
+				pokemonCount = wavePreview.map((p, i) => {
+					if (i === 0) return bossCount;
+					// Distribute escort count across shown escort types
+					return escortTypes > 0 ? Math.floor(escortTotal / escortTypes) : 0;
+				});
 			} else {
 				// Regular endless waves: 20 + wavesPast100 * 1.2
 				const totalEnemies = Math.floor(20 + wavesPast100 * 1.2);
