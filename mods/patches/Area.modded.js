@@ -447,12 +447,12 @@ export class Area {
 		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
 		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
 		const wavesPast100 = wave - 100;
-		const baseBudget = 320000; // MOD: Doubled from 160k for stronger enemies past 300
+		const baseBudget = 200000; // MOD: Slight bump from 160k
 		let hpMult;
 		if (wavesPast100 <= 900) {
-			hpMult = Math.pow(1.0095, wavesPast100);
+			hpMult = Math.pow(1.011, wavesPast100); // MOD: Steeper exponent (was 1.0095) — scales harder at high waves
 		} else {
-			const base = Math.pow(1.0095, 900); // ~5050x anchor at wave 1000
+			const base = Math.pow(1.011, 900); // anchor at wave 1000
 			const extra = wavesPast100 - 900;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
