@@ -313,7 +313,7 @@ MOD_FEATURES = {
     'qol': {
         'name': 'Quality of Life',
         'description': 'Hover tooltips for held items, save/load team buttons, tower position saving across sessions',
-        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix'],
+        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve'],
         'default': True,
     },
     'box_expansion': {
@@ -1792,6 +1792,97 @@ def apply_challenge_levelcap_fix():
     return True
 
 
+def apply_challenge_party_preserve():
+    """Preserve team lineup, items, and tile positions when starting a challenge.
+    
+    Vanilla ChallengeScene.startChallenge() strips all items and moves all team
+    Pokemon to the box before loading the area. This QoL patch saves the team state
+    before the wipe and restores it after loadArea, so players keep their party
+    lineup and deployed positions. Draft challenges are excluded (intentionally fresh).
+    """
+    path = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
+    content = read_file(path)
+    
+    if '// MOD: Save team state before challenge wipe' in content:
+        log_skip("ChallengeScene.js: Challenge party preserve")
+        return True
+    
+    old_start = """this.main.boxScene.removeAllItems();
+		this.main.boxScene.removeAllButton();"""
+    
+    new_start = """// MOD: Save team state before challenge wipe (QoL)
+		const savedTeam = this.main.team.pokemon.map(p => ({
+			pokemon: p,
+			item: p.item ? p.item : null,
+			tilePosition: p.tilePosition ?? -1
+		}));
+
+		this.main.boxScene.removeAllItems();
+		this.main.boxScene.removeAllButton();"""
+    
+    if old_start not in content:
+        log_fail("ChallengeScene.js: Challenge party preserve", "removeAllItems/removeAllButton pattern not found")
+        return False
+    
+    content = content.replace(old_start, new_start)
+    
+    # After loadArea + UI.update + getHealed, restore team (but not for draft)
+    old_post = """this.main.player.getHealed(14);
+		this.main.teamManager.teamChallenge = [[], [], [], [], []];
+		if (this.challenges.draft) this.main.draftScene.open();"""
+    
+    new_post = """this.main.player.getHealed(14);
+		this.main.teamManager.teamChallenge = [[], [], [], [], []];
+
+		// MOD: Restore team lineup after challenge wipe (skip for draft)
+		if (!this.challenges.draft && savedTeam.length > 0) {
+			for (const saved of savedTeam) {
+				const poke = saved.pokemon;
+				// Move from box back to team
+				if (this.main.box.pokemon.includes(poke)) {
+					this.main.box.removePokemon(poke);
+					this.main.team.addPokemon(poke);
+				}
+				// Re-equip item
+				if (saved.item) {
+					poke.equipItem(saved.item);
+				}
+				// Redeploy to tile if position was saved
+				if (saved.tilePosition >= 0 && saved.tilePosition < this.main.area.placementTiles.length) {
+					const tile = this.main.area.placementTiles[saved.tilePosition];
+					if (tile && !tile.tower && poke.tiles.includes(tile.land)) {
+						poke.isDeployed = true;
+						poke.tilePosition = saved.tilePosition;
+						const tower = new Tower(this.main, tile.position.x, tile.position.y, this.main.game.ctx, poke, tile);
+						this.main.area.towers.push(tower);
+						tile.tower = poke;
+						this.main.UI.tilesCountNum[tile.land - 1] = (this.main.UI.tilesCountNum[tile.land - 1] || 0) + 1;
+					}
+				}
+			}
+			this.main.UI.update();
+		}
+
+		if (this.challenges.draft) this.main.draftScene.open();"""
+    
+    if old_post not in content:
+        log_fail("ChallengeScene.js: Challenge party preserve", "post-loadArea pattern not found")
+        return False
+    
+    content = content.replace(old_post, new_post)
+    
+    # Add Tower import for programmatic deployment
+    if "import { Tower }" not in content:
+        old_import = "import { Pokemon } from '../component/Pokemon.js';"
+        new_import = "import { Pokemon } from '../component/Pokemon.js';\nimport { Tower } from '../component/Tower.js';"
+        if old_import in content:
+            content = content.replace(old_import, new_import)
+    
+    write_file(path, content)
+    log_success("ChallengeScene.js: Challenge party preserve (team + items + positions)")
+    return True
+
+
 def apply_projectile_retarget_fix():
     """
     Fix projectile retargeting to search from tower position within tower's range,
@@ -2488,6 +2579,9 @@ def main():
     
     # Fix challenge level cap bug
     apply_challenge_levelcap_fix()
+    
+    # QoL: Preserve party lineup when starting challenges
+    apply_challenge_party_preserve()
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()
