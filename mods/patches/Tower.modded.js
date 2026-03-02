@@ -1073,8 +1073,12 @@ export class Tower extends Sprite {
     findClosestEnemy(fromEnemy, maxDist = 1000) {
         let closest = null;
         let minDist = maxDist;
+        const cw = this.main.game.canvas.width;
+        const ch = this.main.game.canvas.height;
         for (const e of this.main.area.enemies) {
             if (!e || e === fromEnemy || e.hp <= 0) continue;
+            // MOD: Skip off-screen enemies
+            if (e.center.x < 0 || e.center.x > cw || e.center.y < 0 || e.center.y > ch) continue;
             const dx = e.center.x - fromEnemy.center.x;
             const dy = e.center.y - fromEnemy.center.y;
             const d = Math.hypot(dx, dy);

@@ -62,6 +62,18 @@ export class Projectile extends Sprite {
             return;
         }
 
+        // MOD: Delete projectile if target enemy is off-screen
+        if (this.enemy && !this.enemy.dying && this.tower?.main?.game?.canvas) {
+            const ex = this.enemy.center.x;
+            const ey = this.enemy.center.y;
+            const cw = this.tower.main.game.canvas.width;
+            const ch = this.tower.main.game.canvas.height;
+            if (ex < 0 || ex > cw || ey < 0 || ey > ch) {
+                this.markedForDeletion = true;
+                return;
+            }
+        }
+
         // Si ya impact├│ animar y dibujar el pulso desde el propio proyectil
         if (this.impacting) {
             if (!this.ctx) {
