@@ -300,8 +300,8 @@ MOD_FEATURES = {
     },
     'infinite_levels': {
         'name': 'Infinite Levels',
-        'description': 'Remove level 100 cap, asymptotic stat scaling',
-        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods'],
+        'description': 'Remove level 100 cap, asymptotic stat scaling, recharge precision at sub-0.1s',
+        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods', 'apply_recharge_precision'],
         'default': True,
     },
     'shiny': {
@@ -312,7 +312,7 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap 999T, abbreviated gold display, live profile stats',
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), live profile stats',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_live_update'],
         'default': True,
     },
@@ -1194,6 +1194,64 @@ def apply_pokemonscene_mods():
     
     log_fail("PokemonScene.js: mods - modded file not found")
     return False
+
+
+def apply_recharge_precision():
+    """Show 3 decimal places for recharge time when it drops below 0.1s.
+    
+    Patches PokemonScene.js in 3 locations:
+    1. Base stat display (update method)
+    2. Level-up hover preview (+1/x5/x10 buttons)
+    3. Item/ability gains preview
+    """
+    path = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
+    content = read_file(path)
+    
+    if 'speedDecimals' in content:
+        log_skip("PokemonScene.js: Recharge precision (already applied)")
+        return True
+    
+    patched = 0
+    
+    # 1. Base stat display: this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s`;
+    old1 = "this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s`;"
+    new1 = ("const _spd = this.pokemon.speed / 1000; const speedDecimals = _spd < 0.1 ? 3 : 2;\n"
+            "\t\tthis.data['speed'].value.innerHTML = `${_spd.toFixed(speedDecimals)}s`;")
+    if old1 in content:
+        content = content.replace(old1, new1, 1)
+        patched += 1
+    
+    # 2. Level-up hover preview: speedDiff and display lines
+    old2 = "const speedDiff = Math.abs((newSpeed / 1000).toFixed(2) - (this.pokemon.speed / 1000).toFixed(2)).toFixed(2);"
+    new2 = ("const _curSpd = this.pokemon.speed / 1000; const _newSpd = newSpeed / 1000;\n"
+            "\t\tconst _spdDec = _curSpd < 0.1 ? 3 : 2;\n"
+            "\t\tconst speedDiff = Math.abs(_newSpd.toFixed(_spdDec) - _curSpd.toFixed(_spdDec)).toFixed(_spdDec);")
+    if old2 in content:
+        content = content.replace(old2, new2, 1)
+        patched += 1
+    
+    old2b = "this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s <span style=\"color:var(--green)\">(-${(speedDiff)}s)</span>`;"
+    new2b = "this.data['speed'].value.innerHTML = `${_curSpd.toFixed(_spdDec)}s <span style=\"color:var(--green)\">(-${(speedDiff)}s)</span>`;"
+    if old2b in content:
+        content = content.replace(old2b, new2b, 1)
+        patched += 1
+    
+    # 3. Item/ability gains: const speedSec = (Math.abs(speedGains) / 1000).toFixed(2);
+    old3 = "const speedSec = (Math.abs(speedGains) / 1000).toFixed(2);"
+    new3 = ("const _spdDec3 = (this.pokemon.speed / 1000) < 0.1 ? 3 : 2;\n"
+            "\t        const speedSec = (Math.abs(speedGains) / 1000).toFixed(_spdDec3);")
+    if old3 in content:
+        content = content.replace(old3, new3, 1)
+        patched += 1
+    
+    if patched > 0:
+        write_file(path, content)
+        log_success(f"PokemonScene.js: Recharge precision ({patched} patches)")
+        return True
+    
+    log_fail("PokemonScene.js: Recharge precision - no matching patterns")
+    return False
+
 
 # ============================================================================
 # AREA.JS - Endless wave spawning and power budget

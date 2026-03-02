@@ -170,8 +170,13 @@ export class Game {
 	          tower.update(enemiesInRange, stepDelta);
 	        }
 
-	        // Check wave end condition
-	        if (area.waveActive && enemies.length === 0) {
+	        // MOD: Tick deferred spawn queue (spawns enemies as wave progresses)
+	        if (area._spawnQueue && area._spawnQueue.length > 0) {
+	          area.tickSpawnQueue(stepDelta);
+	        }
+
+	        // Check wave end condition (also check spawn queue is drained)
+	        if (area.waveActive && enemies.length === 0 && (!area._spawnQueue || area._spawnQueue.length === 0)) {
 	          area.endWave();
 	        }
 	    }

@@ -28,6 +28,8 @@ export class Area {
 		this.waveActive;
 
 		this.enemies = [];
+		this._spawnQueue = [];  // MOD: Deferred enemy spawning for performance
+		this._spawnElapsed = 0; // MOD: Time elapsed since wave start (for deferred spawning)
 		this.waves = [];
 		this.waypoints = [];
 		this.placementTiles = [];
@@ -196,6 +198,8 @@ export class Area {
 	newWave() {
 		if (this.main.area.waveActive) return;
 		this.goldWave = 0;
+		this._spawnQueue = [];  // MOD: Clear deferred spawn queue
+		this._spawnElapsed = 0;
 		playSound('select', 'ui');
 
 		this.totalDamageDealt = 0;
@@ -551,6 +555,11 @@ export class Area {
 
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
 
+		// MOD: Deferred spawning — only create Enemy objects when they'd be near the screen.
+		// At wave 5000 with 5900 enemies, creating all at once causes lag at wave start.
+		// Instead, queue spawn descriptors sorted by xOffset and spawn them as the wave progresses.
+		const spawnDescriptors = [];
+
 		enemies.forEach((entry, i) => {
 			if (!entry || !entry.template) return;
 
@@ -603,17 +612,64 @@ export class Area {
 			const stackPos = i % stackSize;
 			const yJitter = (stackPos - Math.floor(stackSize / 2)) * 2;
 
-			this.enemies.push(
-				new Enemy(
-					waypointEnemy[0].x - xOffset - 50,
-					waypointEnemy[0].y + yJitter,
-					scaledEnemy,
-					waypointEnemy,
-					this.main,
-					this.main.game.ctx,
-				)
-			);
+			spawnDescriptors.push({
+				x: waypointEnemy[0].x - xOffset - 50,
+				y: waypointEnemy[0].y + yJitter,
+				enemy: scaledEnemy,
+				waypoints: waypointEnemy,
+				xOffset: xOffset,  // distance from screen edge — used for deferred timing
+			});
 		});
+
+		// Sort by xOffset ascending so closest-to-screen enemies spawn first
+		spawnDescriptors.sort((a, b) => a.xOffset - b.xOffset);
+
+		// Spawn the first batch immediately (enemies already near/on screen)
+		// and queue the rest for deferred spawning
+		const SPAWN_BUFFER = 100; // spawn enemies when they'd be within 100px of screen edge
+		for (const desc of spawnDescriptors) {
+			if (desc.xOffset <= SPAWN_BUFFER) {
+				this.enemies.push(
+					new Enemy(desc.x, desc.y, desc.enemy, desc.waypoints, this.main, this.main.game.ctx)
+				);
+			} else {
+				this._spawnQueue.push(desc);
+			}
+		}
+		this._spawnElapsed = 0;
+		// Store SLOWEST enemy speed for spawn timing — ensures no enemy spawns late
+		// Enemy speed is in px per (1000/60)ms frame, so the slowest base speed governs timing
+		const slowestBaseSpeed = wavePreview.reduce((min, p) => Math.min(min, p.speed || 1), Infinity);
+		this._spawnBaseSpeed = slowestBaseSpeed * speedMult;
+	}
+
+	// MOD: Deferred spawn queue tick — called each frame from Game.animate()
+	// Spawns queued enemies as time progresses, based on how far they'd have traveled
+	tickSpawnQueue(deltaMs) {
+		if (this._spawnQueue.length === 0) return;
+		this._spawnElapsed += deltaMs;
+
+		// Calculate how many pixels the wave front has traveled since wave start
+		// Enemy speed is in px per (1000/60)ms frame units, so px/ms = speed * 60/1000
+		// Average base speed for spawn timing — use a conservative estimate
+		// so enemies spawn slightly before they'd actually reach screen edge
+		const pxPerMs = (this._spawnBaseSpeed || 1) * 60 / 1000;
+		const distanceTraveled = this._spawnElapsed * pxPerMs;
+		const SPAWN_BUFFER = 100;
+
+		// Spawn all enemies whose xOffset has been reached by the wave front
+		while (this._spawnQueue.length > 0) {
+			const next = this._spawnQueue[0];
+			// Enemy needs to travel (xOffset - SPAWN_BUFFER) px to be near screen
+			if (distanceTraveled >= next.xOffset - SPAWN_BUFFER) {
+				this._spawnQueue.shift();
+				this.enemies.push(
+					new Enemy(next.x, next.y, next.enemy, next.waypoints, this.main, this.main.game.ctx)
+				);
+			} else {
+				break; // Queue is sorted, so no later enemies are ready either
+			}
+		}
 	}
 
 	// ENDLESS MODE: Get enemy pool categorized by power tier
