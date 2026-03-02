@@ -9,7 +9,7 @@ import { playMusic, playSound } from '../../file/audio.js';
 import { enemyData as e } from '../data/enemyData.js';
 
 // ENDLESS MODE: Boss list for multi-boss spawns
-const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon', 
+const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon',
 	'registeel', 'regice', 'regigigas', 'zapdos', 'hooh', 'articuno'];
 
 export class Area {
@@ -68,7 +68,7 @@ export class Area {
 	checkWeather() {
 		if (this.imposedWeather) return;
 		this.weather = false;
-		this.towers.forEach(t => { 
+		this.towers.forEach(t => {
 			if (t.ability.id == 'drizzle') this.weather = 'rain';
 		});
 
@@ -85,7 +85,7 @@ export class Area {
 		if (challenge) {
 			this.inChallenge = challenge;
 		} else this.inChallenge = false;
-		
+
 		// MOD: Save tile positions before clearing so we can redeploy after tiles are rebuilt
 		const savedTilePositions = new Map();
 		if (!keepTowers) {
@@ -108,7 +108,7 @@ export class Area {
 				}
 			}
 		}
-		
+
 		if (wave != undefined) this.routeWaves[routeNumber] = wave;
 
 		this.routeNumber = routeNumber;
@@ -142,7 +142,7 @@ export class Area {
 			    })
 			})
 		}
-		
+
 		this.enemies = [];
 		this.main.game.canvasBackground.src = this.map.background;
 
@@ -187,7 +187,7 @@ export class Area {
 			}
 			this.recalculateAuras();
 			this.checkWeather();
-			// Defer UI update â€” during constructor, UI.update() may reference
+			// Defer UI update â€" during constructor, UI.update() may reference
 			// properties not yet initialized. Main.js calls UI.update() after all
 			// constructors complete (Main.js line 86).
 		}
@@ -197,7 +197,7 @@ export class Area {
 		if (this.main.area.waveActive) return;
 		this.goldWave = 0;
 		playSound('select', 'ui');
-		
+
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
 		this.shellBellWaveUsed = false;
@@ -213,7 +213,7 @@ export class Area {
 		this.spawnEnemies();
 		this.main.UI.update();
 
-		this.towers.forEach(t => { 
+		this.towers.forEach(t => {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
 			t.lightningRodCharge = 0;
@@ -241,7 +241,7 @@ export class Area {
 		// MOD: Record handling for endless mode - don't cap at 100
 		if (this.main.player.records[this.routeNumber] < this.waveNumber) {
 			this.main.player.records[this.routeNumber] = this.waveNumber; // MOD: Removed cap at 100
-			
+
 			if (this.main.player.stars > 50) {
 				this.main.player.changeGold(bonusGold);
 				this.goldWave += bonusGold;
@@ -252,7 +252,7 @@ export class Area {
 			}
 		}
 
-		this.towers.forEach(t => { 
+		this.towers.forEach(t => {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
 			t.lightningRodCharge = 0;
@@ -307,7 +307,7 @@ export class Area {
 			}, 1500);
 
 			playSound('end', 'ui');
-			
+
 			// MOD: Display enemy info with cycled wave number for endless
 			const previewEnemy = this.getWavePreview(this.waveNumber);
 			if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
@@ -367,7 +367,7 @@ export class Area {
 				this.main.UI.displayEnemyInfo(this.waves[this.waveNumber].preview[0], 0);
 				if (this.autoWave) return this.newWave();
 			}
-		}	
+		}
 	}
 
 	// MOD: Enable endless mode - called from FinalScene continue button
@@ -393,7 +393,7 @@ export class Area {
 		if (this.endlessMode && this.waveNumber > 100) {
 			return this.spawnEndlessWave();
 		}
-		
+
 		// ENDLESS MODE: Wave 100 spawns 1 boss using the boss system (not original multi-boss wave)
 		if (this.waveNumber === 100) {
 			return this.spawnWave100Boss();
@@ -423,48 +423,58 @@ export class Area {
 		})
 	}
 
+	// MOD: Effective wavesPast100 - linear up to wave 1000, then 4x compressed
+	// Keeps waves 100-1000 identical, but stretches 1000+ so current wave 2000 = new wave 5000
+	getEffectiveWP(wavesPast100) {
+		if (wavesPast100 <= 900) return wavesPast100;
+		return 900 + (wavesPast100 - 900) / 4;
+	}
+
 	// ENDLESS MODE: POWER BUDGET SYSTEM - Generate waves 101+
 	// Targets: Wave 700 = ~75k HP avg, Wave 1600 = ~1M HP avg
 	spawnEndlessWave() {
 		const wave = this.waveNumber;
-		
+
 		// Boss wave every 100 (200, 300, 400...)
 		if (wave % 100 === 0) {
 			return this.spawnEndlessBossWave();
 		}
-		
+
 		// === GET WAVE PREVIEW ENEMIES ===
 		const templateWaveNum = ((wave - 1) % 100) + 1;
 		const waveData = this.waves[templateWaveNum] || this.waves[1];
 		const wavePreview = waveData?.preview || [];
-		
+
 		if (wavePreview.length === 0) {
 			console.warn('No preview enemies for wave', wave);
 			return;
 		}
-		
+
 		// === HP SCALING (exponential early, polynomial tail) ===
 		// Balanced so level N Pokemon can roughly reach wave N
 		const wavesPast100 = wave - 100;
+		// MOD: Effective wp — identical up to wave 1000, then 4x compressed
+		// Current wave 2000 difficulty = new wave 5000 difficulty
+		const ewp = this.getEffectiveWP(wavesPast100);
 		const baseBudget = 160000;
 		let hpMult;
-		if (wavesPast100 <= 1300) {
-			hpMult = Math.pow(1.00558, wavesPast100);
+		if (ewp <= 1300) {
+			hpMult = Math.pow(1.00558, ewp);
 		} else {
 			const base = Math.pow(1.00558, 1300); // anchor at wave 1400
-			const extra = wavesPast100 - 1300;
+			const extra = ewp - 1300;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
 		const powerBudget = Math.floor(baseBudget * hpMult);
 		
-		// MOD: Speed scaling â€” gentle logarithmic curve
-		const speedMult = 1 + Math.log2(1 + wavesPast100 / 2500);
-		// MOD: Regeneration scaling â€” asymptotically approaches 5% of max HP/sec
-		const regenScale = 0.05 * wavesPast100 / (wavesPast100 + 3000);
-		
+		// MOD: Speed scaling — gentle logarithmic curve (uses effective wp)
+		const speedMult = 1 + Math.log2(1 + ewp / 2500);
+		// MOD: Regeneration scaling — asymptotically approaches 5% of max HP/sec
+		const regenScale = 0.05 * ewp / (ewp + 3000);
+
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
-		
+
 		// === SEEDED RANDOM FOR CONSISTENT WAVES ===
 		const seed = wave * 12345;
 		const rng = (n) => {
@@ -472,33 +482,33 @@ export class Area {
 			return x - Math.floor(x);
 		};
 		let rngCounter = 0;
-		
+
 		// === BUILD ENEMY LIST WITH ELITE INJECTION ===
 		const enemies = [];
-		
+
 		// Distribute enemies inversely by HP (matches UI display exactly)
 		const hpValues = wavePreview.map(p => p.hp || 100);
 		const inverseHp = hpValues.map(hp => 1 / hp);
 		const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
 		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
-		
+
 		// Calculate HP scale factor from power budget (matches UI exactly)
 		let totalBaseHp = 0;
 		wavePreview.forEach((p, idx) => {
 			totalBaseHp += (p.hp || 100) * enemyCounts[idx];
 		});
 		const hpScaleFactor = powerBudget / totalBaseHp;
-		
-		// MOD: Minimum per-enemy HP floor â€” ensures difficulty never drops when the
+
+		// MOD: Minimum per-enemy HP floor â€" ensures difficulty never drops when the
 		// wave cycle resets (e.g. wave 201 template 1 enemies must be at least as
 		// tough as wave 200 template 100 enemies). Floor = budget / enemy count,
 		// so a cycle-start swarm of Rattata each has comparable HP to a single
 		// endgame enemy from the previous cycle's end.
 		const minHpPerEnemy = Math.floor(powerBudget / totalEnemyCount);
-		
+
 		// Split each type's count into base/elite/champion for variety
 		const tankiest = wavePreview.reduce((a, b) => ((a.hp || 0) + (a.armor || 0) > (b.hp || 0) + (b.armor || 0)) ? a : b);
-		
+
 		wavePreview.forEach((template, typeIdx) => {
 			const count = enemyCounts[typeIdx];
 			// For the tankiest type, promote some to elite/champion
@@ -513,21 +523,21 @@ export class Area {
 				for (let i = 0; i < count; i++) enemies.push({ template, isChampion: false });
 			}
 		});
-		
+
 		// Shuffle enemies for variety
 		for (let i = enemies.length - 1; i > 0; i--) {
 			const j = Math.floor(rng(rngCounter++) * (i + 1));
 			[enemies[i], enemies[j]] = [enemies[j], enemies[i]];
 		}
-		
-		// MOD: Invisible enemy cap — asymptotically approaches 1000 but starts low
+
+		// MOD: Invisible enemy cap - asymptotically approaches 1000 but starts low
 		// Prevents all-invisible waves from being unbeatable
 		// Formula: cap = 1000 * wavesPast100 / (wavesPast100 + 6000)
 		// Wave 200: 16 | Wave 500: 62 | Wave 1000: 130 | Wave 1175: 151
 		// Wave 2000: 240 | Wave 5000: 449 | Wave 10000: 622
 		const invisCap = Math.floor(1000 * wavesPast100 / (wavesPast100 + 6000));
 		let invisCount = 0;
-		
+
 		// === SPACING ===
 		// MOD: Stack multiple enemies at the same spawn point so they arrive as packs.
 		// "stackSize" = how many enemies share one spawn slot (increases with wave).
@@ -538,21 +548,21 @@ export class Area {
 		// Wave 1000+: 10 per slot, 10px gap (swarms)
 		const stackSize = Math.min(10, 1 + Math.floor(wavesPast100 / 50));
 		const slotGap = Math.max(10, 25 - Math.floor(wavesPast100 / 40));
-		
+
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
-		
+
 		enemies.forEach((entry, i) => {
 			if (!entry || !entry.template) return;
-			
+
 			const { template, isElite, isChampion } = entry;
-			
+
 			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy));
 			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
-			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.03 * wavesPast100));
+			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.03 * ewp));
 			if (scaledArmor === 0) {
 				scaledArmor = Math.floor(scaledHp * 0.05);
 			}
-			
+
 			if (isElite) {
 				scaledHp = Math.floor(scaledHp * 2);
 				scaledArmor = Math.floor(scaledArmor * 1.5);
@@ -561,12 +571,12 @@ export class Area {
 				scaledHp = Math.floor(scaledHp * 3);
 				scaledArmor = Math.floor(scaledArmor * 2);
 			}
-			
+
 			// MOD: Speed and regeneration scale with wave
 			const scaledSpeed = template.speed * speedMult;
 			const scaledRegen = Math.floor(scaledHp * regenScale); // HP/sec proportional to max HP
-			
-			// MOD: Cap invisible enemies per wave — excess become visible
+
+			// MOD: Cap invisible enemies per wave - excess become visible
 			let isInvisible = template.invisible || false;
 			if (isInvisible) {
 				if (invisCount < invisCap) {
@@ -575,7 +585,7 @@ export class Area {
 					isInvisible = false;
 				}
 			}
-			
+
 			const scaledEnemy = {
 				...template,
 				hp: scaledHp,
@@ -585,14 +595,14 @@ export class Area {
 				regeneration: Math.max(template.regeneration || 0, scaledRegen),
 				gold: Math.floor(template.gold * (1 + wavesPast100 * 0.11))
 			};
-			
+
 			// Enemies within the same stack share the same spawn slot (same x position)
 			const slotIndex = Math.floor(i / stackSize);
 			const xOffset = slotIndex * slotGap;
 			// Small y jitter within a stack so stacked enemies don't perfectly overlap
 			const stackPos = i % stackSize;
 			const yJitter = (stackPos - Math.floor(stackSize / 2)) * 2;
-			
+
 			this.enemies.push(
 				new Enemy(
 					waypointEnemy[0].x - xOffset - 50,
@@ -605,7 +615,7 @@ export class Area {
 			);
 		});
 	}
-	
+
 	// ENDLESS MODE: Get enemy pool categorized by power tier
 	getEndlessEnemyPool(wave) {
 		const swarm = [
@@ -614,7 +624,7 @@ export class Area {
 			e.swinub, e.hoothoot, e.swablu, e.silicobra, e.larvitar, e.sandile,
 			e.axew, e.snover, e.poochyena, e.bonsly, e.golett, e.venonat
 		].filter(Boolean);
-		
+
 		const elite = [
 			e.raticate, e.butterfree, e.ledian, e.corvisquire, e.corviknight,
 			e.dodrio, e.weepinbell, e.victreebel, e.chimecho, e.sudowoodo,
@@ -627,12 +637,12 @@ export class Area {
 			e.abomasnow, e.drampa, e.togedemaru, e.kangaskhan, e.minior,
 			e.arcanineHisui, e.growlitheHisui, e.fraxure
 		].filter(Boolean);
-		
+
 		if (wave > 200) {
 			const superElite = [e.volbeat, e.illumise, e.flygon, e.haxorus, e.miltank, e.furfrou].filter(Boolean);
 			elite.push(...superElite);
 		}
-		
+
 		return { swarm, elite };
 	}
 
@@ -641,7 +651,7 @@ export class Area {
 		const pool = this.getEndlessEnemyPool(wave);
 		const escorts = pool.elite;
 		if (escorts.length === 0) return [];
-		
+
 		// Seeded selection: pick evenly spaced from the sorted pool based on wave number
 		const step = Math.max(1, Math.floor(escorts.length / count));
 		const offset = wave % step;
@@ -662,33 +672,37 @@ export class Area {
 	spawnEndlessBossWave() {
 		const wave = this.waveNumber;
 		const bossCount = Math.floor(wave / 100);
-		
+
 		const bossKey = BOSS_KEYS[this.routeNumber] || 'shaymin';
 		const boss = e[bossKey];
-		
+
 		if (!boss) {
 			console.warn('Boss not found:', bossKey);
 			return;
 		}
-		
+
 		const wavesPast100 = wave - 100;
+		// MOD: Effective wp for scaling — compressed past wave 1000
+		const ewp = this.getEffectiveWP(wavesPast100);
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 335); // MOD: Stretched boss scaling (level N â‰ˆ wave N)
-		
-		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
-		const bossHp = Math.floor(boss.hp * bossHpMult * 2);
-		
+		bossHpMult *= Math.pow(2, ewp / 335); // MOD: Stretched boss scaling (uses effective wp)
+
+		// MOD: Boss HP divided by sqrt(bossCount) — prevents late-game boss waves
+		// from being impossible due to sheer numbers (50 bosses at wave 5000)
+		const bossCountFactor = 1 / Math.sqrt(Math.max(1, bossCount));
+		const bossHp = Math.floor(boss.hp * bossHpMult * 2 * bossCountFactor);
+
 		const scaledBoss = {
 			...boss,
 			hp: bossHp,
-			armor: Math.floor((boss.armor || 0) * (1 + 0.03 * wavesPast100)),
+			armor: Math.floor((boss.armor || 0) * (1 + 0.03 * ewp)),
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
-		
+
 		const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
 		const bossSpacing = Math.max(80, 150 - Math.floor(wave / 10));
-		
+
 		for (let i = 0; i < bossCount; i++) {
 			const xOffset = (i + 1) * bossSpacing;
 			this.enemies.push(
@@ -702,21 +716,21 @@ export class Area {
 				)
 			);
 		}
-		
+
 		// MOD: Add scaled escort enemies at wave 300+
 		if (wave >= 300) {
 			const escortCount = Math.floor((wave - 200) / 50) * 5;
 			const escortTypes = this.getEscortTypes(wave, 3);
-			
+
 			for (let i = 0; i < escortCount && escortTypes.length > 0; i++) {
 				const escortTemplate = escortTypes[i % escortTypes.length];
 				const scaledEscort = {
 					...escortTemplate,
 					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
-					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.03 * wavesPast100)),
+					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.03 * ewp)),
 					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
 				};
-				
+
 				const xOffset = (bossCount + 1) * bossSpacing + (i + 1) * 25;
 				this.enemies.push(
 					new Enemy(
@@ -736,7 +750,7 @@ export class Area {
 	spawnWave100Boss() {
 		const bossKey = BOSS_KEYS[this.routeNumber] || 'shaymin';
 		let boss = e[bossKey];
-		
+
 		if (!boss) {
 			console.warn('Boss not found:', bossKey, '- trying fallbacks');
 			for (const fallbackKey of BOSS_KEYS) {
@@ -746,7 +760,7 @@ export class Area {
 				}
 			}
 		}
-		
+
 		if (!boss) {
 			const vanillaWave = this.waves[100];
 			if (vanillaWave && vanillaWave.wave) {
@@ -771,12 +785,12 @@ export class Area {
 			}
 			boss = e.rattata || Object.values(e)[0];
 		}
-		
+
 		if (!boss) {
 			this.waveActive = false;
 			return;
 		}
-		
+
 		const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
 		this.enemies.push(
 			new Enemy(
@@ -844,14 +858,14 @@ export class Area {
 		const maxWave = Math.max(this.main.player.records[this.routeNumber] || 0, 100);
 		if (nextWave <= 0) nextWave = maxWave;
 		else if (nextWave > maxWave) nextWave = 1;
-		
+
 		// MOD: Enable endless mode if we've navigated past 100
 		if (nextWave > 100) this.endlessMode = true;
 
 		this.waveStartTime = null;
 		this.goldWave = 0;
 
-		this.towers.forEach(t => { 
+		this.towers.forEach(t => {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
 			t.lightningRodCharge = 0;

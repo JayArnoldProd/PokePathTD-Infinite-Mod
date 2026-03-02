@@ -899,14 +899,16 @@ export class UI {
 		if (wave > 100 && wave % 100 !== 0) {
 			// Match spawnEndlessWave calculation exactly
 			const wavesPast100 = wave - 100;
+			// MOD: Effective wp — identical up to wave 1000, compressed 4x after
+			const ewp = wavesPast100 <= 900 ? wavesPast100 : 900 + (wavesPast100 - 900) / 4;
 			const baseBudget = 160000; // Matches Area.modded.js
 			let hpMult;
-			// MOD: Stretched scaling — matches Area.modded.js (level N ≈ wave N)
-			if (wavesPast100 <= 1300) {
-				hpMult = Math.pow(1.00558, wavesPast100);
+			// MOD: Stretched scaling — matches Area.modded.js (uses effective wp)
+			if (ewp <= 1300) {
+				hpMult = Math.pow(1.00558, ewp);
 			} else {
 				const base = Math.pow(1.00558, 1300);
-				const extra = wavesPast100 - 1300;
+				const extra = ewp - 1300;
 				hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 			}
 			const powerBudget = Math.floor(baseBudget * hpMult);
@@ -938,7 +940,7 @@ export class UI {
 			// MOD: Exact per-type stats matching what spawns in Area.modded.js
 			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
 			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * wavesPast100));
+			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * ewp));
 			if (armor === 0) {
 				armor = Math.floor(hp * 0.05);
 			}
@@ -946,11 +948,15 @@ export class UI {
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
 		} else if (wave % 100 === 0 && wave > 100) {
-			// MOD: Boss waves — each boss gets full scaled HP (half scaling rate)
+			// MOD: Boss waves — uses effective wp + sqrt(bossCount) divisor
+			const bossWP = wave - 100;
+			const bossEWP = bossWP <= 900 ? bossWP : 900 + (bossWP - 900) / 4;
+			const bossCount = Math.floor(wave / 100);
 			let hpMult = 1 + 0.02 * bonusSteps;
-			hpMult *= Math.pow(2, (wave - 100) / 335); // MOD: Stretched boss scaling — matches Area.modded.js
-			hp = Math.floor(enemy.hp * hpMult * 2);
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * (wave - 100)));
+			hpMult *= Math.pow(2, bossEWP / 335); // MOD: Stretched boss scaling — uses effective wp
+			const bossCountFactor = 1 / Math.sqrt(Math.max(1, bossCount));
+			hp = Math.floor(enemy.hp * hpMult * 2 * bossCountFactor);
+			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * bossEWP));
 			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
 		} else if (bonusSteps > 0) {
 			// Waves 1-100: Original scaling
