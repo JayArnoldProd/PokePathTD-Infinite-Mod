@@ -739,9 +739,23 @@ export class UI {
 							playSound('teleport', 'effect')
 
 							if (ditto.adn && [58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
-							ditto.adn = this.main.team.pokemon[0].specie;
-							if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
-							ditto.transformADN();
+							
+							// MOD: If Ditto is now in slot 1, revert to base form
+							if (this.main.team.pokemon[0] === ditto) {
+								ditto.adn = undefined;
+								ditto.sprite = JSON.parse(JSON.stringify(ditto.specie.sprite));
+								ditto.ability = ditto.specie.ability;
+								ditto.tiles = ditto.specie.tiles;
+								ditto.projectile = ditto.specie.projectile;
+								ditto.rangeType = ditto.specie.rangeType;
+								ditto.attackType = ditto.specie.attackType;
+								ditto.updateStats();
+								if (ditto.isShiny) ditto.setShiny();
+							} else {
+								ditto.adn = this.main.team.pokemon[0].specie;
+								if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
+								ditto.transformADN();
+							}
 							// MOD: Update tower sprite if Ditto is deployed
 							if (ditto.isDeployed) {
 								const tower = this.main.area?.towers?.find(t => t.pokemon === ditto);
