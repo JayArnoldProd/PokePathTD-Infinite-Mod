@@ -413,6 +413,16 @@ export class Pokemon {
 	}
 
 	transformADN() {
+		// MOD: Dynamically look up first team slot instead of using stale saved adn
+		if (this.main?.team?.pokemon) {
+			const firstSlot = this.main.team.pokemon[0];
+			if (firstSlot && firstSlot !== this) {
+				this.adn = firstSlot.specie;
+			} else if (!firstSlot || firstSlot === this) {
+				// Ditto is slot 1 or team is empty — stay as base Ditto
+				return;
+			}
+		}
 		if (this.adn?.base) this.adn = pokemonData[this.adn.base]
 		this.sprite = JSON.parse(JSON.stringify(this.adn.sprite)); // MOD: Deep copy to prevent shared sprite mutation
 

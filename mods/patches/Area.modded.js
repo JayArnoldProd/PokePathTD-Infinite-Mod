@@ -7,6 +7,7 @@ import { text } from '../../file/text.js'
 import { saveData } from '../../file/data.js';
 import { playMusic, playSound } from '../../file/audio.js';
 import { enemyData as e } from '../data/enemyData.js';
+import { Pokemon } from '../component/Pokemon.js';
 
 // ENDLESS MODE: Boss list for multi-boss spawns
 const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon', 
@@ -51,6 +52,7 @@ export class Area {
 		this.main.area = this;
 
 		this.loadArea(areaData.routeNumber);
+		Pokemon.refreshDittoTransforms(this.main); // MOD: Refresh Ditto on game load
 		this.goldWave = 0;
 
 		this.waveStartTime = null;
