@@ -1675,22 +1675,23 @@ def apply_expanded_egg_list():
 # PLAYER.JS - Gold cap increase to 999 trillion
 # ============================================================================
 def apply_gold_cap_increase():
-    """Raise gold cap from 99,999,999,999 to 999,999,999,999,999 (999 trillion)."""
+    """Raise gold cap to 9 quadrillion (safe JS integer limit)."""
     path = JS_ROOT / "game" / "core" / "Player.js"
     content = read_file(path)
 
-    if '999999999999999' in content:
+    if '9007199254740991' in content:
         log_skip("Player.js: Gold cap increase")
         return True
 
-    old = 'if (this.gold >= 99999999999) this.gold = 99999999999;'
-    new = 'if (this.gold >= 999999999999999) this.gold = 999999999999999;'
-
-    if old in content:
-        content = content.replace(old, new)
-        write_file(path, content)
-        log_success("Player.js: Gold cap raised to 999 trillion")
-        return True
+    # Match either vanilla or previously patched cap
+    for old_cap in ['999999999999999', '99999999999']:
+        old = f'if (this.gold >= {old_cap}) this.gold = {old_cap};'
+        if old in content:
+            new = 'if (this.gold >= 9007199254740991) this.gold = 9007199254740991;'
+            content = content.replace(old, new)
+            write_file(path, content)
+            log_success("Player.js: Gold cap raised to 9 quadrillion (MAX_SAFE_INTEGER)")
+            return True
 
     log_fail("Player.js: Gold cap increase", "gold cap pattern not found")
     return False
@@ -1703,23 +1704,35 @@ def apply_gold_display_format_player():
     path = JS_ROOT / "game" / "core" / "Player.js"
     content = read_file(path)
 
-    if 'Trillion' in content or 'Billion' in content:
+    if 'TRILLION' in content or 'QUADRILLION' in content:
         log_skip("Player.js: Gold display format")
         return True
 
-    old = "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;"
+    # Remove old Trillion/Billion format if present
+    old_options = [
+        "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;",
+    ]
+    # Also match the previously patched version
+    for marker in ['const g = this.main.player.gold;']:
+        for line in content.split('\n'):
+            if marker in line and 'Trillion' in line:
+                old_options.insert(0, line.strip())
+
     new = ("const g = this.main.player.gold; "
-           "this.main.UI.playerGold.innerText = g >= 1e12 "
-           "? `$${(g/1e12).toFixed(2)} Trillion` "
+           "this.main.UI.playerGold.innerText = g >= 1e15 "
+           "? `$${(g/1e15).toFixed(2)} QUADRILLION` "
+           ": g >= 1e12 "
+           "? `$${(g/1e12).toFixed(2)} TRILLION` "
            ": g >= 1e11 "
-           "? `$${(g/1e9).toFixed(2)} Billion` "
+           "? `$${(g/1e9).toFixed(2)} BILLION` "
            ": `$${this.main.utility.numberDot(g)}`;")
 
-    if old in content:
-        content = content.replace(old, new)
-        write_file(path, content)
-        log_success("Player.js: Gold display abbreviated (Billion/Trillion)")
-        return True
+    for old in old_options:
+        if old in content:
+            content = content.replace(old, new)
+            write_file(path, content)
+            log_success("Player.js: Gold display abbreviated (BILLION/TRILLION/QUADRILLION)")
+            return True
 
     log_fail("Player.js: Gold display format", "playerGold.innerText pattern not found")
     return False
@@ -1732,23 +1745,33 @@ def apply_gold_display_format_ui():
     path = JS_ROOT / "game" / "UI.js"
     content = read_file(path)
 
-    if 'Trillion' in content and 'playerGold' in content:
+    if 'TRILLION' in content and 'playerGold' in content:
         log_skip("UI.js: Gold display format")
         return True
 
-    old = "this.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;"
+    old_options = [
+        "this.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;",
+    ]
+    for marker in ['const _g = this.main.player.gold;']:
+        for line in content.split('\n'):
+            if marker in line and 'Trillion' in line:
+                old_options.insert(0, line.strip())
+
     new = ("const _g = this.main.player.gold; "
-           "this.playerGold.innerText = _g >= 1e12 "
-           "? `$${(_g/1e12).toFixed(2)} Trillion` "
+           "this.playerGold.innerText = _g >= 1e15 "
+           "? `$${(_g/1e15).toFixed(2)} QUADRILLION` "
+           ": _g >= 1e12 "
+           "? `$${(_g/1e12).toFixed(2)} TRILLION` "
            ": _g >= 1e11 "
-           "? `$${(_g/1e9).toFixed(2)} Billion` "
+           "? `$${(_g/1e9).toFixed(2)} BILLION` "
            ": `$${this.main.utility.numberDot(_g)}`;")
 
-    if old in content:
-        content = content.replace(old, new)
-        write_file(path, content)
-        log_success("UI.js: Gold display abbreviated (Billion/Trillion)")
-        return True
+    for old in old_options:
+        if old in content:
+            content = content.replace(old, new)
+            write_file(path, content)
+            log_success("UI.js: Gold display abbreviated (BILLION/TRILLION/QUADRILLION)")
+            return True
 
     log_fail("UI.js: Gold display format", "playerGold.innerText pattern not found")
     return False
