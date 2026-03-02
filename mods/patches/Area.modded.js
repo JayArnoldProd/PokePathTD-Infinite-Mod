@@ -264,7 +264,7 @@ export class Area {
 			playSound('end', 'ui');
 			
 			// MOD: Display enemy info with cycled wave number for endless
-			const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 99) + 1;
+			const displayWaveNum = ((this.waveNumber - 1) % 100) + 1;
 			this.main.UI.displayEnemyInfo(this.waves[displayWaveNum].preview[0], 0);
 
 			const futureWave = this.waves[displayWaveNum].preview;
@@ -345,16 +345,7 @@ export class Area {
 	spawnEnemies() {
 		const wave = this.waveNumber;
 		// MOD: Cycle wave number for endless mode (waves 101+ use wave 1-100 patterns)
-		// Use % 99 + 1 to match UI display (avoids wave 100 boss template on non-boss waves)
-		let falseWaveNumber;
-		if (wave <= 100) {
-			falseWaveNumber = wave;
-		} else if (wave % 100 === 0) {
-			// Boss waves (200, 300, etc.) use wave 100 template
-			falseWaveNumber = 100;
-		} else {
-			falseWaveNumber = ((wave - 1) % 99) + 1;
-		}
+		let falseWaveNumber = ((wave - 1) % 100) + 1;
 
 		const waveData = this.waves[falseWaveNumber] || this.waves[1];
 		const waveEnemies = waveData.wave;
@@ -547,7 +538,7 @@ export class Area {
 		this.enemies = [];
 
 		// MOD: Display enemy info with cycled wave number
-		const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 99) + 1;
+		const displayWaveNum = ((this.waveNumber - 1) % 100) + 1;
 		this.main.UI.displayEnemyInfo(this.waves[displayWaveNum].preview[0], 0);
 
 		this.totalDamageDealt = 0;
