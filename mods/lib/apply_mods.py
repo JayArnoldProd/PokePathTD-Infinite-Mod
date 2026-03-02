@@ -298,7 +298,7 @@ MOD_FEATURES = {
     'infinite_levels': {
         'name': 'Infinite Levels',
         'description': 'Remove level 100 cap, asymptotic stat scaling',
-        'functions': ['apply_pokemon_mods'],
+        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods'],
         'default': True,
     },
     'shiny': {
@@ -321,13 +321,13 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items in the team selection screen',
+        'description': 'Hover tooltips for held items and save/load team buttons',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix'],
         'default': True,
     },
     'box_expansion': {
-        'name': 'Box Expansion (500 slots)',
-        'description': 'Expand Pokemon storage from 120 to 500 slots',
+        'name': 'Box Expansion (200 slots)',
+        'description': 'Expand Pokemon storage from 120 to 200 slots',
         'functions': ['apply_box_expansion'],
         'default': True,
     },
@@ -337,7 +337,7 @@ MOD_FEATURES = {
     'deltatime': {
         'name': 'Delta Time & Performance',
         'description': 'Sub-stepping simulation, accurate projectile timing, squared-distance checks, batch removal, throttled UI, cached draws',
-        'functions': ['apply_tower_deltatime', 'apply_projectile_scaling', 'apply_pokemonscene_mods'],
+        'functions': ['apply_tower_deltatime', 'apply_projectile_scaling'],
         'default': True,
     },
     'devtools': {
