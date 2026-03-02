@@ -485,6 +485,13 @@ export class Area {
 		});
 		const hpScaleFactor = powerBudget / totalBaseHp;
 		
+		// MOD: Minimum per-enemy HP floor — ensures difficulty never drops when the
+		// wave cycle resets (e.g. wave 201 template 1 enemies must be at least as
+		// tough as wave 200 template 100 enemies). Floor = budget / enemy count,
+		// so a cycle-start swarm of Rattata each has comparable HP to a single
+		// endgame enemy from the previous cycle's end.
+		const minHpPerEnemy = Math.floor(powerBudget / totalEnemyCount);
+		
 		// Split each type's count into base/elite/champion for variety
 		const tankiest = wavePreview.reduce((a, b) => ((a.hp || 0) + (a.armor || 0) > (b.hp || 0) + (b.armor || 0)) ? a : b);
 		
@@ -527,7 +534,7 @@ export class Area {
 			
 			const { template, isElite, isChampion } = entry;
 			
-			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor));
+			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy));
 			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.05 * wavesPast100));
 			
 			if (isElite) {
