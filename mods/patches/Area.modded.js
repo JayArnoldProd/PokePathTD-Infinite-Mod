@@ -625,14 +625,12 @@ export class Area {
 		let bossHpMult = 1 + 0.02 * bonusSteps;
 		bossHpMult *= Math.pow(2, wavesPast100 / 100); // MOD: Boss scaling half as fast as regular enemies
 		
-		// MOD: Spread total boss HP across all bosses so difficulty scales smoothly
-		// Total HP budget stays the same regardless of boss count
-		const totalBossHp = Math.floor(boss.hp * bossHpMult * 2);
-		const perBossHp = Math.floor(totalBossHp / bossCount);
+		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
+		const bossHp = Math.floor(boss.hp * bossHpMult * 2);
 		
 		const scaledBoss = {
 			...boss,
-			hp: perBossHp,
+			hp: bossHp,
 			armor: Math.floor((boss.armor || 0) * (1 + 0.05 * wavesPast100)),
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
@@ -654,34 +652,7 @@ export class Area {
 			);
 		}
 		
-		// Add scaled escort enemies at wave 300+
-		if (wave >= 300) {
-			const escortCount = Math.floor((wave - 200) / 50) * 5;
-			const pool = this.getEndlessEnemyPool(wave);
-			const escorts = pool.elite;
-			
-			for (let i = 0; i < escortCount && escorts.length > 0; i++) {
-				const escortTemplate = escorts[Math.floor(Math.random() * escorts.length)];
-				const scaledEscort = {
-					...escortTemplate,
-					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
-					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.05 * wavesPast100)),
-					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
-				};
-				
-				const xOffset = (bossCount + 1) * bossSpacing + (i + 1) * 25;
-				this.enemies.push(
-					new Enemy(
-						waypointEnemy[0].x - xOffset,
-						waypointEnemy[0].y,
-						scaledEscort,
-						waypointEnemy,
-						this.main,
-						this.main.game.ctx,
-					)
-				);
-			}
-		}
+		// Boss waves are bosses only — no escort enemies
 	}
 
 	// WAVE 100: Spawn single boss
