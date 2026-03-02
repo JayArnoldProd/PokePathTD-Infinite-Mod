@@ -264,7 +264,7 @@ export class Area {
 			playSound('end', 'ui');
 			
 			// MOD: Display enemy info with cycled wave number for endless
-			const displayWaveNum = ((this.waveNumber - 1) % 100) + 1;
+			const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 99) + 1;
 			this.main.UI.displayEnemyInfo(this.waves[displayWaveNum].preview[0], 0);
 
 			const futureWave = this.waves[displayWaveNum].preview;
@@ -343,28 +343,145 @@ export class Area {
 	}
 
 	spawnEnemies() {
+		const wave = this.waveNumber;
 		// MOD: Cycle wave number for endless mode (waves 101+ use wave 1-100 patterns)
-		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;
+		// Use % 99 + 1 to match UI display (avoids wave 100 boss template on non-boss waves)
+		let falseWaveNumber;
+		if (wave <= 100) {
+			falseWaveNumber = wave;
+		} else if (wave % 100 === 0) {
+			// Boss waves (200, 300, etc.) use wave 100 template
+			falseWaveNumber = 100;
+		} else {
+			falseWaveNumber = ((wave - 1) % 99) + 1;
+		}
 
-		const wave = this.waves[falseWaveNumber].wave;
-		const waveOffset = this.waves[falseWaveNumber].offSet || 50;
+		const waveData = this.waves[falseWaveNumber] || this.waves[1];
+		const waveEnemies = waveData.wave;
+		const waveOffset = waveData.offSet || 50;
 
-		wave.forEach((enemy, i) => {
-			const xOffset = (i + 1) * waveOffset;
-			const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
-			if (enemy) {
+		if (wave <= 100) {
+			// Waves 1-100: vanilla spawning (Enemy.js handles scaling)
+			waveEnemies.forEach((enemy, i) => {
+				const xOffset = (i + 1) * waveOffset;
+				const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+				if (enemy) {
+					this.enemies.push(
+						new Enemy(
+							waypointEnemy[0].x - xOffset,
+							waypointEnemy[0].y,
+							enemy,
+							waypointEnemy,
+							this.main,
+							this.main.game.ctx,
+						)
+					);
+				}
+			});
+		} else {
+			// ENDLESS MODE: Power budget system for waves > 100
+			this.spawnEndlessWave(wave, waveData, waveOffset);
+		}
+	}
+
+	spawnEndlessWave(wave, waveData, waveOffset) {
+		const wavesPast100 = wave - 100;
+		const preview = waveData.preview || waveData.wave;
+
+		// Boss waves (200, 300, etc.)
+		if (wave % 100 === 0) {
+			const bossCount = Math.floor(wave / 100);
+			const bossEnemy = preview[0];
+			if (!bossEnemy) return;
+
+			// Boss HP multiplier: exponential scaling
+			const bonusSteps = Math.floor((wave - 1) / 5);
+			let hpMult = 1 + 0.02 * bonusSteps;
+			hpMult *= Math.pow(2, (wave - 100) / 50);
+
+			for (let i = 0; i < bossCount; i++) {
+				const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+				const xOffset = (i + 1) * waveOffset;
+
+				// Create a scaled copy of the enemy data
+				const scaledEnemy = Object.assign({}, bossEnemy, {
+					hp: Math.floor(bossEnemy.hp * hpMult * 2),
+					armor: Math.floor((bossEnemy.armor || 0) * (1 + 0.05 * wavesPast100)),
+					gold: Math.floor((bossEnemy.gold + this.main.player.extraGold) * (1 + wavesPast100 * 0.11)),
+				});
+
 				this.enemies.push(
 					new Enemy(
 						waypointEnemy[0].x - xOffset,
 						waypointEnemy[0].y,
-						enemy,
+						scaledEnemy,
 						waypointEnemy,
 						this.main,
 						this.main.game.ctx,
 					)
-				)
+				);
 			}
-		})
+			return;
+		}
+
+		// Regular endless waves: power budget distribution
+		const baseBudget = 160000;
+		let hpMult;
+		if (wave < 200) {
+			hpMult = 1 + wavesPast100 * 0.115;
+		} else {
+			hpMult = wave / 16;
+		}
+		const powerBudget = Math.floor(baseBudget * hpMult);
+		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
+
+		// Distribute enemies inversely by HP (more weak ones, fewer strong ones)
+		const hpValues = preview.map(p => p.hp || 100);
+		const inverseHp = hpValues.map(h => 1 / h);
+		const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
+		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+
+		// Calculate HP scale factor from power budget
+		let totalBaseHp = 0;
+		preview.forEach((p, idx) => {
+			totalBaseHp += (p.hp || 100) * enemyCounts[idx];
+		});
+		const hpScaleFactor = powerBudget / totalBaseHp;
+
+		// Armor scale
+		const armorMult = 1 + 0.05 * wavesPast100;
+		// Gold scale: 100x at wave 1000
+		const goldMult = 1 + wavesPast100 * 0.11;
+
+		// Spawn each enemy type
+		let spawnIndex = 0;
+		preview.forEach((baseEnemy, typeIdx) => {
+			const count = enemyCounts[typeIdx];
+			const scaledHp = Math.floor(Math.max(baseEnemy.hp, baseEnemy.hp * hpScaleFactor));
+
+			for (let i = 0; i < count; i++) {
+				const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+				const xOffset = (spawnIndex + 1) * waveOffset;
+
+				const scaledEnemy = Object.assign({}, baseEnemy, {
+					hp: scaledHp,
+					armor: Math.floor((baseEnemy.armor || 0) * armorMult),
+					gold: Math.floor((baseEnemy.gold + this.main.player.extraGold) * goldMult),
+				});
+
+				this.enemies.push(
+					new Enemy(
+						waypointEnemy[0].x - xOffset,
+						waypointEnemy[0].y,
+						scaledEnemy,
+						waypointEnemy,
+						this.main,
+						this.main.game.ctx,
+					)
+				);
+				spawnIndex++;
+			}
+		});
 	}
 
 	recalculateAuras() {
@@ -430,7 +547,7 @@ export class Area {
 		this.enemies = [];
 
 		// MOD: Display enemy info with cycled wave number
-		const displayWaveNum = ((this.waveNumber - 1) % 100) + 1;
+		const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 99) + 1;
 		this.main.UI.displayEnemyInfo(this.waves[displayWaveNum].preview[0], 0);
 
 		this.totalDamageDealt = 0;
