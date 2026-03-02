@@ -276,16 +276,10 @@ failed_mods = []
 # MOD FEATURES - Defines selectable feature groups for the installer GUI
 # ============================================================================
 MOD_FEATURES = {
-    'pause_micro': {
-        'name': 'Pause Micromanagement',
-        'description': 'Deploy, move, swap, and retire towers while the game is paused',
-        'functions': ['apply_pause_micromanagement'],
-        'default': True,
-    },
     'speed': {
-        'name': '10x Speed',
-        'description': 'Adds 2x, 3x, 5x, and 10x game speed options',
-        'functions': ['apply_speed_mod'],
+        'name': 'Speed & Pause Micro',
+        'description': 'Adds 2x, 3x, 5x, and 10x game speed options. Also enables deploying, moving, swapping, and retiring towers while the game is paused',
+        'functions': ['apply_speed_mod', 'apply_pause_micromanagement'],
         'default': True,
     },
     'endless': {
