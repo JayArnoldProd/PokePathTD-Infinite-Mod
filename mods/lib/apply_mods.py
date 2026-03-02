@@ -51,7 +51,7 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # ============================================================================
 # Mod markers to detect if game is already modded
 MOD_MARKERS = [
-    'speedFactor === 10',        # Speed mod in Game.js
+    "innerText = '10x'",         # Speed labels in Game.js
     'PAUSE MICROMANAGEMENT',      # Pause micro comment in Game.js
     'calculateAsymptoticSpeed',   # Level uncap in Pokemon.js
     'ENDLESS MODE',               # Endless mode markers
@@ -952,7 +952,7 @@ def _ensure_game_modded():
 # GAME.JS - Speed options 2x/3x/5x/10x (surgical patch on Game.modded.js)
 # ============================================================================
 def apply_speed_mod():
-    """Surgically patch Game.js to add 1x/1.5x/2x/3x/5x/10x speed options."""
+    """Surgically patch Game.js to add innerText speed labels (1x/1.5x/2x/3x/5x/10x)."""
     path = JS_ROOT / "game" / "Game.js"
     
     # Ensure Game.modded.js is installed first
@@ -960,38 +960,38 @@ def apply_speed_mod():
     
     content = read_file(path)
     
-    # Check if already applied
-    if 'speedFactor === 10' in content:
+    # Check if already applied (innerText labels are the unique marker)
+    if "innerText = '10x'" in content:
         log_skip("Game.js: Speed mod")
         return True
     
     changes = 0
     
-    # IMPORTANT: Replace toggleSpeed FIRST before changing speedFactor values,
-    # otherwise the pattern won't match after global replacement
-    
-    # 1. Replace vanilla toggleSpeed with enhanced version
+    # 1. Add innerText labels to toggleSpeed
     old_toggle = """	toggleSpeed() {
 	    playSound('option', 'ui');
-	    if (this.speedFactor === 0.8) {
-	      	this.speedFactor = 1.2;
+	    if (this.speedFactor === 1) {
+	      	this.speedFactor = 1.5;
 	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
-	    } else if (this.speedFactor === 1.2) {
-	      	this.speedFactor = 1.7;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
-	    } else if (this.speedFactor === 1.7) {
+	    } else if (this.speedFactor === 1.5) {
 	      	this.speedFactor = 2;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
 	    } else if (this.speedFactor === 2) {
-	      	this.speedFactor = 2.5;
+	      	this.speedFactor = 3;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
+	    } else if (this.speedFactor === 3) {
+	      	this.speedFactor = 5;
 	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 75%, rgba(107, 114, 128, 1) 75%)';
+	    } else if (this.speedFactor === 5) {
+	      	this.speedFactor = 10;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(168, 85, 247, 1) 100%, rgba(107, 114, 128, 1) 100%)';
 	    } else {
-	      	this.speedFactor = 0.8;
+	      	this.speedFactor = 1;
 	      	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
 	    }
 	}"""
     
-    new_toggle = """	// MOD: Enhanced speed toggle with 1x, 1.5x, 2x, 3x, 5x, 10x options
+    new_toggle = """	// MOD: Enhanced speed toggle with innerText labels
 	toggleSpeed() {
 	    playSound('option', 'ui');
 	    if (this.speedFactor === 1) {
@@ -1025,20 +1025,16 @@ def apply_speed_mod():
         content = content.replace(old_toggle, new_toggle)
         changes += 1
     
-    # 3. Fix restoreSpeed to use 1 instead of 0.8
-    # 3. Fix restoreSpeed
-    old_restore = "this.speedFactor = 0.8;\n    \tthis.main.UI.speedWave.style.background"
+    # 2. Add innerText to restoreSpeed
+    old_restore = "this.speedFactor = 1;\n    \tthis.main.UI.speedWave.style.background"
     new_restore = "this.speedFactor = 1;\n    \tthis.main.UI.speedWave.innerText = '1x';\n    \tthis.main.UI.speedWave.style.background"
-    if old_restore in content:
+    if old_restore in content and "innerText = '1x'" not in content:
         content = content.replace(old_restore, new_restore)
         changes += 1
     
-    # 4. Change initial speedFactor from 0.8 to 1 (do this LAST to avoid breaking other patterns)
-    content = content.replace('this.speedFactor = 0.8;', 'this.speedFactor = 1;')
-    
     if changes > 0:
         write_file(path, content)
-        log_success(f"Game.js: 10x speed options ({changes} patches)")
+        log_success(f"Game.js: Speed labels ({changes} patches)")
         return True
     
     log_fail("Game.js: Speed mod", "toggleSpeed pattern not found")
