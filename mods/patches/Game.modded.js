@@ -100,8 +100,11 @@ export class Game {
 	        }
 	    }
 
-	    for (let step = 0; step < numSteps; step++) {
-	        const isLastStep = (step === numSteps - 1);
+	    // MOD: PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped
+	    // Only the draw/render code below runs, so tiles highlight and clicks work
+	    const _simSteps = this.stopped ? 0 : numSteps;
+	    for (let step = 0; step < _simSteps; step++) {
+	        const isLastStep = (step === _simSteps - 1);
 	        
 	        // PERF: Tell towers/enemies/projectiles to skip draw on non-last steps
 	        if (!isLastStep) {

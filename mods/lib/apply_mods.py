@@ -892,8 +892,8 @@ def apply_pause_micromanagement():
     
     content = read_file(path)
     
-    # Check if already applied — no early return pattern exists
-    if 'PAUSE MICROMANAGEMENT' in content:
+    # Check if already applied — look for the specific "No early return" comment
+    if 'PAUSE MICROMANAGEMENT - No early return' in content:
         log_skip("Game.js: Pause micromanagement")
         return True
     
