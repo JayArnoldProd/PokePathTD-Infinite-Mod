@@ -338,8 +338,8 @@ MOD_FEATURES = {
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix, projectile retargeting fix, off-screen targeting fix (baked into core modded files)',
-        'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Tower/Projectile)
+        'description': 'Challenge level cap fix (no boost), projectile retargeting from tower position, off-screen target cleanup',
+        'functions': ['apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix'],
         'default': True,
     },
     'hidden_items': {
@@ -1498,25 +1498,107 @@ def apply_expanded_egg_list():
 # CHALLENGESCENE.JS - Fix level cap boosting low-level Pokemon
 # ============================================================================
 def apply_challenge_levelcap_fix():
-    """Fix vanilla bug: level cap should cap high-level Pokemon, not boost low-level ones."""
-    path = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
+    """
+    Fix vanilla bug: level cap should cap high-level Pokemon, not boost low-level ones.
+    
+    Vanilla updateStats() unconditionally sets level = lvlCap when in a challenge,
+    which BOOSTS low-level Pokemon to the cap. The fix patches updateStats() in
+    Pokemon.js to use Math.min(this.lvl, lvlCap) — only caps DOWN, never boosts UP.
+    """
+    path = JS_ROOT / "game" / "component" / "Pokemon.js"
     content = read_file(path)
-
-    if 'poke.updateStats()' in content and 'setStatsLevel' not in content:
-        log_skip("ChallengeScene.js: Level cap fix")
+    
+    # Check if already applied
+    if 'Math.min(this.lvl' in content and 'inChallenge.lvlCap' in content:
+        log_skip("Pokemon.js: Challenge level cap fix")
         return True
+    
+    # Patch updateStats() to cap DOWN only (not boost up)
+    # Vanilla: if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;
+    # Fixed:   if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
+    old_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;"
+    new_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);"
+    
+    if old_cap in content:
+        content = content.replace(old_cap, new_cap)
+        write_file(path, content)
+        log_success("Pokemon.js: Challenge level cap fix (cap down only, never boost up)")
+        return True
+    
+    log_fail("Pokemon.js: Challenge level cap fix", "inChallenge.lvlCap pattern not found")
+    return False
 
-    old = "pokemon.forEach(poke => poke.setStatsLevel(capLevel))"
-    new = "pokemon.forEach(poke => poke.updateStats())"
 
+def apply_projectile_retarget_fix():
+    """
+    Fix projectile retargeting to search from tower position within tower's range,
+    instead of from projectile position within 200px.
+    """
+    path = JS_ROOT / "game" / "component" / "Projectile.js"
+    content = read_file(path)
+    
+    # Check if already fixed (modded file or already patched)
+    if 'this.tower.range' in content and 'findClosestEnemy(this.tower' in content:
+        log_skip("Projectile.js: Retarget fix")
+        return True
+    
+    # Vanilla pattern: retargets from projectile position with 200px range
+    old = "const fallbackSource = { center: this.position || { x: this.position?.x ?? 0, y: this.position?.y ?? 0 } };\n            const newTarget = this.tower.findClosestEnemy(fallbackSource, 200);"
+    new = "// MOD: Retarget from tower position within tower's actual range\n            const towerRange = this.tower.range || 100;\n            const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);"
+    
     if old in content:
         content = content.replace(old, new)
         write_file(path, content)
-        log_success("ChallengeScene.js: Level cap fix (setStatsLevel -> updateStats)")
+        log_success("Projectile.js: Retarget fix (tower position + tower range)")
         return True
-
-    log_fail("ChallengeScene.js: Level cap fix")
+    
+    log_fail("Projectile.js: Retarget fix", "fallbackSource pattern not found")
     return False
+
+
+def apply_offscreen_target_fix():
+    """
+    Add off-screen target cleanup to Projectile.js.
+    Deletes projectiles whose target enemy has gone off-screen.
+    """
+    path = JS_ROOT / "game" / "component" / "Projectile.js"
+    content = read_file(path)
+    
+    # Check if already applied
+    if 'off-screen' in content.lower() or 'offscreen' in content.lower():
+        log_skip("Projectile.js: Off-screen target fix")
+        return True
+    
+    # Insert after the retarget block, before the "if (!this.enemy" check
+    marker = "if (!this.enemy || this.enemy.hp <= 0) {\n            this.markedForDeletion = true;\n            return;\n        }\n\n        this.age"
+    
+    offscreen_check = """if (!this.enemy || this.enemy.hp <= 0) {
+            this.markedForDeletion = true;
+            return;
+        }
+
+        // MOD: Delete projectile if target enemy is off-screen
+        if (this.enemy && !this.enemy.dying && this.tower?.main?.game?.canvas) {
+            const c = this.tower.main.game.canvas;
+            const ex = this.enemy.center?.x ?? this.enemy.position?.x ?? 0;
+            const ey = this.enemy.center?.y ?? this.enemy.position?.y ?? 0;
+            if (ex < -50 || ex > c.width + 50 || ey < -50 || ey > c.height + 50) {
+                this.markedForDeletion = true;
+                return;
+            }
+        }
+
+        this.age"""
+    
+    if marker in content:
+        content = content.replace(marker, offscreen_check)
+        write_file(path, content)
+        log_success("Projectile.js: Off-screen target fix")
+        return True
+    
+    log_fail("Projectile.js: Off-screen target fix", "insertion marker not found")
+    return False
+
 
 # ============================================================================
 # SCENES.CSS - Fix emoji rendering in pixel font
