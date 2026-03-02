@@ -103,6 +103,19 @@ export class Game {
 	    // MOD: PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped
 	    // Only the draw/render code below runs, so tiles highlight and clicks work
 	    const _simSteps = this.stopped ? 0 : numSteps;
+
+	    // When paused, still redraw background + entities so canvas doesn't smear
+	    if (this.stopped && this.ctx) {
+	        if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
+	            this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
+	        } else {
+	            this.ctx.clearRect(0, 0, canvasW, canvasH);
+	        }
+	        // Redraw enemies and towers in place (no update, just draw)
+	        for (let i = 0; i < enemies.length; i++) { enemies[i]._skipDraw = false; enemies[i].draw(); }
+	        for (let t = 0; t < towers.length; t++) { towers[t]._skipDraw = false; towers[t].draw(); }
+	    }
+
 	    for (let step = 0; step < _simSteps; step++) {
 	        const isLastStep = (step === _simSteps - 1);
 	        
