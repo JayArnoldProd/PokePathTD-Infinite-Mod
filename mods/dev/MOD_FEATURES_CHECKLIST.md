@@ -177,7 +177,7 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] No `if (this.stopped) return;` guard in canvas pointerdown handler
 - [ ] Tile highlighting works during pause (PlacementTile.update() runs via animate loop)
 
-## Feature: Vanilla Bug Fixes & QoL (installer checkbox: `vanilla_fixes`)
+## Feature: Vanilla Bug Fixes (installer checkbox: `vanilla_fixes`)
 Consolidates all vanilla bug fixes and QoL improvements that don't add new gameplay mechanics.
 Baked into core modded files — always present when any mod is installed.
 Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no modifications needed).

@@ -347,7 +347,7 @@ MOD_FEATURES = {
         'default': True,
     },
     'vanilla_fixes': {
-        'name': 'Vanilla Bug Fixes & QoL',
+        'name': 'Vanilla Bug Fixes',
         'description': 'Challenge level cap fix, tower placement persistence, projectile retargeting fix, off-screen targeting fix',
         'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Pokemon/Area/Tower/Projectile)
         'default': True,
