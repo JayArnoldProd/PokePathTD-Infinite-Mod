@@ -24,7 +24,7 @@ export class Game {
 	    this.loopId = null;
 	    this.animate = this.animate.bind(this);
 	    this.ranges = false;
-	    this.speedFactor = 1;
+	    this.speedFactor = 0.8;
 	    this.chrono;
 	    this.mapDragging = false; // MOD: Track drag state to prevent click after drag
 
@@ -667,32 +667,22 @@ export class Game {
 	    });
 	}
 
-	// MOD: Enhanced speed toggle with 2x, 3x, 5x, 10x options
 	toggleSpeed() {
 	    playSound('option', 'ui');
-	    if (this.speedFactor === 1) {
-	      	this.speedFactor = 1.5;
+	    if (this.speedFactor === 0.8) {
+	      	this.speedFactor = 1.2;
 	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
-	      	this.main.UI.speedWave.innerText = '1.5x';
-	    } else if (this.speedFactor === 1.5) {
-	      	this.speedFactor = 2;
-	      	this.main.UI.speedWave.innerText = '2x';
+	    } else if (this.speedFactor === 1.2) {
+	      	this.speedFactor = 1.7;
 	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
-	    } else if (this.speedFactor === 2) {
-	      	this.speedFactor = 3;
-	      	this.main.UI.speedWave.innerText = '3x';
+	    } else if (this.speedFactor === 1.7) {
+	      	this.speedFactor = 2;
 	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
-	    } else if (this.speedFactor === 3) {
-	      	this.speedFactor = 5;
-	      	this.main.UI.speedWave.innerText = '5x';
+	    } else if (this.speedFactor === 2) {
+	      	this.speedFactor = 2.5;
 	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 75%, rgba(107, 114, 128, 1) 75%)';
-	    } else if (this.speedFactor === 5) {
-	      	this.speedFactor = 10;
-	      	this.main.UI.speedWave.innerText = '10x';
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(168, 85, 247, 1) 100%, rgba(107, 114, 128, 1) 100%)';
 	    } else {
-	      	this.speedFactor = 1;
-	      	this.main.UI.speedWave.innerText = '1x';
+	      	this.speedFactor = 0.8;
 	      	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
 	    }
 	}
@@ -730,8 +720,8 @@ export class Game {
   	}
 
   	restoreSpeed() {
-    	this.speedFactor = 1;
-    	this.main.UI.speedWave.style.background = 'linear-gradient(0deg,rgba(194, 177, 183, 1) 50%, rgba(194, 177, 183, 1) 50%)'
+    	this.speedFactor = 0.8;
+    	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
   	}
 
 	shakeCanvas(duration = 500) {

@@ -278,14 +278,14 @@ failed_mods = []
 MOD_FEATURES = {
     'pause_micro': {
         'name': 'Pause Micromanagement',
-        'description': 'Deploy, move, swap, and retire towers while the game is paused. Installs the enhanced game loop (shared with 10x Speed) since vanilla pause kills the render loop entirely',
-        'functions': ['apply_speed_mod', 'apply_pause_micromanagement'],
+        'description': 'Deploy, move, swap, and retire towers while the game is paused. Uses the enhanced game loop (vanilla speeds preserved unless 10x Speed is also enabled)',
+        'functions': ['_ensure_game_modded', 'apply_pause_micromanagement'],
         'default': True,
     },
     'speed': {
         'name': '10x Speed',
-        'description': 'Adds 2x, 3x, 5x, and 10x game speed options with sub-stepping for accuracy at high speeds',
-        'functions': ['apply_speed_mod'],
+        'description': 'Adds 1x, 1.5x, 2x, 3x, 5x, and 10x game speed options with sub-stepping for accuracy at high speeds',
+        'functions': ['_ensure_game_modded', 'apply_speed_mod'],
         'default': True,
     },
     'endless': {
@@ -928,26 +928,120 @@ def apply_pause_micromanagement():
     return False
 
 # ============================================================================
-# GAME.JS - Speed options 2x/3x/5x/10x
+# GAME.JS - Install Game.modded.js (shared base for speed + pause micro)
 # ============================================================================
-def apply_speed_mod():
-    """Change speed options to 2x/3x/5x/10x with text display."""
+def _ensure_game_modded():
+    """Install Game.modded.js if not already present. Returns True if file is modded."""
     path = JS_ROOT / "game" / "Game.js"
     content = read_file(path)
     
-    # Check if already modded
+    # Check if already modded (has sub-stepping loop or pause micro markers)
+    if '_simSteps' in content or 'SUB-STEPPING' in content:
+        return True
+    
+    modded_file = MODS_DIR / "patches" / "Game.modded.js"
+    if modded_file.exists():
+        copy_modded_file(modded_file, path)
+        log_success("Game.js: Enhanced game loop (full file replacement)")
+        return True
+    
+    log_fail("Game.js: Game.modded.js not found")
+    return False
+
+# ============================================================================
+# GAME.JS - Speed options 2x/3x/5x/10x (surgical patch on Game.modded.js)
+# ============================================================================
+def apply_speed_mod():
+    """Surgically patch Game.js to add 1x/1.5x/2x/3x/5x/10x speed options."""
+    path = JS_ROOT / "game" / "Game.js"
+    
+    # Ensure Game.modded.js is installed first
+    _ensure_game_modded()
+    
+    content = read_file(path)
+    
+    # Check if already applied
     if 'speedFactor === 10' in content:
         log_skip("Game.js: Speed mod")
         return True
     
-    # Use modded file directly
-    modded_file = MODS_DIR / "patches" / "Game.modded.js"
-    if modded_file.exists():
-        copy_modded_file(modded_file, path)
-        log_success("Game.js: Speed mod (full file replacement)")
+    changes = 0
+    
+    # IMPORTANT: Replace toggleSpeed FIRST before changing speedFactor values,
+    # otherwise the pattern won't match after global replacement
+    
+    # 1. Replace vanilla toggleSpeed with enhanced version
+    old_toggle = """	toggleSpeed() {
+	    playSound('option', 'ui');
+	    if (this.speedFactor === 0.8) {
+	      	this.speedFactor = 1.2;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
+	    } else if (this.speedFactor === 1.2) {
+	      	this.speedFactor = 1.7;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
+	    } else if (this.speedFactor === 1.7) {
+	      	this.speedFactor = 2;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
+	    } else if (this.speedFactor === 2) {
+	      	this.speedFactor = 2.5;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 75%, rgba(107, 114, 128, 1) 75%)';
+	    } else {
+	      	this.speedFactor = 0.8;
+	      	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+	    }
+	}"""
+    
+    new_toggle = """	// MOD: Enhanced speed toggle with 1x, 1.5x, 2x, 3x, 5x, 10x options
+	toggleSpeed() {
+	    playSound('option', 'ui');
+	    if (this.speedFactor === 1) {
+	      	this.speedFactor = 1.5;
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
+	      	this.main.UI.speedWave.innerText = '1.5x';
+	    } else if (this.speedFactor === 1.5) {
+	      	this.speedFactor = 2;
+	      	this.main.UI.speedWave.innerText = '2x';
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
+	    } else if (this.speedFactor === 2) {
+	      	this.speedFactor = 3;
+	      	this.main.UI.speedWave.innerText = '3x';
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
+	    } else if (this.speedFactor === 3) {
+	      	this.speedFactor = 5;
+	      	this.main.UI.speedWave.innerText = '5x';
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 75%, rgba(107, 114, 128, 1) 75%)';
+	    } else if (this.speedFactor === 5) {
+	      	this.speedFactor = 10;
+	      	this.main.UI.speedWave.innerText = '10x';
+	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(168, 85, 247, 1) 100%, rgba(107, 114, 128, 1) 100%)';
+	    } else {
+	      	this.speedFactor = 1;
+	      	this.main.UI.speedWave.innerText = '1x';
+	      	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+	    }
+	}"""
+    
+    if old_toggle in content:
+        content = content.replace(old_toggle, new_toggle)
+        changes += 1
+    
+    # 3. Fix restoreSpeed to use 1 instead of 0.8
+    # 3. Fix restoreSpeed
+    old_restore = "this.speedFactor = 0.8;\n    \tthis.main.UI.speedWave.style.background"
+    new_restore = "this.speedFactor = 1;\n    \tthis.main.UI.speedWave.innerText = '1x';\n    \tthis.main.UI.speedWave.style.background"
+    if old_restore in content:
+        content = content.replace(old_restore, new_restore)
+        changes += 1
+    
+    # 4. Change initial speedFactor from 0.8 to 1 (do this LAST to avoid breaking other patterns)
+    content = content.replace('this.speedFactor = 0.8;', 'this.speedFactor = 1;')
+    
+    if changes > 0:
+        write_file(path, content)
+        log_success(f"Game.js: 10x speed options ({changes} patches)")
         return True
     
-    log_fail("Game.js: Speed mod - modded file not found")
+    log_fail("Game.js: Speed mod", "toggleSpeed pattern not found")
     return False
 
 # ============================================================================
@@ -1855,8 +1949,9 @@ def main():
     
     # Apply all mods in order
     apply_devtools()  # Enable F12/Ctrl+Shift+I for debugging
-    apply_speed_mod()  # Install Game.modded.js (includes pause micromanagement)
-    apply_pause_micromanagement()  # Verify pause micro is present
+    _ensure_game_modded()  # Install Game.modded.js base
+    apply_speed_mod()  # Patch in 10x speed options
+    apply_pause_micromanagement()  # Patch in pause micro
     apply_text_continue_option()
     apply_menu_autoreset_range()
     apply_map_record_uncap()
