@@ -22,8 +22,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### 📈 Removed Caps
 - **Level Cap Removed** - Pokemon can level past 100 (to 9999+)
 - **No Star Cap** - Earn as many stars as you physically can
-- **Asymptotic Attack Speed** - Speed approaches but never reaches zero at high levels (no negative rates)
-                              - with improved delta time accuracy, we can handle a going on at high speeds.
 
 ### 🌊 Endless Mode
 - **Continue Button** - After beating wave 100, choose to continue to wave 101+
@@ -35,8 +33,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Upgrade Costs** - Cost = (previous × 1.02) + 8000 past level 100 (caps at 1 Billion)
 - **Enemy HP/Armor** - Scales smoothly with power budget system
 - **Enemy Speed Scaling** - Enemies gradually get faster in endless mode (logarithmic curve)
-- **Enemy Regeneration** - Enemies regenerate HP in endless mode, scaling asymptotically (never reaches cap)
-- **Boss Wave Balancing** - Boss HP scales at half the rate of regular enemies
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 
 ### 🐱 Hidden Content Unlocked
