@@ -378,9 +378,43 @@ export class Pokemon {
 		if (this.main.boxScene.isOpen) this.main.boxScene.update()
 	}
 
+	// MOD: Refresh all Dittos in team when team composition changes
+	static refreshDittoTransforms(main) {
+		if (!main?.team?.pokemon) return;
+		for (const poke of main.team.pokemon) {
+			if (poke.id === 70) {
+				const firstSlot = main.team.pokemon[0];
+				if (firstSlot && firstSlot !== poke) {
+					poke.adn = firstSlot.specie;
+				} else {
+					poke.adn = undefined;
+				}
+				if (poke.adn) {
+					poke.transformADN();
+				} else {
+					// Ditto is in slot 1 or alone — revert to base Ditto
+					poke.sprite = JSON.parse(JSON.stringify(poke.specie.sprite));
+					poke.ability = poke.specie.ability;
+					poke.tiles = poke.specie.tiles;
+					poke.projectile = poke.specie.projectile;
+					poke.rangeType = poke.specie.rangeType;
+					poke.attackType = poke.specie.attackType;
+					poke.updateStats();
+					if (poke.isShiny) poke.setShiny();
+				}
+				// Update tower sprite if deployed
+				if (poke.isDeployed) {
+					const tower = main.area?.towers?.find(t => t.pokemon === poke);
+					if (tower) tower.updateStatsFromPokemon();
+				}
+			}
+		}
+		if (main.UI) main.UI.updatePokemon();
+	}
+
 	transformADN() {
 		if (this.adn?.base) this.adn = pokemonData[this.adn.base]
-		this.sprite = this.adn.sprite;
+		this.sprite = JSON.parse(JSON.stringify(this.adn.sprite)); // MOD: Deep copy to prevent shared sprite mutation
 
 		this.ability = this.adn.ability;
 		this.tiles = this.adn.tiles;
