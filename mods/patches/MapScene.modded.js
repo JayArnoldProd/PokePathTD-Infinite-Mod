@@ -131,7 +131,8 @@ export class MapScene extends GameScene {
 		this.main.area.loadArea(pos);
 		this.main.UI.update();
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
-		this.main.UI.displayEnemyInfo(this.main.area.waves[this.main.area.waveNumber].preview[0], 0);
+		const _wv = this.main.area.waves?.[this.main.area.waveNumber]?.preview?.[0] || this.main.area.waves?.[((this.main.area.waveNumber - 1) % 100) + 1]?.preview?.[0];
+		if (_wv) this.main.UI.displayEnemyInfo(_wv, 0);
 		this.main.area.checkWeather();
 		this.close();
 		playSound('step', 'ui');
