@@ -163,6 +163,8 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Feature: Projectile Range Fix (always-on)
 - [ ] Retargeting searches from tower position within tower's range (Tower.modded.js, Projectile.modded.js)
+- [ ] Projectiles targeting off-screen enemies are deleted (Projectile.modded.js)
+- [ ] Retarget search skips off-screen enemies (Tower.modded.js findClosestEnemy)
 - [ ] Ricochet chaining is 200px from enemy position — NOT tower-range-limited
 
 ## Feature: Endless Wave Density (always-on)

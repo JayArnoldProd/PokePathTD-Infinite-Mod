@@ -366,7 +366,7 @@ MOD_FEATURES = {
     },
     'projectile_retarget_fix': {
         'name': 'Projectile Range Fix',
-        'description': 'Projectiles only retarget enemies within the firing tower\'s range (fixes infinite chaining bug)',
+        'description': 'Projectiles only retarget on-screen enemies within the firing tower\'s range; off-screen targets are deleted',
         'functions': [],  # Always-on: baked into Tower.modded.js and Projectile.modded.js (core mod files)
         'default': True,
     },
