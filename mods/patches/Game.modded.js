@@ -46,8 +46,7 @@ export class Game {
   	}
 
   	animate(time) {
-	    // MOD: PAUSE MICROMANAGEMENT - Do NOT return early when stopped!
-	    // The render loop must keep running so tiles highlight and clicks work.
+	    if (this.stopped) return;
 	    if (!this.lastTime) this.lastTime = time;
 	    const delta = time - this.lastTime;
 	    if (delta < this.frameDuration) return;
@@ -56,8 +55,7 @@ export class Game {
 
 	    // --- MOD: DELTA TIME FIX - Sub-stepping for high speed accuracy ---
 	    // Calculate total scaled time to simulate this frame
-	    // MOD: PAUSE MICROMANAGEMENT - When stopped, scaledDelta = 0 (enemies/towers freeze)
-	    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;
+	    const totalScaledDelta = this.frameDuration * this.speedFactor;
 	    
 	    // Determine number of simulation steps (cap at 100 for CPU safety)
 	    // Each step simulates at most 1 frame worth of time (16.67ms)

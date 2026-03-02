@@ -276,10 +276,16 @@ failed_mods = []
 # MOD FEATURES - Defines selectable feature groups for the installer GUI
 # ============================================================================
 MOD_FEATURES = {
+    'pause_micro': {
+        'name': 'Pause Micromanagement',
+        'description': 'Deploy, move, swap, and retire towers while the game is paused. Render loop keeps running during pause so tile highlighting and clicks work',
+        'functions': ['apply_pause_micromanagement'],
+        'default': True,
+    },
     'speed': {
-        'name': 'Speed & Pause Micro',
-        'description': 'Adds 2x, 3x, 5x, and 10x game speed options. Also enables deploying, moving, swapping, and retiring towers while the game is paused',
-        'functions': ['apply_speed_mod', 'apply_pause_micromanagement'],
+        'name': '10x Speed',
+        'description': 'Adds 2x, 3x, 5x, and 10x game speed options with sub-stepping for accuracy at high speeds',
+        'functions': ['apply_speed_mod'],
         'default': True,
     },
     'endless': {
@@ -866,45 +872,64 @@ def apply_ui_mods():
     return False
 
 # ============================================================================
-# GAME.JS - Pause Micromanagement (baked into Game.modded.js)
+# GAME.JS - Pause Micromanagement (surgical patch on Game.js)
 # ============================================================================
 def apply_pause_micromanagement():
     """
-    Verify pause micromanagement is present in Game.modded.js.
+    Surgically patch Game.js to enable pause micromanagement.
     
-    The fix is baked into Game.modded.js:
-    - animate() does NOT return early when stopped
-    - totalScaledDelta = 0 when stopped (game freezes but render continues)
-    - No 'if (this.stopped)' guards in interaction handlers
+    Two changes:
+    1. Remove 'if (this.stopped) return;' at top of animate() so render loop keeps running
+    2. Change totalScaledDelta to use ternary (= 0 when stopped) so sim freezes but render continues
     
     This allows deploying, moving, swapping, and retiring towers while paused.
     """
     path = JS_ROOT / "game" / "Game.js"
     
-    # If Game.js doesn't exist yet, skip - will be created by apply_speed_mod
     if not path.exists():
         log_skip("Game.js: Pause micromanagement (file not yet installed)")
         return True
     
     content = read_file(path)
     
-    # Check that the fix is present (animate doesn't return early on stopped)
-    # Look for the comment we added
-    if 'PAUSE MICROMANAGEMENT' in content and 'this.stopped ? 0 :' in content:
-        # Verify there's NO early return at start of animate
-        # The pattern "animate(time) {\n\t    if (this.stopped) return;" should NOT exist
-        import re
-        bad_pattern = re.search(r'animate\s*\([^)]*\)\s*\{\s*\n\s*if\s*\(\s*this\.stopped\s*\)\s*return\s*;', content)
-        if bad_pattern:
-            log_fail("Game.js: Pause micromanagement", "animate() still has early return on stopped")
-            return False
-        
-        log_success("Game.js: Pause micromanagement verified")
+    # Check if already applied (no early return + ternary present)
+    has_early_return = '  	animate(time) {\n\t    if (this.stopped) return;' in content
+    has_ternary = 'this.stopped ? 0 : this.frameDuration' in content
+    
+    if not has_early_return and has_ternary:
+        log_skip("Game.js: Pause micromanagement")
         return True
     
-    # If not present, the file is old - will be fixed when apply_speed_mod runs
-    log_skip("Game.js: Pause micromanagement (pending Game.modded.js install)")
-    return True
+    changes = 0
+    
+    # 1. Remove the early return on stopped at top of animate()
+    old_animate = '  \tanimate(time) {\n\t    if (this.stopped) return;\n\t    if (!this.lastTime)'
+    new_animate = '  \tanimate(time) {\n\t    // MOD: PAUSE MICROMANAGEMENT - No early return when stopped\n\t    if (!this.lastTime)'
+    
+    if old_animate in content:
+        content = content.replace(old_animate, new_animate)
+        changes += 1
+    
+    # 2. Add ternary so totalScaledDelta = 0 when stopped
+    old_delta = '\t    const totalScaledDelta = this.frameDuration * this.speedFactor;'
+    new_delta = '\t    // MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped, render continues\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
+    
+    if old_delta in content:
+        content = content.replace(old_delta, new_delta)
+        changes += 1
+    
+    if changes > 0:
+        write_file(path, content)
+        log_success(f"Game.js: Pause micromanagement ({changes} patches)")
+        return True
+    
+    # If patterns didn't match, check if it's already good
+    if not has_early_return and has_ternary:
+        log_skip("Game.js: Pause micromanagement")
+        return True
+    
+    log_fail("Game.js: Pause micromanagement", "patterns not found in animate()")
+    return False
 
 # ============================================================================
 # GAME.JS - Speed options 2x/3x/5x/10x
