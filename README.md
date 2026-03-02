@@ -58,7 +58,7 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 
 ### 🐛 Vanilla Bug Fixes
 - **Tower Placement Persistence** - Tower positions are saved and restored on load
-- **Off-Screen Projectile Fix** - Projectiles no longer chase enemies that have left the screen
+- **Off-Screen Projectile Fix** - Projectiles no longer chase enemies that are off-screen
 - **Challenge Level Cap Fix** - Level cap no longer boosts low-level Pokemon instead of only capping high-level ones
 - **Shiny Ditto Fix** - Untransformed shiny Ditto now correctly displays its blue sprite
 - **Projectile Retargeting Fix** - Projectiles only retarget enemies within the firing tower's range
