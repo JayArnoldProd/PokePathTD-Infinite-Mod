@@ -449,9 +449,9 @@ export class Area {
 		const baseBudget = 160000;
 		let hpMult;
 		if (wavesPast100 <= 1300) {
-			hpMult = Math.pow(1.0052, wavesPast100);
+			hpMult = Math.pow(1.0054, wavesPast100);
 		} else {
-			const base = Math.pow(1.0052, 1300); // anchor at wave 1400
+			const base = Math.pow(1.0054, 1300); // anchor at wave 1400
 			const extra = wavesPast100 - 1300;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
@@ -655,7 +655,7 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 225); // MOD: Stretched boss scaling (level N â‰ˆ wave N)
+		bossHpMult *= Math.pow(2, wavesPast100 / 250); // MOD: Stretched boss scaling (level N â‰ˆ wave N)
 		
 		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
 		const bossHp = Math.floor(boss.hp * bossHpMult * 2);

@@ -26,9 +26,11 @@ export class Pokemon {
 		this.attackType = specie.attackType;
 
 		// MOD: ENDLESS MODE - Asymptotic/endless scaling for all stats
-		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, lvl);
+		// AOE Pokemon get slower speed decay (4x) and slower range growth (2x)
+		const isAOE = this.attackType === 'area';
+		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, lvl, isAOE);
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * lvl));
-		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, lvl);
+		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, lvl, isAOE);
 
 		if (item) {
 			const indx = this.main.player.items.findIndex(i => i.id === item.id);
