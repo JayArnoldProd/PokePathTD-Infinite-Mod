@@ -588,48 +588,38 @@ export class PokemonScene extends GameScene {
 		}
 	}
 
-	// Mirror of Pokemon.calculateAsymptoticSpeed for preview
+	// Mirror of Pokemon.calculateAsymptoticSpeed — MUST match exactly
 	calculatePreviewSpeed(base, scale, level) {
 		if (level <= 100) {
-			return Math.max(1, Math.floor(base + (scale * level)));
+			return Math.floor(base + (scale * level));
 		}
-		const speedAt100 = Math.max(1, base + (scale * 100));
-		const linearSpeedAtLevel = base + (scale * level);
-		const hasFastScaling = linearSpeedAtLevel <= 1 || scale < -1;
-		const ratio = 100 / level;
-		let decayedSpeed;
-		if (hasFastScaling) {
-			decayedSpeed = speedAt100 * ratio;
-		} else {
-			const wavesPast100 = level - 100;
-			decayedSpeed = speedAt100 * 225 / (225 + wavesPast100);
-		}
-		return Math.max(0.001, decayedSpeed);
+		const speed100 = base + (scale * 100);
+		const minSpeed = Math.max(50, Math.floor(speed100 * 0.05));
+		const excessLevels = level - 100;
+		const decayRate = 0.005;
+		const decayFactor = Math.exp(-decayRate * excessLevels);
+		const asymptoticSpeed = minSpeed + (speed100 - minSpeed) * decayFactor;
+		return Math.max(minSpeed, Math.floor(asymptoticSpeed));
 	}
 
-	// Range calculation with logarithmic scaling past level 100
-	// Freezes linear component at level 100, then applies log multiplier
-	// 1x at 100, 3x at 1000
+	// Mirror of Pokemon.calculateEndlessRange — MUST match exactly
 	calculatePreviewRange(base, scale, level) {
 		if (level <= 100) {
 			return Math.floor(base + (scale * level));
 		}
-		// Freeze linear growth at level 100 value
 		const range100 = base + (scale * 100);
-		const scaleFactor = 2 / Math.log2(10); // ~0.602
+		const scaleFactor = 2 / Math.log2(10);
 		const rangeMultiplier = 1 + Math.log2(level / 100) * scaleFactor;
 		return Math.floor(range100 * rangeMultiplier);
 	}
 
-	// Crit calculation with asymptotic approach to 100%
-	// Every 100 levels past 100, get 50% closer to 100%
+	// Mirror of Pokemon.calculateEndlessCrit — MUST match exactly
 	calculatePreviewCrit(base, scale, level) {
-		const critAt100 = base + (scale * 100);
 		if (level <= 100) {
 			return base + (scale * level);
 		}
-		// Each 100 levels past 100, close 50% of the gap to 100
 		const periods = (level - 100) / 100;
+		const critAt100 = base + (scale * 100);
 		const remainingGap = (100 - critAt100) * Math.pow(0.5, periods);
 		return 100 - remainingGap;
 	}
