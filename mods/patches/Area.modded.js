@@ -407,8 +407,8 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const hpMult = Math.pow(1.0095, wavesPast100);
 		
-		// === ENEMY COUNT (scales slower to maintain individual threat) ===
-		const totalEnemyCount = Math.floor(18 + Math.sqrt(wavesPast100) * 3);
+		// === ENEMY COUNT (matches UI display) ===
+		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
 		
 		// === SEEDED RANDOM FOR CONSISTENT WAVES ===
 		const seed = wave * 12345;
@@ -421,33 +421,29 @@ export class Area {
 		// === BUILD ENEMY LIST WITH ELITE INJECTION ===
 		const enemies = [];
 		
-		// Base enemies from preview (weighted toward weaker types)
+		// Distribute enemies inversely by HP (matches UI display exactly)
 		const hpValues = wavePreview.map(p => p.hp || 100);
 		const inverseHp = hpValues.map(hp => 1 / hp);
 		const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
-		const baseCount = Math.floor(totalEnemyCount * 0.7); // 70% base enemies
-		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(baseCount * (inv / totalInverse))));
+		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+		
+		// Split each type's count into base/elite/champion for variety
+		const tankiest = wavePreview.reduce((a, b) => ((a.hp || 0) + (a.armor || 0) > (b.hp || 0) + (b.armor || 0)) ? a : b);
 		
 		wavePreview.forEach((template, typeIdx) => {
 			const count = enemyCounts[typeIdx];
-			for (let i = 0; i < count; i++) {
-				enemies.push({ template, isChampion: false });
+			// For the tankiest type, promote some to elite/champion
+			if (template === tankiest && count >= 4) {
+				const championCount = Math.floor(count * 0.1);
+				const eliteCount = Math.floor(count * 0.2);
+				const baseCount = count - eliteCount - championCount;
+				for (let i = 0; i < baseCount; i++) enemies.push({ template, isChampion: false });
+				for (let i = 0; i < eliteCount; i++) enemies.push({ template, isElite: true });
+				for (let i = 0; i < championCount; i++) enemies.push({ template, isChampion: true });
+			} else {
+				for (let i = 0; i < count; i++) enemies.push({ template, isChampion: false });
 			}
 		});
-		
-		// === ELITE/CHAMPION INJECTION ===
-		const eliteCount = Math.floor(totalEnemyCount * 0.2);
-		const championCount = Math.floor(totalEnemyCount * 0.1);
-		
-		const tankiest = wavePreview.reduce((a, b) => ((a.hp || 0) + (a.armor || 0) > (b.hp || 0) + (b.armor || 0)) ? a : b);
-		
-		for (let i = 0; i < eliteCount; i++) {
-			enemies.push({ template: tankiest, isElite: true });
-		}
-		
-		for (let i = 0; i < championCount; i++) {
-			enemies.push({ template: tankiest, isChampion: true });
-		}
 		
 		// Shuffle enemies for variety
 		for (let i = enemies.length - 1; i > 0; i--) {
