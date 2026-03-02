@@ -470,8 +470,10 @@ export class PokemonScene extends GameScene {
 	}
 
 	updateLevelButton() {
+		// MOD: During challenge lvlCap, allow leveling freely (stats capped by updateStats)
+		const inLvlCapChallenge = typeof this.main?.area?.inChallenge?.lvlCap === 'number';
 		// Only shiny Pokemon can level past 100 (x1 would go to 101+)
-		if (this.pokemon.lvl >= 100 && !this.pokemon.isShiny) {
+		if (this.pokemon.lvl >= 100 && !this.pokemon.isShiny && !inLvlCapChallenge) {
 			this.levelUp.innerHTML = `MAX`;
 			this.levelUp.style.filter = 'brightness(0.8)';
 			this.levelUp.style.pointerEvents = 'none';
@@ -488,7 +490,7 @@ export class PokemonScene extends GameScene {
 		}
 
 		// Only shiny Pokemon can level past 100 (x5 would push past 100)
-		if (this.pokemon.lvl + 5 > 100 && !this.pokemon.isShiny) {
+		if (this.pokemon.lvl + 5 > 100 && !this.pokemon.isShiny && !inLvlCapChallenge) {
 			this.levelUpFive.innerHTML = `MAX`;
 			this.levelUpFive.style.filter = 'brightness(0.8)';
 			this.levelUpFive.style.pointerEvents = 'none';
@@ -505,7 +507,7 @@ export class PokemonScene extends GameScene {
 		}
 
 		// Only shiny Pokemon can level past 100 (x10 would push past 100)
-		if (this.pokemon.lvl + 10 > 100 && !this.pokemon.isShiny) {
+		if (this.pokemon.lvl + 10 > 100 && !this.pokemon.isShiny && !inLvlCapChallenge) {
 			this.levelUpTen.innerHTML = `MAX`;
 			this.levelUpTen.style.filter = 'brightness(0.8)';
 			this.levelUpTen.style.pointerEvents = 'none';
