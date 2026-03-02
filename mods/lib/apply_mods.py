@@ -290,9 +290,10 @@ MOD_FEATURES = {
     },
     'endless': {
         'name': 'Endless Mode',
-        'description': 'Continue past wave 100 with scaling difficulty and checkpoints',
+        'description': 'Continue past wave 100 with scaling difficulty, checkpoints, and auto-continue option',
         'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
-                      'apply_enemy_scaling', 'apply_profile_endless_stats'],
+                      'apply_enemy_scaling', 'apply_profile_endless_stats',
+                      'apply_text_continue_option', 'apply_menu_autoreset_range'],
         'default': True,
     },
     'infinite_levels': {
@@ -307,12 +308,6 @@ MOD_FEATURES = {
         'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites'],
         'default': True,
     },
-    'auto_continue': {
-        'name': 'Auto-Continue Option',
-        'description': 'Adds "Continue" to auto-reset options for endless mode',
-        'functions': ['apply_text_continue_option', 'apply_menu_autoreset_range'],
-        'default': True,
-    },
     'wave_record': {
         'name': 'Wave Record Uncap',
         'description': 'Display wave records above 100 on the map',
@@ -321,7 +316,7 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items and save/load team buttons',
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving across sessions',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix'],
         'default': True,
     },
@@ -348,8 +343,8 @@ MOD_FEATURES = {
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix, tower placement persistence, projectile retargeting fix, off-screen targeting fix, shiny Ditto fix',
-        'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Pokemon/Area/Tower/Projectile)
+        'description': 'Challenge level cap fix, projectile retargeting fix, off-screen targeting fix (baked into core modded files)',
+        'functions': ['apply_challenge_levelcap_fix'],  # Other fixes are baked into core modded files (Tower/Projectile)
         'default': True,
     },
     'hidden_items': {
