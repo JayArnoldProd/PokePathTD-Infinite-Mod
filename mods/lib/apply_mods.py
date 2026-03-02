@@ -1736,6 +1736,9 @@ def main():
     # Unlock hidden items (Magma Stone)
     apply_hidden_items()
     
+    # Apply userData redirect (modded saves isolation)
+    apply_modded_userdata_redirect()
+    
     print()
     print("=" * 50)
     print(f"  Applied: {len(applied_mods)}")
