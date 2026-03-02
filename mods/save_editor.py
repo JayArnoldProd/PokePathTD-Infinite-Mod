@@ -581,7 +581,7 @@ class App(tk.Tk):
         self.gold_entry = ttk.Entry(stats, textvariable=self.gold_var, width=12)
         self.gold_entry.grid(row=0, column=3, padx=5, sticky='w')
         ttk.Button(stats, text="Set", command=self.set_gold, width=5).grid(row=0, column=4, padx=2)
-        ttk.Button(stats, text="Max Gold", command=lambda: self.set_gold_value(99999999)).grid(row=0, column=5, padx=5)
+        ttk.Button(stats, text="Max Gold", command=lambda: self.set_gold_value(99999999999)).grid(row=0, column=5, padx=5)
         
         # Stars (display only - calculated from records)
         ttk.Label(stats, text="Stars:").grid(row=0, column=6, padx=5, sticky='e')
@@ -597,9 +597,9 @@ class App(tk.Tk):
         left_frame.pack(side='left', fill='both', expand=True, padx=(0, 10))
         
         # Team section
-        team_header = tk.Label(left_frame, text="TEAM (6 slots)", font=('Arial', 9, 'bold'), 
+        self.team_header = tk.Label(left_frame, text="TEAM (6 slots)", font=('Arial', 9, 'bold'), 
                                bg='#2b2b2b', fg='#88ff88')
-        team_header.pack(anchor='w', pady=(0, 5))
+        self.team_header.pack(anchor='w', pady=(0, 5))
         
         team_grid = tk.Frame(left_frame, bg='#1e1e1e')
         team_grid.pack(fill='x', pady=(0, 10))
@@ -860,6 +860,7 @@ class App(tk.Tk):
         team_count = len(self.save.team)
         box_count = len(self.save.box)
         player_team_slots = self.save.player.get('teamSlots', TEAM_SLOTS)
+        self.team_header.config(text=f"TEAM ({player_team_slots} slots)")
         self.status.config(text=f"Team: {team_count}/{player_team_slots} | Box: {box_count}/{BOX_SLOTS} | Total: {team_count + box_count}")
         
         # Update editor if something selected
@@ -1199,7 +1200,7 @@ class App(tk.Tk):
     
     def max_gold(self):
         if self.save.data:
-            self.save.set_player('gold', 999999)
+            self.save.set_player('gold', 99999999999)
             self.refresh_grid()
     
     def set_gold(self):
