@@ -735,13 +735,18 @@ export class UI {
 
 	                if (this.main.team.pokemon[0] !== firstBefore) {
 		                const ditto = this.main.team.pokemon.find(p => p.id === 70);
-		                if (ditto != undefined && !ditto.isDeployed) {
+		                if (ditto != undefined) {
 							playSound('teleport', 'effect')
 
-							if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
+							if (ditto.adn && [58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
 							ditto.adn = this.main.team.pokemon[0].specie;
 							if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
 							ditto.transformADN();
+							// MOD: Update tower sprite if Ditto is deployed
+							if (ditto.isDeployed) {
+								const tower = this.main.area?.towers?.find(t => t.pokemon === ditto);
+								if (tower) tower.updateStatsFromPokemon();
+							}
 							this.main.UI.updatePokemon();
 							this.update();
 						}
