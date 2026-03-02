@@ -5,6 +5,8 @@ This document lists all mod features that MUST be present in the modded files. U
 ## Area.modded.js
 - [ ] `this.endlessMode = false;` in constructor
 - [ ] `this.endlessMode = this.waveNumber > 100;` in loadArea()
+- [ ] `import { Tower }` for tower redeployment from save
+- [ ] MOD: Tower redeployment from saved tilePositions at end of `loadArea()`
 - [ ] MOD: Record handling - uncapped records past wave 100
 - [ ] MOD: Stars only awarded for waves 1-100
 - [ ] `enableEndlessMode()` method - sets endlessMode=true, waveNumber=101
@@ -25,6 +27,8 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Pokemon.modded.js
 - [ ] `this.sprite = JSON.parse(JSON.stringify(specie.sprite));` - Deep copy sprite
+- [ ] `tilePosition` included in `getOriginalData()` (both branches) for save persistence
+- [ ] `fromOriginalData()` restores `tilePosition` from save data
 - [ ] `this.form = (this.specie.form) ? this.specie.key : false;`
 - [ ] `calculateAsymptoticSpeed()` method - asymptotic speed scaling for levels 100+
 - [ ] NO level cap check in `levelUp()` method
@@ -80,9 +84,12 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Tower.modded.js
 - [ ] Delta time fix for accurate projectile timing
+- [ ] MOD: Projectile retargeting uses tower position + tower range (not hardcoded 200 from projectile)
 
 ## Projectile.modded.js
 - [ ] Endless scaling for projectile damage
+- [ ] MOD: Retarget in update() uses tower position + tower range
+- [ ] MOD: findClosestEnemy() (ricochets) searches from tower position within tower range
 
 ## ProfileScene.modded.js
 - [ ] Uncapped wave record display (shows 100+ instead of capping at 100)

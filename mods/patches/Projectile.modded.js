@@ -40,7 +40,8 @@ export class Projectile extends Sprite {
         const frameFactor = simDelta / (1000 / 60);
         const secs = simDelta / 1000;
 
-        // If target is dead, try to retarget within tower's range (from tower position, not projectile)
+        // MOD: If target is dead, retarget within tower's range from tower position
+        // Note: Tower.modded.js updateProjectiles also handles this BEFORE update() is called
         if ((!this.enemy || this.enemy.hp <= 0) && this.tower) {
             const towerRange = this.tower.range || 100;
             const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);
@@ -526,12 +527,15 @@ export class Projectile extends Sprite {
 
     findClosestEnemy(fromEnemy, maxDist = 200) {
         let closest = null;
-        let minDist = maxDist;
+        // MOD: Use tower range, search from tower position for range-limited retargeting
+        const searchRange = this.tower?.range || maxDist;
+        const searchOrigin = this.tower ? { center: { x: this.tower.center.x, y: this.tower.center.y } } : fromEnemy;
+        let minDist = searchRange;
         const canSeeInvisible = this.tower?.revealInvisible || false;
         for (const e of this.tower.main.area.enemies) {
             if (!e || e === fromEnemy || e.hp <= 0 || (e.invisible && !canSeeInvisible)) continue;
-            const dx = e.center.x - fromEnemy.center.x;
-            const dy = e.center.y - fromEnemy.center.y;
+            const dx = e.center.x - searchOrigin.center.x;
+            const dy = e.center.y - searchOrigin.center.y;
             const d = Math.hypot(dx, dy);
             if (d < minDist) {
                 minDist = d;

@@ -1,5 +1,6 @@
 import { routeData } from '../data/routeData.js';
 import { PlacementTile } from '../component/PlacementTile.js';
+import { Tower } from '../component/Tower.js';
 import { Element } from '../../utils/Element.js';
 import { Enemy } from '../component/Enemy.js';
 import { text } from '../../file/text.js'
@@ -81,11 +82,17 @@ export class Area {
 			this.inChallenge = challenge;
 		} else this.inChallenge = false;
 		
+		// MOD: Save tile positions before clearing so we can redeploy after tiles are rebuilt
+		const savedTilePositions = new Map();
 		if (!keepTowers) {
 			this.main.UI.tilesCountNum = [0, 0, 0, 0];
 			const teamCopy = [...this.main.team.pokemon];
 
 			for (const pokemon of teamCopy) {
+				// MOD: Remember saved tilePosition before clearing
+				if (pokemon.tilePosition >= 0) {
+					savedTilePositions.set(pokemon, pokemon.tilePosition);
+				}
 				if (pokemon.isDeployed) {
 					pokemon.isDeployed = false;
 					pokemon.tilePosition = -1;
@@ -151,6 +158,33 @@ export class Area {
 		this.main.UI.refreshDamageDealt(true);
 		this.music = this.map.music;
 		playMusic(this.music.song);
+
+		// MOD: Redeploy towers from saved tile positions after area load
+		if (!keepTowers && savedTilePositions.size > 0 && this.placementTiles.length > 0) {
+			for (const [pokemon, tilePos] of savedTilePositions) {
+				if (tilePos < 0 || tilePos >= this.placementTiles.length) continue;
+				const tile = this.placementTiles[tilePos];
+				if (!tile || tile.tower) continue;  // tile occupied or invalid
+				// Check if pokemon can be placed on this tile type
+				if (!pokemon.tiles.includes(tile.land) &&
+					!(pokemon?.item?.id == 'airBalloon' && tile.land == 4) &&
+					!(pokemon?.item?.id == 'heavyDutyBoots' && tile.land == 2) &&
+					!(pokemon?.item?.id == 'assaultVest' && tile.land == 2) &&
+					!(pokemon?.item?.id == 'dampMulch' && tile.land == 1)
+				) continue;
+				// Deploy the tower
+				tile.tower = pokemon;
+				this.towers.push(
+					new Tower(this.main, tile.position.x, tile.position.y, this.main.game.ctx, pokemon, tile)
+				);
+				pokemon.tilePosition = tilePos;
+				pokemon.isDeployed = true;
+				this.main.UI.tilesCountNum[tile.land - 1]++;
+			}
+			this.recalculateAuras();
+			this.checkWeather();
+			this.main.UI.update();
+		}
 	}
 
 	newWave() {

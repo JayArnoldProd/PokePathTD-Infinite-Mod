@@ -154,7 +154,8 @@ export class Pokemon {
 	            alias: this.alias,
 	            isShiny: this.isShiny,
 	            hideShiny: this.hideShiny,
-	            isMega: this.isMega
+	            isMega: this.isMega,
+	            tilePosition: this.tilePosition  // MOD: Persist tower placement
 	        };
 	    } else {
 	        return {
@@ -167,7 +168,8 @@ export class Pokemon {
 	            alias: this.alias,
 	            isShiny: this.isShiny,
 	            hideShiny: this.hideShiny,
-	            isMega: this.isMega
+	            isMega: this.isMega,
+	            tilePosition: this.tilePosition  // MOD: Persist tower placement
 	        };
 	    }
 	}
@@ -189,7 +191,7 @@ export class Pokemon {
 	        }
 	    }
 
-	    return new Pokemon(
+	    const pokemon = new Pokemon(
 	        specie,
 	        data.lvl,
 	        data.targetMode,
@@ -202,6 +204,9 @@ export class Pokemon {
 	        data.hideShiny,
 	        data.isMega
 	    );
+	    // MOD: Restore saved tower placement position
+	    pokemon.tilePosition = data.tilePosition ?? -1;
+	    return pokemon;
 	}
 
 	changeTargetMode(mode) {
