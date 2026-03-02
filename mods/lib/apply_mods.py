@@ -1811,7 +1811,7 @@ def apply_challenge_party_preserve():
 		this.main.boxScene.removeAllButton();"""
     
     new_start = """// MOD: Save team state before challenge wipe (QoL)
-		const savedTeam = this.main.team.pokemon.map(p => ({
+		this._savedTeamForChallenge = this.main.team.pokemon.map(p => ({
 			pokemon: p,
 			item: p.item ? p.item : null,
 			tilePosition: p.tilePosition ?? -1
@@ -1835,8 +1835,8 @@ def apply_challenge_party_preserve():
 		this.main.teamManager.teamChallenge = [[], [], [], [], []];
 
 		// MOD: Restore team lineup after challenge wipe (skip for draft)
-		if (!this.challenges.draft && savedTeam.length > 0) {
-			for (const saved of savedTeam) {
+		if (!this.challenges.draft && this._savedTeamForChallenge && this._savedTeamForChallenge.length > 0) {
+			for (const saved of this._savedTeamForChallenge) {
 				const poke = saved.pokemon;
 				// Move from box back to team
 				if (this.main.box.pokemon.includes(poke)) {
@@ -1870,6 +1870,57 @@ def apply_challenge_party_preserve():
         return False
     
     content = content.replace(old_post, new_post)
+    
+    # Patch cancelChallenge (surrender) to also restore team
+    old_cancel = """this.main.boxScene.removeAllItems();
+		this.main.boxScene.removeAllButton();
+
+		this.main.area.checkWeather();
+		this.main.UI.update();
+
+		this.main.game.cancelDeployUnit();"""
+    
+    new_cancel = """this.main.boxScene.removeAllItems();
+		this.main.boxScene.removeAllButton();
+
+		// MOD: Restore team lineup after surrender (skip for draft)
+		if (this._savedTeamForChallenge && this._savedTeamForChallenge.length > 0) {
+			for (const saved of this._savedTeamForChallenge) {
+				const poke = saved.pokemon;
+				if (this.main.box.pokemon.includes(poke)) {
+					this.main.box.removePokemon(poke);
+					this.main.team.addPokemon(poke);
+				}
+				if (saved.item) {
+					poke.equipItem(saved.item);
+				}
+				if (saved.tilePosition >= 0 && saved.tilePosition < this.main.area.placementTiles.length) {
+					const tile = this.main.area.placementTiles[saved.tilePosition];
+					if (tile && !tile.tower && poke.tiles.includes(tile.land)) {
+						poke.isDeployed = true;
+						poke.tilePosition = saved.tilePosition;
+						const tower = new Tower(this.main, tile.position.x, tile.position.y, this.main.game.ctx, poke, tile);
+						this.main.area.towers.push(tower);
+						tile.tower = poke;
+						this.main.UI.tilesCountNum[tile.land - 1] = (this.main.UI.tilesCountNum[tile.land - 1] || 0) + 1;
+					}
+				}
+			}
+			this._savedTeamForChallenge = null;
+		}
+
+		this.main.area.checkWeather();
+		this.main.UI.update();
+
+		this.main.game.cancelDeployUnit();"""
+    
+    if old_cancel in content:
+        content = content.replace(old_cancel, new_cancel)
+    elif '// MOD: Restore team lineup after surrender' in content:
+        pass  # already applied
+    else:
+        log_fail("ChallengeScene.js: Challenge party preserve (surrender)", "cancelChallenge pattern not found")
+        return False
     
     # Add Tower import for programmatic deployment
     if "import { Tower }" not in content:
