@@ -1026,8 +1026,12 @@ export class UI {
 				const escortTypes = wavePreview.length - 1; // first entry is boss
 				pokemonCount = wavePreview.map((p, i) => {
 					if (i === 0) return bossCount;
-					// Distribute escort count across shown escort types
-					return escortTypes > 0 ? Math.floor(escortTotal / escortTypes) : 0;
+					// Distribute escort count matching actual spawn cycling (i % escortTypes)
+					if (escortTypes <= 0) return 0;
+					const typeIndex = i - 1; // 0-based escort type index
+					let count = Math.floor(escortTotal / escortTypes);
+					if (typeIndex < (escortTotal % escortTypes)) count++;
+					return count;
 				});
 			} else {
 				// Regular endless waves: 20 + wavesPast100 * 1.2
