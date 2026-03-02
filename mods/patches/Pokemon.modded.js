@@ -91,7 +91,7 @@ export class Pokemon {
 	}
 
 	// MOD: Asymptotic speed scaling - speed approaches minimum but never reaches 0
-	calculateAsymptoticSpeed(baseSpeed, scale, level) {
+	calculateAsymptoticSpeed(baseSpeed, scale, level, isAOE = false) {
 		// For levels 1-100, use vanilla formula
 		if (level <= 100) {
 			return Math.floor(baseSpeed + (scale * level));
@@ -105,9 +105,9 @@ export class Pokemon {
 		const minSpeed = Math.max(50, Math.floor(speed100 * 0.05));
 		
 		// Calculate asymptotic approach: speed decreases but never goes below minSpeed
-		// Uses exponential decay towards minimum
+		// AOE Pokemon decay 4x slower to balance their multi-target advantage
 		const excessLevels = level - 100;
-		const decayRate = 0.005; // How fast we approach minimum
+		const decayRate = isAOE ? 0.00125 : 0.005;
 		const decayFactor = Math.exp(-decayRate * excessLevels);
 		
 		// Interpolate between speed100 and minSpeed
@@ -131,13 +131,14 @@ export class Pokemon {
 	// MOD: Endless range scaling - logarithmic growth past level 100
 	// Freezes linear component at level 100, then applies log multiplier
 	// 1x at level 100, 3x at level 1000
-	calculateEndlessRange(base, scale, level) {
+	calculateEndlessRange(base, scale, level, isAOE = false) {
 		if (level <= 100) {
 			return Math.floor(base + (scale * level));
 		}
 		// Freeze linear growth at level 100 value
 		const range100 = base + (scale * 100);
-		const scaleFactor = 2 / Math.log2(10);
+		// AOE Pokemon get half the range scaling to balance multi-target coverage
+		const scaleFactor = isAOE ? (1 / Math.log2(10)) : (2 / Math.log2(10));
 		const rangeMultiplier = 1 + Math.log2(level / 100) * scaleFactor;
 		return Math.floor(range100 * rangeMultiplier);
 	}
@@ -346,16 +347,19 @@ export class Pokemon {
 		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
 
 		// MOD: Use asymptotic/endless scaling for all stats
-		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level);
+		// AOE Pokemon get slower speed decay (4x) and slower range growth (2x)
+		const isAOE = this.attackType === 'area';
+		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level, isAOE);
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level);
+		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level, isAOE);
 		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, level);
 	}
 
 	setStatsLevel(level = 50) {
-		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level);
+		const isAOE = this.attackType === 'area';
+		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level, isAOE);
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level);
+		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level, isAOE);
 		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, level);
 	}
 
@@ -400,9 +404,10 @@ export class Pokemon {
 		let level = this.lvl;
 		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
 
-		this.speed = this.calculateAsymptoticSpeed(this.adn.speed.base, this.adn.speed.scale, level);
+		const isAOE = this.attackType === 'area';
+		this.speed = this.calculateAsymptoticSpeed(this.adn.speed.base, this.adn.speed.scale, level, isAOE);
 		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
-		this.range = this.calculateEndlessRange(this.adn.range.base, this.adn.range.scale, level);
+		this.range = this.calculateEndlessRange(this.adn.range.base, this.adn.range.scale, level, isAOE);
 
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;

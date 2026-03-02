@@ -561,13 +561,11 @@ export class PokemonScene extends GameScene {
 		const specie = (this.pokemon.specie.evolution != undefined && (this.pokemon.lvl >= this.pokemon.specie.evolution.level - levels)) ? pokemonData[this.pokemon.specie.evolution.pokemon] : this.pokemon.specie;
 		const newLevel = this.pokemon.lvl + levels;
 
+		const isAOE = this.pokemon.attackType === 'area';
 		const newPower = Math.floor(specie.power.base + (specie.power.scale * newLevel));
-		// Use the same asymptotic speed formula as Pokemon.calculateAsymptoticSpeed
-		const newSpeed = this.calculatePreviewSpeed(specie.speed.base, specie.speed.scale, newLevel);
-		// Use the same asymptotic crit formula as Pokemon.calculateAsymptoticCrit
+		const newSpeed = this.calculatePreviewSpeed(specie.speed.base, specie.speed.scale, newLevel, isAOE);
 		const newCritical = this.calculatePreviewCrit(specie.critical.base, specie.critical.scale, newLevel);
-		// Use the same range formula as Pokemon (includes endless scaling)
-		const newRange = this.calculatePreviewRange(specie.range.base, specie.range.scale, newLevel);
+		const newRange = this.calculatePreviewRange(specie.range.base, specie.range.scale, newLevel, isAOE);
 		
 		const powerDiff = newPower - this.pokemon.power;
 		const speedDiff = Math.abs((newSpeed / 1000).toFixed(2) - (this.pokemon.speed / 1000).toFixed(2)).toFixed(2);
@@ -589,26 +587,26 @@ export class PokemonScene extends GameScene {
 	}
 
 	// Mirror of Pokemon.calculateAsymptoticSpeed — MUST match exactly
-	calculatePreviewSpeed(base, scale, level) {
+	calculatePreviewSpeed(base, scale, level, isAOE = false) {
 		if (level <= 100) {
 			return Math.floor(base + (scale * level));
 		}
 		const speed100 = base + (scale * 100);
 		const minSpeed = Math.max(50, Math.floor(speed100 * 0.05));
 		const excessLevels = level - 100;
-		const decayRate = 0.005;
+		const decayRate = isAOE ? 0.00125 : 0.005;
 		const decayFactor = Math.exp(-decayRate * excessLevels);
 		const asymptoticSpeed = minSpeed + (speed100 - minSpeed) * decayFactor;
 		return Math.max(minSpeed, Math.floor(asymptoticSpeed));
 	}
 
 	// Mirror of Pokemon.calculateEndlessRange — MUST match exactly
-	calculatePreviewRange(base, scale, level) {
+	calculatePreviewRange(base, scale, level, isAOE = false) {
 		if (level <= 100) {
 			return Math.floor(base + (scale * level));
 		}
 		const range100 = base + (scale * 100);
-		const scaleFactor = 2 / Math.log2(10);
+		const scaleFactor = isAOE ? (1 / Math.log2(10)) : (2 / Math.log2(10));
 		const rangeMultiplier = 1 + Math.log2(level / 100) * scaleFactor;
 		return Math.floor(range100 * rangeMultiplier);
 	}
