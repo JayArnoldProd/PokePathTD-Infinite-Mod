@@ -535,15 +535,19 @@ export class Area {
 			const { template, isElite, isChampion } = entry;
 			
 			let scaledHp = Math.floor(Math.max(template.hp, template.hp * hpScaleFactor, minHpPerEnemy));
+			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
 			let scaledArmor = Math.floor((template.armor || 0) * (1 + 0.05 * wavesPast100));
+			if (scaledArmor === 0) {
+				scaledArmor = Math.floor(scaledHp * 0.05);
+			}
 			
 			if (isElite) {
 				scaledHp = Math.floor(scaledHp * 2);
-				scaledArmor = Math.floor(scaledArmor * 1.5) || Math.floor(scaledHp * 0.1);
+				scaledArmor = Math.floor(scaledArmor * 1.5);
 			}
 			if (isChampion) {
 				scaledHp = Math.floor(scaledHp * 3);
-				scaledArmor = Math.floor(scaledArmor * 2) || Math.floor(scaledHp * 0.2);
+				scaledArmor = Math.floor(scaledArmor * 2);
 			}
 			
 			const scaledEnemy = {

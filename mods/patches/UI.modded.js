@@ -911,7 +911,11 @@ export class UI {
 			
 			// MOD: Exact per-type stats matching what spawns in Area.modded.js
 			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
+			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
 			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * wavesPast100));
+			if (armor === 0) {
+				armor = Math.floor(hp * 0.05);
+			}
 			
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
