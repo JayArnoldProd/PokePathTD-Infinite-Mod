@@ -563,6 +563,7 @@ class App(tk.Tk):
         ttk.Separator(toolbar, orient='vertical').pack(side='left', fill='y', padx=10)
         self.source_label = ttk.Label(toolbar, text="No save loaded", font=('Arial', 10, 'bold'))
         self.source_label.pack(side='left', padx=5)
+        self.loaded_as_modded = IS_MODDED  # Track which save type was actually loaded
         
         # Stats
         stats = ttk.LabelFrame(main, text="Player Stats", padding=10)
@@ -775,6 +776,7 @@ class App(tk.Tk):
             mode_str = "Modded" if use_modded else "Vanilla"
             team_count = len([p for p in self.save.team if p])
             box_count = len([p for p in self.save.box if p])
+            self.loaded_as_modded = use_modded
             self.source_label.config(text=f"Game Save ({mode_str}) - {team_count} team, {box_count} box")
             self._inject_missing_eggs()
             self.refresh_grid()
@@ -1095,7 +1097,7 @@ class App(tk.Tk):
         if not self.save.data:
             return
         
-        is_vanilla = self.save_mode_var.get() == "vanilla"
+        is_vanilla = not self.loaded_as_modded
         count = 0
         skipped = 0
         for poke in self.save.team + self.save.box:
@@ -1166,6 +1168,17 @@ class App(tk.Tk):
             return True  # Unknown — allow shiny
         return self.poke_data.get_final_evo(key) == key
 
+    def _has_shiny_sprite(self, poke):
+        """Check if this Pokemon has a shiny sprite available (max evo always does, others need mod sprites)."""
+        if self._is_max_evo(poke):
+            return True  # Vanilla game has shiny sprites for max evolutions
+        # Check if mod's bundled shiny sprites exist for this Pokemon
+        key = poke.get('specieKey') or poke.get('specie', {}).get('key', '')
+        sprite_key = self.poke_data.SPRITE_NAME_MAP.get(key, key)
+        if PATHS.get('mod_shiny_sprites'):
+            return (PATHS['mod_shiny_sprites'] / f"{sprite_key}.png").exists()
+        return False
+
     def toggle_all_shiny(self):
         """Toggle shiny status for all Pokemon. On vanilla saves, only affects max evolutions."""
         if not self.save.data:
@@ -1173,7 +1186,7 @@ class App(tk.Tk):
         all_poke = [p for p in self.save.team + self.save.box if p]
         if not all_poke:
             return
-        is_vanilla = self.save_mode_var.get() == "vanilla"
+        is_vanilla = not self.loaded_as_modded
         # If any are not shiny, make all shiny; otherwise make all normal
         eligible = [p for p in all_poke if not is_vanilla or self._is_max_evo(p)]
         any_not_shiny = any(not p.get('isShiny', False) for p in eligible)
