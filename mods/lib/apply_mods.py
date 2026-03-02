@@ -1501,32 +1501,45 @@ def apply_challenge_levelcap_fix():
     """
     Fix vanilla bug: level cap should cap high-level Pokemon, not boost low-level ones.
     
-    Vanilla updateStats() unconditionally sets level = lvlCap when in a challenge,
-    which BOOSTS low-level Pokemon to the cap. The fix patches updateStats() in
-    Pokemon.js to use Math.min(this.lvl, lvlCap) — only caps DOWN, never boosts UP.
+    Two locations need fixing:
+    1. Pokemon.js updateStats(): unconditionally sets level = lvlCap (should use Math.min)
+    2. ChallengeScene.js: calls setStatsLevel(capLevel) which boosts low-level Pokemon
+       to the cap level instead of only capping high-level ones down.
     """
+    # --- Fix 1: Pokemon.js updateStats() ---
     path = JS_ROOT / "game" / "component" / "Pokemon.js"
     content = read_file(path)
     
-    # Check if already applied
     if 'Math.min(this.lvl' in content and 'inChallenge.lvlCap' in content:
         log_skip("Pokemon.js: Challenge level cap fix")
-        return True
+    else:
+        old_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;"
+        new_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);"
+        
+        if old_cap in content:
+            content = content.replace(old_cap, new_cap)
+            write_file(path, content)
+            log_success("Pokemon.js: Challenge level cap fix (cap down only, never boost up)")
+        else:
+            log_fail("Pokemon.js: Challenge level cap fix", "inChallenge.lvlCap pattern not found")
     
-    # Patch updateStats() to cap DOWN only (not boost up)
-    # Vanilla: if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;
-    # Fixed:   if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
-    old_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;"
-    new_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);"
+    # --- Fix 2: ChallengeScene.js setStatsLevel(capLevel) ---
+    path_cs = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
+    content_cs = read_file(path_cs)
     
-    if old_cap in content:
-        content = content.replace(old_cap, new_cap)
-        write_file(path, content)
-        log_success("Pokemon.js: Challenge level cap fix (cap down only, never boost up)")
-        return True
+    old_scene = "pokemon.forEach(poke => poke.setStatsLevel(capLevel))"
+    new_scene = "pokemon.forEach(poke => poke.setStatsLevel(Math.min(poke.lvl, capLevel)))"
     
-    log_fail("Pokemon.js: Challenge level cap fix", "inChallenge.lvlCap pattern not found")
-    return False
+    if new_scene in content_cs:
+        log_skip("ChallengeScene.js: Challenge level cap fix")
+    elif old_scene in content_cs:
+        content_cs = content_cs.replace(old_scene, new_scene)
+        write_file(path_cs, content_cs)
+        log_success("ChallengeScene.js: Challenge level cap fix (cap down only)")
+    else:
+        log_fail("ChallengeScene.js: Challenge level cap fix", "setStatsLevel(capLevel) pattern not found")
+    
+    return True
 
 
 def apply_projectile_retarget_fix():
