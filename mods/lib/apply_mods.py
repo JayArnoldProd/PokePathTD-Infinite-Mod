@@ -1606,6 +1606,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             from lib import save_manager
             importlib.reload(save_manager)
             save_ok, save_msg = save_manager.setup_modded_saves()
+            save_manager.set_mod_flag()
             print(f"  [INFO] Save setup result: success={save_ok}, msg={save_msg}")
             if not save_ok:
                 print(f"  [WARN] Save setup: {save_msg}")
@@ -1790,6 +1791,12 @@ def main():
             print("  [ERROR] PowerShell is blocking scripts. Try running from Command Prompt (cmd.exe)")
         elif result.returncode == 0:
             print("  [OK] Game repacked successfully!")
+            # Set mod flag so GUI installer knows game is modded
+            try:
+                from lib import save_manager
+                save_manager.set_mod_flag()
+            except Exception:
+                pass
         else:
             print(f"  [ERROR] Repack failed: {result.stderr}")
     except subprocess.TimeoutExpired:
