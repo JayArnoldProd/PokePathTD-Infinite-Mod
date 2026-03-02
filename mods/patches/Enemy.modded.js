@@ -400,8 +400,8 @@ export class Enemy extends Sprite {
 		if (this.dying) {
 	        this.opacity -= this.dyingSpeed * frameFactor;
 	        if (this.opacity <= 0) {
-	            // PERF: Avoid indexOf on large arrays — mark for batch removal
-	            this._markedForRemoval = true;
+	            const index = this.main.area.enemies.indexOf(this);
+	            if (index > -1) this.main.area.enemies.splice(index, 1);
 	            return;
 	        }
 	    }
