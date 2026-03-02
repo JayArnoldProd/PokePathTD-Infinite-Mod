@@ -1539,6 +1539,39 @@ def apply_challenge_levelcap_fix():
     else:
         log_fail("ChallengeScene.js: Challenge level cap fix", "setStatsLevel(capLevel) pattern not found")
     
+    # --- Fix 3: UI.js team sidebar display shows cap instead of Math.min ---
+    path_ui = JS_ROOT / "game" / "UI.js"
+    content_ui = read_file(path_ui)
+    
+    old_ui_display = "this.pokemon[i].level.innerText = `Lv ${this.main.area.inChallenge.lvlCap}`;"
+    new_ui_display = "this.pokemon[i].level.innerText = `Lv ${Math.min(pokemon.lvl, this.main.area.inChallenge.lvlCap)}`;"
+    
+    if new_ui_display in content_ui:
+        log_skip("UI.js: Challenge level cap display fix")
+    elif old_ui_display in content_ui:
+        content_ui = content_ui.replace(old_ui_display, new_ui_display)
+        write_file(path_ui, content_ui)
+        log_success("UI.js: Challenge level cap display fix (show actual capped level)")
+    else:
+        log_fail("UI.js: Challenge level cap display fix", "lvlCap display pattern not found")
+    
+    # --- Fix 4: PokemonScene.js detail view shows cap instead of Math.min ---
+    path_ps = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
+    content_ps = read_file(path_ps)
+    
+    # The vanilla code shows [lvlCap] for ALL pokemon instead of [Math.min(lvl, cap)]
+    old_ps = "else this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${this.main.area.inChallenge.lvlCap}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${this.main.area.inChallenge.lvlCap}]`;"
+    new_ps = "else { const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap); this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${displayLvl}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${displayLvl}]`; }"
+    
+    if 'const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap)' in content_ps:
+        log_skip("PokemonScene.js: Challenge level cap display fix")
+    elif old_ps in content_ps:
+        content_ps = content_ps.replace(old_ps, new_ps)
+        write_file(path_ps, content_ps)
+        log_success("PokemonScene.js: Challenge level cap display fix (show actual capped level)")
+    else:
+        log_fail("PokemonScene.js: Challenge level cap display fix", "lvlCap display pattern not found")
+    
     return True
 
 
