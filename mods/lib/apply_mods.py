@@ -305,7 +305,7 @@ MOD_FEATURES = {
     'shiny': {
         'name': 'Shiny Pokemon (1/30)',
         'description': '1 in 30 chance for any new Pokemon to be shiny — eggs, starters, and secret/hidden unlocks. Includes shiny reveal animation, custom sprites for all non-max evolutions, and shiny Ditto fix',
-        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites'],
+        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites', 'apply_secret_shiny'],
         'default': True,
     },
     'wave_record': {
@@ -744,6 +744,62 @@ def apply_shiny_reveal():
         return True
     
     log_fail("ShopScene.js: Shiny reveal")
+    return False
+
+# ============================================================================
+# UI.JS - 1/30 shiny chance for secret/hidden Pokemon unlocks
+# ============================================================================
+def apply_secret_shiny():
+    """Patch getSecret() in UI.js to add 1/30 shiny chance for hidden Pokemon."""
+    path = JS_ROOT / "game" / "UI.js"
+    
+    if not path.exists():
+        log_skip("UI.js: Secret shiny (file not yet installed)")
+        return True
+    
+    content = read_file(path)
+    
+    # Check if already applied
+    if '1 / 30' in content and 'getSecret' in content and 'isShiny' in content:
+        log_skip("UI.js: Secret shiny")
+        return True
+    
+    # Vanilla getSecret pattern (matches both vanilla and our reverted UI.modded.js)
+    old = """	getSecret(poke) {
+		const pokemon = pokemonData[poke];
+
+		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
+			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
+		} else {
+			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
+		}"""
+    
+    new = """	getSecret(poke) {
+		const pokemon = pokemonData[poke];
+		// 1 in 30 chance for shiny secret Pokemon
+		const isShiny = Math.random() < (1 / 30);
+
+		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
+			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
+			const newPoke = this.main.team.pokemon.at(-1);
+			if (isShiny) { newPoke.isShiny = true; newPoke.setShiny(); }
+			this.main.shopScene.displayPokemon.open(newPoke, isShiny)
+		} else {
+			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
+			const newPoke = this.main.box.pokemon.at(-1);
+			if (isShiny) { newPoke.isShiny = true; newPoke.setShiny(); }
+			this.main.shopScene.displayPokemon.open(newPoke, isShiny)
+		}"""
+    
+    if old in content:
+        content = content.replace(old, new)
+        write_file(path, content)
+        log_success("UI.js: Secret shiny (1/30 chance for hidden Pokemon)")
+        return True
+    
+    log_fail("UI.js: Secret shiny", "getSecret pattern not found")
     return False
 
 # ============================================================================
@@ -1721,6 +1777,9 @@ def main():
     
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
+    
+    # Patch secret/hidden Pokemon with 1/30 shiny chance
+    apply_secret_shiny()
     
     # Fix challenge level cap bug
     apply_challenge_levelcap_fix()

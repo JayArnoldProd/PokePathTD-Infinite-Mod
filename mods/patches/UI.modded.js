@@ -1194,19 +1194,13 @@ export class UI {
 
 	getSecret(poke) {
 		const pokemon = pokemonData[poke];
-		// 1 in 30 chance for shiny secret Pokemon
-		const isShiny = Math.random() < (1 / 30);
 
 		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			const newPoke = this.main.team.pokemon.at(-1);
-			if (isShiny) { newPoke.isShiny = true; newPoke.setShiny(); }
-			this.main.shopScene.displayPokemon.open(newPoke, isShiny)
+			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
 		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			const newPoke = this.main.box.pokemon.at(-1);
-			if (isShiny) { newPoke.isShiny = true; newPoke.setShiny(); }
-			this.main.shopScene.displayPokemon.open(newPoke, isShiny)
+			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
 		}
 
 		this.main.player.stats.pokemonOwned++;
