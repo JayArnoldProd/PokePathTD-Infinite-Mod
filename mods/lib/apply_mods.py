@@ -305,7 +305,7 @@ MOD_FEATURES = {
     'shiny': {
         'name': 'Shiny Pokemon (1/30)',
         'description': '1 in 30 chance for any new Pokemon to be shiny — eggs, starters, and secret/hidden unlocks. Includes shiny reveal animation, custom sprites for all non-max evolutions, and shiny Ditto fix',
-        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites'],
+        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites', 'apply_ui_mods'],
         'default': True,
     },
     'wave_record': {
