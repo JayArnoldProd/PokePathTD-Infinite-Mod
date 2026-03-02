@@ -909,15 +909,20 @@ export class UI {
 			// MOD: Minimum HP floor — matches Area.modded.js spawning logic
 			const minHpPerEnemy = Math.floor(powerBudget / totalEnemyCount);
 			
-			// Apply to this specific enemy (with floor — same as spawning)
-			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
+			// MOD: Show weighted average HP/armor accounting for elite (20%, 2x HP) and champion (10%, 3x HP) injection
+			// This matches what the player actually experiences, not just base enemy stats
+			const baseHp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
+			const baseArmor = Math.floor((enemy.armor || 0) * (1 + 0.05 * wavesPast100));
 			
-			// MOD: Armor scales with wave; if base armor is 0, show elite-tier fallback
-			// (20% of wave is elite with 10% HP as armor, 10% is champion with 20% HP as armor)
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * wavesPast100));
-			if (armor === 0) {
-				armor = Math.floor(hp * 0.1);  // Show elite-tier armor as representative
-			}
+			// Elite: 2x HP, armor = max(baseArmor*1.5, 10% HP). Champion: 3x HP, armor = max(baseArmor*2, 20% HP)
+			const eliteHp = Math.floor(baseHp * 2);
+			const eliteArmor = Math.floor(baseArmor * 1.5) || Math.floor(eliteHp * 0.1);
+			const champHp = Math.floor(baseHp * 3);
+			const champArmor = Math.floor(baseArmor * 2) || Math.floor(champHp * 0.2);
+			
+			// Weighted average: 70% base, 20% elite, 10% champion
+			hp = Math.floor(baseHp * 0.7 + eliteHp * 0.2 + champHp * 0.1);
+			armor = Math.floor(baseArmor * 0.7 + eliteArmor * 0.2 + champArmor * 0.1);
 			
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
