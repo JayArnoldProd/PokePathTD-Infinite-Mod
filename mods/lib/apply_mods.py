@@ -294,7 +294,7 @@ MOD_FEATURES = {
         'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
                       'apply_enemy_scaling', 'apply_profile_endless_stats',
                       'apply_text_continue_option', 'apply_menu_autoreset_range',
-                      'apply_map_record_uncap'],
+                      'apply_map_record_uncap', 'apply_wave_manager_fix'],
         'default': True,
     },
     'infinite_levels': {
@@ -1216,6 +1216,34 @@ def apply_endless_waves():
     
     log_fail("Area.js: Endless waves - modded file not found")
     return False
+
+
+def apply_wave_manager_fix():
+    """Fix wave manager visibility for endless mode records > 100.
+    
+    Vanilla UI.js checks records === 100 (exact match), which fails when
+    endless mode pushes records past 100. Patch to >= 100.
+    Only needed when UI.modded.js is NOT installed (QoL not selected).
+    """
+    path = JS_ROOT / "game" / "UI.js"
+    content = read_file(path)
+    
+    old_check = ".records[this.main.area.map.id] === 100 && this.main.player.hasBike)"
+    new_check = ".records[this.main.area.map.id] >= 100 && this.main.player.hasBike)"
+    
+    if '>= 100 && this.main.player.hasBike)' in content:
+        log_skip("UI.js: Wave manager >= 100 fix")
+        return True
+    elif old_check in content:
+        content = content.replace(old_check, new_check)
+        write_file(path, content)
+        log_success("UI.js: Wave manager >= 100 fix (records past 100)")
+        return True
+    else:
+        # UI.modded.js already has >= 100, or pattern changed
+        log_skip("UI.js: Wave manager >= 100 fix (not needed)")
+        return True
+
 
 # ============================================================================
 # DEFEATSCENE.JS - Checkpoints every 50 waves in endless
