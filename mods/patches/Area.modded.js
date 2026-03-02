@@ -447,21 +447,21 @@ export class Area {
 		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
 		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
 		const wavesPast100 = wave - 100;
-		const baseBudget = 200000; // MOD: Slight bump from 160k
+		const baseBudget = 180000; // MOD: Modest bump from 160k
 		let hpMult;
 		if (wavesPast100 <= 900) {
-			hpMult = Math.pow(1.011, wavesPast100); // MOD: Steeper exponent (was 1.0095) — scales harder at high waves
+			hpMult = Math.pow(1.01, wavesPast100); // MOD: Slightly steeper exponent (was 1.0095)
 		} else {
-			const base = Math.pow(1.011, 900); // anchor at wave 1000
+			const base = Math.pow(1.01, 900); // anchor at wave 1000
 			const extra = wavesPast100 - 900;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
 		const powerBudget = Math.floor(baseBudget * hpMult);
 		
-		// MOD: Speed scaling — 1.5x at wave 500, 2x at 1000, 4x at 10000
-		const speedMult = 1 + Math.log2(1 + wavesPast100 / 800);
-		// MOD: Regeneration scaling — proportional to scaled HP, capped at hpMax/sec
-		const regenScale = Math.min(1.0, 0.01 + wavesPast100 * 0.0001); // 1% at 101, 10% at 1000, caps at 100%
+		// MOD: Speed scaling — gentle: 1.2x at wave 500, 1.5x at 1000, 2.5x at 10000
+		const speedMult = 1 + Math.log2(1 + wavesPast100 / 1600);
+		// MOD: Regeneration scaling — 0.5% of max HP/sec base, grows slowly, caps at 50%
+		const regenScale = Math.min(0.5, 0.005 + wavesPast100 * 0.00005);
 		
 		// === ENEMY COUNT (matches UI display) ===
 		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
