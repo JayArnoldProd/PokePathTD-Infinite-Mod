@@ -290,10 +290,11 @@ MOD_FEATURES = {
     },
     'endless': {
         'name': 'Endless Mode',
-        'description': 'Continue past wave 100 with scaling difficulty, checkpoints, and auto-continue option',
+        'description': 'Continue past wave 100 with scaling difficulty, checkpoints, auto-continue, and uncapped wave record display on the map',
         'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
                       'apply_enemy_scaling', 'apply_profile_endless_stats',
-                      'apply_text_continue_option', 'apply_menu_autoreset_range'],
+                      'apply_text_continue_option', 'apply_menu_autoreset_range',
+                      'apply_map_record_uncap'],
         'default': True,
     },
     'infinite_levels': {
@@ -306,12 +307,6 @@ MOD_FEATURES = {
         'name': 'Shiny Pokemon (1/30)',
         'description': '1 in 30 chance for any new Pokemon to be shiny — eggs, starters, and secret/hidden unlocks. Includes shiny reveal animation, custom sprites for all non-max evolutions, and shiny Ditto fix',
         'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites', 'apply_secret_shiny'],
-        'default': True,
-    },
-    'wave_record': {
-        'name': 'Wave Record Uncap',
-        'description': 'Display wave records above 100 on the map',
-        'functions': ['apply_map_record_uncap'],
         'default': True,
     },
     'qol': {

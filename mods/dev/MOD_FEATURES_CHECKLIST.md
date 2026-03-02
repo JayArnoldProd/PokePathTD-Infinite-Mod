@@ -27,12 +27,10 @@ This document lists all mod features that MUST be present in the modded files. U
 ## Game.modded.js
 - [ ] `this.mapDragging = false;` in constructor
 - [ ] Sub-stepping loop for accurate high-speed simulation (numSteps calculation)
-- [ ] Enhanced speed toggle: 1x, 1.5x, 2x, 3x, 5x, 10x options
-- [ ] Speed options display with gradient backgrounds
-- [ ] **PAUSE MICROMANAGEMENT**: `animate()` does NOT have `if (this.stopped) return;` at the start
-- [ ] **PAUSE MICROMANAGEMENT**: `totalScaledDelta = this.stopped ? 0 : ...` (game freezes but render continues)
-- [ ] **PAUSE MICROMANAGEMENT**: No `if (this.stopped)` guards in `tryDeployUnit()`, `moveUnitToTile()`, `swapUnits()`, `retireUnit()`
-- [ ] **PAUSE MICROMANAGEMENT**: No `if (this.stopped)` guards in canvas click/pointerdown handlers
+- [ ] Vanilla speed toggle preserved: 0.8x, 1.2x, 1.7x, 2x, 2.5x with correct fill levels (25/50/75/100%)
+- [ ] Full vanilla pause behavior: overlay, canvas pointer blocking, deploy guard, interval clearing
+- [ ] `showPauseOverlay()` and `hidePauseOverlay()` methods
+- [ ] `if (this.stopped) return playSound('pop0', 'ui');` guard in `tryDeployUnit()`
 - [ ] **PERF**: Cache area/enemies/towers refs outside sub-step loop
 - [ ] **PERF**: Pre-compute snowCloak enemy list once per frame, pass to towers via `_snowCloakEnemies`
 - [ ] **PERF**: `_skipDraw` set on enemies and towers for non-last sub-steps
@@ -166,16 +164,21 @@ This document lists all mod features that MUST be present in the modded files. U
 ## UI.modded.js (challenge cap display)
 - [ ] Pokemon level display in team bar shows `Math.min(lvl, lvlCap)` during challenges instead of always showing cap level
 
-## Game.modded.js (pause micromanagement)
-- [ ] NO `if (this.stopped) return;` early exit at top of `animate()` — render loop must keep running during pause
-- [ ] `scaledDelta` / `totalScaledDelta` = 0 when `this.stopped` (sim freezes but rendering continues)
-- [ ] `switchPause()` only toggles `this.stopped` — does NOT call `stop()` or kill the `setInterval`
-- [ ] No `if (this.stopped) return;` guard in `tryDeployUnit()`
-- [ ] No `if (this.stopped) return;` guard in `moveUnitToTile()`
-- [ ] No `if (this.stopped) return;` guard in `swapUnits()`
-- [ ] No `if (this.stopped) return;` guard in canvas click handler
-- [ ] No `if (this.stopped) return;` guard in canvas pointerdown handler
+## Pause Micromanagement (surgical patches via apply_pause_micromanagement)
+All pause micro is now injected surgically — NOT baked into Game.modded.js.
+- [ ] animate(): `if (this.stopped) return;` replaced with comment (render loop continues)
+- [ ] `totalScaledDelta = this.stopped ? 0 : ...` (sim freezes but rendering continues)
+- [ ] `_simSteps = this.stopped ? 0 : numSteps` injected before sub-stepping loop
+- [ ] Stopped redraw block (background + enemies + towers drawn in place when paused)
+- [ ] `tryDeployUnit()` deploy guard removed (allows deploying while paused)
+- [ ] `switchPause()` replaced with simple toggle (no overlay, no pointer blocking, no interval clearing)
 - [ ] Tile highlighting works during pause (PlacementTile.update() runs via animate loop)
+
+## 10x Speed (surgical patches via apply_speed_mod)
+All speed changes are injected surgically — NOT baked into Game.modded.js.
+- [ ] `toggleSpeed()` replaced: 1x→1.5x→2x→3x→5x→10x with innerText labels
+- [ ] `restoreSpeed()` updated: speedFactor=1, innerText='1x'
+- [ ] Initial `speedFactor` changed from 0.8 to 1
 
 ## Feature: Vanilla Bug Fixes (installer checkbox: `vanilla_fixes`)
 Consolidates all vanilla bug fixes and QoL improvements that don't add new gameplay mechanics.
@@ -238,9 +241,9 @@ When updating to a new vanilla version:
 
 - **Record caps**: Vanilla caps records at 100, mod allows uncapped
 - **Level caps**: Vanilla has `if (this.lvl >= 100) return;`, mod removes this
-- **Speed options**: Vanilla has fewer speed options, mod adds 5x and 10x
-- **Endless mode**: ALL endless mode code is mod-only, easily lost in merges
-- **Pause micromanagement**: Vanilla blocks interactions during pause. Mod removes the `if (this.stopped) return;` early exit from `animate()` — this is the most critical line. If it reappears, pause micro breaks.
+- **Speed options**: Game.modded.js has VANILLA speeds (0.8/1.2/1.7/2/2.5). Speed mod surgically patches to 1/1.5/2/3/5/10. Do NOT bake speed changes into Game.modded.js.
+- **Endless mode**: ALL endless mode code is mod-only, easily lost in merges. Wave Record Uncap is part of Endless Mode.
+- **Pause micromanagement**: Game.modded.js has VANILLA pause behavior (overlay, pointer blocking, deploy guard). Pause micro surgically patches all of that out. Do NOT bake pause micro changes into Game.modded.js.
 - **Stat scaling**: Crit and range use endless scaling methods (calculateEndlessCrit/Range). Linear formulas must NOT be used past level 100. Preview functions in PokemonScene must match actual stat functions in Pokemon.
 - **Save isolation**: Modded game uses separate userData folder. Save migration uses LevelDB API (save_helper.js export/import), NOT raw file copy.
 - **Emoji rendering**: All emoji in game UI must use `<span class="msrre">` wrapper for proper rendering in PressStart2P pixel font. CSS class has `font-family: 'Segoe UI Emoji'` fallback.
