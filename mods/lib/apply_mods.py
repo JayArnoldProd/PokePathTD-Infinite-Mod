@@ -2140,8 +2140,40 @@ def apply_star_display_cap():
         log_success("UI.js: Star display capped (100 per route without Endless)")
         return True
     
-    log_fail("UI.js: Star display cap", "star display pattern not found")
+    log_fail("UI.js: Star display cap (player panel)", "star display pattern not found")
     return False
+
+
+def apply_star_record_cap():
+    """Cap the per-route record star display (mapRecord) at 100 when Endless isn't installed.
+    
+    UI.modded.js has 'ENDLESS MODE: No cap on star display' showing raw records.
+    Without Endless, records past 100 should display as 100.
+    """
+    path = JS_ROOT / "game" / "UI.js"
+    content = read_file(path)
+    
+    if 'Math.min(100, this.main.player.records[this.main.area.map.id])' in content:
+        log_skip("UI.js: Map record star cap")
+        return True
+    
+    # Match the modded line
+    old_record = 'this.mapRecord.innerHTML = `<span class="msrre">\u2b50</span>${this.main.player.records[this.main.area.map.id]}`;'
+    new_record = 'this.mapRecord.innerHTML = `<span class="msrre">\u2b50</span>${Math.min(100, this.main.player.records[this.main.area.map.id])}`;'
+    
+    if old_record in content:
+        content = content.replace(old_record, new_record)
+        write_file(path, content)
+        log_success("UI.js: Map record star capped at 100")
+        return True
+    
+    # Try vanilla pattern (has Math.min(100, ...))
+    if 'Math.min(100' in content and 'mapRecord' in content:
+        log_skip("UI.js: Map record star cap (vanilla already caps)")
+        return True
+    
+    log_skip("UI.js: Map record star cap (pattern not found)")
+    return True
 
 
 def apply_wave_clamp():
@@ -2475,6 +2507,10 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             apply_star_display_cap()
         except Exception as e:
             failed_mods.append(f"star display cap: {str(e)}")
+        try:
+            apply_star_record_cap()
+        except Exception as e:
+            failed_mods.append(f"star record cap: {str(e)}")
     
     # Step 5: Repack
     if progress_callback:
