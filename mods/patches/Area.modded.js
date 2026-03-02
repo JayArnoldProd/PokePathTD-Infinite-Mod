@@ -46,6 +46,10 @@ export class Area {
 		// MOD: Endless mode flag
 		this.endlessMode = false;
 
+		// MOD: Expose this Area on main before loadArea() so Tower constructors
+		// can access this.main.area (needed for tower redeployment from save)
+		this.main.area = this;
+
 		this.loadArea(areaData.routeNumber);
 		this.goldWave = 0;
 
@@ -504,10 +508,12 @@ export class Area {
 		}
 		
 		// === SPACING ===
+		// MOD: Progressively tighter spacing so late-game waves don't take forever
+		// Wave 101: 30px apart, wave 200: ~18px, wave 500: ~6px, wave 1000+: 3px minimum
 		const baseOffset = 30;
-		const waveOffset = Math.max(8, baseOffset - Math.floor(wavesPast100 / 20));
-		const clusterSize = Math.min(20, 5 + Math.floor(wavesPast100 / 30));
-		const clusterGap = Math.max(15, waveOffset);
+		const waveOffset = Math.max(3, baseOffset - Math.floor(wavesPast100 / 12));
+		const clusterSize = Math.min(40, 5 + Math.floor(wavesPast100 / 15));
+		const clusterGap = Math.max(5, Math.floor(waveOffset * 0.8));
 		
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
 		
