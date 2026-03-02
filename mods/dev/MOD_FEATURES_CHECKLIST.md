@@ -33,6 +33,13 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] **PAUSE MICROMANAGEMENT**: `totalScaledDelta = this.stopped ? 0 : ...` (game freezes but render continues)
 - [ ] **PAUSE MICROMANAGEMENT**: No `if (this.stopped)` guards in `tryDeployUnit()`, `moveUnitToTile()`, `swapUnits()`, `retireUnit()`
 - [ ] **PAUSE MICROMANAGEMENT**: No `if (this.stopped)` guards in canvas click/pointerdown handlers
+- [ ] **PERF**: Cache area/enemies/towers refs outside sub-step loop
+- [ ] **PERF**: Pre-compute snowCloak enemy list once per frame, pass to towers via `_snowCloakEnemies`
+- [ ] **PERF**: `_skipDraw` set on enemies and towers for non-last sub-steps
+- [ ] **PERF**: `_isFirstStep` flag passed to towers (recalculatePower only on first step)
+- [ ] **PERF**: Batch enemy removal — `_markedForRemoval` cleaned in one pass instead of indexOf per dying enemy
+- [ ] **PERF**: enemiesInRange built with for-loop (not .filter()) to avoid array allocation per tower
+- [ ] **PERF**: Throttled `updateDamageDealt()` to every 5 frames
 
 ## Pokemon.modded.js
 - [ ] `this.sprite = JSON.parse(JSON.stringify(specie.sprite));` - Deep copy sprite
@@ -90,16 +97,27 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Enemy.modded.js
 - [ ] Endless scaling - enemy HP/power scales for waves 100+
+- [ ] **PERF**: Center point mutation (not new object) in update loop
+- [ ] **PERF**: `_markedForRemoval` flag for batch removal (not indexOf+splice per enemy)
+- [ ] **PERF**: Single-pass status effect compaction (replaces two .filter() calls)
 
 ## Tower.modded.js
 - [ ] Delta time fix for accurate projectile timing
 - [ ] Projectile retargeting in `updateProjectiles()`: search from tower position with tower's range
 - [ ] `findClosestEnemy()` method on Tower: searches from given position within maxDist
+- [ ] **PERF**: `recalculatePower()` only runs on `_isFirstStep` (not every sub-step)
+- [ ] **PERF**: Single-pass aura detection in recalculatePower (replaces 4 separate .filter() calls)
+- [ ] **PERF**: Squared distance for aura range, snowCloak, static stun checks
+- [ ] **PERF**: Pre-computed snowCloak from `_snowCloakEnemies` (not iterating all enemies per tower)
+- [ ] **PERF**: Cached `_tempCanvas`/`_tempCtx` for ADN tower tint draws (not createElement every frame)
+- [ ] **PERF**: `findClosestEnemy` uses squared distance, skips off-screen enemies
 
 ## Projectile.modded.js
 - [ ] Endless scaling for projectile damage
 - [ ] Retarget in `update()`: search from tower position with tower's range
 - [ ] Ricochet `findClosestEnemy()`: 200px from enemy position, NOT limited to tower range
+- [ ] **PERF**: Center point mutation (not new object) in update loop
+- [ ] **PERF**: `findClosestEnemy` uses squared distance
 
 ## ProfileScene.modded.js
 - [ ] Uncapped wave record display (shows 100+ instead of capping at 100)
@@ -167,9 +185,30 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Retarget search skips off-screen enemies (Tower.modded.js findClosestEnemy)
 - [ ] Ricochet chaining is 200px from enemy position — NOT tower-range-limited
 
+## Feature: Delta Time & Performance (always-on, baked into Game/Tower/Enemy/Projectile)
+- [ ] Sub-stepping simulation loop in Game.modded.js (numSteps based on speed multiplier)
+- [ ] `isEnemyInRange` uses squared distance for circle/default range types (avoids sqrt)
+- [ ] recalculatePower only on first sub-step per frame
+- [ ] Pre-computed snowCloak list once per frame
+- [ ] Batch enemy removal via `_markedForRemoval` flag
+- [ ] Cached temp canvas for ADN tower tint draws
+- [ ] Throttled damage UI updates (every 5 frames)
+- [ ] Object reuse for enemy/projectile center points (reduces GC pressure)
+- [ ] Single-pass aura detection, status effect compaction
+- [ ] _skipDraw on non-last sub-steps for enemies and towers
+
 ## Feature: Endless Wave Density (always-on)
 - [ ] Stack-based spawning: multiple enemies per spawn slot, `stackSize` scales with wave
 - [ ] Minimum HP floor per enemy: `powerBudget / totalEnemyCount` — prevents difficulty dips on cycle reset
+
+## Feature: Endless Scaling (always-on)
+- [ ] Regular enemy HP: `Math.pow(1.007, wavesPast100)` exponent, baseBudget=160000
+- [ ] Boss HP: `Math.pow(2, wavesPast100 / 150)` — stretched so old wave 700 ≈ new wave 1000
+- [ ] Speed scaling: `1 + Math.log2(1 + wavesPast100 / 1600)` — 1.2x@500, 1.5x@1000
+- [ ] Regen scaling: `0.05 * wavesPast100 / (wavesPast100 + 2000)` — asymptotically approaches 5% max HP/sec
+- [ ] Armor scaling: `(1 + 0.05 * wavesPast100)` with 5% HP minimum armor if base is 0
+- [ ] Deterministic escort selection via `getEscortTypes(wave, count)` — preview matches spawns
+- [ ] Escort enemies at boss waves 300+ with modular count distribution in UI
 
 ---
 

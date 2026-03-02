@@ -583,11 +583,16 @@ export class Tower extends Sprite {
         }
 
         if (this.pokemon.adn != undefined) {
-           // ---- CANVAS TEMPORAL ----
-            const temp = document.createElement("canvas");
-            temp.width = crop.width;
-            temp.height = crop.height;
-            const tctx = temp.getContext("2d");
+           // PERF: Reuse cached temp canvas instead of creating new one every frame
+            if (!this._tempCanvas || this._tempCanvas.width !== crop.width || this._tempCanvas.height !== crop.height) {
+                this._tempCanvas = document.createElement("canvas");
+                this._tempCanvas.width = crop.width;
+                this._tempCanvas.height = crop.height;
+                this._tempCtx = this._tempCanvas.getContext("2d");
+            }
+            const temp = this._tempCanvas;
+            const tctx = this._tempCtx;
+            tctx.clearRect(0, 0, crop.width, crop.height);
 
             // Dibujar el sprite recortado en el canvas temporal
             tctx.drawImage(
@@ -625,17 +630,17 @@ export class Tower extends Sprite {
         const simDelta = deltaTime;
         const frameFactor = simDelta / (1000 / 60);
 
-        this.recalculatePower();
+        // PERF: Only recalculate power on first sub-step (inputs don't change between steps)
+        if (this._isFirstStep) this.recalculatePower();
 
-        // PERF: Single-pass snowCloak check (was two separate iterations)
+        // PERF: Use pre-computed snowCloak enemy list from Game loop (avoids iterating ALL enemies per tower)
         {
             let foundSnowCloak = false;
-            const enemies = this.main.area.enemies;
-            const scThreshSq = 160 * 160; // PERF: squared distance
-            for (let i = 0; i < enemies.length; i++) {
-                const e = enemies[i];
-                if (!e || e.hp <= 0 || e.invulnerable) continue;
-                if (e.passive?.id === 'snowCloak') {
+            const scList = this._snowCloakEnemies;
+            if (scList && scList.length > 0) {
+                const scThreshSq = 25600; // 160 * 160
+                for (let i = 0; i < scList.length; i++) {
+                    const e = scList[i];
                     const dx = e.center.x - this.center.x;
                     const dy = e.center.y - this.center.y;
                     if (dx * dx + dy * dy <= scThreshSq) {

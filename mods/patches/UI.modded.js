@@ -881,10 +881,11 @@ export class UI {
 			const wavesPast100 = wave - 100;
 			const baseBudget = 160000; // Matches Area.modded.js
 			let hpMult;
+			// MOD: Stretched scaling — matches Area.modded.js
 			if (wavesPast100 <= 900) {
-				hpMult = Math.pow(1.0095, wavesPast100); // Matches Area.modded.js
+				hpMult = Math.pow(1.007, wavesPast100);
 			} else {
-				const base = Math.pow(1.0095, 900);
+				const base = Math.pow(1.007, 900);
 				const extra = wavesPast100 - 900;
 				hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 			}
@@ -927,7 +928,7 @@ export class UI {
 		} else if (wave % 100 === 0 && wave > 100) {
 			// MOD: Boss waves — each boss gets full scaled HP (half scaling rate)
 			let hpMult = 1 + 0.02 * bonusSteps;
-			hpMult *= Math.pow(2, (wave - 100) / 100);
+			hpMult *= Math.pow(2, (wave - 100) / 150); // MOD: Stretched boss scaling — matches Area.modded.js
 			hp = Math.floor(enemy.hp * hpMult * 2);
 			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * (wave - 100)));
 			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));

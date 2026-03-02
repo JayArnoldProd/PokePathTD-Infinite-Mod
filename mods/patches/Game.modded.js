@@ -92,15 +92,33 @@ export class Game {
 	    const canvasW = this.canvas.width;
 	    const canvasH = this.canvas.height;
 
+	    // PERF: Pre-compute snowCloak positions ONCE per frame (not per tower per step)
+	    // This replaces the per-tower snowCloak iteration in Tower.update()
+	    const snowCloakEnemies = [];
+	    for (let i = 0; i < enemies.length; i++) {
+	        const e = enemies[i];
+	        if (e && e.hp > 0 && !e.invulnerable && e.passive?.id === 'snowCloak') {
+	            snowCloakEnemies.push(e);
+	        }
+	    }
+
 	    for (let step = 0; step < numSteps; step++) {
 	        const isLastStep = (step === numSteps - 1);
 	        
-	        // Only render on last step (clear and draw background)
-	        if (isLastStep && this.ctx) {
-	            if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
-	                this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
-	            } else {
-	                this.ctx.clearRect(0, 0, canvasW, canvasH);
+	        // PERF: Tell towers/enemies/projectiles to skip draw on non-last steps
+	        if (!isLastStep) {
+	            for (let t = 0; t < towers.length; t++) towers[t]._skipDraw = true;
+	            for (let i = 0; i < enemies.length; i++) enemies[i]._skipDraw = true;
+	        } else {
+	            for (let t = 0; t < towers.length; t++) towers[t]._skipDraw = false;
+	            for (let i = 0; i < enemies.length; i++) enemies[i]._skipDraw = false;
+	            // Render background on last step
+	            if (this.ctx) {
+	                if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
+	                    this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
+	                } else {
+	                    this.ctx.clearRect(0, 0, canvasW, canvasH);
+	                }
 	            }
 	        }
 
@@ -128,10 +146,18 @@ export class Game {
 	          }
 	        }
 
+	        // PERF: Batch-remove dead enemies (avoids indexOf per dying enemy)
+	        for (let i = enemies.length - 1; i >= 0; i--) {
+	            if (enemies[i]._markedForRemoval) enemies.splice(i, 1);
+	        }
+
 	        // Update towers
 	        // PERF: Build enemiesInRange with for-loop instead of .filter() to avoid array allocation per tower
+	        // PERF: recalculatePower only on first step (inputs don't change between sub-steps)
 	        for (let t = 0; t < towers.length; t++) {
 	          const tower = towers[t];
+	          tower._snowCloakEnemies = snowCloakEnemies; // PERF: pass pre-computed list
+	          tower._isFirstStep = (step === 0);
 	          const enemiesInRange = [];
 	          for (let e = 0; e < enemies.length; e++) {
 	            const enemy = enemies[e];
@@ -156,8 +182,13 @@ export class Game {
 	    // Update placement tiles (visual only)
 	    this.main.area.placementTiles.forEach(tile => tile.update(this.mouse));
 
-	    // Update damage dealt display
-	    this.main.UI.updateDamageDealt();
+	    // PERF: Throttle damage dealt UI update to every 5 frames (DOM manipulation is expensive)
+	    if (!this._damageUpdateCounter) this._damageUpdateCounter = 0;
+	    this._damageUpdateCounter++;
+	    if (this._damageUpdateCounter >= 5) {
+	        this.main.UI.updateDamageDealt();
+	        this._damageUpdateCounter = 0;
+	    }
 
 	    // Draw floating damage texts
 	    if (this.main.showDamage) {

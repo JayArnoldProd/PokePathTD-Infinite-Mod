@@ -447,12 +447,13 @@ export class Area {
 		// Waves 101-1000: original 1.0095^n exponential (2.6x at 200, 44x at 500, 5050x at 1000)
 		// Waves 1001+: polynomial tail from the wave-1000 anchor (~101kx at 2000, ~1.5Mx at 10000)
 		const wavesPast100 = wave - 100;
-		const baseBudget = 160000; // Original balanced value
+		const baseBudget = 160000;
 		let hpMult;
+		// MOD: Stretched scaling — old wave 775 difficulty lands at wave 1000
 		if (wavesPast100 <= 900) {
-			hpMult = Math.pow(1.0095, wavesPast100); // Original exponent — HP was balanced, speed+regen add difficulty
+			hpMult = Math.pow(1.007, wavesPast100);
 		} else {
-			const base = Math.pow(1.0095, 900); // ~5050x anchor at wave 1000
+			const base = Math.pow(1.007, 900); // anchor at wave 1000
 			const extra = wavesPast100 - 900;
 			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
 		}
@@ -656,7 +657,7 @@ export class Area {
 		const wavesPast100 = wave - 100;
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, wavesPast100 / 100); // MOD: Boss scaling half as fast as regular enemies
+		bossHpMult *= Math.pow(2, wavesPast100 / 150); // MOD: Stretched boss scaling (old wave 700 = new wave 1000)
 		
 		// MOD: Each boss gets full scaled HP (scaling is halved rate to compensate for multiple bosses)
 		const bossHp = Math.floor(boss.hp * bossHpMult * 2);

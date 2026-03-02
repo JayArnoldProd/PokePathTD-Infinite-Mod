@@ -335,8 +335,8 @@ MOD_FEATURES = {
     # through vanilla gameplay (secret clicks, audio codes, route challenges).
     # Keeping them in the shop would create duplicates. See transcript guide.
     'deltatime': {
-        'name': 'Delta Time Fixes',
-        'description': 'Smoother animations and accurate projectile timing',
+        'name': 'Delta Time & Performance',
+        'description': 'Sub-stepping simulation, accurate projectile timing, squared-distance checks, batch removal, throttled UI, cached draws',
         'functions': ['apply_tower_deltatime', 'apply_projectile_scaling', 'apply_pokemonscene_mods'],
         'default': True,
     },
