@@ -906,11 +906,18 @@ export class UI {
 			// HP scale factor (same as spawning)
 			const hpScaleFactor = powerBudget / totalBaseHp;
 			
-			// Apply to this specific enemy
-			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor));
+			// MOD: Minimum HP floor — matches Area.modded.js spawning logic
+			const minHpPerEnemy = Math.floor(powerBudget / totalEnemyCount);
 			
-			// Armor scales with wave
+			// Apply to this specific enemy (with floor — same as spawning)
+			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
+			
+			// MOD: Armor scales with wave; if base armor is 0, show elite-tier fallback
+			// (20% of wave is elite with 10% HP as armor, 10% is champion with 20% HP as armor)
 			armor = Math.floor((enemy.armor || 0) * (1 + 0.05 * wavesPast100));
+			if (armor === 0) {
+				armor = Math.floor(hp * 0.1);  // Show elite-tier armor as representative
+			}
 			
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
