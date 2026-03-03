@@ -1,4 +1,4 @@
-import { GameScene } from '../../utils/GameScene.js';
+﻿import { GameScene } from '../../utils/GameScene.js';
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { playSound } from '../../file/audio.js';
@@ -116,7 +116,7 @@ class DisplayPokemon extends GameScene {
 		
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
-		this.shinySymbol.innerHTML = '<span class="msrre">✨</span>';
+		this.shinySymbol.innerHTML = '<span class="msrre">⭐</span>';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
 		
 		// Add pulse animation keyframe if not exists
