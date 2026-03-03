@@ -894,6 +894,8 @@ export class UI {
 		let hp = enemy.hp;
 		let armor = enemy.armor;
 		let gold = enemy.gold + this.main.player.extraGold;
+		let speed = enemy.speed;
+		let regeneration = enemy.regeneration || 0;
 
 		// ENDLESS MODE: Use power budget system for waves > 100
 		if (wave > 100 && wave % 100 !== 0) {
@@ -945,6 +947,15 @@ export class UI {
 				armor = Math.floor(hp * 0.05);
 			}
 			
+			// MOD: Speed scaling — matches Area.modded.js (uses effective wp)
+			const speedMult = 1 + Math.log2(1 + ewp / 2500);
+			speed = +(enemy.speed * speedMult).toFixed(2);
+			
+			// MOD: Regen scaling — ALL enemies get regen proportional to max HP
+			// Asymptotically approaches 5% of max HP/sec (uses effective wp)
+			const regenScale = 0.05 * ewp / (ewp + 3000);
+			regeneration = Math.max(enemy.regeneration || 0, Math.floor(hp * regenScale));
+			
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
 		} else if (wave % 100 === 0 && wave > 100) {
@@ -977,9 +988,9 @@ export class UI {
 		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
 		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${hp}</span>`;
 		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${armor || 0}</span>`;
-		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${enemy.speed}</span>`;
+		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${speed}</span>`;
 		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${enemy.power}</span>`;
-		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${enemy.regeneration}/s</span>`;
+		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${regeneration}/s</span>`;
 		this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;
 		this.infoSlow.innerHTML = `${text.ui.slow[this.main.lang].toUpperCase()}`;
 		this.infoBurn.innerHTML = `${text.ui.burn[this.main.lang].toUpperCase()}`;
