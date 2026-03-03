@@ -968,6 +968,11 @@ export class UI {
 			const bossCountFactor = 1 / Math.sqrt(Math.max(1, bossCount));
 			hp = Math.floor(enemy.hp * hpMult * 2 * bossCountFactor);
 			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * bossEWP));
+			// MOD: Boss speed and regen scaling — matches Area.modded.js
+			const bossSpeedMult = 1 + Math.log2(1 + bossEWP / 2500);
+			speed = +(enemy.speed * bossSpeedMult).toFixed(2);
+			const bossRegenScale = 0.05 * bossEWP / (bossEWP + 3000);
+			regeneration = Math.max(enemy.regeneration || 0, Math.floor(hp * bossRegenScale));
 			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
 		} else if (bonusSteps > 0) {
 			// Waves 1-100: Original scaling

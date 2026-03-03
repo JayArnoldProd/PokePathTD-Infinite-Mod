@@ -749,10 +749,16 @@ export class Area {
 		const bossCountFactor = 1 / Math.sqrt(Math.max(1, bossCount));
 		const bossHp = Math.floor(boss.hp * bossHpMult * 2 * bossCountFactor);
 
+		// MOD: Boss speed and regen scaling — matches regular enemy formulas
+		const bossSpeedMult = 1 + Math.log2(1 + ewp / 2500);
+		const bossRegenScale = 0.05 * ewp / (ewp + 3000);
+
 		const scaledBoss = {
 			...boss,
 			hp: bossHp,
 			armor: Math.floor((boss.armor || 0) * (1 + 0.03 * ewp)),
+			speed: boss.speed * bossSpeedMult,
+			regeneration: Math.max(boss.regeneration || 0, Math.floor(bossHp * bossRegenScale)),
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
 
@@ -780,10 +786,13 @@ export class Area {
 
 			for (let i = 0; i < escortCount && escortTypes.length > 0; i++) {
 				const escortTemplate = escortTypes[i % escortTypes.length];
+				const escortHp = Math.floor(escortTemplate.hp * bossHpMult * 1.5);
 				const scaledEscort = {
 					...escortTemplate,
-					hp: Math.floor(escortTemplate.hp * bossHpMult * 1.5),
+					hp: escortHp,
 					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.03 * ewp)),
+					speed: escortTemplate.speed * bossSpeedMult,
+					regeneration: Math.max(escortTemplate.regeneration || 0, Math.floor(escortHp * bossRegenScale)),
 					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
 				};
 
