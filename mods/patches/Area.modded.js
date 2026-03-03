@@ -429,9 +429,12 @@ export class Area {
 
 	// MOD: Effective wavesPast100 - linear up to wave 1000, then 4x compressed
 	// Keeps waves 100-1000 identical, but stretches 1000+ so current wave 2000 = new wave 5000
+	// MOD: Flat /2 compression past wave 1000 — smooth difficulty ramp
+	// Wave 100-1000: linear (unchanged, ewp 0-900)
+	// Wave 1000+: /2 compression (wave 2000 ewp=1400, wave 5000 ewp=2900, wave 10000 ewp=5400)
 	getEffectiveWP(wavesPast100) {
 		if (wavesPast100 <= 900) return wavesPast100;
-		return 900 + (wavesPast100 - 900) / 4;
+		return 900 + (wavesPast100 - 900) / 2;
 	}
 
 	// ENDLESS MODE: POWER BUDGET SYSTEM - Generate waves 101+
@@ -467,17 +470,20 @@ export class Area {
 		} else {
 			const base = Math.pow(1.00558, 1300); // anchor at wave 1400
 			const extra = ewp - 1300;
-			hpMult = base * Math.pow(extra / 100 + 1, 1.3);
+			hpMult = base * Math.pow(extra / 100 + 1, 0.6);
 		}
-		const powerBudget = Math.floor(baseBudget * hpMult);
+		const powerBudget = Math.floor(baseBudget * hpMult * 0.775); // ~22.5% HP reduction (shifted W5200→W5000)
 		
 		// MOD: Speed scaling — gentle logarithmic curve (uses effective wp)
-		const speedMult = 1 + Math.log2(1 + ewp / 2500);
-		// MOD: Regeneration scaling — asymptotically approaches 5% of max HP/sec
-		const regenScale = 0.05 * ewp / (ewp + 3000);
+		const speedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500); // slowed: 30% speed scaling
+		// MOD: Regeneration scaling — flat percentage of max HP, no DPS-based cap
+		// Asymptotically approaches 3.33% of max HP/sec (reduced from 5%)
+		const regenScale = 0.0333 * ewp / (ewp + 3000);
 
-		// === ENEMY COUNT (matches UI display) ===
-		const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
+		// === ENEMY COUNT (asymptotic, hard cap 600 — deferred spawning handles perf) ===
+		const linearCount = Math.floor(20 + wavesPast100 * 1.2);
+		const asymptoticCount = Math.floor(200 + 600 * wavesPast100 / (wavesPast100 + 3000));
+		const totalEnemyCount = Math.min(linearCount, asymptoticCount, 600);
 
 		// === SEEDED RANDOM FOR CONSISTENT WAVES ===
 		const seed = wave * 12345;
@@ -546,12 +552,13 @@ export class Area {
 		// MOD: Stack multiple enemies at the same spawn point so they arrive as packs.
 		// "stackSize" = how many enemies share one spawn slot (increases with wave).
 		// "slotGap" = pixels between each spawn slot (stays readable).
+		// MOD: Stream-style spawning — enemies spread out for visual density
+		// Small stacks (max 3) with wider gaps create a steady stream, not a clump
 		// Wave 101: 1 per slot, 25px gap (vanilla feel)
-		// Wave 200: 2 per slot, 20px gap (pairs arrive together)
-		// Wave 500: 5 per slot, 14px gap (dense packs)
-		// Wave 1000+: 10 per slot, 10px gap (swarms)
-		const stackSize = Math.min(10, 1 + Math.floor(wavesPast100 / 50));
-		const slotGap = Math.max(10, 25 - Math.floor(wavesPast100 / 40));
+		// Wave 600: 2 per slot, 20px gap (pairs)
+		// Wave 1000+: 3 per slot, 15px gap (dense stream)
+		const stackSize = Math.min(3, 1 + Math.floor(wavesPast100 / 500));
+		const slotGap = Math.max(15, 25 - Math.floor(wavesPast100 / 200));
 
 		const waypointEnemy = this.waypoints[Math.floor(rng(rngCounter++) * this.waypoints.length)];
 
@@ -581,9 +588,9 @@ export class Area {
 				scaledArmor = Math.floor(scaledArmor * 2);
 			}
 
-			// MOD: Speed and regeneration scale with wave
+			// MOD: Speed and regeneration scale with wave — flat % of max HP, no cap
 			const scaledSpeed = template.speed * speedMult;
-			const scaledRegen = Math.floor(scaledHp * regenScale); // HP/sec proportional to max HP
+			const scaledRegen = Math.floor(scaledHp * regenScale);
 
 			// MOD: Cap invisible enemies per wave - excess become visible
 			let isInvisible = template.invisible || false;
@@ -742,23 +749,36 @@ export class Area {
 		const ewp = this.getEffectiveWP(wavesPast100);
 		const bonusSteps = Math.floor((wave - 1) / 5);
 		let bossHpMult = 1 + 0.02 * bonusSteps;
-		bossHpMult *= Math.pow(2, ewp / 335); // MOD: Stretched boss scaling (uses effective wp)
+		// MOD: Boss HP scaling — exponential up to ewp 1500, polynomial tail after
+		// Prevents astronomical HP at very high waves while keeping 100-2200 unchanged
+		if (ewp <= 1500) {
+			bossHpMult *= Math.pow(2, ewp / 335);
+		} else {
+			const anchor = Math.pow(2, 1500 / 335); // ~22.3x at ewp=1500
+			const extra = ewp - 1500;
+			bossHpMult *= anchor * Math.pow(extra / 200 + 1, 0.85);
+		}
 
-		// MOD: Boss HP divided by sqrt(bossCount) — prevents late-game boss waves
-		// from being impossible due to sheer numbers (50 bosses at wave 5000)
-		const bossCountFactor = 1 / Math.sqrt(Math.max(1, bossCount));
-		const bossHp = Math.floor(boss.hp * bossHpMult * 2 * bossCountFactor);
+		// MOD: Boss HP divided by bossCount^(2/3) — stronger reduction than sqrt
+		// sqrt(52) = 7.2x reduction, cbrt(52^2) = 13.9x reduction
+		// Prevents late-game boss waves from being impossible due to sheer numbers
+		const bossCountFactor = 1 / Math.pow(Math.max(1, bossCount), 2/3);
+		const bossHp = Math.floor(boss.hp * bossHpMult * 2 * bossCountFactor * 0.775); // shifted W5200→W5000
 
-		// MOD: Boss speed and regen scaling — matches regular enemy formulas
-		const bossSpeedMult = 1 + Math.log2(1 + ewp / 2500);
-		const bossRegenScale = 0.05 * ewp / (ewp + 3000);
+		// MOD: Boss speed and regen scaling
+		const bossSpeedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500); // slowed: 30% speed scaling
+		// MOD: Boss regen at 1.67% asymptotic (reduced from 2.5%)
+		const bossRegenScale = 0.0167 * ewp / (ewp + 3000);
+		// MOD: Boss regen — flat percentage of max HP, no DPS-based cap
+		const escortCount = Math.min(100, Math.floor((wave - 200) / 50) * 5);
+		const bossRegen = Math.max(boss.regeneration || 0, Math.floor(bossHp * bossRegenScale));
 
 		const scaledBoss = {
 			...boss,
 			hp: bossHp,
 			armor: Math.floor((boss.armor || 0) * (1 + 0.03 * ewp)),
 			speed: boss.speed * bossSpeedMult,
-			regeneration: Math.max(boss.regeneration || 0, Math.floor(bossHp * bossRegenScale)),
+			regeneration: bossRegen,
 			gold: Math.floor(boss.gold * (1 + wavesPast100 * 0.11))
 		};
 
@@ -780,19 +800,23 @@ export class Area {
 		}
 
 		// MOD: Add scaled escort enemies at wave 300+
+		// Escort count scales slower and caps at 100 to prevent overwhelming numbers
 		if (wave >= 300) {
-			const escortCount = Math.floor((wave - 200) / 50) * 5;
 			const escortTypes = this.getEscortTypes(wave, 3);
+
+			// Escorts get HP scaled down by escort count (gentler than bosses — escorts are the real threat)
+			const escortCountFactor = 1 / Math.pow(Math.max(1, escortCount), 0.35);
 
 			for (let i = 0; i < escortCount && escortTypes.length > 0; i++) {
 				const escortTemplate = escortTypes[i % escortTypes.length];
-				const escortHp = Math.floor(escortTemplate.hp * bossHpMult * 1.5);
+				const escortHp = Math.floor(escortTemplate.hp * bossHpMult * 0.75 * escortCountFactor * 0.775); // Escorts = balanced support threats
+				const escortRegen = Math.max(escortTemplate.regeneration || 0, Math.floor(escortHp * bossRegenScale));
 				const scaledEscort = {
 					...escortTemplate,
 					hp: escortHp,
 					armor: Math.floor((escortTemplate.armor || 0) * (1 + 0.03 * ewp)),
 					speed: escortTemplate.speed * bossSpeedMult,
-					regeneration: Math.max(escortTemplate.regeneration || 0, Math.floor(escortHp * bossRegenScale)),
+					regeneration: escortRegen,
 					gold: Math.floor(escortTemplate.gold * (1 + wavesPast100 * 0.11))
 				};
 

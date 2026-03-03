@@ -328,7 +328,7 @@ MOD_FEATURES = {
     'deltatime': {
         'name': 'Delta Time & Performance',
         'description': 'Sub-stepping simulation, accurate projectile timing, squared-distance checks, batch removal, throttled UI, cached draws',
-        'functions': ['apply_tower_deltatime', 'apply_projectile_scaling'],
+        'functions': ['apply_tower_deltatime', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'], 
         'default': True,
     },
     'devtools': {
@@ -1545,6 +1545,43 @@ def apply_projectile_scaling():
     
     log_fail("Projectile.js: modded file not found")
     return False
+
+# ============================================================================
+# PROJECTILE.JS - Projectile speed scales with attack rate (surgical)
+# ============================================================================
+def apply_projectile_speed_scaling():
+    """Scale projectile speed with tower attack speed so fast enemies can't outrun bullets."""
+    path = JS_ROOT / "game" / "component" / "Projectile.js"
+    content = read_file(path)
+
+    if "projectile speed with attack rate" in content:
+        log_skip("Projectile.js: Projectile speed scaling")
+        return True
+
+    old = """        const rawSpeed = projectile.speed ?? 5;
+        this.speed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed; 
+"""
+
+    new = """        const rawSpeed = projectile.speed ?? 5;
+        let baseSpeed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed;
+
+        // MOD: Scale projectile speed with attack rate — faster attacks = faster projectiles
+        // Smooth linear ramp: 1x at 500ms, 2x at 50ms (no overshooting)
+        if (tower?.speed && tower.speed < 500) {
+            const t = (500 - tower.speed) / 450; // 0..1 from 500ms→50ms
+            baseSpeed *= (1 + 1 * t); // 1x → 2x
+        }
+        this.speed = baseSpeed;
+"""
+
+    if old not in content:
+        log_fail("Projectile.js: Projectile speed scaling", "pattern not found")
+        return False
+
+    content = content.replace(old, new)
+    write_file(path, content)
+    log_success("Projectile.js: Projectile speed scaling (attack rate)")
+    return True
 
 # ============================================================================
 # MAIN.JS - Enable DevTools with F12

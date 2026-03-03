@@ -19,7 +19,7 @@ export class UI {
 		this.damageDealtType = 'trueDamage';  // RESTORED: Vanilla damage type toggle
 		this.enemyPositionDisplay = 0;
 		this.tileTerrainHover = null;
-		
+
 		// ENDLESS MOD: Wave Info Panel (bottom-left) - default off
 		this.waveInfoDisplay = false;
 
@@ -34,14 +34,14 @@ export class UI {
 		this.saveTeamButton = [];
 		for (let i = 0; i < 5; i++) {
 			this.saveTeamButton[i] = new Element(this.saveTeamButtonContainer, { className: 'ui-save-team-button', text: `#${i+1}` }).element;
-			this.saveTeamButton[i].addEventListener('mouseenter', () => { 
+			this.saveTeamButton[i].addEventListener('mouseenter', () => {
 				playSound('open', 'ui');
 				if (this.main.tooltip) this.main.tooltip.showText('Save');
 			})
-			this.saveTeamButton[i].addEventListener('mouseleave', () => { 
+			this.saveTeamButton[i].addEventListener('mouseleave', () => {
 				if (this.main.tooltip) this.main.tooltip.hide();
 			})
-			this.saveTeamButton[i].addEventListener('click', () => { 
+			this.saveTeamButton[i].addEventListener('click', () => {
 				this.saveTeamButtonHandle(i);
 			});
 		}
@@ -51,14 +51,14 @@ export class UI {
 		this.importTeamButton = [];
 		for (let i = 0; i < 5; i++) {
 			this.importTeamButton[i] = new Element(this.importTeamButtonContainer, { className: 'ui-import-team-button', text: `#${i+1}` }).element;
-			this.importTeamButton[i].addEventListener('mouseenter', () => { 
+			this.importTeamButton[i].addEventListener('mouseenter', () => {
 				playSound('open', 'ui');
 				if (this.main.tooltip) this.main.tooltip.showText('Load');
 			})
-			this.importTeamButton[i].addEventListener('mouseleave', () => { 
+			this.importTeamButton[i].addEventListener('mouseleave', () => {
 				if (this.main.tooltip) this.main.tooltip.hide();
 			})
-			this.importTeamButton[i].addEventListener('click', () => { 
+			this.importTeamButton[i].addEventListener('click', () => {
 				this.importTeamButtonHandle(i);
 			});
 		}
@@ -121,7 +121,7 @@ export class UI {
 		this.tilesCountContainer = new Element(this.bottomBar, { className: 'ui-tiles-count-container' }).element;
 		this.tilesCount = [];
 		this.tilesCountNum = [0, 0, 0, 0];
-		
+
 		for (let i = 0; i < 4; i++) {
 			this.tilesCount[i] = new Element(this.tilesCountContainer, { className: 'ui-tiles-count' }).element;
 			this.tilesCount[i].addEventListener('mouseenter', () => {
@@ -195,7 +195,7 @@ export class UI {
 					if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
 					if (this.main.team.pokemon[i].isDeployed) {
 						this.main.team.pokemon[i].isDeployed = false;
-					
+
 						// RETIRAR TORRE
 						const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this.main.team.pokemon[i]);
 						this.tilesCountNum[this.main.area.towers[index].tile.land-1]--;
@@ -237,7 +237,7 @@ export class UI {
 			this.section[section] = new Element(this.sectionContainer, { className: 'ui-section' }).element;
 			this.section[section].img = new Element(this.section[section], { className: 'ui-section-img', image: `./src/assets/images/icons/${section}.png` }).element;
 			this.section[section].addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		}) 
+		})
 
 		this.section['profile'].addEventListener('click', () => { this.main.profileScene.open() });
 		this.section['box'].addEventListener('click', () => { this.main.boxScene.open() });
@@ -247,7 +247,7 @@ export class UI {
 		this.section['challenge'].addEventListener('click', () => { this.main.challengeScene.open()  });
 		this.section['damageDealt'].addEventListener('click', () => { this.damageDealtSwitch() });
 		this.section['menu'].addEventListener('click', () => { this.main.menuScene.open() });
-		
+
 		this.mapPanelBackground = new Element(this.mapPanel, { className: 'ui-map-panel-background' }).element;
 		this.mapWavePokemonContainer = new Element(this.mapPanelBackground, { className: 'ui-map-wave-pokemon-container' }).element;
 		this.mapWavePokemon = [];
@@ -315,25 +315,25 @@ export class UI {
 			this.damageDealtUnit[i].barContainer = new Element(this.damageDealtUnit[i], { className: 'ui-damage-dealt-unit-bar-container' }).element;
 			this.damageDealtUnit[i].barPrevious = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar-previous' }).element;
 			this.damageDealtUnit[i].bar = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar' }).element;
-		}	
+		}
 
 		this.secretCacnea = new Element(this.main.scene, { className: 'secret-cacnea' }).element;
-		this.secretCacnea.addEventListener('click', () => { 
+		this.secretCacnea.addEventListener('click', () => {
 			this.secretCacnea.style.pointerEvents = 'none';
 			this.main.player.secrets.cacnea = true;
 			this.getSecret('cacnea');
 		});
 		this.secretGreavard = new Element(this.main.scene, { className: 'secret-greavard' }).element;
-		this.secretGreavard.addEventListener('click', () => { 
+		this.secretGreavard.addEventListener('click', () => {
 			this.secretGreavard.style.pointerEvents = 'none';
 			this.main.player.secrets.greavard = true;
-			this.getSecret('greavard'); 
+			this.getSecret('greavard');
 		});
 		// this.secretAipom = new Element(this.main.scene, { className: 'secret-aipom' }).element;
-		// this.secretAipom.addEventListener('click', () => { 
+		// this.secretAipom.addEventListener('click', () => {
 		// 	this.secretAipom.style.pointerEvents = 'none';
 		// 	this.main.player.secrets.greavard = true;
-		// 	this.getSecret('aipom'); 
+		// 	this.getSecret('aipom');
 		// });
 	}
 
@@ -364,7 +364,7 @@ export class UI {
 		this.waveSelectorLabel.innerText = text.ui.waveManager[this.main.lang].toUpperCase();
 		// ENDLESS MODE: Show wave selector if record >= 100 (not just exactly 100)
 		if (!this.main.area.inChallenge && this.main.player.records[this.main.area.map.id] >= 100 && this.main.player.hasBike) this.waveSelectorContainer.style.display = 'revert-layer';
-		
+
 		this.musicContainer.style.display = 'none';
 		if (this.main.player.hasSubwoofer) {
 			this.musicContainer.style.display = 'revert-layer';
@@ -380,7 +380,7 @@ export class UI {
 			(this.main.team.pokemon.length + this.main.box.pokemon.length) > 30
 		) {
 			this.section['challenge'].style.opacity = 1;
-			this.section['challenge'].style.pointerEvents = 'revert-layer';	
+			this.section['challenge'].style.pointerEvents = 'revert-layer';
 		} else {
 			this.section['challenge'].style.opacity = 0.4;
 			this.section['challenge'].style.pointerEvents = 'none';
@@ -435,7 +435,7 @@ export class UI {
 		}
 
 		if (
-			this.main.area.routeNumber == 4 && 
+			this.main.area.routeNumber == 4 &&
 			//!this.main.area.waveActive &&
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.cacnea
@@ -443,10 +443,10 @@ export class UI {
 			this.secretCacnea.style.pointerEvents = 'revert-layer';
 		} else {
 			this.secretCacnea.style.pointerEvents = 'none';
-		} 
+		}
 
 		if (
-			this.main.area.routeNumber == 2 && 
+			this.main.area.routeNumber == 2 &&
 			//!this.main.area.waveActive &&
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.greavard
@@ -468,14 +468,14 @@ export class UI {
 			this.waveInfoPanel.style.display = 'none';
 			return;
 		}
-		
+
 		this.waveInfoPanel.style.display = 'block';
-		
+
 		// Wave number
 		const waveNum = this.main.area.waveNumber;
 		const isEndless = waveNum > 100;
 		this.waveInfoWave.innerHTML = `WAVE ${waveNum}${isEndless ? ' <span style="color:#e94560;">(Γê₧)</span>' : ''}`;
-		
+
 		// Enemies remaining
 		const enemiesRemaining = this.main.area.enemies?.length || 0;
 		const waveActive = this.main.area.waveActive;
@@ -484,7 +484,7 @@ export class UI {
 		} else {
 			this.waveInfoEnemies.innerHTML = `<span style="color:#666;">Wave Complete</span>`;
 		}
-		
+
 		// Time elapsed (if wave is active)
 		if (waveActive && this.main.area.waveStartTime) {
 			const elapsed = Math.floor((Date.now() - this.main.area.waveStartTime) / 1000);
@@ -540,7 +540,7 @@ export class UI {
 			this.pokemon[i].sprite.style.cursor = "";
 			this.pokemon[i].style.transform = `revert-layer`
 			this.pokemon[i].sprite.style.transform = `revert-layer`
-			
+
 			this.pokemon[i].item.style.background = "revert-layer";
 			this.pokemon[i].item.style.pointerEvents = 'none';
 			this.pokemon[i].item.style.display = 'none';
@@ -575,13 +575,13 @@ export class UI {
 		this.main.team.pokemon.forEach((pokemon, i) => {
 			this.pokemon[i].noPokemon.style.display = 'none';
 			this.pokemon[i].name.innerText = (pokemon.alias != undefined) ? pokemon.alias.toUpperCase() : pokemon.name[this.main.lang].toUpperCase();
-			
+
 			if (pokemon.id == 70) this.pokemon[i].dittoBg.style.display = 'revert-layer';
-	
+
 			if (typeof this.main.area.inChallenge.lvlCap == 'number') {
 				this.pokemon[i].level.innerText = `Lv ${Math.min(pokemon.lvl, this.main.area.inChallenge.lvlCap)}`;
 			} else this.pokemon[i].level.innerText = `Lv ${pokemon.lvl}`;
-			
+
 			this.pokemon[i].sprite.style.backgroundImage = `url("${pokemon.sprite.base}")`;
 			if (pokemon.item != undefined) {
 				this.pokemon[i].item.innerText = '';
@@ -592,7 +592,7 @@ export class UI {
 				}
 			}
 			if (pokemon.isShiny) this.pokemon[i].shiny.style = 'revert-layer';
-			
+
 			this.pokemon[i].sprite.style.cursor = "grab";
 			this.damageDealtUnit[i].sprite.style.display = 'revert-layer';
 			this.damageDealtUnit[i].number.style.display = 'revert-layer';
@@ -635,7 +635,7 @@ export class UI {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
-				this.pokemon[i].deploy.style.background = 
+				this.pokemon[i].deploy.style.background =
 					`url("./src/assets/images/icons/pokeball-open.png") center / 50% no-repeat, linear-gradient(180deg,rgba(178, 61, 39, 1) 0%, rgba(157, 56, 41, 1) 100%)`
 			}
 		})
@@ -644,7 +644,7 @@ export class UI {
 			this.pokemon[i].noPokemon.style.display = 'none';
 			this.pokemon[i].style.background = 'rgba(0, 0, 0, 0.55)';
 			this.pokemon[i].name.innerText = text.ui.locked[this.main.lang].toUpperCase();
-			this.pokemon[i].stars.style.display = 'revert-layer';		
+			this.pokemon[i].stars.style.display = 'revert-layer';
 		}
 
 		if (typeof this.main.area.inChallenge.slotLimit == 'number') {
@@ -654,7 +654,7 @@ export class UI {
 		}
 
 		this.pokemon.forEach((slot, i) => {
-	        slot.dataset.index = i;  
+	        slot.dataset.index = i;
 	    });
 
 	    this.setupPokemonDragAndDrop();
@@ -742,7 +742,7 @@ export class UI {
 
 							if (ditto.adn && [58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
 							if (this.main.team.pokemon[0] === ditto) {
-								// Ditto is now slot 1 — revert to base form
+								// Ditto is now slot 1 - revert to base form
 								ditto.adn = undefined;
 								ditto.sprite = JSON.parse(JSON.stringify(ditto.specie.sprite));
 								ditto.ability = ditto.specie.ability;
@@ -882,7 +882,7 @@ export class UI {
 			enemy = wavePreview[0];
 			pos = 0;
 		}
-		
+
 		this.mapWavePokemon.forEach((pokemon, i) => {
 			pokemon.style.filter = `brightness(0.8)`;
 			if (pos === i) pokemon.style.filter = `brightness(1) drop-shadow(0 0 1px white)`;
@@ -901,44 +901,49 @@ export class UI {
 		if (wave > 100 && wave % 100 !== 0) {
 			// Match spawnEndlessWave calculation exactly
 			const wavesPast100 = wave - 100;
-			// MOD: Effective wp — identical up to wave 1000, compressed 4x after
-			const ewp = wavesPast100 <= 900 ? wavesPast100 : 900 + (wavesPast100 - 900) / 4;
+			// MOD: Flat /2 compression - matches Area.modded.js getEffectiveWP()
+			let ewp;
+			if (wavesPast100 <= 900) ewp = wavesPast100;
+			else ewp = 900 + (wavesPast100 - 900) / 2;
 			const baseBudget = 160000; // Matches Area.modded.js
 			let hpMult;
-			// MOD: Stretched scaling — matches Area.modded.js (uses effective wp)
+			// MOD: Stretched scaling - matches Area.modded.js (uses effective wp)
 			if (ewp <= 1300) {
 				hpMult = Math.pow(1.00558, ewp);
 			} else {
 				const base = Math.pow(1.00558, 1300);
 				const extra = ewp - 1300;
-				hpMult = base * Math.pow(extra / 100 + 1, 1.3);
+				hpMult = base * Math.pow(extra / 100 + 1, 0.6);
 			}
-			const powerBudget = Math.floor(baseBudget * hpMult);
-			const totalEnemyCount = Math.floor(20 + wavesPast100 * 1.2);
-			
+			const powerBudget = Math.floor(baseBudget * hpMult * 0.775); // shifted W5200→W5000
+			// MOD: Asymptotic enemy count - matches Area.modded.js
+			const linearCount = Math.floor(20 + wavesPast100 * 1.2);
+			const asymptoticCount = Math.floor(200 + 600 * wavesPast100 / (wavesPast100 + 3000));
+			const totalEnemyCount = Math.min(linearCount, asymptoticCount, 600);
+
 			// Get wave preview (same as spawning)
 			const templateWaveNum = ((wave - 1) % 100) + 1;
 			const waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
 			const endlessPreview = waveData?.preview || [enemy];
-			
+
 			// Calculate inverse HP distribution (same as spawning)
 			const hpValues = endlessPreview.map(p => p.hp || 100);
 			const inverseHp = hpValues.map(h => 1 / h);
 			const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
 			const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
-			
+
 			// Calculate total base HP of all enemies that will spawn
 			let totalBaseHp = 0;
 			endlessPreview.forEach((p, idx) => {
 				totalBaseHp += (p.hp || 100) * enemyCounts[idx];
 			});
-			
+
 			// HP scale factor (same as spawning)
 			const hpScaleFactor = powerBudget / totalBaseHp;
-			
-			// MOD: Minimum HP floor — matches Area.modded.js spawning logic
+
+			// MOD: Minimum HP floor - matches Area.modded.js spawning logic
 			const minHpPerEnemy = Math.floor(powerBudget / totalEnemyCount);
-			
+
 			// MOD: Exact per-type stats matching what spawns in Area.modded.js
 			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
 			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
@@ -946,32 +951,50 @@ export class UI {
 			if (armor === 0) {
 				armor = Math.floor(hp * 0.05);
 			}
-			
-			// MOD: Speed scaling — matches Area.modded.js (uses effective wp)
-			const speedMult = 1 + Math.log2(1 + ewp / 2500);
+
+			// MOD: Speed scaling - matches Area.modded.js (uses effective wp)
+			const speedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500);
 			speed = +(enemy.speed * speedMult).toFixed(2);
-			
-			// MOD: Regen scaling — ALL enemies get regen proportional to max HP
-			// Asymptotically approaches 5% of max HP/sec (uses effective wp)
-			const regenScale = 0.05 * ewp / (ewp + 3000);
+
+			// MOD: Regen scaling — flat percentage of max HP, no DPS-based cap
+			// Asymptotically approaches 3.33% of max HP/sec (reduced from 5%)
+			const regenScale = 0.0333 * ewp / (ewp + 3000);
 			regeneration = Math.max(enemy.regeneration || 0, Math.floor(hp * regenScale));
-			
+
 			// Gold scales linearly: 100x at wave 1000
 			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
 		} else if (wave % 100 === 0 && wave > 100) {
-			// MOD: Boss waves — uses effective wp + sqrt(bossCount) divisor
+			// MOD: Boss waves - uses effective wp + bossCount^(2/3) divisor
 			const bossWP = wave - 100;
-			const bossEWP = bossWP <= 900 ? bossWP : 900 + (bossWP - 900) / 4;
+			let bossEWP;
+			if (bossWP <= 900) bossEWP = bossWP;
+			else bossEWP = 900 + (bossWP - 900) / 2;
 			const bossCount = Math.floor(wave / 100);
 			let hpMult = 1 + 0.02 * bonusSteps;
-			hpMult *= Math.pow(2, bossEWP / 335); // MOD: Stretched boss scaling — uses effective wp
-			const bossCountFactor = 1 / Math.sqrt(Math.max(1, bossCount));
-			hp = Math.floor(enemy.hp * hpMult * 2 * bossCountFactor);
+			// MOD: Boss HP - exponential up to ewp 1500, polynomial tail after
+			if (bossEWP <= 1500) {
+				hpMult *= Math.pow(2, bossEWP / 335);
+			} else {
+				const anchor = Math.pow(2, 1500 / 335);
+				const extra = bossEWP - 1500;
+				hpMult *= anchor * Math.pow(extra / 200 + 1, 0.85);
+			}
+			const bossCountFactor = 1 / Math.pow(Math.max(1, bossCount), 2/3);
+			const escortCount = Math.min(100, Math.floor((wave - 200) / 50) * 5);
+			const escortCountFactor = 1 / Math.pow(Math.max(1, escortCount), 0.35);
+			// MOD: Check if this enemy is boss (index 0) or escort (index 1+) in preview
+			const isBossEnemy = (pos === 0);
+			if (isBossEnemy) {
+				hp = Math.floor(enemy.hp * hpMult * 2 * bossCountFactor * 0.775);
+			} else {
+				hp = Math.floor(enemy.hp * hpMult * 0.75 * escortCountFactor * 0.775); // Escorts = balanced support threats
+			}
 			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * bossEWP));
-			// MOD: Boss speed and regen scaling — matches Area.modded.js
-			const bossSpeedMult = 1 + Math.log2(1 + bossEWP / 2500);
+			// MOD: Boss speed and regen scaling - matches Area.modded.js
+			const bossSpeedMult = 1 + 0.3 * Math.log2(1 + bossEWP / 2500);
 			speed = +(enemy.speed * bossSpeedMult).toFixed(2);
-			const bossRegenScale = 0.05 * bossEWP / (bossEWP + 3000);
+			// MOD: Boss regen at 1.67% asymptotic — flat % of max HP, no DPS-based cap
+			const bossRegenScale = 0.0167 * bossEWP / (bossEWP + 3000);
 			regeneration = Math.max(enemy.regeneration || 0, Math.floor(hp * bossRegenScale));
 			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
 		} else if (bonusSteps > 0) {
@@ -979,7 +1002,7 @@ export class UI {
 			let hpMult = 1 + 0.02 * bonusSteps;
 			let armorMult = 1 + 0.01 * bonusSteps;
 			let goldMult = 1 + 0.15 * bonusSteps;
-			
+
 			hp = Math.floor(enemy.hp * hpMult);
 			armor = Math.floor(enemy.armor * armorMult);
 			gold = Math.floor(gold * goldMult);
@@ -990,7 +1013,7 @@ export class UI {
 			armor += Math.floor(armor * (this.main.area.inChallenge.toughEnemies / 100));
 		}
 
-		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
+		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase();
 		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${hp}</span>`;
 		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${armor || 0}</span>`;
 		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${speed}</span>`;
@@ -1016,11 +1039,11 @@ export class UI {
 		} else {
 			this.infoPassive.style.display = 'none';
 		}
-		
+
 		this.infoStun.innerHTML += (enemy.canStun) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
 		this.infoSlow.innerHTML += (enemy.canSlow) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
 		this.infoBurn.innerHTML += (enemy.canBurn) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
-		this.infoPoison.innerHTML += (enemy.canPoison) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`	
+		this.infoPoison.innerHTML += (enemy.canPoison) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
 
 		this.enemyPositionDisplay = pos;
 	}
@@ -1039,10 +1062,10 @@ export class UI {
 			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
 			waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
 			wavePreview = waveData?.preview;
-			
+
 			// Boss wave override (every 100 waves)
 			if (this.main.area.waveNumber % 100 === 0 && this.main.area.waveNumber > 100) {
-				const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon', 
+				const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon',
 					'registeel', 'regice', 'regigigas', 'zapdos', 'hooh', 'articuno'];
 				const bossKey = BOSS_KEYS[this.main.area.routeNumber] || 'shaymin';
 				const boss = this.main.area.main.area.waves[100]?.preview?.[0];
@@ -1057,7 +1080,7 @@ export class UI {
 			}
 		}
 		let pokemonCount = waveData ? this.countPokemon(waveData) : {};
-		
+
 		// ENDLESS MODE: Override enemy count for waves > 100
 		const wave = this.main.area.waveNumber;
 		if (wave > 100 && wavePreview) {
@@ -1077,8 +1100,10 @@ export class UI {
 					return count;
 				});
 			} else {
-				// Regular endless waves: 20 + wavesPast100 * 1.2
-				const totalEnemies = Math.floor(20 + wavesPast100 * 1.2);
+				// Regular endless waves: asymptotic count matching Area.modded.js
+				const linCount = Math.floor(20 + wavesPast100 * 1.2);
+				const asyCount = Math.floor(200 + 300 * wavesPast100 / (wavesPast100 + 2000));
+				const totalEnemies = Math.min(linCount, asyCount);
 				// Distribute count inversely by HP (more weak enemies, fewer strong ones)
 				const hpValues = wavePreview.map(p => p.hp || 100);
 				const inverseHp = hpValues.map(hp => 1 / hp);
@@ -1101,7 +1126,7 @@ export class UI {
 		wavePreview.forEach((pokemon, i) => {
 			this.mapWavePokemon[i] = new Element(this.mapWavePokemonContainer, { className: 'ui-map-wave-pokemon', image: pokemon.sprite.base }).element;
 			this.mapWavePokemon[i].style.width = `${slotWidth}px`;
-			this.mapWavePokemon[i].addEventListener('click', () => { 
+			this.mapWavePokemon[i].addEventListener('click', () => {
 				playSound('click1', 'ui');
 				this.displayEnemyInfo(pokemon, i);
 			})
@@ -1119,11 +1144,11 @@ export class UI {
 
 		this.autoWave.innerHTML = text.ui.autoWave[this.main.lang].toUpperCase();
 		this.nextWave.innerText = text.ui.nextWave[this.main.lang].toUpperCase();
-	
+
 		this.autoWave.style.filter = `revert-layer`;
 		this.autoWave.style.pointerEvents = `revert-layer`;
 		this.speedWave.style.filter = `revert-layer`;
-		this.speedWave.style.pointerEvents = `revert-layer`;	
+		this.speedWave.style.pointerEvents = `revert-layer`;
 
 		if (this.main.area.waveActive) {
 			this.nextWave.style.filter = `brightness(0.8)`;
@@ -1157,7 +1182,7 @@ export class UI {
 			if (pokemon.damageDealt > 0) {
 				const per = Math.ceil((pokemon.damageDealt/this.main.area.totalDamageDealt)*100)
 				this.damageDealtUnit[i].number.innerHTML = `
-					${this.main.utility.numberDot(pokemon.damageDealt, this.main.lang)} 
+					${this.main.utility.numberDot(pokemon.damageDealt, this.main.lang)}
 					<span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(${per}%)</span>
 				`;
 				this.damageDealtUnit[i].bar.style.width = `${per}%`;
@@ -1171,7 +1196,7 @@ export class UI {
 		});
 	}
 
-	refreshDamageDealt(force = false) {	
+	refreshDamageDealt(force = false) {
 		for (let i = 0; i < 10; i++) {
 			if (this.main.team.pokemon[i]) this.main.team.pokemon[i].damageDealt = 0;
 			this.damageDealtUnit[i].number.innerHTML = `0 <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(0%)</span>`;
@@ -1241,17 +1266,17 @@ export class UI {
 		this.main.player.stats.pokemonOwned++;
 		this.main.player.stats.totalPokemonLevel++;
 		this.main.player.achievementProgress.evolutionCount++;
-		
+
 		if (this.main.player.achievementProgress.evolutionCount === 210) this.main.player.unlockAchievement(1);
 
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
-		this.main.UI.update();	
+		this.main.UI.update();
 	}
 
 	importTeamButtonHandle(i) {
 		if (!this.main.area.inChallenge && this.main.teamManager.teams[i][this.main.area.routeNumber].length == 0) return
 		if (this.main.area.inChallenge && this.main.teamManager.teamChallenge[i].length == 0) return
-			
+
 		const msg = new Element(this.main.scene, {
 			className: 'team-saved-message',
 			text: text.ui.loadTeam[this.main.lang].toUpperCase()
@@ -1267,8 +1292,8 @@ export class UI {
 			setTimeout(() => msg.remove(), 500);
 		}, 1500);
 
-		if (this.main.area.inChallenge) this.main.teamManager.importTeam(i, true); 
-		else this.main.teamManager.importTeam(i); 
+		if (this.main.area.inChallenge) this.main.teamManager.importTeam(i, true);
+		else this.main.teamManager.importTeam(i);
 	}
 
 	saveTeamButtonHandle(i) {
@@ -1287,8 +1312,8 @@ export class UI {
 			setTimeout(() => msg.remove(), 500);
 		}, 1500);
 
-		if (this.main.area.inChallenge) this.main.teamManager.saveTeam(i, true); 
-		else this.main.teamManager.saveTeam(i); 
+		if (this.main.area.inChallenge) this.main.teamManager.saveTeam(i, true);
+		else this.main.teamManager.saveTeam(i);
 	}
 
 	waveSelectorBlockHandle() {
@@ -1337,7 +1362,7 @@ class FastScene {
 		this.pokemonArray = [];
 		this.itemArray = [];
 
-		this.render(); 
+		this.render();
 	}
 
 	render() {
@@ -1345,7 +1370,7 @@ class FastScene {
 		this.window.className = 'item-scene-window';
 
         this.container = new Element(this.window, { className: 'fast-scene-container' }).element;
-        this.prompt = new Element(this.window, { className: 'fast-scene-prompt' }).element; 
+        this.prompt = new Element(this.window, { className: 'fast-scene-prompt' }).element;
 
         //ITEM
         this.itemSlot = [];
@@ -1446,23 +1471,23 @@ class FastScene {
 			case 'id':
 				if (item.restriction[key].includes(pokemon.id)) return true;
 				break;
-			case 'idForbidden':	
+			case 'idForbidden':
 				if (!item.restriction[key].includes(pokemon.id)) return true;
 				break;
-			case 'tile': 
-				if (pokemon.id == 70) return false;	
+			case 'tile':
+				if (pokemon.id == 70) return false;
 				if (item.restriction[key].some(tile => pokemon.tiles.includes(tile))) return true;
 				break;
 			case 'tileForbidden':
-				if (pokemon.id == 70) return false;	
+				if (pokemon.id == 70) return false;
 				if (!item.restriction[key].some(tile => pokemon.tiles.includes(tile)))  return true;
 				break;
 			case 'attackType':
-				if (pokemon.id == 70) return false;	
+				if (pokemon.id == 70) return false;
 				if (item.restriction[key] == pokemon.attackType) return true;
 				break;
 			case 'rangeType':
-				if (pokemon.id == 70) return false;	
+				if (pokemon.id == 70) return false;
 				if (item.restriction[key] == pokemon.rangeType) return true;
 				break;
 		}

@@ -6,7 +6,15 @@ export class Projectile extends Sprite {
         super(x, y, ctx, projectile.sprite.image, projectile.sprite.frames);
 
         const rawSpeed = projectile.speed ?? 5;
-        this.speed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed; 
+        let baseSpeed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed;
+
+        // MOD: Scale projectile speed with attack rate — faster attacks = faster projectiles
+        // Smooth linear ramp: 1x at 500ms+ recharge, 10x at 50ms recharge
+        // Prevents high-wave enemies from outrunning bullets at machine-gun fire rates
+        if (tower?.speed && tower.speed < 500) {
+            baseSpeed *= (500 / tower.speed);
+        }
+        this.speed = baseSpeed;
 
         this.velocity = { x: 0, y: 0 };
         this.enemy = enemy;
