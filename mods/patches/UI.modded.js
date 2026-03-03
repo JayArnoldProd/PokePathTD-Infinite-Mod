@@ -1090,8 +1090,17 @@ export class UI {
 		this.mapWavePokemonContainer.innerHTML = "";
 		this.mapWavePokemon = [];
 		if (!wavePreview) return;
+
+		// MOD: Calculate slot width based on max digit count to prevent overlap
+		// Default 34px works for 1-3 digit counts; wider slots for 4+ digits
+		const allCounts = wavePreview.map((p, i) => wave > 100 ? (pokemonCount[i] || 0) : Math.max(0, (pokemonCount[i] || 1) - 1));
+		const maxCount = Math.max(1, ...allCounts);
+		const maxDigits = `x${maxCount}`.length; // e.g. "x1234" = 5 chars
+		const slotWidth = maxDigits > 4 ? Math.max(34, 20 + maxDigits * 7) : 34;
+
 		wavePreview.forEach((pokemon, i) => {
 			this.mapWavePokemon[i] = new Element(this.mapWavePokemonContainer, { className: 'ui-map-wave-pokemon', image: pokemon.sprite.base }).element;
+			this.mapWavePokemon[i].style.width = `${slotWidth}px`;
 			this.mapWavePokemon[i].addEventListener('click', () => { 
 				playSound('click1', 'ui');
 				this.displayEnemyInfo(pokemon, i);
