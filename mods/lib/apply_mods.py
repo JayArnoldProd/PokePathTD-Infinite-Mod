@@ -339,8 +339,8 @@ MOD_FEATURES = {
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix (no boost), projectile retargeting from tower position, off-screen target cleanup',
-        'functions': ['apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix'],
+        'description': 'Challenge level cap fix (no boost), projectile retargeting from tower position, off-screen target cleanup, Shell Bell / Clefairy Doll damage tracking fix',
+        'functions': ['apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
         'default': True,
     },
     'hidden_items': {
@@ -2247,6 +2247,38 @@ def apply_offscreen_target_fix():
         return True
     
     log_fail("Projectile.js: Off-screen target fix", "insertion marker not found")
+    return False
+
+
+def apply_shellbell_fix():
+    """Fix vanilla bug: Shell Bell and Clefairy Doll never trigger.
+    
+    The vanilla game checks pokemon.trueDamageDealt but never increments it.
+    Only pokemon.damageDealt gets incremented. This adds the missing increment.
+    Skipped when Enemy.modded.js is installed (Endless mode already includes the fix).
+    """
+    path = JS_ROOT / "game" / "component" / "Enemy.js"
+    content = read_file(path)
+    
+    # Skip if Enemy.modded.js is installed (has the fix baked in)
+    if 'pokemon.trueDamageDealt += amount' in content:
+        log_skip("Enemy.js: Shell Bell / Clefairy Doll fix")
+        return True
+    
+    # Find the damageDealt increment line and add trueDamageDealt after it
+    old = "    this.main.area.totalDamageDealt += amount;\n\t    pokemon.damageDealt += amount;"
+    new = ("    this.main.area.totalDamageDealt += amount;\n"
+           "\t    this.main.area.totalTrueDamageDealt += amount;  // MOD: Fix vanilla bug\n"
+           "\t    pokemon.damageDealt += amount;\n"
+           "\t    pokemon.trueDamageDealt += amount;  // MOD: Fix Shell Bell / Clefairy Doll")
+    
+    if old in content:
+        content = content.replace(old, new, 1)
+        write_file(path, content)
+        log_success("Enemy.js: Shell Bell / Clefairy Doll fix (trueDamageDealt increment)")
+        return True
+    
+    log_fail("Enemy.js: Shell Bell fix", "damageDealt pattern not found")
     return False
 
 
