@@ -274,7 +274,6 @@ export class PokemonScene extends GameScene {
 		DATA.forEach(data => { this.data[data].label.innerText = text.pokemon[data][this.main.lang] });
 
 		if (this.pokemon?.item?.id == 'inverter' && this.pokemon?.ability?.id != 'defiant') {
-			console.log(this.pokemon?.ability?.id)
 			this.window.style.transform = `translate(-50%, -50%) scale(1, -1)`;
 		} else {
 			this.window.style.transform = `revert-layer`;

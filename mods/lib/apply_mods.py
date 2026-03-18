@@ -349,6 +349,12 @@ MOD_FEATURES = {
         'functions': ['apply_hidden_items'],
         'default': True,
     },
+    'allow_dupes': {
+        'name': 'Allow Duplicate Pokemon',
+        'description': 'Removes the team deduplication filter that prevents Pokemon sharing the same species ID (e.g. Cherubi/Cherrim both have ID 75)',
+        'functions': ['apply_allow_dupes'],
+        'default': True,
+    },
 }
 
 def log_success(name):
@@ -2921,6 +2927,87 @@ def _repack_game():
         return False
 
 # ============================================================================
+# TEAM.JS - Allow duplicate Pokemon IDs
+# ============================================================================
+def apply_allow_dupes():
+    """Remove the team deduplication filter that prevents duplicate species IDs.
+    
+    The vanilla game filters team members by specie.id, which means Pokemon that
+    share an ID (e.g. Cherubi and Cherrim both have id:75) can't coexist on a team.
+    This patch comments out the dedup filter.
+    """
+    path = JS_ROOT / "game" / "core" / "Team.js"
+    content = read_file(path)
+    
+    if '// MOD: Dedup filter removed' in content:
+        log_skip("Team.js: Allow dupes (already applied)")
+        return True
+    
+    # Find and comment out the dedup filter block
+    old_dedup = """		const seenIds = new Set();
+	    this.pokemon = this.pokemon.filter(p => {
+	        if (seenIds.has(p.id)) return false; // duplicado
+	        seenIds.add(p.id);
+	        return true;
+	    });"""
+    
+    new_dedup = """		// MOD: Dedup filter removed — allow duplicate species IDs on team
+		// const seenIds = new Set();
+	    // this.pokemon = this.pokemon.filter(p => {
+	    //     if (seenIds.has(p.id)) return false;
+	    //     seenIds.add(p.id);
+	    //     return true;
+	    // });"""
+    
+    if old_dedup not in content:
+        # Try alternate formatting (tabs vs spaces)
+        old_dedup_alt = old_dedup.replace('	    ', '\t\t')
+        if old_dedup_alt in content:
+            content = content.replace(old_dedup_alt, new_dedup)
+        else:
+            log_fail("Team.js: Allow dupes - dedup block not found (game version may differ)")
+            return False
+    else:
+        content = content.replace(old_dedup, new_dedup)
+    
+    write_file(path, content)
+    log_success("Team.js: Allow duplicate Pokemon IDs")
+
+    # Also remove Box.js dedup filter — it filters box Pokemon against team IDs,
+    # which removes Pokemon like Cherubi (id:75) when Cherrim (id:75) is on team
+    box_path = JS_ROOT / "game" / "core" / "Box.js"
+    box_content = read_file(box_path)
+
+    if '// MOD: Box dedup filter removed' in box_content:
+        log_skip("Box.js: Allow dupes (already applied)")
+        return True
+
+    old_box_dedup = """        const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        this.pokemon = this.pokemon.filter(p => {
+            if (seenIds.has(p.id)) return false; 
+            seenIds.add(p.id); 
+            return true;
+        });"""
+
+    new_box_dedup = """        // MOD: Box dedup filter removed — allow duplicate species IDs in box
+        // const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        // this.pokemon = this.pokemon.filter(p => {
+        //     if (seenIds.has(p.id)) return false; 
+        //     seenIds.add(p.id); 
+        //     return true;
+        // });"""
+
+    if old_box_dedup not in box_content:
+        log_fail("Box.js: Allow dupes - dedup block not found (game version may differ)")
+        return False
+
+    box_content = box_content.replace(old_box_dedup, new_box_dedup)
+    write_file(box_path, box_content)
+    log_success("Box.js: Allow duplicate Pokemon IDs in box")
+    return True
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 def main():
@@ -3006,6 +3093,9 @@ def main():
     
     # Unlock hidden items (Magma Stone)
     apply_hidden_items()
+    
+    # Allow duplicate Pokemon IDs on team (Cherubi/Cherrim etc.)
+    apply_allow_dupes()
     
     # Apply userData redirect (modded saves isolation)
     apply_modded_userdata_redirect()

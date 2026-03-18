@@ -936,6 +936,8 @@ class App(tk.Tk):
             poke = self.save.get_pokemon_at_slot(self.selected_slot)
             if poke:
                 poke['specieKey'] = new_key
+                # Remove legacy specie object to prevent stale data conflicts
+                poke.pop('specie', None)
             else:
                 new_poke = self.poke_data.create_new_pokemon(new_key)
                 self.save.set_pokemon_at_slot(self.selected_slot, new_poke)

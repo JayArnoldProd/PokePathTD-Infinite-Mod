@@ -78,6 +78,9 @@ export class FinalScene extends GameScene {
 		this.prompt.innerHTML = text.final.prompt[this.main.lang].toUpperCase();
 		this.info.innerHTML = this.getText(this.main.lang).toUpperCase();
 
+		// Hide continue button during challenges — challenges end at wave 100
+		this.continueButton.style.display = this.main.area.inChallenge ? 'none' : '';
+
 		this.challenge = [];
 		this.challengeContainer.innerHTML = "";
 		this.challengeContainer.style.display = 'none';
@@ -154,8 +157,8 @@ export class FinalScene extends GameScene {
 
 		playSound('results', 'ui');
 
-		// AUTO-RESET: If set to "continue" mode (3), auto-continue to endless
-		if (this.main.autoReset === 3) {
+		// AUTO-RESET: If set to "continue" mode (3), auto-continue to endless (not during challenges)
+		if (this.main.autoReset === 3 && !this.main.area.inChallenge) {
 			this.continueEndless({ autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor });
 		}
 	}

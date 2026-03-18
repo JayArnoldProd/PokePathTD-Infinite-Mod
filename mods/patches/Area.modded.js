@@ -1,4 +1,4 @@
-﻿import { routeData } from '../data/routeData.js';
+import { routeData } from '../data/routeData.js';
 import { PlacementTile } from '../component/PlacementTile.js';
 import { Tower } from '../component/Tower.js';
 import { Element } from '../../utils/Element.js';
@@ -119,7 +119,8 @@ export class Area {
 		this.waveActive = false;
 
 		// MOD: Set endless mode flag if wave > 100 OR player has reached past 100 on this route
-		this.endlessMode = this.waveNumber > 100 || (this.main.player.records[routeNumber] || 0) > 100;
+		// Never enable endless mode during Challenge runs — challenges must end at wave 100
+		this.endlessMode = !this.inChallenge && (this.waveNumber > 100 || (this.main.player.records[routeNumber] || 0) > 100);
 
 		if (!keepTowers) {
 			this.placementTiles = [];
@@ -376,6 +377,7 @@ export class Area {
 
 	// MOD: Enable endless mode - called from FinalScene continue button
 	enableEndlessMode() {
+		if (this.inChallenge) return; // Challenges must end at wave 100
 		this.endlessMode = true;
 		this.waveNumber = 101;
 		this.routeWaves[this.routeNumber] = 101;

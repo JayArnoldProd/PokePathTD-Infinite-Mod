@@ -121,10 +121,12 @@ A graphical save editor with full control over your game:
 
 | Requirement | Download | Why It's Needed |
 |-------------|----------|-----------------|
-| **Python 3.7+** | [python.org](https://python.org/downloads/) | Runs the mod installer & save editor |
+| **Python 3.7+** (recommended: 3.12 or 3.13) | [python.org](https://python.org/downloads/) | Runs the mod installer & save editor |
 | **Node.js** | [nodejs.org](https://nodejs.org) | Extracts and repacks game files |
 
-> **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — this is required!
+> **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
+>
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest mod version (v1.4.4) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```

@@ -30,7 +30,6 @@ export class Shop {
 
 		this.itemBackup = Array.isArray(itemBackup) ? [...itemBackup] : [];
 		this.restoreItemBackup();
-		console.log(itemBackup)
 		this.generateStock();
 		this.removeOwnedItems();
 		this.removeGimmighoulIfGholdengo();
