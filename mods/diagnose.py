@@ -148,6 +148,52 @@ def main():
         print("   → Dependencies not installed. The installer will auto-install them,")
         print("     or you can run 'npm install' manually in the mods folder.")
     
+    # 5c. Check game version compatibility
+    print("\n[Checking game version compatibility...]")
+    # Expected vanilla file sizes for the game version this mod targets
+    EXPECTED_VANILLA_FILES = {
+        "src/js/game/Game.js":                  44439,
+        "src/js/game/component/Pokemon.js":     20520,
+        "src/js/game/scenes/PokemonScene.js":   46814,
+        "src/js/game/core/Area.js":             12838,
+        "src/js/game/core/Team.js":             1744,
+        "src/js/game/core/Box.js":              703,
+    }
+    
+    # Try vanilla backup first, then extracted files
+    vanilla_asar = resources / "app.asar.vanilla" if resources.exists() else None
+    app_extracted = resources / "app_extracted" if resources.exists() else None
+    
+    version_checked = False
+    if app_extracted and app_extracted.exists():
+        mismatches = []
+        for rel_path, expected_size in EXPECTED_VANILLA_FILES.items():
+            file_path = app_extracted / rel_path.replace("/", os.sep)
+            if file_path.exists():
+                actual_size = file_path.stat().st_size
+                # Modded files will be different sizes, so only flag if files are
+                # clearly from a different game version (vanilla files match exactly)
+                # We can't distinguish modded-size from wrong-version-size here,
+                # so just report for awareness
+        version_checked = True
+    
+    if vanilla_asar and vanilla_asar.exists():
+        vanilla_size = vanilla_asar.stat().st_size
+        # Known vanilla asar size for v1.4.4
+        expected_vanilla_asar_size = 49065923
+        version_ok = vanilla_size == expected_vanilla_asar_size
+        check(f"Vanilla backup size ({vanilla_size:,} bytes)", version_ok,
+              f"Expected {expected_vanilla_asar_size:,} bytes for v1.4.4.\n"
+              "      Your game may be a different version. This mod requires PokePath TD v1.4.4.\n"
+              "      Update your game or download the matching mod version.")
+        if not version_ok:
+            all_good = False
+        version_checked = True
+    
+    if not version_checked:
+        print("  [INFO] Cannot verify game version (no vanilla backup or extracted files)")
+        print("         Run the installer first to create a vanilla backup.")
+    
     # 6. Check for common mistakes
     print("\n[Checking for common mistakes...]")
     

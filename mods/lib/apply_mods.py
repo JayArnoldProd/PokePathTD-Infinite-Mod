@@ -24,6 +24,7 @@ from pathlib import Path
 import re
 import shutil
 import json
+import os
 import subprocess
 import sys
 
@@ -45,6 +46,43 @@ APP_EXTRACTED = RESOURCES / "app_extracted"
 APP_ASAR = RESOURCES / "app.asar"
 APP_ASAR_VANILLA = RESOURCES / "app.asar.vanilla"
 JS_ROOT = APP_EXTRACTED / "src" / "js"
+
+# ============================================================================
+# GAME VERSION COMPATIBILITY
+# ============================================================================
+# Expected vanilla file sizes for the game version this mod targets.
+# If these don't match, the user likely has a different game version and
+# full-file-replacement patches (.modded.js) will break core gameplay.
+EXPECTED_VANILLA_FILES = {
+    "src/js/game/Game.js":                  44439,
+    "src/js/game/component/Pokemon.js":     20520,
+    "src/js/game/scenes/PokemonScene.js":   46814,
+    "src/js/game/core/Area.js":             12838,
+    "src/js/game/core/Team.js":             1744,
+    "src/js/game/core/Box.js":              703,
+}
+
+def check_game_version_compatibility():
+    """Check if extracted vanilla files match expected sizes.
+    
+    Returns:
+        tuple: (compatible: bool, mismatches: list of str)
+    """
+    mismatches = []
+    if not APP_EXTRACTED.exists():
+        return True, []  # Can't check yet, will be checked after extraction
+    
+    for rel_path, expected_size in EXPECTED_VANILLA_FILES.items():
+        file_path = APP_EXTRACTED / rel_path.replace("/", os.sep)
+        if not file_path.exists():
+            mismatches.append(f"{rel_path}: FILE MISSING (expected {expected_size} bytes)")
+            continue
+        actual_size = file_path.stat().st_size
+        if actual_size != expected_size:
+            mismatches.append(f"{rel_path}: {actual_size} bytes (expected {expected_size})")
+    
+    return len(mismatches) == 0, mismatches
+
 
 # ============================================================================
 # VANILLA BACKUP & EXTRACTION - Clean-slate mod installation
@@ -2771,6 +2809,18 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     if not extract_ok:
         return False, [], [extract_msg]
     
+    # Step 2b: Verify game version compatibility
+    compatible, mismatches = check_game_version_compatibility()
+    if not compatible:
+        warning = (f"Game version mismatch! This mod is built for v{MOD_VERSION}.\n"
+                   f"Mismatched files: {', '.join(m.split(':')[0] for m in mismatches)}\n"
+                   f"The mod may not work correctly.")
+        print(f"\n  [WARNING] {warning}")
+        # Don't block in GUI mode - just warn. The GUI can check return value.
+        failed_mods.append(f"VERSION WARNING: {warning}")
+    else:
+        print(f"  [OK] Game files match expected version ({MOD_VERSION})")
+    
     # Build list of functions to call
     functions_to_call = []
     for feature_key in selected_features:
@@ -3037,6 +3087,26 @@ def main():
         print(f"\nERROR: {extract_msg}")
         return
     
+    # Step 3: Verify game version compatibility
+    print("\n[*] Checking game version compatibility...")
+    compatible, mismatches = check_game_version_compatibility()
+    if compatible:
+        print(f"  [OK] Game files match expected version ({MOD_VERSION})")
+    else:
+        print(f"\n  [WARNING] Game version mismatch detected!")
+        print(f"  This mod was built for PokePath TD v{MOD_VERSION}.")
+        print(f"  Your game files differ from the expected version:\n")
+        for m in mismatches:
+            print(f"    - {m}")
+        print(f"\n  The mod may not work correctly. Features like placement,")
+        print(f"  level cap removal, and shinies use full file replacements")
+        print(f"  that are tied to a specific game version.\n")
+        response = input("  Continue anyway? (y/N): ").strip().lower()
+        if response != 'y':
+            print("\n  Installation cancelled. Update your game or download")
+            print("  the correct mod version for your game.")
+            return
+
     print("\n[*] Applying all mods...\n")
     
     # Apply all mods in order
