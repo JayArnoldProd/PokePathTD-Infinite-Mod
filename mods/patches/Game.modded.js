@@ -233,6 +233,7 @@ export class Game {
 	}
 
   	tryDeployUnit(pos, ui) {
+  		console.warn('[MOD-DEBUG] tryDeployUnit called:', { pokemonIndex: pos, deployingUnitExists: !!this.deployingUnit, stopped: this.stopped });
   		if (this.stopped) return playSound('pop0', 'ui');
 	    if (this.deployingUnit != undefined) return this.cancelDeployUnit();
 	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
@@ -247,6 +248,7 @@ export class Game {
   	}
 
   	cancelDeployUnit() {
+  		console.warn('[MOD-DEBUG] cancelDeployUnit called');
 	    this.deployingUnit = undefined;
 	    this.main.UI.updatePokemon();
 	    if (!this.main.area.waveActive) {
@@ -257,6 +259,12 @@ export class Game {
   	}
 
   	moveUnitToTile(newTile, mute = false) {
+  		console.warn('[MOD-DEBUG] moveUnitToTile called:', { 
+  			tileId: newTile?.id, 
+  			tileLand: newTile?.land, 
+  			tileTower: !!newTile?.tower, 
+  			deployingUnitName: this.deployingUnit?.specie?.name?.[0] 
+  		});
 	    if (!this.deployingUnit || !newTile) return;
 	    if (
 	      	!this.deployingUnit.tiles.includes(newTile.land) &&
@@ -386,6 +394,7 @@ export class Game {
 	}
 
   	setEvents() {
+  		console.warn('[MOD-DEBUG] setEvents called - canvas events initialized');
 	    const canPlaceOn = (pokemon, tile) => {
 	        if (!pokemon || !tile) return false;
 	        if (pokemon.tiles && pokemon.tiles.includes(tile.land)) return true;
@@ -417,6 +426,11 @@ export class Game {
 	    this.mapDragging = false;
 
 	    this.canvas.addEventListener('click', (event) => {
+	        console.warn('[MOD-DEBUG] Canvas click:', { 
+	        	activeTile: this.activeTile ? `id=${this.activeTile.id}, land=${this.activeTile.land}` : 'none',
+	        	deployingUnit: this.deployingUnit?.specie?.name?.[0] || 'none',
+	        	clickedPokemon: (this.activeTile?.tower?.specie?.name?.[0]) || 'none'
+	        });
 	        if (this.mapDragging) { 
 	            this.mapDragging = false;
 	            return;

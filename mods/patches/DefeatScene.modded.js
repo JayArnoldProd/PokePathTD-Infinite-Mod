@@ -105,6 +105,12 @@ export class DefeatScene extends GameScene {
 	}
 
 	open() {
+		console.warn('[MOD-DEBUG] DefeatScene open called:', { 
+			autoReset: this.main.autoReset, 
+			inChallenge: this.main.area.inChallenge, 
+			waveNumber: this.main.area.waveNumber, 
+			health: this.main.player.health[this.main.area.routeNumber] 
+		});
 		super.open();
 		this.update();
 		this.main.game.stop();
@@ -152,27 +158,39 @@ export class DefeatScene extends GameScene {
 
 		// MOD: Auto-reset options - 0=Off, 1=Restart, 2=Retry, 3=Continue
 		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) { 
+			console.warn('[MOD-DEBUG] Auto-reset branch: restart (autoReset=1)');
 			this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
 		} 
 		if (this.main.autoReset == 2 && !this.main.area.inChallenge.permadeath) { 
-			if (this.main.area.waveNumber > 25) this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
-			else this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor})
+			if (this.main.area.waveNumber > 25) {
+				console.warn('[MOD-DEBUG] Auto-reset branch: retry (autoReset=2, wave>25)');
+				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			} else {
+				console.warn('[MOD-DEBUG] Auto-reset branch: restart (autoReset=2, wave<=25)');
+				this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
+			}
 		}
 		// MOD: Auto-continue option (3) - continue from current wave in endless mode
 		if (this.main.autoReset == 3 && !this.main.area.inChallenge.permadeath) {
 			// In endless mode (wave > 100), continue from checkpoint
 			if (this.main.area.waveNumber > 100) {
+				console.warn('[MOD-DEBUG] Auto-reset branch: endless retry (autoReset=3, wave>100)');
 				this.getRetryWave();
 				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
 			} else if (this.main.area.waveNumber > 25) {
+				console.warn('[MOD-DEBUG] Auto-reset branch: retry (autoReset=3, wave>25)');
 				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
 			} else {
+				console.warn('[MOD-DEBUG] Auto-reset branch: restart (autoReset=3, wave<=25)');
 				this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
 			}
 		}
 	}
 
 	restart(autoReset = {}) {
+		console.warn('[MOD-DEBUG] DefeatScene restart triggered:', { 
+			permadeath: this.main.area.inChallenge.permadeath 
+		});
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(14);
@@ -191,6 +209,11 @@ export class DefeatScene extends GameScene {
 		if (this.main.area.waveNumber >= 100) {
 			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
 		}
+		
+		console.warn('[MOD-DEBUG] DefeatScene retry triggered:', { 
+			savedWave: this.savedWave, 
+			livesCalculated: lives 
+		});
 		
 		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
 		this.main.player.getHealed(lives);

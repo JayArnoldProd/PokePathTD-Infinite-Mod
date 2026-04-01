@@ -2882,6 +2882,14 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         except Exception as e:
             failed_mods.append(f"star record cap: {str(e)}")
     
+    # Step 4c: Apply debug diagnostics
+    if progress_callback:
+        progress_callback(current + 1, total, "Applying debug diagnostics...")
+    try:
+        apply_debug_diagnostics()
+    except Exception as e:
+        failed_mods.append(f"debug diagnostics: {str(e)}")
+    
     # Step 5: Repack
     if progress_callback:
         progress_callback(total, total, "Repacking game...")
@@ -3058,6 +3066,115 @@ def apply_allow_dupes():
 
 
 # ============================================================================
+# DEBUG DIAGNOSTICS - Add debug logging and F9 diagnostics
+# ============================================================================
+def apply_debug_diagnostics():
+    """Add debug diagnostic logging and F9 diagnostic dump for remote troubleshooting."""
+    print("\n[*] Adding debug diagnostics...")
+    
+    # 1. Patch Init.js to expose Main instance on window
+    init_path = JS_ROOT / "game" / "Init.js"
+    init_content = read_file(init_path)
+    
+    # Check if already applied
+    if 'window.__POKEPATH_MAIN__' in init_content:
+        log_skip("Init.js: Main instance exposure")
+    else:
+        old_init = "new Main(this.data.save);"
+        new_init = "const main = new Main(this.data.save); window.__POKEPATH_MAIN__ = main;"
+        
+        if old_init in init_content:
+            init_content = init_content.replace(old_init, new_init)
+            write_file(init_path, init_content)
+            log_success("Init.js: Main instance exposed on window")
+        else:
+            log_fail("Init.js: Main instance exposure", "Main instantiation not found")
+    
+    # 2. Inject debug script into index.html
+    index_path = APP_EXTRACTED / "index.html"
+    index_content = read_file(index_path)
+    
+    # Check if already applied
+    if 'PokePath TD Infinite Mod — Debug Diagnostics' in index_content:
+        log_skip("index.html: Debug script injection")
+        return True
+    
+    # Find the closing </body> tag and inject before it
+    debug_script = '''
+    <script>
+        // PokePath TD Infinite Mod — Debug Diagnostics v1.4.4
+        (function() {
+            console.log('%c[PokePath Mod v1.4.4] Debug diagnostics loaded', 'color: #70ac4c; font-weight: bold');
+            
+            window.modDiagnostic = function() {
+                // Try to access game state via the global main object
+                const main = window.__POKEPATH_MAIN__;
+                if (!main) {
+                    console.warn('[MOD-DEBUG] Game state not accessible. Try after game fully loads.');
+                    return;
+                }
+                
+                const area = main.area;
+                const game = main.game;
+                const player = main.player;
+                const team = main.team;
+                
+                const info = [
+                    '=== PokePath TD Mod Diagnostic ===',
+                    `Mod Version: 1.4.4`,
+                    `Wave: ${area?.waveNumber || 'N/A'}`,
+                    `Endless Mode: ${area?.endlessMode || false}`,
+                    `In Challenge: ${JSON.stringify(area?.inChallenge) || false}`,
+                    `Wave Active: ${area?.waveActive || false}`,
+                    `Auto Wave: ${area?.autoWave || false}`,
+                    `Game Stopped: ${game?.stopped || false}`,
+                    `Game Loop ID: ${game?.loopId || 'null'}`,
+                    `Deploying Unit: ${game?.deployingUnit?.specie?.name?.[0] || 'none'}`,
+                    `Active Tile: ${game?.activeTile ? `land=${game.activeTile.land}, tower=${!!game.activeTile.tower}` : 'none'}`,
+                    `Placement Tiles: ${area?.placementTiles?.length || 0}`,
+                    `Towers Placed: ${area?.towers?.length || 0}`,
+                    `Team Size: ${team?.pokemon?.filter(p => p)?.length || 0}`,
+                    `Health: ${player?.health?.[area?.routeNumber] || 'N/A'}`,
+                    `Gold: ${player?.gold || 0}`,
+                    `Auto Reset: ${main.autoReset ?? 'N/A'}`,
+                    `Speed Factor: ${game?.speedFactor || 'N/A'}`,
+                    `Route: ${area?.routeNumber ?? 'N/A'}`,
+                    `Canvas Pointer Events: ${game?.canvas?.style?.pointerEvents || 'N/A'}`,
+                    '=================================='
+                ];
+                
+                console.log(info.join('\\n'));
+                return info.join('\\n');
+            };
+            
+            // F9 key handler for diagnostic dump
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F9') {
+                    e.preventDefault();
+                    const result = window.modDiagnostic();
+                    if (result) {
+                        // Also show as alert for easy screenshot
+                        alert(result);
+                    }
+                }
+            });
+        })();
+    </script>
+</body>'''
+    
+    old_closing = '</body>'
+    
+    if old_closing in index_content:
+        index_content = index_content.replace(old_closing, debug_script)
+        write_file(index_path, index_content)
+        log_success("index.html: Debug script injected (F9 for diagnostics)")
+        return True
+    
+    log_fail("index.html: Debug script injection", "</body> tag not found")
+    return False
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 def main():
@@ -3166,6 +3283,9 @@ def main():
     
     # Allow duplicate Pokemon IDs on team (Cherubi/Cherrim etc.)
     apply_allow_dupes()
+    
+    # Apply debug diagnostics
+    apply_debug_diagnostics()
     
     # Apply userData redirect (modded saves isolation)
     apply_modded_userdata_redirect()

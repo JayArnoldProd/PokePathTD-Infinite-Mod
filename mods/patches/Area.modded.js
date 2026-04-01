@@ -78,6 +78,12 @@ export class Area {
 	}
 
 	loadArea(routeNumber, wave, keepTowers = false, challenge = false) {
+		console.warn('[MOD-DEBUG] loadArea called:', { 
+			routeNumber, 
+			wave, 
+			challenge, 
+			endlessModeResult: this.endlessMode 
+		});
 		this.repeat = false;
 		this.main.UI.waveSelectorBlock.style.background = 'revert-layer';
 		this.imposedWeather = false;
@@ -197,6 +203,11 @@ export class Area {
 	}
 
 	newWave() {
+		console.warn('[MOD-DEBUG] newWave called:', { 
+			waveNumber: this.waveNumber, 
+			endlessMode: this.endlessMode, 
+			waveActive: this.waveActive 
+		});
 		if (this.main.area.waveActive) return;
 		this.goldWave = 0;
 		this._spawnQueue = [];  // MOD: Clear deferred spawn queue
@@ -231,6 +242,13 @@ export class Area {
 	}
 
 	endWave() {
+		console.warn('[MOD-DEBUG] endWave called:', { 
+			waveNumber: this.waveNumber, 
+			endlessMode: this.endlessMode, 
+			inChallenge: this.inChallenge, 
+			health: this.main.player.health[this.routeNumber], 
+			autoWave: this.autoWave 
+		});
 		this.imposedWeather = false;
 		if (this.main.player.health[this.routeNumber] <= 0) return;
 
@@ -377,9 +395,17 @@ export class Area {
 
 	// MOD: Enable endless mode - called from FinalScene continue button
 	enableEndlessMode() {
+		console.warn('[MOD-DEBUG] enableEndlessMode called:', { 
+			waveNumberBefore: this.waveNumber, 
+			inChallenge: this.inChallenge 
+		});
 		if (this.inChallenge) return; // Challenges must end at wave 100
 		this.endlessMode = true;
 		this.waveNumber = 101;
+		console.warn('[MOD-DEBUG] enableEndlessMode set:', { 
+			waveNumberAfter: this.waveNumber, 
+			endlessMode: this.endlessMode 
+		});
 		this.routeWaves[this.routeNumber] = 101;
 		this.main.UI.update();
 	}

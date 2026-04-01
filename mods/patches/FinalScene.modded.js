@@ -131,6 +131,11 @@ export class FinalScene extends GameScene {
 	}
 
 	open() {
+		console.warn('[MOD-DEBUG] FinalScene open called:', { 
+			autoReset: this.main.autoReset, 
+			inChallenge: this.main.area.inChallenge, 
+			waveNumber: this.main.area.waveNumber 
+		});
 		super.open();
 		this.update();
 		this.main.game.stop();
@@ -165,6 +170,11 @@ export class FinalScene extends GameScene {
 
 	// ENDLESS MODE: Continue to wave 101+
 	continueEndless(autoReset = {}) {
+		console.warn('[MOD-DEBUG] continueEndless called:', { 
+			endlessModeSet: true, 
+			waveNumberSet: 101, 
+			gameStoppedBefore: this.main.game.stopped 
+		});
 		super.close();
 
 		if (this.main.area.inChallenge) this.main.challengeScene.cancelChallenge();
@@ -195,6 +205,7 @@ export class FinalScene extends GameScene {
 
 	// RESTART: Back to wave 1 (original behavior)
 	close() {
+		console.warn('[MOD-DEBUG] FinalScene close (restart) triggered');
 		super.close();
 
 		if (this.main.area.inChallenge) this.main.challengeScene.cancelChallenge();
