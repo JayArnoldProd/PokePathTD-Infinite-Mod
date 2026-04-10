@@ -44,10 +44,18 @@ PokePath-TD-INFINITE-Mac/
 
 1. **Close PokePath TD** if it's running
 2. **Double-click `ModManager.command`**
-   - If macOS says it can't be opened: right-click it, choose **Open**, then click **Open** in the dialog
-3. Choose **1. Install Mods (GUI)**
-4. Select which features you want and click **Install Selected**
-5. Close the installer and launch PokePath TD
+3. If macOS blocks it, you will usually see a message like:
+   - **`"ModManager.command" can't be opened because it is from an unidentified developer.`**
+   - On some macOS versions, the wording may instead say the app was blocked to protect your Mac
+4. Click **OK** on that popup first. This is important, because the **Open Anyway** button usually does **not** appear in Settings until after you dismiss the warning once.
+5. Open **System Settings > Privacy & Security**
+6. Scroll down to the **Security** section
+7. Look for a message saying **`"ModManager.command" was blocked from use because it is not from an identified developer.`**
+8. Click **Open Anyway**
+9. If macOS asks again, click **Open** to confirm
+10. Choose **1. Install Mods (GUI)**
+11. Select which features you want and click **Install Selected**
+12. Close the installer and launch PokePath TD
 
 ### First Run
 
@@ -85,7 +93,20 @@ This restores your game to its original unmodded state. Your modded save data is
 
 On first use, macOS may show a Gatekeeper warning for a file called `classic-level.node`. This is the LevelDB database driver used to read your game saves. It is safe.
 
-**Fix:** Go to **System Settings > Privacy & Security**, scroll down, and click **Allow Anyway**. Then retry the operation. You only need to do this once.
+You may also see a warning for `ModManager.command` itself first.
+
+Typical messages include:
+- **`"ModManager.command" can't be opened because it is from an unidentified developer.`**
+- **`"classic-level.node" was blocked to protect your Mac.`**
+
+**Fix:**
+1. Click **OK** on the popup.
+2. Open **System Settings > Privacy & Security**.
+3. Scroll down to the **Security** section.
+4. Click **Open Anyway** for the blocked item.
+5. Retry the operation, then click **Open** if prompted again.
+
+You usually only need to do this once per blocked file.
 
 ---
 
@@ -133,9 +154,9 @@ Double-click **ModManager.command** and choose **2. Run Diagnostics**. This chec
 
 | Problem | Solution |
 | --- | --- |
-| "can't be opened" when double-clicking .command | Right-click > **Open** > click **Open** in the dialog |
+| "can't be opened" when double-clicking .command | Double-click once, click **OK**, then go to **System Settings > Privacy & Security > Security** and click **Open Anyway** |
 | Game won't launch after modding | Open ModManager, use **Restore Vanilla**, then reinstall |
-| "Apple could not verify" popup | System Settings > Privacy & Security > **Allow Anyway** |
+| "Apple could not verify" popup | Click **OK**, then go to **System Settings > Privacy & Security > Security** and click **Open Anyway** |
 | Save editor can't load saves | Make sure PokePath TD is fully closed first |
 | Dependencies fail to install | Make sure Node.js is installed: `brew install node` |
 | Wrong game version | This mod requires PokePath TD v1.4.4 |

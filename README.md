@@ -127,11 +127,19 @@ A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds 
 
 1. Download either the **Mac ZIP** or **Mac DMG** from the latest release.
 2. Open it and place **`PokePath-TD-INFINITE-Mac`** wherever you want.
-3. Double-click **`ModManager.command`**
-   - If macOS blocks it, right-click and choose **Open**
-4. Choose **Install Mods (GUI)**
-5. Select your features and install
-6. Launch the game
+3. Double-click **`ModManager.command`**.
+4. If macOS blocks it, you will usually see a message like:
+   - **`"ModManager.command" can't be opened because it is from an unidentified developer.`**
+   - On some macOS versions, the wording may instead say the app was blocked to protect your Mac.
+5. Click **OK** on that popup first. This matters, because the **Open Anyway** button usually does **not** appear in Settings until after you dismiss the warning once.
+6. Open **System Settings > Privacy & Security**.
+7. Scroll down to the **Security** section.
+8. Look for a message saying **`"ModManager.command" was blocked from use because it is not from an identified developer.`**
+9. Click **Open Anyway**.
+10. If macOS asks again, click **Open** to confirm.
+11. Choose **Install Mods (GUI)**.
+12. Select your features and install.
+13. Launch the game.
 
 > For full platform-specific instructions, see:
 > - [Windows README](windows/mods/README.md)
@@ -175,8 +183,8 @@ Your save data is kept separate and is not overwritten by the installer.
 - If PowerShell blocks scripts, use the provided installer flow or Command Prompt instead
 
 ### macOS
-- If `.command` files are blocked, right-click and choose **Open**
-- If macOS shows an Apple verification warning, allow it in **Privacy & Security**
+- If `.command` files are blocked, try opening them once, click **OK** on the warning, then go to **System Settings > Privacy & Security > Security** and click **Open Anyway**
+- The warning often says **`"ModManager.command" can't be opened because it is from an unidentified developer`**, though wording can vary by macOS version
 - If the game is installed somewhere else, set the app path manually as described in the Mac README
 
 If something breaks, restore vanilla first, then reinstall the mod fresh.
