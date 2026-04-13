@@ -121,7 +121,7 @@ A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds 
    ```
 5. Run `mods\PokePath_Mod_Installer.pyw`
 6. Select your features and click **Install Selected**
-7. Restart the game
+7. Launch the game
 
 ### macOS
 
