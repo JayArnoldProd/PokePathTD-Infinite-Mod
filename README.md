@@ -87,13 +87,13 @@ A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds 
 ## ⚠️ Requirements
 
 ### Windows
-- **Python 3.7+** (recommended: 3.12 or 3.13)
-- **Node.js**
+- **Python 3.7+** ([Download Python for Windows](https://www.python.org/downloads/windows/)) (recommended: 3.12 or 3.13)
+- **Node.js** ([Download Node.js](https://nodejs.org/en/download))
 
 ### macOS
-- **Python 3.7+**
-- **Node.js 18+**
-- **PokePath TD** installed at `/Applications/PokePath TD.app`
+- **Python 3.7+** ([Download Python for macOS](https://www.python.org/downloads/macos/))
+- **Node.js 18+** ([Download Node.js](https://nodejs.org/en/download))
+- **PokePath TD** ([Download from itch.io](https://khydra98.itch.io/pokepath)) installed at `/Applications/PokePath TD.app`
 
 > **Important:** On Windows, make sure Python is added to PATH during installation.
 
