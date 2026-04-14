@@ -533,6 +533,7 @@ export class Game {
 	            if (Math.hypot(dx, dy) > MOVETHRESHOLD) {
 	                window.removeEventListener('pointermove', onMoveCheck);
 	                window.removeEventListener('pointerup', onCancelStart);
+	                window.removeEventListener('pointercancel', onCancelStart);
 
 	                mapDrag.active = true;
 	                this.mapDragging = true; 
@@ -555,17 +556,20 @@ export class Game {
 
 	                window.addEventListener('pointermove', onDraggingMove);
 	                window.addEventListener('pointerup', onDraggingUp);
+	                window.addEventListener('pointercancel', onDraggingUp);
 	            }
 	        };
 
 	        const onCancelStart = () => {
 	            window.removeEventListener('pointermove', onMoveCheck);
 	            window.removeEventListener('pointerup', onCancelStart);
+	            window.removeEventListener('pointercancel', onCancelStart);
 	            mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
 	        };
 
 	        window.addEventListener('pointermove', onMoveCheck);
 	        window.addEventListener('pointerup', onCancelStart);
+	        window.addEventListener('pointercancel', onCancelStart);
 
 	        const onDraggingMove = (ev) => {
 	            if (!mapDrag.active) return;
@@ -584,6 +588,7 @@ export class Game {
 	            if (mapDrag.clone) mapDrag.clone.remove();
 	            window.removeEventListener('pointermove', onDraggingMove);
 	            window.removeEventListener('pointerup', onDraggingUp);
+	            window.removeEventListener('pointercancel', onDraggingUp);
 
 	            const canvasX = (ev.clientX - mapDrag.rect.left) * mapDrag.scaleX;
 	            const canvasY = (ev.clientY - mapDrag.rect.top) * mapDrag.scaleY;

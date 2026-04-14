@@ -166,9 +166,7 @@ export class BoxScene extends SectionScene {
 		this.addUnit.innerHTML = text.box.add[this.main.lang].toUpperCase();
 		this.removeUnit.innerHTML = text.box.remove[this.main.lang].toUpperCase();
 		this.removeAll.innerHTML = text.box.removeAll[this.main.lang].toUpperCase();
-		const sortLabel = sort[this.sorted] === 'attackType'
-			? 'Attack Type'
-			: (text.box[sort[this.sorted]]?.[this.main.lang] || sort[this.sorted]);
+		const sortLabel = text.box[sort[this.sorted]]?.[this.main.lang] || sort[this.sorted];
 		this.sortValue.innerHTML = sortLabel.toUpperCase();
 
 		this.tabs.forEach((tab, i) => {
@@ -226,8 +224,13 @@ export class BoxScene extends SectionScene {
 				this.units[i].text.innerHTML = "";
 				if (this.sorted <= 1 || this.sorted == 11) this.units[i].text.innerHTML = poke.name[this.main.lang];
 				else if (this.sorted == 12) {
-					const typeLabels = { 'area': 'AOE', 'aura': 'Aura', 'single': 'Single' };
-					const typeColors = { 'area': '#e94560', 'aura': '#a855f7', 'single': '#38bdf8' };
+					const typeLabels = {
+						'area': text.box.area?.[this.main.lang] ?? 'AOE',
+						'aura': text.box.aura?.[this.main.lang] ?? 'Aura',
+						'single': text.box.single?.[this.main.lang] ?? 'Single',
+						'orbital': text.box.orbital?.[this.main.lang] ?? 'Orbital',
+					};
+					const typeColors = { 'area': '#e94560', 'aura': '#a855f7', 'single': '#38bdf8', 'orbital': '#f59e0b' };
 					const label = typeLabels[poke.attackType] || poke.attackType;
 					const color = typeColors[poke.attackType] || '#fff';
 					this.units[i].text.innerHTML = `<span style="color: ${color}; font-size: 7px;">${label}</span>`;
@@ -499,11 +502,11 @@ export class BoxScene extends SectionScene {
 		        break;
 		    case 'attackType':
 		        {
-		            const typeOrder = { 'area': 0, 'aura': 1, 'single': 2 };
+		            const typeOrder = { 'area': 0, 'aura': 1, 'single': 2, 'orbital': 3 };
 		            this.searchPokemon.sort((a, b) => {
 		                if (a.favorite && !b.favorite) return -1;
 		                if (!a.favorite && b.favorite) return 1;
-		                return (typeOrder[a.attackType] ?? 3) - (typeOrder[b.attackType] ?? 3);
+		                return (typeOrder[a.attackType] ?? 4) - (typeOrder[b.attackType] ?? 4);
 		            });
 		        }
 		        break;
@@ -542,6 +545,7 @@ export class BoxScene extends SectionScene {
 	}
 
 	close() {
+		if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
 		super.close();
 		this.main.UI.section['box'].classList.remove('is-selected');
 	}
@@ -566,6 +570,9 @@ export class BoxScene extends SectionScene {
 		let originTransformSaved = null;
 
 	    const clearDragState = () => {
+	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
+	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
+	        window.removeEventListener('pointercancel', onPointerCancelDuringDrag);
 	        if (clone && typeof clone.remove === 'function') { clone.remove(); clone = null; }
 	        if (originatingUnit && activePointerId != null) {
 	            try { originatingUnit.releasePointerCapture(activePointerId); } catch (e) {}
@@ -576,16 +583,16 @@ export class BoxScene extends SectionScene {
 			    if (originBgSaved !== null) {
 
 			        originatingUnit.style.backgroundImage = originBgSaved;
-			        originBgSaved = null;
 			    }
 			    if (originTransformSaved !== null) {
 			        originatingUnit.style.transform = originTransformSaved;
-			        originTransformSaved = null;
 			    }
 			}
 	        draggedIndex = null;
 	        activePointerId = null;
 	        originatingUnit = null;
+	        originBgSaved = null;
+	        originTransformSaved = null;
 	        this.isDragging = false;
 
 	        if (this.main?.game?.mouse) {
@@ -639,11 +646,16 @@ export class BoxScene extends SectionScene {
 	        try { this.main.game.animate(performance.now()); } catch (err) {}
 	    };
 
+	    const onPointerCancelDuringDrag = () => {
+	        clearDragState();
+	    };
+
 	    const onPointerUpDuringDrag = (e) => {
 	        if (this.main.game.stopped) return playSound('pop0', 'ui');
 
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
 	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
+	        window.removeEventListener('pointercancel', onPointerCancelDuringDrag);
 
 	        if (clone && typeof clone.remove === 'function') clone.remove();
 
@@ -855,6 +867,7 @@ export class BoxScene extends SectionScene {
 
 		    window.addEventListener('pointermove', onPointerMoveDuringDrag);
 		    window.addEventListener('pointerup', onPointerUpDuringDrag);
+		    window.addEventListener('pointercancel', onPointerCancelDuringDrag);
 		};
 
 	    const onPointerDownCandidate = function(e) {
@@ -881,12 +894,14 @@ export class BoxScene extends SectionScene {
 	        const onCancel = () => {
 	            window.removeEventListener('pointermove', onMoveCheck);
 	            window.removeEventListener('pointerup', onCancel);
+	            window.removeEventListener('pointercancel', onCancel);
 	        };
 
 	        e.preventDefault();
 
 	        window.addEventListener('pointermove', onMoveCheck);
 	        window.addEventListener('pointerup', onCancel);
+	        window.addEventListener('pointercancel', onCancel);
 	    };
 
 	    for (let i = 0; i < this.units.length; i++) {

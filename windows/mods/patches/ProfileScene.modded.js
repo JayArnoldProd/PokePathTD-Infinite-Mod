@@ -11,18 +11,68 @@ import { itemData } from '../data/itemData.js';
 import { routeData } from '../data/routeData.js';
 import { achievementData } from '../data/achievementData.js';
 
-const PROFILE_UI_TEXT = {
-	stats: ['Stats', 'Stats', 'Stats', 'Stats', 'Stats', 'Stats', 'Stats', 'Stats', 'Stats', 'Stats'],
-	unlockables: ['Unlockables', 'Unlockables', 'Unlockables', 'Unlockables', 'Unlockables', 'Unlockables', 'Unlockables', 'Unlockables', 'Unlockables', 'Unlockables'],
-	unlocked: ['Unlocked', 'Unlocked', 'Unlocked', 'Unlocked', 'Unlocked', 'Unlocked', 'Unlocked', 'Unlocked', 'Unlocked', 'Unlocked'],
-	locked: ['Locked', 'Locked', 'Locked', 'Locked', 'Locked', 'Locked', 'Locked', 'Locked', 'Locked', 'Locked'],
-	challengeRibbon: ['Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon', 'Challenge Ribbon'],
-	challengeRibbons: ['Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons', 'Challenge Ribbons'],
-	secretMap: ['Secret Map', 'Secret Map', 'Secret Map', 'Secret Map', 'Secret Map', 'Secret Map', 'Secret Map', 'Secret Map', 'Secret Map', 'Secret Map'],
-};
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
 const SECRET_POKEMON_KEYS = ['greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot', 'shedinja', 'gholdengo', 'stakataka', 'missingNo'];
+
+const PROFILE_STAT_FALLBACK_TEXT = {
+	19: [
+		'Max Gold/Wave',
+		'Oro máx./Oleada',
+		'Or max./Vague',
+		'Ouro máx./Onda',
+		'Oro max./Ondata',
+		'Max. Gold/Welle',
+		'最大ゴールド／ウェーブ',
+		'최대 골드/웨이브',
+		'最大金币/波次',
+		'Maks. złota/fala',
+	],
+	20: [
+		'Max Gold/Time',
+		'Oro máx./Tiempo',
+		'Or max./Temps',
+		'Ouro máx./Tempo',
+		'Oro max./Tempo',
+		'Max. Gold/Zeit',
+		'最大ゴールド／時間',
+		'최대 골드/시간',
+		'最大金币/时间',
+		'Maks. złota/czas',
+	],
+	21: [
+		'Shiny Enemies Defeated',
+		'Enemigos shiny derrotados',
+		'Ennemis shiny vaincus',
+		'Inimigos shiny derrotados',
+		'Nemici shiny sconfitti',
+		'Besiegte Shiny-Feinde',
+		'撃破した色違い敵',
+		'처치한 색이 다른 적',
+		'击败的闪光敌人',
+		'Pokonani wrogowie shiny',
+	],
+};
+
+const PROFILE_UNLOCKABLE_TEXT = {
+	statsTab: ['Stats', 'Estadísticas', 'Statistiques', 'Estatísticas', 'Statistiche', 'Statistiken', '統計', '통계', '统计', 'Statystyki'],
+	unlockablesTab: ['Unlockables', 'Desbloqueables', 'Déblocables', 'Desbloqueáveis', 'Sbloccabili', 'Freischaltbares', 'アンロック要素', '잠금 해제', '可解锁内容', 'Odblokowania'],
+	locked: ['Locked', 'Bloqueado', 'Verrouillé', 'Bloqueado', 'Bloccato', 'Gesperrt', 'ロック中', '잠김', '已锁定', 'Zablokowane'],
+	unlocked: ['Unlocked', 'Desbloqueado', 'Débloqué', 'Desbloqueado', 'Sbloccato', 'Freigeschaltet', 'アンロック済み', '잠금 해제됨', '已解锁', 'Odblokowane'],
+	hiddenName: ['???', '???', '???', '???', '???', '???', '???', '???', '???', '???'],
+	secretMap: ['Secret Map', 'Mapa secreto', 'Carte secrète', 'Mapa secreto', 'Mappa segreta', 'Geheime Karte', '秘密のマップ', '비밀 맵', '秘密地图', 'Sekretna mapa'],
+	challengeRibbon: ['Challenge Ribbon', 'Listón de desafío', 'Ruban défi', 'Fita de desafio', 'Nastro sfida', 'Challenge-Band', 'チャレンジリボン', '챌린지 리본', '挑战缎带', 'Wstążka wyzwania'],
+	challengeRibbons: ['Challenge Ribbons', 'Listones de desafío', 'Rubans défi', 'Fitas de desafio', 'Nastri sfida', 'Challenge-Bänder', 'チャレンジリボン', '챌린지 리본', '挑战缎带', 'Wstążki wyzwania'],
+	challengeRequirement: ['Earn {count} {ribbons} on {route}', 'Consigue {count} {ribbons} en {route}', 'Obtenez {count} {ribbons} sur {route}', 'Ganhe {count} {ribbons} em {route}', 'Ottieni {count} {ribbons} su {route}', 'Erhalte {count} {ribbons} auf {route}', '{route}で{count}個の{ribbons}を獲得', '{route}에서 {ribbons} {count}개 획득', '在{route}获得{count}个{ribbons}', 'Zdobądź {count} {ribbons} na {route}'],
+	findHiddenSecretOnRouteOutsideChallenge: ['Find the hidden secret on {route} outside Challenge', 'Encuentra el secreto oculto en {route} fuera de Desafío', 'Trouvez le secret caché sur {route} hors Défi', 'Encontre o segredo oculto em {route} fora do Desafio', 'Trova il segreto nascosto su {route} fuori dalla Sfida', 'Finde das versteckte Geheimnis auf {route} außerhalb der Herausforderung', 'チャレンジ外で{route}の隠しシークレットを見つける', '챌린지 외부에서 {route}의 숨겨진 비밀 찾기', '在挑战外于{route}找到隐藏秘密', 'Znajdź ukryty sekret na {route} poza wyzwaniem'],
+	clickHiddenProfileSecretOutsideChallenge: ['Click the hidden Profile achievement secret outside Challenge', 'Haz clic en el secreto oculto de logro del perfil fuera de Desafío', 'Cliquez sur le secret caché de succès du profil hors Défi', 'Clique no segredo oculto de conquista do perfil fora do Desafio', 'Clicca sul segreto nascosto del profilo fuori dalla Sfida', 'Klicke auf das versteckte Profil-Erfolgsgeheimnis außerhalb der Herausforderung', 'チャレンジ外でプロフィール実績の隠しシークレットをクリック', '챌린지 외부에서 프로필 업적 숨김 비밀 클릭', '在挑战外点击个人资料成就隐藏秘密', 'Kliknij ukryty sekret osiągnięcia profilu poza wyzwaniem'],
+	setAudioCodeOutsideChallenge: ['Set audio to Master 0, Music 4, UI 4, Effects 1 outside Challenge', 'Configura audio en Maestro 0, Música 4, UI 4, Efectos 1 fuera de Desafío', 'Réglez l’audio sur Principal 0, Musique 4, UI 4, Effets 1 hors Défi', 'Defina áudio para Master 0, Música 4, UI 4, Efeitos 1 fora do Desafio', 'Imposta audio su Master 0, Musica 4, UI 4, Effetti 1 fuori dalla Sfida', 'Stelle Audio auf Master 0, Musik 4, UI 4, Effekte 1 außerhalb der Herausforderung', 'チャレンジ外で音声を Master 0, Music 4, UI 4, Effects 1 に設定', '챌린지 외부에서 오디오를 Master 0, Music 4, UI 4, Effects 1로 설정', '在挑战外将音频设为 Master 0、Music 4、UI 4、Effects 1', 'Ustaw audio na Master 0, Music 4, UI 4, Effects 1 poza wyzwaniem'],
+	evolveNincada: ['Evolve Nincada', 'Evoluciona a Nincada', 'Faites évoluer Nincada', 'Evolua Nincada', 'Fai evolvere Nincada', 'Entwickle Nincada', 'ツチニンを進化させる', '톱치니를 진화시켜라', '让土居忍士进化', 'Ewoluuj Nincadę'],
+	buyGimmighoulFromShop: ['Buy Gimmighoul from the Shop', 'Compra a Gimmighoul en la tienda', 'Achetez Gimmighoul dans la boutique', 'Compre Gimmighoul na loja', 'Compra Gimmighoul dal negozio', 'Kaufe Gimmighoul im Shop', 'ショップでコレクレーを購入', '상점에서 꼬마동을 구매', '在商店购买索财灵', 'Kup Gimmighoula w sklepie'],
+	type5675OnRouteOutsideChallenge: ['On {route}, type 5675 outside Challenge', 'En {route}, escribe 5675 fuera de Desafío', 'Sur {route}, tapez 5675 hors Défi', 'Em {route}, digite 5675 fora do Desafio', 'Su {route}, digita 5675 fuori dalla Sfida', 'Auf {route}, tippe 5675 außerhalb der Herausforderung', '{route}でチャレンジ外に5675を入力', '{route}에서 챌린지 외부에 5675 입력', '在{route}挑战外输入5675', 'Na {route} wpisz 5675 poza wyzwaniem'],
+	findHiddenCaveOnRouteWhileNoWave: ['Find the hidden cave on {route} while no wave is active', 'Encuentra la cueva oculta en {route} cuando no haya oleada activa', 'Trouvez la grotte cachée sur {route} quand aucune vague n’est active', 'Encontre a caverna oculta em {route} quando nenhuma onda estiver ativa', 'Trova la grotta nascosta su {route} quando nessuna ondata è attiva', 'Finde die versteckte Höhle auf {route}, wenn keine Welle aktiv ist', 'ウェーブがない時に{route}の隠し洞窟を見つける', '웨이브가 없을 때 {route}의 숨겨진 동굴 찾기', '在无波次进行时于{route}找到隐藏洞穴', 'Znajdź ukrytą jaskinię na {route}, gdy żadna fala nie jest aktywna'],
+	redeemSecretCodeFromMenu: ['Redeem a secret code from the Menu', 'Canjea un código secreto desde el menú', 'Utilisez un code secret depuis le menu', 'Resgate um código secreto no menu', 'Riscatta un codice segreto dal menu', 'Löse einen geheimen Code im Menü ein', 'メニューでシークレットコードを入力', '메뉴에서 비밀 코드를 입력', '在菜单中兑换秘密代码', 'Wpisz tajny kod w menu'],
+};
 
 function localized(arr, lang = 0) {
 	if (!Array.isArray(arr)) return arr ?? '';
@@ -31,6 +81,30 @@ function localized(arr, lang = 0) {
 
 function clampLang(lang = 0) {
 	return Number.isInteger(lang) ? Math.max(0, Math.min(9, lang)) : 0;
+}
+
+function getProfileUnlockableText(key, lang = 0, fallback = '') {
+	const idx = clampLang(lang);
+	const value = text?.profile?.unlockables?.[key] ?? PROFILE_UNLOCKABLE_TEXT[key];
+	if (Array.isArray(value)) return value[idx] ?? value[0] ?? fallback;
+	return fallback;
+}
+
+function formatTemplate(template, replacements = {}) {
+	let result = template ?? '';
+	Object.entries(replacements).forEach(([k, v]) => {
+		result = result.replaceAll(`{${k}}`, String(v ?? ''));
+	});
+	return result;
+}
+
+function getProfileStatLabel(index, lang = 0) {
+	const idx = clampLang(lang);
+	const localizedLabel = text?.profile?.stats?.[index];
+	if (Array.isArray(localizedLabel)) return localizedLabel[idx] ?? localizedLabel[0] ?? '';
+	const fallbackLabel = PROFILE_STAT_FALLBACK_TEXT[index];
+	if (Array.isArray(fallbackLabel)) return fallbackLabel[idx] ?? fallbackLabel[0] ?? '';
+	return '';
 }
 
 export class ProfileScene extends SectionScene {
@@ -381,8 +455,11 @@ export class ProfileScene extends SectionScene {
 
 	formatRibbonRequirement(count, routeName) {
 		const lang = clampLang(this.main.lang);
-		const noun = count === 1 ? localized(PROFILE_UI_TEXT.challengeRibbon, lang) : localized(PROFILE_UI_TEXT.challengeRibbons, lang);
-		return `Earn ${count} ${noun.toLowerCase()} on ${routeName}`;
+		const noun = count === 1
+			? getProfileUnlockableText('challengeRibbon', lang, 'Challenge Ribbon')
+			: getProfileUnlockableText('challengeRibbons', lang, 'Challenge Ribbons');
+		const template = getProfileUnlockableText('challengeRequirement', lang, 'Earn {count} {ribbons} on {route}');
+		return formatTemplate(template, { count, ribbons: noun.toLowerCase(), route: routeName });
 	}
 
 	getUnlockableEntries() {
@@ -401,7 +478,7 @@ export class ProfileScene extends SectionScene {
 					id: `route-${route.id}-reward-${rewardIndex}`,
 					order: route.order * 10 + CHALLENGE_REWARD_RIBBON_COSTS[rewardIndex],
 					name: localized(rewardData.name, clampLang(this.main.lang)),
-					lockedName: '???',
+					lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
 					unlockText: this.formatRibbonRequirement(CHALLENGE_REWARD_RIBBON_COSTS[rewardIndex], this.getRouteName(route.id)),
 					icon: isPokemonReward ? rewardData?.sprite?.base : rewardData?.sprite,
 					secretLevel: 'normal',
@@ -425,8 +502,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-greavard',
 				order: 10000,
 				name: localized(pokemonData.greavard?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: `Find the hidden secret on ${secretRoute2} outside Challenge`,
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenSecretOnRouteOutsideChallenge', clampLang(this.main.lang), 'Find the hidden secret on {route} outside Challenge'), { route: secretRoute2 }),
 				icon: pokemonData.greavard?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.greavard || this.hasPokemonKey('greavard'),
@@ -435,8 +512,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-cacnea',
 				order: 10010,
 				name: localized(pokemonData.cacnea?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: `Find the hidden secret on ${secretRoute4} outside Challenge`,
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenSecretOnRouteOutsideChallenge', clampLang(this.main.lang), 'Find the hidden secret on {route} outside Challenge'), { route: secretRoute4 }),
 				icon: pokemonData.cacnea?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.cacnea || this.hasPokemonKey('cacnea'),
@@ -445,8 +522,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-ducklett',
 				order: 10020,
 				name: localized(pokemonData.ducklett?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: `Find the hidden secret on ${secretRoute13} outside Challenge`,
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenSecretOnRouteOutsideChallenge', clampLang(this.main.lang), 'Find the hidden secret on {route} outside Challenge'), { route: secretRoute13 }),
 				icon: pokemonData.ducklett?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.ducklett || this.hasPokemonKey('ducklett'),
@@ -455,8 +532,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-sandygast',
 				order: 10030,
 				name: localized(pokemonData.sandygast?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: `Find the hidden secret on ${secretRoute16} outside Challenge`,
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenSecretOnRouteOutsideChallenge', clampLang(this.main.lang), 'Find the hidden secret on {route} outside Challenge'), { route: secretRoute16 }),
 				icon: pokemonData.sandygast?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.sandygast || this.hasPokemonKey('sandygast'),
@@ -465,8 +542,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-luvdisc',
 				order: 10100,
 				name: localized(pokemonData.luvdisc?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: 'Click the hidden Profile achievement secret outside Challenge',
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: getProfileUnlockableText('clickHiddenProfileSecretOutsideChallenge', clampLang(this.main.lang), 'Click the hidden Profile achievement secret outside Challenge'),
 				icon: pokemonData.luvdisc?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.luvdisc || this.hasPokemonKey('luvdisc'),
@@ -475,8 +552,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-chatot',
 				order: 10110,
 				name: localized(pokemonData.chatot?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: 'Set audio to Master 0, Music 4, UI 4, Effects 1 outside Challenge',
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: getProfileUnlockableText('setAudioCodeOutsideChallenge', clampLang(this.main.lang), 'Set audio to Master 0, Music 4, UI 4, Effects 1 outside Challenge'),
 				icon: pokemonData.chatot?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.chatot || this.hasPokemonKey('chatot'),
@@ -485,8 +562,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-shedinja',
 				order: 10120,
 				name: localized(pokemonData.shedinja?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: 'Evolve Nincada',
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: getProfileUnlockableText('evolveNincada', clampLang(this.main.lang), 'Evolve Nincada'),
 				icon: pokemonData.shedinja?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => this.hasPokemonKey('shedinja'),
@@ -495,8 +572,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-gholdengo',
 				order: 10130,
 				name: localized(pokemonData.gholdengo?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: 'Buy Gimmighoul from the Shop',
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: getProfileUnlockableText('buyGimmighoulFromShop', clampLang(this.main.lang), 'Buy Gimmighoul from the Shop'),
 				icon: pokemonData.gholdengo?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => this.hasPokemonKey('gholdengo'),
@@ -505,8 +582,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-stakataka',
 				order: 10135,
 				name: localized(pokemonData.stakataka?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: `On ${secretRoute8}, type 5675 outside Challenge`,
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('type5675OnRouteOutsideChallenge', clampLang(this.main.lang), 'On {route}, type 5675 outside Challenge'), { route: secretRoute8 }),
 				icon: pokemonData.stakataka?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.stakataka || this.hasPokemonKey('stakataka'),
@@ -514,9 +591,9 @@ export class ProfileScene extends SectionScene {
 			{
 				id: 'secret-manaphy-cave',
 				order: 10140,
-				name: routeData?.[20]?.name?.[clampLang(this.main.lang)] ?? localized(PROFILE_UI_TEXT.secretMap, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: `Find the hidden cave on ${secretRoute11} while no wave is active`,
+				name: routeData?.[20]?.name?.[clampLang(this.main.lang)] ?? getProfileUnlockableText('secretMap', clampLang(this.main.lang), 'Secret Map'),
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenCaveOnRouteWhileNoWave', clampLang(this.main.lang), 'Find the hidden cave on {route} while no wave is active'), { route: secretRoute11 }),
 				icon: './src/assets/images/maps/manaphy.png',
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secretMaps?.manaphyCave,
@@ -525,8 +602,8 @@ export class ProfileScene extends SectionScene {
 				id: 'secret-missingno',
 				order: 10150,
 				name: localized(pokemonData.missingNo?.name, clampLang(this.main.lang)),
-				lockedName: '???',
-				unlockText: 'Redeem a secret code from the Menu',
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: getProfileUnlockableText('redeemSecretCodeFromMenu', clampLang(this.main.lang), 'Redeem a secret code from the Menu'),
 				icon: pokemonData.missingNo?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => this.hasPokemonKey('missingNo'),
@@ -559,10 +636,10 @@ export class ProfileScene extends SectionScene {
 		const unlockedCount = this.unlockableEntries.filter((entry) => entry.isUnlocked()).length;
 		const totalCount = this.unlockableEntries.length;
 
-		if (this.statsButton) this.statsButton.innerText = localized(PROFILE_UI_TEXT.stats, lang).toUpperCase();
-		if (this.unlockablesButton) this.unlockablesButton.innerText = localized(PROFILE_UI_TEXT.unlockables, lang).toUpperCase();
-		if (this.unlockablesCount) this.unlockablesCount.innerText = `${unlockedCount}/${totalCount} ${localized(PROFILE_UI_TEXT.unlockables, lang).toUpperCase()}`;
-		if (this.unlockablesHeaderTitle) this.unlockablesHeaderTitle.innerText = localized(PROFILE_UI_TEXT.unlockables, lang).toUpperCase();
+		if (this.statsButton) this.statsButton.innerText = getProfileUnlockableText('statsTab', lang, 'Stats').toUpperCase();
+		if (this.unlockablesButton) this.unlockablesButton.innerText = getProfileUnlockableText('unlockablesTab', lang, 'Unlockables').toUpperCase();
+		if (this.unlockablesCount) this.unlockablesCount.innerText = `${unlockedCount}/${totalCount} ${getProfileUnlockableText('unlockablesTab', lang, 'Unlockables').toUpperCase()}`;
+		if (this.unlockablesHeaderTitle) this.unlockablesHeaderTitle.innerText = getProfileUnlockableText('unlockablesTab', lang, 'Unlockables').toUpperCase();
 		if (this.unlockablesHeaderCount) this.unlockablesHeaderCount.innerText = `${unlockedCount}/${totalCount}`;
 
 		this.unlockableRows.forEach(({ entry, row }, index) => {
@@ -577,7 +654,9 @@ export class ProfileScene extends SectionScene {
 				? 'drop-shadow(1px 1px 0 #000) brightness(1)'
 				: 'drop-shadow(1px 1px 0 #000) brightness(0) saturate(0)';
 			row.name.innerText = (name || '???').toUpperCase();
-			row.state.innerText = unlocked ? '✓' : localized(PROFILE_UI_TEXT.locked, lang).toUpperCase();
+			row.state.innerText = unlocked
+				? getProfileUnlockableText('unlocked', lang, 'Unlocked').toUpperCase()
+				: getProfileUnlockableText('locked', lang, 'Locked').toUpperCase();
 			row.state.classList.toggle('is-unlocked', unlocked);
 			row.state.classList.toggle('is-locked', !unlocked);
 			row.condition.innerText = (conditionText || '???').toUpperCase();
@@ -597,7 +676,7 @@ export class ProfileScene extends SectionScene {
 		});
 
 		for (let i = 0; i < 22; i++) {
-			const statLabel = text.profile.stats[i]?.[this.main.lang] ?? text.profile.stats[i]?.[0] ?? (i === 21 ? 'Shiny Enemies Defeated' : '');
+			const statLabel = getProfileStatLabel(i, this.main.lang);
 		 	this.stats[i].label.innerText = statLabel.toUpperCase();
 		}
 
@@ -757,7 +836,7 @@ export class DeleteRecord extends GameScene {
 	}
 
 	update() {
-		this.title.innerHTML = text.profile.stats[this.stat][this.main.lang].toUpperCase();
+		this.title.innerHTML = getProfileStatLabel(this.stat, this.main.lang).toUpperCase();
 		this.prompt.innerHTML = text.profile.delete[this.main.lang].toUpperCase();
 		this.yesButton.innerText = text.menu.data.delete[this.main.lang].toUpperCase();
 		this.noButton.innerText = text.menu.data.cancel[this.main.lang].toUpperCase();

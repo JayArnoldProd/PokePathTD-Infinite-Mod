@@ -71,7 +71,7 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  42586,
+    "src/js/game/Game.js":                  42952,
     "src/js/game/component/Pokemon.js":     24099,
     "src/js/game/scenes/PokemonScene.js":   58007,
     "src/js/game/core/Area.js":             18848,
@@ -2401,35 +2401,55 @@ def apply_challenge_levelcap_fix():
 
 
 def apply_attacktype_sort():
-    """Add attack type sorting option to the box scene.
-    
-    Adds 'attackType' text label to text.js so BoxScene.modded.js can display it.
-    BoxScene.modded.js already has the sort logic baked in.
+    """Add attack type sorting option + localized type labels to box section in text.js.
+
+    Ensures text.box has:
+    - attackType (sort label)
+    - single / aura / area / orbital (per-Pokemon top labels)
     """
     path = JS_ROOT / "file" / "text.js"
     content = read_file(path)
-    
-    if 'attackType:' in content and 'Attack Type' in content:
-        log_skip("text.js: Attack type sort label")
+
+    import re
+
+    # Scope strictly to box:{} so we don't accidentally patch pokemon:{} keys.
+    box_match = re.search(r'(box:\s*\{)([\s\S]*?)(\n\t\},\n\tchangeName:\s*\{)', content)
+    if not box_match:
+        log_fail("text.js: Attack type labels", "box section not found")
+        return False
+
+    box_start, box_body, box_end = box_match.group(1), box_match.group(2), box_match.group(3)
+
+    shiny_match = re.search(r'(shiny:\s*\[.*?\])', box_body)
+    if not shiny_match:
+        log_fail("text.js: Attack type labels", "box.shiny label pattern not found")
+        return False
+
+    additions = []
+    if re.search(r'\n\s*attackType:\s*\[', box_body) is None:
+        additions.append('\n\t\tattackType: ["Attack Type","Tipo de ataque","Type d’attaque","Tipo de ataque","Tipo di attacco","Angriffstyp","攻撃タイプ","공격 유형","攻击类型","Typ ataku"]')
+    if re.search(r'\n\s*single:\s*\[', box_body) is None:
+        additions.append('\n\t\tsingle: ["Single","Único","Unique","Único","Singolo","Einzeln","単体","단일","单体","Pojedynczy"]')
+    if re.search(r'\n\s*aura:\s*\[', box_body) is None:
+        additions.append('\n\t\taura: ["Aura","Aura","Aura","Aura","Aura","Aura","オーラ","오라","光环","Aura"]')
+    if re.search(r'\n\s*area:\s*\[', box_body) is None:
+        additions.append('\n\t\tarea: ["AOE","Área","Zone","Área","Area","Fläche","範囲","범위","范围","Obszar"]')
+    if re.search(r'\n\s*orbital:\s*\[', box_body) is None:
+        additions.append('\n\t\torbital: ["Orbital","Orbital","Orbital","Orbital","Orbitale","Orbital","軌道","궤도","轨道","Orbitalny"]')
+
+    if not additions:
+        log_skip("text.js: Attack type labels")
         return True
-    
-    # Add after the shiny sort label
-    old_shiny = 'shiny: ["Shiny","Variocolor","Chromatique","Shiny","Shiny","Schillernd"'
-    
-    if old_shiny in content:
-        # Find the full shiny line and add attackType after it
-        import re
-        match = re.search(r'(shiny: \[.*?\])', content)
-        if match:
-            old_line = match.group(0)
-            new_line = old_line + ',\n\t\tattackType: ["Attack Type","Tipo Ataque","Type Attaque","Tipo Ataque","Tipo Attacco","Angriffstyp","\u653b\u6483\u30bf\u30a4\u30d7","\uacf5\uaca9 \ud0c0\uc785","\u653b\u64ca\u985e\u578b","Typ ataku"]'
-            content = content.replace(old_line, new_line)
-            write_file(path, content)
-            log_success("text.js: Attack type sort label added")
-            return True
-    
-    log_fail("text.js: Attack type sort label", "shiny label pattern not found")
-    return False
+
+    shiny_line = shiny_match.group(1)
+    new_shiny_line = shiny_line + ',' + ','.join(additions)
+    new_box_body = box_body.replace(shiny_line, new_shiny_line, 1)
+    new_box_block = box_start + new_box_body + box_end
+
+    content = content[:box_match.start()] + new_box_block + content[box_match.end():]
+    write_file(path, content)
+    log_success("text.js: Attack type labels added")
+    return True
 
 
 def apply_challenge_party_preserve():

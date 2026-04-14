@@ -1,12 +1,12 @@
 {
-    "version": "1.5.0",
-    "game_version": "1.5.0",
+    "version": "1.5.1",
+    "game_version": "1.5.1",
     "release_date": "2026-04-14",
     "changes": [
-        "Validated Windows compatibility against live PokePath TD 1.5.0 vanilla files",
-        "Fixed non-Endless star display installer patch for the new vanilla star-cap pattern",
-        "Re-ran installer matrix validation for full, speed-only, pause-only, no-Endless, and Endless-only installs",
-        "Confirmed the existing Windows v1.5.0 release remains the current release artifact",
-        "macOS compatibility for 1.5 pending dedicated validation"
+        "Validated Windows compatibility against live PokePath TD 1.5.1 vanilla files",
+        "Updated installer vanilla compatibility fingerprint for 1.5.1 Game.js",
+        "Rebased drag-and-drop patch files to preserve 1.5.1 pointer-cancel hotfix behavior",
+        "Updated in-game mod version label to 1.5.1",
+        "macOS compatibility for 1.5.x remains pending dedicated validation"
     ]
 }

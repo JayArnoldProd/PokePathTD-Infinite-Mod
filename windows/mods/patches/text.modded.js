@@ -80,7 +80,13 @@ export const text = {
 			"초과 피해",
 			"超额伤害",
 			"Nadwyżka obrażeń"
-		]
+		],
+		billion: ["Billion", "Mil millones", "Milliard", "Bilhão", "Miliardo", "Milliarde", "十億", "십억", "十亿", "Miliard"],
+		trillion: ["Trillion", "Billón", "Billion", "Trilhão", "Bilione", "Billion", "兆", "조", "万亿", "Bilion"],
+		quadrillion: ["Quadrillion", "Mil billones", "Billiard", "Quadrilhão", "Biliardo", "Billiarde", "京", "경", "千万亿", "Biliard"],
+		enemies: ["Enemies", "Enemigos", "Ennemis", "Inimigos", "Nemici", "Gegner", "敵", "적", "敌人", "Wrogowie"],
+		waveComplete: ["Wave Complete", "Oleada completada", "Vague terminée", "Onda concluída", "Ondata completata", "Welle abgeschlossen", "ウェーブ完了", "웨이브 완료", "波次完成", "Fala ukończona"],
+		time: ["Time", "Tiempo", "Temps", "Tempo", "Tempo", "Zeit", "時間", "시간", "时间", "Czas"]
 	},
 	notification: {
 		pause: [
@@ -103,7 +109,9 @@ export const text = {
 		terrain: ['Terrain', 'Terreno', 'Terrain', 'Terreno', 'Terreno', 'Terrain', '地形', '지형', '地形', 'Teren'],
 		attackType: ['Target', 'Objetivo', 'Cible', 'Alvo', 'Bersaglio', 'Ziel', 'ターゲット', '대상', '目标', 'Cel'],
 		single: ['Single Target', 'Monobjetivo', 'Cible Unique', 'Alvo Único', 'Bersaglio Singolo', 'Einzelziel', '単体攻撃', '단일 대상', '单体目标', 'Pojedynczy cel'],
+		aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '光环', 'Aura'],
 		area: ['Area', 'Área', 'Zone', 'Área', 'Area', 'Fläche', '範囲', '범위', '范围', 'Obszar'],
+		orbital: ['Orbital', 'Orbital', 'Orbital', 'Orbital', 'Orbitale', 'Orbital', '軌道', '궤道', '轨道', 'Orbitalny'],
 		circle: ['Circle', 'Círculo', 'Cercle', 'Círculo', 'Cerchio', 'Kreis', '円形', '원형', '圆形', 'Okrąg'],
 		donut: ['Ring', 'Anillo', 'Anneau', 'Anel', 'Anello', 'Ring', 'リング', '고리형', '环形', 'Pierścień'],
 		cross: ['Cross', 'Cruz', 'Croix', 'Cruz', 'Croce', 'Plus-Form', '十字', '십자형', '十字', 'Krzyż'],
@@ -210,6 +218,26 @@ export const text = {
 				"Pokonani wrogowie shiny",
 			],
 		},
+		unlockables: {
+			statsTab: ['Stats', 'Estadísticas', 'Statistiques', 'Estatísticas', 'Statistiche', 'Statistiken', '統計', '통계', '统计', 'Statystyki'],
+			unlockablesTab: ['Unlockables', 'Desbloqueables', 'Déblocables', 'Desbloqueáveis', 'Sbloccabili', 'Freischaltbares', 'アンロック要素', '잠금 해제', '可解锁内容', 'Odblokowania'],
+			locked: ['Locked', 'Bloqueado', 'Verrouillé', 'Bloqueado', 'Bloccato', 'Gesperrt', 'ロック中', '잠김', '已锁定', 'Zablokowane'],
+			unlocked: ['Unlocked', 'Desbloqueado', 'Débloqué', 'Desbloqueado', 'Sbloccato', 'Freigeschaltet', 'アンロック済み', '잠금 해제됨', '已解锁', 'Odblokowane'],
+			hiddenName: ['???', '???', '???', '???', '???', '???', '???', '???', '???', '???'],
+			secretMap: ['Secret Map', 'Mapa secreto', 'Carte secrète', 'Mapa secreto', 'Mappa segreta', 'Geheime Karte', '秘密のマップ', '비밀 맵', '秘密地图', 'Sekretna mapa'],
+			challengeRibbon: ['Challenge Ribbon', 'Listón de desafío', 'Ruban défi', 'Fita de desafio', 'Nastro sfida', 'Challenge-Band', 'チャレンジリボン', '챌린지 리본', '挑战缎带', 'Wstążka wyzwania'],
+			challengeRibbons: ['Challenge Ribbons', 'Listones de desafío', 'Rubans défi', 'Fitas de desafio', 'Nastri sfida', 'Challenge-Bänder', 'チャレンジリボン', '챌린지 리본', '挑战缎带', 'Wstążki wyzwania'],
+			challengeRequirement: ['Earn {count} {ribbons} on {route}', 'Consigue {count} {ribbons} en {route}', 'Obtenez {count} {ribbons} sur {route}', 'Ganhe {count} {ribbons} em {route}', 'Ottieni {count} {ribbons} su {route}', 'Erhalte {count} {ribbons} auf {route}', '{route}で{count}個の{ribbons}を獲得', '{route}에서 {ribbons} {count}개 획득', '在{route}获得{count}个{ribbons}', 'Zdobądź {count} {ribbons} na {route}'],
+			findHiddenSecretOnRouteOutsideChallenge: ['Find the hidden secret on {route} outside Challenge', 'Encuentra el secreto oculto en {route} fuera de Desafío', 'Trouvez le secret caché sur {route} hors Défi', 'Encontre o segredo oculto em {route} fora do Desafio', 'Trova il segreto nascosto su {route} fuori dalla Sfida', 'Finde das versteckte Geheimnis auf {route} außerhalb der Herausforderung', 'チャレンジ外で{route}の隠しシークレットを見つける', '챌린지 외부에서 {route}의 숨겨진 비밀 찾기', '在挑战外于{route}找到隐藏秘密', 'Znajdź ukryty sekret na {route} poza wyzwaniem'],
+			clickHiddenProfileSecretOutsideChallenge: ['Click the hidden Profile achievement secret outside Challenge', 'Haz clic en el secreto oculto de logro del perfil fuera de Desafío', 'Cliquez sur le secret caché de succès du profil hors Défi', 'Clique no segredo oculto de conquista do perfil fora do Desafio', 'Clicca sul segreto nascosto del profilo fuori dalla Sfida', 'Klicke auf das versteckte Profil-Erfolgsgeheimnis außerhalb der Herausforderung', 'チャレンジ外でプロフィール実績の隠しシークレットをクリック', '챌린지 외부에서 프로필 업적 숨김 비밀 클릭', '在挑战外点击个人资料成就隐藏秘密', 'Kliknij ukryty sekret osiągnięcia profilu poza wyzwaniem'],
+			setAudioCodeOutsideChallenge: ['Set audio to Master 0, Music 4, UI 4, Effects 1 outside Challenge', 'Configura audio en Maestro 0, Música 4, UI 4, Efectos 1 fuera de Desafío', 'Réglez l’audio sur Principal 0, Musique 4, UI 4, Effets 1 hors Défi', 'Defina áudio para Master 0, Música 4, UI 4, Efeitos 1 fora do Desafio', 'Imposta audio su Master 0, Musica 4, UI 4, Effetti 1 fuori dalla Sfida', 'Stelle Audio auf Master 0, Musik 4, UI 4, Effekte 1 außerhalb der Herausforderung', 'チャレンジ外で音声を Master 0, Music 4, UI 4, Effects 1 に設定', '챌린지 외부에서 오디오를 Master 0, Music 4, UI 4, Effects 1로 설정', '在挑战外将音频设为 Master 0、Music 4、UI 4、Effects 1', 'Ustaw audio na Master 0, Music 4, UI 4, Effects 1 poza wyzwaniem'],
+			evolveNincada: ['Evolve Nincada', 'Evoluciona a Nincada', 'Faites évoluer Nincada', 'Evolua Nincada', 'Fai evolvere Nincada', 'Entwickle Nincada', 'ツチニンを進化させる', '톱치니를 진화시켜라', '让土居忍士进化', 'Ewoluuj Nincadę'],
+			buyGimmighoulFromShop: ['Buy Gimmighoul from the Shop', 'Compra a Gimmighoul en la tienda', 'Achetez Gimmighoul dans la boutique', 'Compre Gimmighoul na loja', 'Compra Gimmighoul dal negozio', 'Kaufe Gimmighoul im Shop', 'ショップでコレクレーを購入', '상점에서 꼬마동을 구매', '在商店购买索财灵', 'Kup Gimmighoula w sklepie'],
+			type5675OnRouteOutsideChallenge: ['On {route}, type 5675 outside Challenge', 'En {route}, escribe 5675 fuera de Desafío', 'Sur {route}, tapez 5675 hors Défi', 'Em {route}, digite 5675 fora do Desafio', 'Su {route}, digita 5675 fuori dalla Sfida', 'Auf {route}, tippe 5675 außerhalb der Herausforderung', '{route}でチャレンジ外に5675を入力', '{route}에서 챌린지 외부에 5675 입력', '在{route}挑战外输入5675', 'Na {route} wpisz 5675 poza wyzwaniem'],
+			findHiddenCaveOnRouteWhileNoWave: ['Find the hidden cave on {route} while no wave is active', 'Encuentra la cueva oculta en {route} cuando no haya oleada activa', 'Trouvez la grotte cachée sur {route} quand aucune vague n’est active', 'Encontre a caverna oculta em {route} quando nenhuma onda estiver ativa', 'Trova la grotta nascosta su {route} quando nessuna ondata è attiva', 'Finde die versteckte Höhle auf {route}, wenn keine Welle aktiv ist', 'ウェーブがない時に{route}の隠し洞窟を見つける', '웨이브가 없을 때 {route}의 숨겨진 동굴 찾기', '在无波次进行时于{route}找到隐藏洞穴', 'Znajdź ukrytą jaskinię na {route}, gdy żadna fala nie jest aktywna'],
+			redeemSecretCodeFromMenu: ['Redeem a secret code from the Menu', 'Canjea un código secreto desde el menú', 'Utilisez un code secret depuis le menu', 'Resgate um código secreto no menu', 'Riscatta un codice segreto dal menu', 'Löse einen geheimen Code im Menü ein', 'メニューでシークレットコードを入力', '메뉴에서 비밀 코드를 입력', '在菜单中兑换秘密代码', 'Wpisz tajny kod w menu']
+		},
+
 		delete: [
 		  	"Delete the data from this statistic?",
 		  	"¿Borrar los datos de esta estadística?",
@@ -243,7 +271,12 @@ export const text = {
 		power: ['Power', 'Poder', 'Puissance', 'Poder', 'Potenza', 'Kraft', 'パワー', '파워', '力量', 'Moc'],
 		speed: ['Recharge', 'Recarga', 'Récupération', 'Recarga', 'Ricarica', 'Nachladen', 'リチャージ', '재충전', '充能', 'Przeładowanie'],
 		range: ['Range', 'Alcance', 'Portée', 'Alcance', 'Portata', 'Reichweite', '射程', '사거리', '射程', 'Zasięg'],
-		shiny: ["Shiny","Variocolor","Chromatique","Shiny","Shiny","Schillernd","色違い","색이 다른 포켓몬","闪光", "Shiny"]
+		shiny: ["Shiny","Variocolor","Chromatique","Shiny","Shiny","Schillernd","色違い","색이 다른 포켓몬","闪光", "Shiny"],
+		attackType: ['Attack Type', 'Tipo de ataque', 'Type d’attaque', 'Tipo de ataque', 'Tipo di attacco', 'Angriffstyp', '攻撃タイプ', '공격 유형', '攻击类型', 'Typ ataku'],
+		single: ['Single', 'Único', 'Unique', 'Único', 'Singolo', 'Einzeln', '単体', '단일', '单体', 'Pojedynczy'],
+		aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '光环', 'Aura'],
+		area: ['AOE', 'Área', 'Zone', 'Área', 'Area', 'Fläche', '範囲', '범위', '范围', 'Obszar'],
+		orbital: ['Orbital', 'Orbital', 'Orbital', 'Orbital', 'Orbitale', 'Orbital', '軌道', '궤도', '轨道', 'Orbitalny']
 	},
 	changeName: {
 		title: [

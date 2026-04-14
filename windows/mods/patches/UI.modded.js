@@ -10,6 +10,22 @@ import { songData } from './data/songData.js';
 
 const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
 
+const UI_LOCALIZED_LABELS = {
+	save: ['Save team', 'Guardar equipo', 'Enregistrer l’équipe', 'Salvar equipe', 'Salvare la squadra', 'Team speichern', 'チームを保存する', '팀 저장', '保存队伍', 'Zapisz drużynę'],
+	load: ['Load team', 'Cargar equipo', 'Charger l’équipe', 'Carregar equipe', 'Caricare la squadra', 'Team laden', 'チームを読み込む', '팀 불러오기', '加载队伍', 'Wczytaj drużynę'],
+	enemies: ['Enemies', 'Enemigos', 'Ennemis', 'Inimigos', 'Nemici', 'Gegner', '敵', '적', '敌人', 'Wrogowie'],
+	waveComplete: ['Wave Complete', 'Oleada completada', 'Vague terminée', 'Onda concluída', 'Ondata completata', 'Welle abgeschlossen', 'ウェーブ完了', '웨이브 완료', '波次完成', 'Fala ukończona'],
+	time: ['Time', 'Tiempo', 'Temps', 'Tempo', 'Tempo', 'Zeit', '時間', '시간', '时间', 'Czas'],
+	billion: ['Billion', 'Mil millones', 'Milliard', 'Bilhão', 'Miliardo', 'Milliarde', '十億', '십억', '十亿', 'Miliard'],
+	trillion: ['Trillion', 'Billón', 'Billion', 'Trilhão', 'Bilione', 'Billion', '兆', '조', '万亿', 'Bilion'],
+	quadrillion: ['Quadrillion', 'Mil billones', 'Billiard', 'Quadrilhão', 'Biliardo', 'Billiarde', '京', '경', '千万亿', 'Biliard'],
+};
+
+function uiLabel(key, lang = 0, fallback = '') {
+	const idx = Number.isInteger(lang) ? Math.max(0, Math.min(9, lang)) : 0;
+	return text?.ui?.[key]?.[idx] ?? text?.ui?.[key]?.[0] ?? UI_LOCALIZED_LABELS[key]?.[idx] ?? UI_LOCALIZED_LABELS[key]?.[0] ?? fallback;
+}
+
 export class UI {
 	constructor(main) {
 		this.main = main;
@@ -163,7 +179,7 @@ export class UI {
 			this.saveTeamButton[i] = new Element(this.saveTeamButtonContainer, { className: 'ui-save-team-button', text: `#${i+1}` }).element;
 			this.saveTeamButton[i].addEventListener('mouseenter', () => {
 				playSound('open', 'ui');
-				if (this.main.tooltip) this.main.tooltip.showText('Save');
+				if (this.main.tooltip) this.main.tooltip.showText(uiLabel('save', this.main.lang, 'Save'));
 			})
 			this.saveTeamButton[i].addEventListener('mouseleave', () => {
 				if (this.main.tooltip) this.main.tooltip.hide();
@@ -181,7 +197,7 @@ export class UI {
 			this.importTeamButton[i] = new Element(this.importTeamButtonContainer, { className: 'ui-import-team-button', text: `#${i+1}` }).element;
 			this.importTeamButton[i].addEventListener('mouseenter', () => {
 				playSound('open', 'ui');
-				if (this.main.tooltip) this.main.tooltip.showText('Load');
+				if (this.main.tooltip) this.main.tooltip.showText(uiLabel('load', this.main.lang, 'Load'));
 			})
 			this.importTeamButton[i].addEventListener('mouseleave', () => {
 				if (this.main.tooltip) this.main.tooltip.hide();
@@ -636,21 +652,21 @@ export class UI {
 
 		const waveNum = this.main.area.waveNumber;
 		const isEndless = waveNum > 100;
-		this.waveInfoWave.innerHTML = `WAVE ${waveNum}${isEndless ? ' <span style="color:#e94560;">(∞)</span>' : ''}`;
+		this.waveInfoWave.innerHTML = `${(text.map.wave?.[this.main.lang] ?? text.map.wave?.[0] ?? 'Wave').toUpperCase()} ${waveNum}${isEndless ? ' <span style=\"color:#e94560;\">(∞)</span>' : ''}`;
 
 		const enemiesRemaining = this.main.area.enemies?.length || 0;
 		const waveActive = this.main.area.waveActive;
 		if (waveActive) {
-			this.waveInfoEnemies.innerHTML = `Enemies: <span style="color:#ff6b6b;">${enemiesRemaining}</span>`;
+			this.waveInfoEnemies.innerHTML = `${uiLabel('enemies', this.main.lang, 'Enemies')}: <span style="color:#ff6b6b;">${enemiesRemaining}</span>`;
 		} else {
-			this.waveInfoEnemies.innerHTML = `<span style="color:#666;">Wave Complete</span>`;
+			this.waveInfoEnemies.innerHTML = `<span style="color:#666;">${uiLabel('waveComplete', this.main.lang, 'Wave Complete')}</span>`;
 		}
 
 		if (waveActive && this.main.area.waveStartTime) {
 			const elapsed = Math.floor((Date.now() - this.main.area.waveStartTime) / 1000);
 			const mins = Math.floor(elapsed / 60);
 			const secs = elapsed % 60;
-			this.waveInfoTime.innerHTML = `Time: ${mins}:${secs.toString().padStart(2, '0')}`;
+			this.waveInfoTime.innerHTML = `${uiLabel('time', this.main.lang, 'Time')}: ${mins}:${secs.toString().padStart(2, '0')}`;
 		} else {
 			this.waveInfoTime.innerHTML = '';
 		}
@@ -675,13 +691,16 @@ export class UI {
 		this.playerPortrait.style.backgroundImage = `url("./src/assets/images/portraits/${this.main.player.portrait}.png")`;
 		this.playerName.innerText = this.main.player.name.toUpperCase();
 		const gold = this.main.player.gold;
+		const billion = uiLabel('billion', this.main.lang, 'BILLION').toUpperCase();
+		const trillion = uiLabel('trillion', this.main.lang, 'TRILLION').toUpperCase();
+		const quadrillion = uiLabel('quadrillion', this.main.lang, 'QUADRILLION').toUpperCase();
 		const goldText = gold >= 1e15
-			? `$${(gold / 1e15).toFixed(2)} QUADRILLION`
+			? `$${(gold / 1e15).toFixed(2)} ${quadrillion}`
 			: gold >= 1e12
-				? `$${(gold / 1e12).toFixed(2)} TRILLION`
+				? `$${(gold / 1e12).toFixed(2)} ${trillion}`
 				: gold >= 1e9
-					? `$${(gold / 1e9).toFixed(2)} BILLION`
-					: `$${this.main.utility.numberDot(gold)}`;
+					? `$${(gold / 1e9).toFixed(2)} ${billion}`
+					: `$${this.main.utility.numberDot(gold, this.main.lang)}`;
 		this.playerGold.innerText = goldText;
 		this.playerGold.style.whiteSpace = 'nowrap';
 		this.playerGold.style.lineHeight = '10px';
@@ -825,7 +844,8 @@ export class UI {
 		}
 
 		this.pokemon.forEach((slot, i) => {
-	        slot.dataset.index = i;  
+	        slot.dataset.index = i;
+	        slot.style.touchAction = 'none';
 	    });
 
 	    this.setupPokemonDragAndDrop();
@@ -848,8 +868,14 @@ export class UI {
 	    let activePointerId = null;
 	    let slotElement = null;
 
+	    const onPointerCancelDuringDrag = () => {
+	        clearDragState();
+	    };
+
 	    const clearDragState = () => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
+	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
+	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
+	        window.removeEventListener('pointercancel', onPointerCancelDuringDrag);
 	        if (clone) {
 	            clone.remove();
 	            clone = null;
@@ -868,6 +894,7 @@ export class UI {
 	            // forzar redraw inmediato para que desaparezcan los highlights
 	            try { this.main.game.animate(performance.now()); } catch (err) {}
 	        }
+	        document.body.style.cursor = '';
 	    };
 
 	    const onPointerMoveDuringDrag = (e) => {
@@ -923,6 +950,7 @@ export class UI {
 	        // quitar listeners de arrastre
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
 	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
+	        window.removeEventListener('pointercancel', onPointerCancelDuringDrag);
 
 	        if (clone) clone.remove();
 
@@ -1247,6 +1275,7 @@ export class UI {
 
 	        window.addEventListener('pointermove', onPointerMoveDuringDrag);
 	        window.addEventListener('pointerup', onPointerUpDuringDrag);
+	        window.addEventListener('pointercancel', onPointerCancelDuringDrag);
 	    };
 
 	    const onPointerDownCandidate = function(e) {

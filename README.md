@@ -85,12 +85,12 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 ## 📥 Downloads
 
 **Latest + fallback releases:**
-- **Windows (latest):** [PokePath-TD-INFINITE-Windows-v1.5.0.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.5.0/PokePath-TD-INFINITE-Windows-v1.5.0.zip)
+- **Windows (latest):** [PokePath-TD-INFINITE-Windows-v1.5.1.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.5.1/PokePath-TD-INFINITE-Windows-v1.5.1.zip)
 - **Windows (older):** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
 - **macOS ZIP (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
 - **macOS DMG (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
 
-> 💡 **Match your game version.** Windows v1.5.0 targets **PokePath TD 1.5**.
+> 💡 **Match your game version.** Windows v1.5.1 targets **PokePath TD 1.5.1**.
 > macOS is still on the older **1.4.4** release track for now.
 
 ---
@@ -114,7 +114,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 
 ### Windows
 
-1. Download **`PokePath-TD-INFINITE-Windows-v1.5.0.zip`** from the latest release.
+1. Download **`PokePath-TD-INFINITE-Windows-v1.5.1.zip`** from the latest release.
 2. Extract it anywhere.
 3. Copy the included **`mods`** folder into your game directory:
    ```
@@ -208,7 +208,7 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
   - `windows/mods/`
   - `mac/PokePath-TD-INFINITE-Mac/`
 - The Windows release intentionally includes a top-level **`mods`** folder so users can drop it directly into the game directory.
-- Recommended for Windows: **v1.5.0**.
+- Recommended for Windows: **v1.5.1**.
 - Older fallback release: **v1.4.4 (older)**.
 
 ---

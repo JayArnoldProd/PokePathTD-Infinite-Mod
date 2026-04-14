@@ -62,6 +62,12 @@ const TARGET_MODES_TRADUCTIONS = {
 	invisible: ['Invisible', 'Invisible', 'Invisible', 'Invis├¡vel', 'Invisibile', 'Unsichtbar', 'ΘÇÅµÿÄ', 'φê¼δ¬à', 'ΘÜÉσ╜ó', 'Niewidzialny']
 }
 
+const LARGE_NUMBER_UNITS = {
+	billion: ['Billion', 'Mil millones', 'Milliard', 'Bilhão', 'Miliardo', 'Milliarde', '十億', '십억', '十亿', 'Miliard'],
+	trillion: ['Trillion', 'Billón', 'Billion', 'Trilhão', 'Bilione', 'Billion', '兆', '조', '万亿', 'Bilion'],
+	quadrillion: ['Quadrillion', 'Mil billones', 'Billiard', 'Quadrilhão', 'Biliardo', 'Billiarde', '京', '경', '千万亿', 'Biliard'],
+};
+
 export class PokemonScene extends GameScene {
 	constructor(main) {
 		super(560, 550);
@@ -479,13 +485,25 @@ export class PokemonScene extends GameScene {
 	}
 
 	formatLevelUpCost(cost) {
-		if (cost >= 1000000000) {
-			const billions = cost / 1000000000;
-			const formattedBillions = Number.isInteger(billions) ? billions.toString() : billions.toFixed(2).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
-			return `$${formattedBillions} BILLION`;
+		const lang = this.main.lang;
+		const units = [
+			{ value: 1e15, key: 'quadrillion', fallback: 'QUADRILLION' },
+			{ value: 1e12, key: 'trillion', fallback: 'TRILLION' },
+			{ value: 1e9, key: 'billion', fallback: 'BILLION' },
+		];
+
+		for (const unit of units) {
+			if (cost >= unit.value) {
+				const scaled = cost / unit.value;
+				const formatted = Number.isInteger(scaled)
+					? scaled.toString()
+					: scaled.toFixed(2).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+				const localizedUnit = (text?.ui?.[unit.key]?.[lang] ?? text?.ui?.[unit.key]?.[0] ?? LARGE_NUMBER_UNITS[unit.key]?.[lang] ?? LARGE_NUMBER_UNITS[unit.key]?.[0] ?? unit.fallback).toUpperCase();
+				return `$${formatted} ${localizedUnit}`;
+			}
 		}
 
-		return `$${this.main.utility.numberDot(cost, this.main.lang)}`;
+		return `$${this.main.utility.numberDot(cost, lang)}`;
 	}
 
 	updateLevelButton() {
