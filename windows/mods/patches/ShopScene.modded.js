@@ -1,11 +1,12 @@
-﻿import { GameScene } from '../../utils/GameScene.js';
+import { GameScene } from '../../utils/GameScene.js';
+import { SectionScene } from '../../utils/SectionScene.js';
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { playSound } from '../../file/audio.js';
 
-export class ShopScene extends GameScene {
+export class ShopScene extends SectionScene {
 	constructor(main) {
-		super(400, 260);
+		super();
 		this.main = main;
 
 		this.displayPokemon = new DisplayPokemon(this.main);	
@@ -13,9 +14,6 @@ export class ShopScene extends GameScene {
 	}
 
 	render() {
-		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-
-		//this.prompt = new Element(this.container, { className: 'shop-scene-prompt' }).element;
 		this.itemContainer = new Element(this.container, { className: 'shop-scene-item-container' }).element;
 
 		this.egg = new Element(this.itemContainer, { className: 'shop-scene-item shop-scene-egg' }).element;
@@ -27,20 +25,15 @@ export class ShopScene extends GameScene {
 		this.egg.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 
 		this.itemSlot = [];
-		for (let i = 0; i < 5; i++) {
+		for (let i = 0; i < 8; i++) {
 			this.itemSlot[i] = new Element(this.itemContainer, { className: 'shop-scene-item' }).element;
 			this.itemSlot[i].purchaseButton = new Element(this.itemSlot[i], { className: 'shop-scene-purchase' }).element;
 			this.itemSlot[i].addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 			this.itemSlot[i].addEventListener('click', () => { this.main.shop.buyItem(i); })
 		}	
-		
-		this.background.addEventListener('click', (e) => { if (e.target == this.background) this.close() })
 	}
 
 	update() {
-		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		//this.prompt.innerHTML = text.shop.prompt[this.main.lang].toUpperCase();
-		
 		this.updateEgg();
 		this.updateItems();
 	}
@@ -50,13 +43,11 @@ export class ShopScene extends GameScene {
 		this.main.tooltip.bindTo(this.egg, { name: text.shop.eggName, description: text.shop.egg }, 'item');
 
 		if (this.main.player.gold >= Math.min(50000, this.main.shop.eggPrice) && this.main.shop.eggList.length > 0) {
-			//this.egg.style.pointerEvents = 'all';
+
 			this.egg.style.filter = 'revert-layer';
 		} else {
-			//this.egg.style.pointerEvents = 'none';
 			this.egg.style.filter = 'brightness(0.8)';
 			if (this.main.shop.eggList.length === 0) {
-				//this.prompt.innerHTML = text.shop.prompt[this.main.lang].toUpperCase();
 				this.purchaseEgg.innerHTML = text.shop.sold[this.main.lang].toUpperCase();
 			}
 		}
@@ -66,17 +57,16 @@ export class ShopScene extends GameScene {
 		this.itemSlot.forEach((item, i) => {
 			item.style.backgroundImage = `url("./src/assets/images/items/poke.png")`;
 			item.purchaseButton.innerHTML = text.shop.sold[this.main.lang].toUpperCase();
-			//item.style.pointerEvents = 'none';
+
 			item.style.filter = 'brightness(0.8)';
 			if (this.main.shop.itemStock[i] != null) {
 				item.style.backgroundImage = `url(${this.main.shop.itemStock[i].sprite})`;
 				item.purchaseButton.innerHTML = `$${this.main.utility.numberDot(this.main.shop.itemStock[i].price, this.main.lang)}`;
-				if (this.main.shop.itemStock[i].price > 99999999) item.purchaseButton.style.fontSize = '6.5px';
-				else if (this.main.shop.itemStock[i].price > 999999) item.purchaseButton.style.fontSize = '8px';
-				else  item.purchaseButton.style.fontSize = 'revert-layer';
+				// if (this.main.shop.itemStock[i].price > 99999999) item.purchaseButton.style.fontSize = '6.5px';
+				// else if (this.main.shop.itemStock[i].price > 999999) item.purchaseButton.style.fontSize = '8px';
+				// else  item.purchaseButton.style.fontSize = 'revert-layer';
 				this.main.tooltip.bindTo(item, this.main.shop.itemStock[i], 'item');
 				if (this.main.player.gold >= this.main.shop.itemStock[i].price) {
-					//item.style.pointerEvents = 'all';
 					item.style.filter = 'revert-layer';
 				}
 			}
@@ -84,20 +74,29 @@ export class ShopScene extends GameScene {
 	}
 
 	open() {
+		if (this.main.game.stopped) return playSound('pop0', 'ui');
+		if (this.isOpen) return this.close();
+		
+		this.main.sections.forEach(section => {
+			if (section.isOpen && section != this) section.close();
+		})
+		
 		super.open();
 		this.update();
+		this.main.UI.section['shop'].classList.add('is-selected');
 		if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
 	}
 
 	close() {
 		super.close();
+		this.main.UI.section['shop'].classList.remove('is-selected');
 		this.main.tooltip.hide();
 	}
 }
 
 class DisplayPokemon extends GameScene {
 	constructor(main) {
-		super(220, 240);
+		super(200, 200);
 		this.main = main;
 		this.pokemon;
 		this.isShinyReveal = false;
@@ -111,15 +110,12 @@ class DisplayPokemon extends GameScene {
 		this.prompt = new Element(this.container, { className: 'dp-scene-prompt' }).element;
 		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
-		// Scale up the Pokemon sprite 3x (120px = 40px * 3), 10px lower
 		this.image.style.cssText = 'width:96px;height:96px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
 		
-		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
 		this.shinySymbol.innerHTML = '<span class="msrre">⭐</span>';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
 		
-		// Add pulse animation keyframe if not exists
 		if (!document.getElementById('shinyPulseStyle')) {
 			const style = document.createElement('style');
 			style.id = 'shinyPulseStyle';
@@ -148,20 +144,11 @@ class DisplayPokemon extends GameScene {
 		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
 		this.pokemonName.style.color = this.pokemon.specie.color;
 		
-		// FIX: Explicitly determine sprite URL based on isShinyReveal flag, not Pokemon's current state
-		// This ensures shiny/normal displays correctly regardless of player's inventory
 		let spriteUrl = this.pokemon.specie.sprite.base;
-		if (this.isShinyReveal) {
-			// Force shiny sprite path
-			spriteUrl = spriteUrl.replace(/\/normal\//g, '/shiny/');
-		} else {
-			// Force normal sprite path
-			spriteUrl = spriteUrl.replace(/\/shiny\//g, '/normal/');
-		}
+		if (this.isShinyReveal) spriteUrl = spriteUrl.replace(/\/normal\//g, '/shiny/');
+		else spriteUrl = spriteUrl.replace(/\/shiny\//g, '/normal/');
 		this.image.style.backgroundImage = `url("${spriteUrl}")`;
 		this.closeButton.innerHTML = 'OK';
-		
-		// Show shiny symbol if it's a shiny reveal
 		this.shinySymbol.style.display = this.isShinyReveal ? 'block' : 'none';
 	}
 

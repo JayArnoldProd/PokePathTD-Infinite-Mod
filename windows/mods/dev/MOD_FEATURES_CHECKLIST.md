@@ -106,6 +106,10 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Enemy.modded.js
 - [ ] Endless scaling - enemy HP/power scales for waves 100+
+- [ ] Shiny enemy spawn roll: `this.isShiny = Math.random() < (1 / 50);`
+- [ ] Shiny enemies swap to `/shiny/` sprite path when available
+- [ ] Shiny enemy gameplay modifiers: +50% HP, +50% armor, 2-heart damage, 10x gold
+- [ ] Shiny enemy defeats increment `this.main.player.stats.shinyEnemiesDefeated`
 - [ ] **PERF**: Center point mutation (not new object) in update loop
 - [ ] **PERF**: `_markedForRemoval` flag for batch removal (not indexOf+splice per enemy)
 - [ ] **PERF**: Single-pass status effect compaction (replaces two .filter() calls)
@@ -130,6 +134,12 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## ProfileScene.modded.js
 - [ ] Uncapped wave record display (shows 100+ instead of capping at 100)
+- [ ] Stats list supports 22 entries, including `shinyEnemiesDefeated`
+- [ ] Safe fallback stat label for shiny enemy defeats when text data is missing
+- [ ] Profile has Stats / Unlockables tab toggle
+- [ ] Unlockables panel is scrollable and refreshes live while the profile is open
+- [ ] Unlockables registry includes verified secrets/challenge rewards instead of guessed entries
+- [ ] Hidden unlockables can stay obscured (`???`) until earned, including MissingNo handling
 
 ## main.modded.js
 - [ ] DevTools enabled (`nw.Window.get().showDevTools()`)
@@ -143,6 +153,7 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## MapScene.modded.js
 - [ ] Record display uncapped (shows 100+ records)
+- [ ] `changeMap()` uses endless-safe preview lookup (`getWavePreview`) instead of raw `waves[waveNumber]` indexing
 
 ## NewGameScene.modded.js
 - [ ] Shiny starter chance
@@ -251,6 +262,19 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] `apply_gold_display_format_ui()` — UI.js same abbreviated format
 - [ ] `apply_profile_live_update()` — ProfileScene.js auto-refreshes stats every 500ms while open
 
+## Feature: Shiny Enemies (installer checkbox: `shiny_enemies`)
+- [ ] Dedicated installer feature key exists separately from `shiny`
+- [ ] Uses `apply_enemy_shiny_spawn()` only, so enemy shinies are decoupled from player shiny sprite support
+- [ ] Enemy shiny spawn rate is 1/50
+- [ ] Enemy shiny defeats are tracked in profile stats via `shinyEnemiesDefeated`
+- [ ] Save editor non-max shiny logic still keys off `shiny`, not `shiny_enemies`
+
+## Feature: Unlockables Profile View (currently carried by `ProfileScene.modded.js`)
+- [ ] Profile screen exposes a readable unlockables panel in addition to stats
+- [ ] Verified route rewards and secrets are listed with curated unlock text
+- [ ] Locked entries show requirements, while true secret/meta entries may stay obscured
+- [ ] Unlock state is derived from real save/reward data rather than hardcoded always-unlocked presentation
+
 ## Feature: installed_features.json Manifest
 - [ ] `apply_mods.py` writes `installed_features.json` to mods/ dir after successful mod application
 - [ ] Contains list of selected feature keys (e.g. `["pause_micro", "speed", "endless", ...]`)
@@ -258,6 +282,12 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] Save editor reads this to determine feature-specific behavior:
   - Max Gold: 9 quadrillion only with `qol`, else vanilla 99.9B
   - Shiny toggle for non-max-evo: only with `shiny` feature (not generic is_modded)
+
+## Feature: Save Editor 1.5 Species + Sprite Coverage
+- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (304 keys for 1.5)
+- [ ] Save editor species dropdown sources `allKeys` from regenerated metadata
+- [ ] Normal sprite lookup falls back from bundled `patches/normal_sprites` to extracted runtime `src/assets/images/pokemon/normal`
+- [ ] Runtime-only 1.5 species (example: Dewpider line) render correctly in save editor UI
 
 ---
 

@@ -1,8 +1,12 @@
+import { SectionScene } from '../../utils/SectionScene.js';
 import { GameScene } from '../../utils/GameScene.js';
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { playSound, setVolume } from '../../file/audio.js';
 import { Input } from '../../utils/Input.js';
+import { featureRequiresPlayerCode, resolveRedeemCodeFeature, validateRedeemCode } from '../../utils/Redeem.js';
+import { pokemonData } from '../data/pokemonData.js';
+import { isSaveExportDisabled } from '../../config.js';
 
 const OPTION = {
 	language: ['English', 'Español', 'Français', 'Português', 'Italiano', 'Deutsch', '日本語', '한국어', '繁體中文', 'Polski'],
@@ -12,8 +16,8 @@ const OPTION = {
 
 const CREDITS = {
 	developer: {
-		label: ['Developer', 'Desarrollador', 'Développeur', 'Desenvolvedor', 'Sviluppatore', 'Entwickler', '開発者', '개발자', '开发者', 'Programista'],
-		content: '<a href="https://x.com/khydra98" target="_blank" class="link-red">KHYDRA</a>'
+		label: ['Developers', 'Desarrolladores', 'Développeurs', 'Desenvolvedores', 'Sviluppatori', 'Entwickler', '開発者', '개발자', '开发者', 'Programiści'],
+		content: '<a href="https://x.com/khydra98" target="_blank" class="link-red">KHYDRA</a> <br> <a href="https://x.com/gaudesp" target="_blank" class="link-red">Nox</a>'
 	},
 	mapArtist: {
 		label: ['Map Artist', 'Artista de mapas', 'Artiste des cartes', 'Artista de mapas', 'Artista di mappe', 'Kartenkünstler', 'マップアーティスト', '지도 아티스트', '地图绘师', 'Twórca Map'],
@@ -32,7 +36,7 @@ const CREDITS = {
 			"贡献者",
 			"Współautorzy"
 		],
-		content: '<a href="https://x.com/gaudesp" target="_blank" class="link-red">Nox</a> <br> AncestralZ'
+		content: 'AncestralZ<br> Irec<br> Revy<br> Sokudo<br> Segmental'
 	},
 	balance: {
 		label: [
@@ -49,7 +53,7 @@ const CREDITS = {
 		],
 		content: `Mitsue <br> Sabry <br> Khaotik <br> Quinn <br> Roses <br> TaejaMyungsik <br> 
 				<a href="https://github.com/innerthunder" target="_blank" class="link-red">Innerthunder</a> <br> 
-				Skrubboi <br> Segmental
+				Skrubboi 
 		`
 	},
 	testers: {
@@ -83,19 +87,19 @@ const CREDITS = {
 				"公式ウェブサイト",
 				"공식 웹사이트",
 				"官方网站",
-				"Oficjalna strona internetowa"
+				"Oficjalna internetowa"
 			],
 			1: [
 				"Community Discord",
-				"Discord de la comunidad",
-				"Discord de la communauté",
+				"Discord",
+				"Discord",
 				"Discord da comunidade",
-				"Discord della comunità",
+				"Discord",
 				"Community-Discord",
 				"コミュニティのDiscord",
 				"커뮤니티 디스코드",
 				"社区Discord",
-				"Discord społeczności"
+				"Discord"
 			],
 			2: ['itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io']
 		},
@@ -124,22 +128,22 @@ const CREDITS = {
 			3: '<a href="https://downloads.khinsider.com/game-soundtracks/album/pokemon-firered-leafgreen-music-super-complete" target="_blank" class="link-red">MEDIA FACTORY</a>',
 			4: '<a href="https://msikma.github.io/pokesprite/overview/inventory.html" target="_blank" class="link-red">PokéSprite</a>',
 			5: `Anonalpaca<br> Aveontrainer<br> Beta-SP<br> Ekat<br> Elinthind<br> Farore<br> Heartlessdragoon<br> Idilio<br> KingTapir<br> LunaMaddalena<br> Noelle<br> Pokémon Alexandrite<br> 
-				Pokémon Halcyon<br> Pokémon Nightshade<br> Ross-Hawkins<br> Shyinn<br> Skidmarc25<br> <span style="font-size: 12px;">TheDeadHeroAlistair</span><br> Vurtax<br> Zein<br> Zeo`,
-			6: `<a href="https://sprites.pmdcollab.org/" target="_blank" class="link-red">PMD COLLAB</a><br>
+				Pokémon Halcyon<br> Pokémon Nightshade<br> Ross-Hawkins<br> Shyinn<br> Skidmarc25<br> TheDeadHeroAlistair<br> Vurtax<br> Zein<br> Zeo`,
+			6: ` Sokudo <br> <a href="https://sprites.pmdcollab.org/" target="_blank" class="link-red">PMD COLLAB</a><br>
 				◥θ┴θ◤ <br> 0palite <br> 3Monika4 <br> 3P1C <br> A_Lettuce <br> Adrian <br> AikoMaiko 
 				<br> Akai <br> AlexGroeger <br> AllPatchedUp <br> Angels-Snack <br> Anon <br> Anonymous <br> Ariakyu 
 				<br> Atwer <br> Audino <br> avalancheman <br> Avery <br> Aviivix <br> Axcel <br> Azifel <br> baronessfaron 
-				<br> Blanca <br> Blanky <br> <span style="font-size: 12px;">Bluetails_the_Buizel</span> <br> brookriver <br> bwappi <br> C_Pariah <br> Caitemis 
+				<br> Blanca <br> Blanky <br> Bluetails_the_Buizel <br> brookriver <br> bwappi <br> C_Pariah <br> Caitemis 
 				<br> CamusZekeSirius <br> CeleryGuy <br> Chesyon <br> Chi <br> chikorene <br> Child-Of-Hades <br> chime 
 				<br> CHUNSOFT <br> CinderedPhoenix <br> Cloudy <br> Cocosquid. <br> Coksi <br> Colistan <br> cosmosully <br> cyboy_bit 
 				<br> dariosparks <br> Darkrai <br> Dasawkem <br> DasK <br> Davilos <br> DavKriz <br> Ddragon <br> dede6giu 
 				<br> Deeshura <br> Dejais <br> Deleca7755 <br> deltaflare <br> DeltaL <br> Deltex12 <br> distress <br> dmDash 
-				<br> drawsstuff <br> Dutch-Spaniard <br> <span style="font-size: 12px;">EeveeandVulpix2000</span> <br> El_Pangoro_Parse <br> electronvolt <br>ElGian <br> Eliza   
+				<br> drawsstuff <br> Dutch-Spaniard <br>EeveeandVulpix2000<br> El_Pangoro_Parse <br> electronvolt <br>ElGian <br> Eliza   
 				<br> Emboarger <br> Emitone <br> Emmuffin <br> eon <br> ErrantWitch <br> estelstarlight <br> EzerArt <br> Fable 
 				<br> FalafelPorpoise <br> Fearless-Quit <br> Felis-Licht <br> FerMrack <br> Fingernails <br> Fire_Scyther <br> FissionCube 
 				<br> fledermaus <br> FlowerSnek <br> FrivolousAqua <br> Frostdrop1 <br> G〜 <br> Gayschlatt <br> Gelius <br> Ginnie 
-				<br> Giru <br> Grimlin <br> gromchurch <br> Gust <br> GustavoMusinTG <br> Hanbei <br> Hemlock <br> <span style="font-size: 12px;">HopeBurnsBright2008 </span>
-				<br> Ichor <br> Inv3rse <br> <span style="font-size: 10px;">jackolanternjackalope</span> <br> Jarleypeño <br> Jelly <br> JemDragons <br> JFain <br> Jhony-Rex 
+				<br> Giru <br> Grimlin <br> gromchurch <br> Gust <br> GustavoMusinTG <br> Hanbei <br> Hemlock <br> HopeBurnsBright2008
+				<br> Ichor <br> Inv3rse <br> jackolanternjackalope <br> Jarleypeño <br> Jelly <br> JemDragons <br> JFain <br> Jhony-Rex 
 				<br> JkKU　(Jenrikku) <br> JuanmaSG <br> JustAGunk <br> Katach314 <br> Kawaiitron <br> KCN015 <br> Keldaan <br> Kevin0itachi 
 				<br> LazerBlitz <br> leafia_barrett <br> LegendaryPhoenix <br> Leif <br> lemongrass <br> LightBlueBlaze <br> Limomon <br> lokatts 
 				<br> LornaWR <br> lovefulpup <br> Lovi <br> LT <br> Luca <br> LuchuIsASquirrel <br> Luna-Alex <br> Magu <br> Maruvert 
@@ -147,7 +151,7 @@ const CREDITS = {
 				<br> MonochromeKirby <br> Moo <br> Mooncaller <br> Morei <br> mothbeanie <br> motherhenna Helen <br> Mr_L <br> mucrush <br> namu 
 				<br> nataniel-sama <br> Neat_Neato <br> NeonCityRain <br> NeroIntruder <br> NikolaP <br> Noivern <br> NOLASMOR <br> Noo <br> Novie 
 				<br> Okami <br> Orange <br> Palika <br> Pencil <br> PhillipsYoung <br> pi3.14 <br> PikaNiko <br> Pink_no_tori <br> PinkKecleon <br>
-				PixlHoopa <br> Pokejavi. <br> Pokenoice <br> PoliteHoppip <br> powercristal <br> Precascer <br> Prismatic <br> <span style="font-size: 12px;">programmedsleepstate </span>
+				PixlHoopa <br> Pokejavi. <br> Pokenoice <br> PoliteHoppip <br> powercristal <br> Precascer <br> Prismatic <br> programmedsleepstate 
 				<br> RacieB <br> RaoKurai <br> Ray2064 <br> Reimu_needs_$$$ <br> RelicCipher <br> Reppamon <br> rhys <br> RibbonDove <br> 
 				Richelieu <br> Riodise <br> RoyalRust <br> Rudy <br> Rustnuttie <br> Sceptile <br> Scizivire <br> Semilia <br> SethY <br> 
 				Shadowcrafts <br> Sharpen <br> shimx <br> Shitpost_Sunkern <br> ShyStarryRain <br> SilverDeoxys563 <br> silverfox88 <br> 
@@ -197,7 +201,7 @@ const SHORTCUTS = {
 		2: ['W', 'W', 'Z', 'W', 'W', 'W', 'W', 'W', 'W', 'W'], 
 		3: ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
 		4: ['S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S'],
-		5: ['Z', 'Z', 'W', 'Z', 'Z', 'Y', 'Z', 'Z', 'Z', 'Z'],
+		5: ['Z', 'Z', 'W', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z'],
 		6: ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
 		7: ['Esc', 'Esc', 'Échap', 'Esc', 'Esc', 'Esc', 'Esc', 'Esc', 'Esc', 'Esc'],
 		8: ['Space', 'Espacio', 'Espace', 'Espaço', 'Spazio', 'Leertaste', 'スペース', '스페이스', '空格', 'Spacja'],
@@ -225,7 +229,7 @@ const SHORTCUTS = {
 
 const audioKeys = ['master', 'music', 'ui', 'effects'];
 
-export class MenuScene extends GameScene {
+export class MenuScene extends SectionScene {
 	constructor(main) {
 		super();
 		this.main = main;
@@ -246,280 +250,222 @@ export class MenuScene extends GameScene {
         window.localStorage.setItem("data", JSON.stringify(data));
     }
 
+    createSection(parent) {
+		const section = new Element(parent, { className: 'menu-scene-section' }).element;
+		const title = new Element(section, { className: 'menu-scene-section-title' }).element;
+		const content = new Element(section, { className: 'menu-scene-section-content' }).element;
+		return { section, title, content };
+	}
+
+	createArrowRow(parent) {
+		const row = new Element(parent, { className: 'menu-scene-row' }).element;
+		row.label = new Element(row, { className: 'menu-scene-label' }).element;
+		row.prev = new Element(row, { className: 'menu-scene-arrow', text: '<' }).element;
+		row.value = new Element(row, { className: 'menu-scene-value' }).element;
+		row.next = new Element(row, { className: 'menu-scene-arrow', text: '>' }).element;
+		return row;
+	}
+
+	createLabelValueRow(parent, creditStyle = false) {
+		const row = new Element(parent, { className: creditStyle ? 'menu-scene-credit-row' : 'menu-scene-row' }).element;
+		row.label = new Element(row, { className: 'menu-scene-label' }).element;
+		row.content = new Element(row, { className: 'menu-scene-value-credits' }).element;
+		return row;
+	}
+
+	bindArrowEvents(row, onPrev, onNext, hoverSound = 'hover1') {
+		if (onPrev) row.prev.addEventListener('click', onPrev);
+		if (onNext) row.next.addEventListener('click', onNext);
+		const hover = () => playSound(hoverSound, 'ui');
+		row.prev.addEventListener('mouseenter', hover);
+		row.next.addEventListener('mouseenter', hover);
+	}
+
+	makeButton(parent, className, onClick, hoverSound = 'hover2') {
+		const el = new Element(parent, { className }).element;
+		if (onClick) el.addEventListener('click', onClick);
+		el.addEventListener('mouseenter', () => playSound(hoverSound, 'ui'));
+		return el;
+	}
+
 	render() {
-		this.title.innerHTML = text.menu.title[this.main.lang].toUpperCase();
 		this.menuContainer = new Element(this.container, { className: 'menu-scene-container' }).element;
 
-		// OFFICIAL
-		this.sectionOfficial = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
-		this.titleOfficial = new Element(this.sectionOfficial, { className: 'menu-scene-section-title' }).element;
-		this.contentOfficial = new Element(this.sectionOfficial, { className: 'menu-scene-section-content' }).element;
+		this.renderOfficial();
+		this.renderSettings();
+		this.renderAudio();
+		this.renderShortcuts();
+		this.renderData();
+		this.renderCredits();
+	}
 
-		this.officialWeb = new Element(this.contentOfficial, { className: 'menu-scene-row' }).element;
-		this.officialWeb.label = new Element(this.officialWeb, { className: 'menu-scene-label' }).element;
-		this.officialWeb.content = new Element(this.officialWeb, { className: 'menu-scene-value-credits' }).element;
+	renderOfficial() {
+		const { section, title, content } = this.sectionOfficial = this.createSection(this.menuContainer);
+		this.titleOfficial = title;
+		this.contentOfficial = content;
+
+		this.officialWeb = this.createLabelValueRow(content);
+		this.officialDiscord = this.createLabelValueRow(content);
+		this.officialItchio = this.createLabelValueRow(content);
+
 		this.officialWeb.content.innerHTML = CREDITS.official.content[0];
-
-		this.officialDiscord = new Element(this.contentOfficial, { className: 'menu-scene-row' }).element;
-		this.officialDiscord.label = new Element(this.officialDiscord, { className: 'menu-scene-label' }).element;
-		this.officialDiscord.content = new Element(this.officialDiscord, { className: 'menu-scene-value-credits' }).element;
 		this.officialDiscord.content.innerHTML = CREDITS.official.content[1];
-
-		this.officialItchio = new Element(this.contentOfficial, { className: 'menu-scene-row' }).element;
-		this.officialItchio.label = new Element(this.officialItchio, { className: 'menu-scene-label' }).element;
-		this.officialItchio.content = new Element(this.officialItchio, { className: 'menu-scene-value-credits' }).element;
 		this.officialItchio.content.innerHTML = CREDITS.official.content[2];
+	}
 
-		// SETTINGS
-		this.sectionSettings = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
-		this.titleSettings = new Element(this.sectionSettings, { className: 'menu-scene-section-title' }).element;
-		this.contentSettings = new Element(this.sectionSettings, { className: 'menu-scene-section-content' }).element;
+	renderSettings() {
+		const { section, title, content } = this.sectionSettings = this.createSection(this.menuContainer);
+		this.titleSettings = title;
+		this.contentSettings = content;
 
-		this.languageRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.languageRow.label = new Element(this.languageRow, { className: 'menu-scene-label' }).element;
-		this.languageRow.prev = new Element(this.languageRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.languageRow.value = new Element(this.languageRow, { className: 'menu-scene-value' }).element;
-		this.languageRow.next = new Element(this.languageRow, { className: 'menu-scene-arrow', text: '>' }).element;
+		this.languageRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.languageRow, () => this.updateLanguage(-1), () => this.updateLanguage(1));
 
-		this.languageRow.prev.addEventListener('click', () => { this.updateLanguage(-1) })
-		this.languageRow.next.addEventListener('click', () => { this.updateLanguage(1) })
-		this.languageRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.languageRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+		this.damageRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.damageRow, () => this.updateShowDamage(), () => this.updateShowDamage());
 
-		this.damageRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.damageRow.label = new Element(this.damageRow, { className: 'menu-scene-label' }).element;
-		this.damageRow.prev = new Element(this.damageRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.damageRow.value = new Element(this.damageRow, { className: 'menu-scene-value' }).element;
-		this.damageRow.next = new Element(this.damageRow, { className: 'menu-scene-arrow', text: '>' }).element;
+		this.autoStopRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.autoStopRow, () => this.updateAutoStop(), () => this.updateAutoStop());
 
-		this.damageRow.prev.addEventListener('click', () => { this.updateShowDamage() })
-		this.damageRow.next.addEventListener('click', () => { this.updateShowDamage() })
-		this.damageRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.damageRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-			
-		// this.showRouteRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		// this.showRouteRow.label = new Element(this.showRouteRow, { className: 'menu-scene-label' }).element;
-		// this.showRouteRow.prev = new Element(this.showRouteRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		// this.showRouteRow.value = new Element(this.showRouteRow, { className: 'menu-scene-value' }).element;
-		// this.showRouteRow.next = new Element(this.showRouteRow, { className: 'menu-scene-arrow', text: '>' }).element;
+		this.autoStopBossRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.autoStopBossRow, () => this.updateAutoStopBoss(), () => this.updateAutoStopBoss());
 
-		// this.showRouteRow.prev.addEventListener('click', () => { this.updateShowRoute() })
-		// this.showRouteRow.next.addEventListener('click', () => { this.updateShowRoute() })
-		// this.showRouteRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		// this.showRouteRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+		this.autoResetRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.autoResetRow, () => this.updateAutoReset(-1), () => this.updateAutoReset(1));
 
-		// this.showTCRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		// this.showTCRow.label = new Element(this.showTCRow, { className: 'menu-scene-label' }).element;
-		// this.showTCRow.prev = new Element(this.showTCRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		// this.showTCRow.value = new Element(this.showTCRow, { className: 'menu-scene-value' }).element;
-		// this.showTCRow.next = new Element(this.showTCRow, { className: 'menu-scene-arrow', text: '>' }).element;
+		this.displayHealthRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.displayHealthRow, () => this.updateDisplayHealth(-1), () => this.updateDisplayHealth(1));
 
-		// this.showTCRow.prev.addEventListener('click', () => { this.updateShowTC() })
-		// this.showTCRow.next.addEventListener('click', () => { this.updateShowTC() })
-		// this.showTCRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		// this.showTCRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+		this.mapEffectsRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.mapEffectsRow, () => this.updateMapEffects(-1), () => this.updateMapEffects(1));
+	}
 
-		this.autoStopRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.autoStopRow.label = new Element(this.autoStopRow, { className: 'menu-scene-label' }).element;
-		this.autoStopRow.prev = new Element(this.autoStopRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.autoStopRow.value = new Element(this.autoStopRow, { className: 'menu-scene-value' }).element;
-		this.autoStopRow.next = new Element(this.autoStopRow, { className: 'menu-scene-arrow', text: '>' }).element;
-
-		this.autoStopRow.prev.addEventListener('click', () => { this.updateAutoStop() })
-		this.autoStopRow.next.addEventListener('click', () => { this.updateAutoStop() })
-		this.autoStopRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.autoStopRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-
-		this.autoStopBossRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.autoStopBossRow.label = new Element(this.autoStopBossRow, { className: 'menu-scene-label' }).element;
-		this.autoStopBossRow.prev = new Element(this.autoStopBossRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.autoStopBossRow.value = new Element(this.autoStopBossRow, { className: 'menu-scene-value' }).element;
-		this.autoStopBossRow.next = new Element(this.autoStopBossRow, { className: 'menu-scene-arrow', text: '>' }).element;
-
-		this.autoStopBossRow.prev.addEventListener('click', () => { this.updateAutoStopBoss() })
-		this.autoStopBossRow.next.addEventListener('click', () => { this.updateAutoStopBoss() })
-		this.autoStopBossRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.autoStopBossRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-
-		this.autoResetRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.autoResetRow.label = new Element(this.autoResetRow, { className: 'menu-scene-label' }).element;
-		this.autoResetRow.prev = new Element(this.autoResetRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.autoResetRow.value = new Element(this.autoResetRow, { className: 'menu-scene-value' }).element;
-		this.autoResetRow.next = new Element(this.autoResetRow, { className: 'menu-scene-arrow', text: '>' }).element;
-
-		this.autoResetRow.prev.addEventListener('click', () => { this.updateAutoReset(-1) })
-		this.autoResetRow.next.addEventListener('click', () => { this.updateAutoReset(1) })
-		this.autoResetRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.autoResetRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-
-		this.displayHealthRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.displayHealthRow.label = new Element(this.displayHealthRow, { className: 'menu-scene-label' }).element;
-		this.displayHealthRow.prev = new Element(this.displayHealthRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.displayHealthRow.value = new Element(this.displayHealthRow, { className: 'menu-scene-value' }).element;
-		this.displayHealthRow.next = new Element(this.displayHealthRow, { className: 'menu-scene-arrow', text: '>' }).element;
-
-		this.displayHealthRow.prev.addEventListener('click', () => { this.updateDisplayHealth(-1) })
-		this.displayHealthRow.next.addEventListener('click', () => { this.updateDisplayHealth(1) })
-		this.displayHealthRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.displayHealthRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-
-		this.mapEffectsRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.mapEffectsRow.label = new Element(this.mapEffectsRow, { className: 'menu-scene-label' }).element;
-		this.mapEffectsRow.prev = new Element(this.mapEffectsRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.mapEffectsRow.value = new Element(this.mapEffectsRow, { className: 'menu-scene-value' }).element;
-		this.mapEffectsRow.next = new Element(this.mapEffectsRow, { className: 'menu-scene-arrow', text: '>' }).element;
-
-		this.mapEffectsRow.prev.addEventListener('click', () => { this.updateMapEffects(-1) })
-		this.mapEffectsRow.next.addEventListener('click', () => { this.updateMapEffects(1) })
-		this.mapEffectsRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.mapEffectsRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-
-		// ENDLESS MOD: Wave Info Panel setting
-		this.waveInfoRow = new Element(this.contentSettings, { className: 'menu-scene-row' }).element;
-		this.waveInfoRow.label = new Element(this.waveInfoRow, { className: 'menu-scene-label' }).element;
-		this.waveInfoRow.prev = new Element(this.waveInfoRow, { className: 'menu-scene-arrow', text: '<' }).element;
-		this.waveInfoRow.value = new Element(this.waveInfoRow, { className: 'menu-scene-value' }).element;
-		this.waveInfoRow.next = new Element(this.waveInfoRow, { className: 'menu-scene-arrow', text: '>' }).element;
-
-		this.waveInfoRow.prev.addEventListener('click', () => { this.updateWaveInfo() })
-		this.waveInfoRow.next.addEventListener('click', () => { this.updateWaveInfo() })
-		this.waveInfoRow.prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		this.waveInfoRow.next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-
-		this.sectionAudio = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
-		this.titleAudio = new Element(this.sectionAudio, { className: 'menu-scene-section-title' }).element;
-		this.contentAudio = new Element(this.sectionAudio, { className: 'menu-scene-section-content' }).element;
+	renderAudio() {
+		const { section, title, content } = this.sectionAudio = this.createSection(this.menuContainer);
+		this.titleAudio = title;
+		this.contentAudio = content;
 
 		this.audioRow = [];
-	
-		for (let i = 0; i < 4; i++) {
-			this.audioRow[i] = new Element(this.contentAudio, { className: 'menu-scene-row' }).element;
-			this.audioRow[i].label = new Element(this.audioRow[i], { className: 'menu-scene-label' }).element;
-			this.audioRow[i].prev = new Element(this.audioRow[i], { className: 'menu-scene-arrow', text: '<' }).element;
-			this.audioRow[i].value = new Element(this.audioRow[i], { className: 'menu-scene-value' }).element;
-			this.audioRow[i].next = new Element(this.audioRow[i], { className: 'menu-scene-arrow', text: '>' }).element;
-
-			this.audioRow[i].prev.addEventListener('click', () => {this.updateAudio(audioKeys[i], -1)})
-			this.audioRow[i].next.addEventListener('click', () => {this.updateAudio(audioKeys[i], 1)})
-			this.audioRow[i].prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-			this.audioRow[i].next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+		for (let i = 0; i < audioKeys.length; i++) {
+			const row = this.createArrowRow(content);
+			this.bindArrowEvents(row, () => this.updateAudio(audioKeys[i], -1), () => this.updateAudio(audioKeys[i], 1));
+			this.audioRow.push(row);
 		}
 
 		this.muteRow = [];
-
 		for (let i = 0; i < 3; i++) {
-			this.muteRow[i] = new Element(this.contentAudio, { className: 'menu-scene-row' }).element;
-			this.muteRow[i].label = new Element(this.muteRow[i], { className: 'menu-scene-label' }).element;
-			this.muteRow[i].prev = new Element(this.muteRow[i], { className: 'menu-scene-arrow', text: '<' }).element;
-			this.muteRow[i].value = new Element(this.muteRow[i], { className: 'menu-scene-value' }).element;
-			this.muteRow[i].next = new Element(this.muteRow[i], { className: 'menu-scene-arrow', text: '>' }).element;
-
-			this.muteRow[i].prev.addEventListener('click', () => {this.muteAudio(i)})
-			this.muteRow[i].next.addEventListener('click', () => {this.muteAudio(i)})
-			this.muteRow[i].prev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-			this.muteRow[i].next.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+			const row = this.createArrowRow(content);
+			this.bindArrowEvents(row, () => this.muteAudio(i), () => this.muteAudio(i));
+			this.muteRow.push(row);
 		}
+	}
 
-		//SHORTCUTS
-		this.sectionShortcuts = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
-		this.titleShortcuts = new Element(this.sectionShortcuts, { className: 'menu-scene-section-title' }).element;
-		this.contentShortcuts = new Element(this.sectionShortcuts, { className: 'menu-scene-section-content' }).element;
+	renderShortcuts() {
+		const { section, title, content } = this.sectionShortcuts = this.createSection(this.menuContainer);
+		this.titleShortcuts = title;
+		this.contentShortcuts = content;
 
 		this.shortcutRow = [];
-
 		for (let i = 0; i < 13; i++) {
-			this.shortcutRow[i] = new Element(this.contentShortcuts, { className: 'menu-scene-row' }).element;
-			this.shortcutRow[i].label = new Element(this.shortcutRow[i], { className: 'menu-scene-label' }).element;
-			this.shortcutRow[i].content = new Element(this.shortcutRow[i], { className: 'menu-scene-value-credits' }).element;
+			const row = new Element(content, { className: 'menu-scene-row' }).element;
+			row.label = new Element(row, { className: 'menu-scene-label' }).element;
+			row.content = new Element(row, { className: 'menu-scene-value-credits' }).element;
+			this.shortcutRow.push(row);
 		}
+	}
 
-		// DELETE DATA
+	renderData() {
+		const { section, title, content } = this.sectionData = this.createSection(this.menuContainer);
+		this.titleData = title;
+		this.contentData = content;
 
-		this.sectionData = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
-		this.titleData = new Element(this.sectionData, { className: 'menu-scene-section-title' }).element;
-		this.contentData = new Element(this.sectionData, { className: 'menu-scene-section-content' }).element;
-		this.deleteData = new Element(this.contentData, { className: 'menu-scene-delete-data' }).element;
+		const redeemRow = new Element(content, { className: 'menu-scene-redeem-row-data' }).element;
+		this.redeemCodeInput = new Input(redeemRow, "text", { className: 'menu-scene-redeem-input-data', maxlength: 64 });
+		this.validateRedeemButton = new Element(redeemRow, { className: 'menu-scene-redeem-submit-data' }).element;
+		this.validateRedeemButton.addEventListener('click', () => this.handleRedeemCode());
+		this.validateRedeemButton.addEventListener('mouseenter', () => playSound('hover2', 'ui'));
 
-		this.deleteData.addEventListener('click', () => { 
-			this.deleteScene.open(); 
-		})
+		this.redeemCodeMessage = new Element(content, { className: 'menu-scene-redeem-feedback' }).element;
 
-		this.exportData = new Element(this.contentData, { className: 'menu-scene-export-data' }).element;
-		this.exportData.addEventListener('click', () => { 
-			this.exportScene.open(); 
-		})
+		this.deleteData = this.makeButton(content, 'menu-scene-delete-data', () => this.deleteScene.open());
+		this.copyPlayerCodeData = this.makeButton(content, 'menu-scene-copy-player-code', () => this.copyPlayerCode());
+		this.exportData = this.makeButton(content, 'menu-scene-export-data', () => {
+			if (isSaveExportDisabled()) return;
+			this.exportScene.open();
+		});
+		this.importData = this.makeButton(content, 'menu-scene-import-data', () => this.importScene.open());
+		this.syncExportDataButtonState();
 
-		this.importData = new Element(this.contentData, { className: 'menu-scene-import-data' }).element;
-		this.importData.addEventListener('click', () => { 
-			this.importScene.open(); 
-		})
+		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.5.0` }).element;
+	}
 
-		this.deleteData.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
-		this.exportData.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
-		this.importData.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
+	syncExportDataButtonState() {
+		if (!this.exportData) return;
 
-		this.version = new Element(this.sectionData, { className: 'menu-scene-version', text: `v 1.4.0` }).element;
-		// CREDITS
-		this.sectionCredits = new Element(this.menuContainer, { className: 'menu-scene-section' }).element;
-		this.titleCredits = new Element(this.sectionCredits, { className: 'menu-scene-section-title' }).element;
-		this.contentCredits = new Element(this.sectionCredits, { className: 'menu-scene-section-content' }).element;
+		const isDisabled = isSaveExportDisabled();
+		this.exportData.classList.toggle('disabled', isDisabled);
+		this.exportData.setAttribute('aria-disabled', isDisabled ? 'true' : 'false');
+	}
 
-		this.developer = new Element(this.contentCredits, { className: 'menu-scene-row' }).element;
-		this.developer.label = new Element(this.developer, { className: 'menu-scene-label' }).element;
-		this.developer.content = new Element(this.developer, { className: 'menu-scene-value-credits' }).element;
+	makeButton(parent, className, onClick) {
+		return this.makeButtonWithHover(parent, className, onClick);
+	}
+
+	makeButtonWithHover(parent, className, onClick, hoverSound = 'hover2') {
+		const el = new Element(parent, { className }).element;
+		if (onClick) el.addEventListener('click', onClick);
+		el.addEventListener('mouseenter', () => playSound(hoverSound, 'ui'));
+		return el;
+	}
+
+	renderCredits() {
+		const { section, title, content } = this.sectionCredits = this.createSection(this.menuContainer);
+		this.titleCredits = title;
+		this.contentCredits = content;
+
+		this.developer = this.createLabelValueRow(content, true);
 		this.developer.content.innerHTML = CREDITS.developer.content;
 
-		this.mapArtist = new Element(this.contentCredits, { className: 'menu-scene-row' }).element;
-		this.mapArtist.label = new Element(this.mapArtist, { className: 'menu-scene-label' }).element;
-		this.mapArtist.content = new Element(this.mapArtist, { className: 'menu-scene-value-credits' }).element;
+		this.mapArtist = this.createLabelValueRow(content);
 		this.mapArtist.content.innerHTML = CREDITS.mapArtist.content;
 
-		this.contributors = new Element(this.contentCredits, { className: 'menu-scene-credit-row' }).element;
-		this.contributors.label = new Element(this.contributors, { className: 'menu-scene-label' }).element;
-		this.contributors.content = new Element(this.contributors, { className: 'menu-scene-value-credits' }).element;
-		this.contributors.content.innerHTML = CREDITS.contributors.content;
-
-		this.balance = new Element(this.contentCredits, { className: 'menu-scene-credit-row' }).element;
-		this.balance.label = new Element(this.balance, { className: 'menu-scene-label' }).element;
-		this.balance.content = new Element(this.balance, { className: 'menu-scene-value-credits' }).element;
+		this.balance = this.createLabelValueRow(content, true);
 		this.balance.content.innerHTML = CREDITS.balance.content;
 
-		this.testers = new Element(this.contentCredits, { className: 'menu-scene-credit-row' }).element;
-		this.testers.label = new Element(this.testers, { className: 'menu-scene-label' }).element;
-		this.testers.content = new Element(this.testers, { className: 'menu-scene-value-credits' }).element;
+		this.contributors = this.createLabelValueRow(content, true);
+		this.contributors.content.innerHTML = CREDITS.contributors.content;
+
+		this.testers = this.createLabelValueRow(content, true);
 		this.testers.content.innerHTML = CREDITS.testers.content;
 
-		this.traductionsContainer = new Element(this.contentCredits, { className: 'menu-scene-credits-container' }).element;
+		this.traductionsContainer = new Element(content, { className: 'menu-scene-credits-container' }).element;
 		this.traductionsTitle = new Element(this.traductionsContainer, { className: 'menu-scene-credits-title' }).element;
 		this.traductionsList = [];
-
 		for (let i = 0; i < 4; i++) {
-			this.traductionsList[i] = new Element(this.traductionsContainer, { className: 'menu-scene-credit-row' }).element;
-			this.traductionsList[i].label = new Element(this.traductionsList[i], { className: 'menu-scene-label' }).element;
-			this.traductionsList[i].content = new Element(this.traductionsList[i], { className: 'menu-scene-value-credits' }).element;
+			const r = new Element(this.traductionsContainer, { className: 'menu-scene-credit-row' }).element;
+			r.label = new Element(r, { className: 'menu-scene-label' }).element;
+			r.content = new Element(r, { className: 'menu-scene-value-credits' }).element;
+			this.traductionsList.push(r);
 			this.traductionsList[i].content.innerHTML = CREDITS.traductions.content[i];
 		}
-		
-		this.assetsContainer = new Element(this.contentCredits, { className: 'menu-scene-credits-container' }).element;
+
+		this.assetsContainer = new Element(content, { className: 'menu-scene-credits-container' }).element;
 		this.assetsTitle = new Element(this.assetsContainer, { className: 'menu-scene-credits-title' }).element;
 		this.assetsList = [];
-
 		for (let i = 0; i < 7; i++) {
-			this.assetsList[i] = new Element(this.assetsContainer, { className: 'menu-scene-credit-row' }).element;
-			this.assetsList[i].label = new Element(this.assetsList[i], { className: 'menu-scene-label' }).element;
-			this.assetsList[i].content = new Element(this.assetsList[i], { className: 'menu-scene-value-credits' }).element;
+			const r = new Element(this.assetsContainer, { className: 'menu-scene-credit-row' }).element;
+			r.label = new Element(r, { className: 'menu-scene-label' }).element;
+			r.content = new Element(r, { className: 'menu-scene-value-credits' }).element;
+			this.assetsList.push(r);
 			this.assetsList[i].content.innerHTML = CREDITS.assets.content[i];
 		}
 
 		this.disclaimer = new Element(this.contentCredits, { className: 'menu-credits-disclaimer' }).element;
-
-		this.background.addEventListener('click', (e) => { if (e.target == this.background) this.close() })
 	}
 
 	update() {
 		const data = JSON.parse(window.localStorage.getItem("data"));
 
-		this.title.innerHTML = text.menu.title[this.main.lang].toUpperCase();
 		this.titleOfficial.innerHTML = text.menu.official.title[this.main.lang].toUpperCase();
 		this.titleSettings.innerHTML = text.menu.settings.title[this.main.lang].toUpperCase();
 		this.titleAudio.innerHTML = text.menu.audio.title[this.main.lang].toUpperCase();
@@ -527,86 +473,79 @@ export class MenuScene extends GameScene {
 		this.titleShortcuts.innerHTML = text.menu.shortcuts.title[this.main.lang].toUpperCase();
 		this.titleData.innerHTML = text.menu.data.title[this.main.lang].toUpperCase();
 
-		// Official
 		this.officialWeb.label.innerHTML = CREDITS.official.label[0][this.main.lang].toUpperCase();
 		this.officialDiscord.label.innerHTML = CREDITS.official.label[1][this.main.lang].toUpperCase();
 		this.officialItchio.label.innerHTML = CREDITS.official.label[2][this.main.lang].toUpperCase();
 
-		//SETINGS
-
 		this.languageRow.label.innerText = text.menu.settings.language[this.main.lang].toUpperCase();
 		this.languageRow.value.innerText = OPTION.language[this.main.lang].toUpperCase();
 
-		for (let i = 0; i < 4; i++) {
-  			this.audioRow[i].label.innerHTML = text.menu.settings.audio[i][this.main.lang].toUpperCase();
-  			this.audioRow[i].value.innerHTML = this.getConfig().audio[audioKeys[i]]
-  		}
+		for (let i = 0; i < this.audioRow.length; i++) {
+			this.audioRow[i].label.innerHTML = text.menu.settings.audio[i][this.main.lang].toUpperCase();
+			this.audioRow[i].value.innerHTML = this.getConfig().audio[audioKeys[i]];
+		}
 
-  		for (let i = 0; i < 3; i++) {
-  			this.muteRow[i].label.innerHTML = text.menu.settings.mute[i][this.main.lang].toUpperCase();
-  			this.muteRow[i].value.innerHTML = (this.main.mute[i]) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
-  		}
+		for (let i = 0; i < this.muteRow.length; i++) {
+			this.muteRow[i].label.innerHTML = text.menu.settings.mute[i][this.main.lang].toUpperCase();
+			this.muteRow[i].value.innerHTML = (this.main.mute[i]) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+		}
 
-  		this.damageRow.label.innerText = text.menu.settings.showDamage[this.main.lang].toUpperCase();
-  		this.damageRow.value.innerText = (data.config.showDamage) ? text.ui.yes[this.main.lang].toUpperCase(): text.ui.no[this.main.lang].toUpperCase();
+		this.damageRow.label.innerText = text.menu.settings.showDamage[this.main.lang].toUpperCase();
+		this.damageRow.value.innerText = (data.config.showDamage) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
 
-  		// this.showRouteRow.label.innerText = text.menu.settings.showRoute[this.main.lang].toUpperCase();
-  		// this.showRouteRow.value.innerText = (data.config.showRoute) ? text.ui.yes[this.main.lang].toUpperCase(): text.ui.no[this.main.lang].toUpperCase();
+		this.autoStopRow.label.innerText = text.menu.settings.autoStop[this.main.lang].toUpperCase();
+		this.autoStopRow.value.innerText = (data.config.autoStop) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
 
-  		// this.showTCRow.label.innerText = text.menu.settings.showTC[this.main.lang].toUpperCase();
-  		// this.showTCRow.value.innerText = (data.config.showTC) ? text.ui.yes[this.main.lang].toUpperCase(): text.ui.no[this.main.lang].toUpperCase();
+		this.autoStopBossRow.label.innerText = text.menu.settings.autoStopBoss[this.main.lang].toUpperCase();
+		this.autoStopBossRow.value.innerText = (data.config.autoStopBoss) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
 
-  		this.autoStopRow.label.innerText = text.menu.settings.autoStop[this.main.lang].toUpperCase();
-  		this.autoStopRow.value.innerText = (data.config.autoStop) ? text.ui.yes[this.main.lang].toUpperCase(): text.ui.no[this.main.lang].toUpperCase();
+		this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
+		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();
 
-  		this.autoStopBossRow.label.innerText = text.menu.settings.autoStopBoss[this.main.lang].toUpperCase();
-  		this.autoStopBossRow.value.innerText = (data.config.autoStopBoss) ? text.ui.yes[this.main.lang].toUpperCase(): text.ui.no[this.main.lang].toUpperCase();
+		this.displayHealthRow.label.innerText = text.menu.settings.displayHealth[this.main.lang].toUpperCase();
+		if (data.config.displayHealth == 1) this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[1][this.main.lang].toUpperCase();
+		else if (data.config.displayHealth == 2) this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[2][this.main.lang].toUpperCase();
+		else this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[0][this.main.lang].toUpperCase();
 
-  		this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
-  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase(); 
+		this.mapEffectsRow.label.innerText = text.menu.settings.mapEffects[this.main.lang].toUpperCase();
+		if (data.config.mapEffects == 1) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[1][this.main.lang].toUpperCase();
+		else if (data.config.mapEffects == 2) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[2][this.main.lang].toUpperCase();
+		else this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[0][this.main.lang].toUpperCase();
 
-  		this.displayHealthRow.label.innerText = text.menu.settings.displayHealth[this.main.lang].toUpperCase();
-  		if (data.config.displayHealth == 1) this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[1][this.main.lang].toUpperCase();
-  		else if (data.config.displayHealth == 2) this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[2][this.main.lang].toUpperCase();
-  		else this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[0][this.main.lang].toUpperCase(); 
+		for (let i = 0; i < this.shortcutRow.length; i++) {
+			this.shortcutRow[i].label.innerHTML = SHORTCUTS.key[i][this.main.lang].toUpperCase();
+			this.shortcutRow[i].content.innerHTML = SHORTCUTS.do[i][this.main.lang].toUpperCase();
+		}
 
-  		this.mapEffectsRow.label.innerText = text.menu.settings.mapEffects[this.main.lang].toUpperCase();
-  		if (data.config.mapEffects == 1) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[1][this.main.lang].toUpperCase();
-  		else if (data.config.mapEffects == 2) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[2][this.main.lang].toUpperCase();
-  		else this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[0][this.main.lang].toUpperCase(); 
+		this.developer.label.innerHTML = CREDITS.developer.label[this.main.lang].toUpperCase();
+		this.mapArtist.label.innerHTML = CREDITS.mapArtist.label[this.main.lang].toUpperCase();
+		this.contributors.label.innerHTML = CREDITS.contributors.label[this.main.lang].toUpperCase();
+		this.balance.label.innerHTML = CREDITS.balance.label[this.main.lang].toUpperCase();
+		this.testers.label.innerHTML = CREDITS.testers.label[this.main.lang].toUpperCase();
 
-  		// ENDLESS MOD: Wave Info Panel setting
-  		this.waveInfoRow.label.innerText = 'WAVE INFO PANEL'; // text.menu.settings.waveInfo
-  		this.waveInfoRow.value.innerText = (this.main.UI.waveInfoDisplay) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+		this.traductionsTitle.innerHTML = CREDITS.traductions.title[this.main.lang].toUpperCase();
+		for (let i = 0; i < this.traductionsList.length; i++) {
+			this.traductionsList[i].label.innerHTML = CREDITS.traductions.label[i][this.main.lang].toUpperCase();
+		}
 
-  		//SHORTCUTS
-  		for (let i = 0; i < 13; i++) {
-  			this.shortcutRow[i].label.innerHTML = SHORTCUTS.key[i][this.main.lang].toUpperCase();
-  			this.shortcutRow[i].content.innerHTML = SHORTCUTS.do[i][this.main.lang].toUpperCase();
-  		}
+		this.assetsTitle.innerHTML = CREDITS.assets.title[this.main.lang].toUpperCase();
+		for (let i = 0; i < this.assetsList.length; i++) {
+			this.assetsList[i].label.innerHTML = CREDITS.assets.label[i][this.main.lang].toUpperCase();
+		}
 
-  		// CREDITS
-  		this.developer.label.innerHTML = CREDITS.developer.label[this.main.lang].toUpperCase();
-  		this.mapArtist.label.innerHTML = CREDITS.mapArtist.label[this.main.lang].toUpperCase();
-  		this.contributors.label.innerHTML = CREDITS.contributors.label[this.main.lang].toUpperCase();
-  		this.balance.label.innerHTML = CREDITS.balance.label[this.main.lang].toUpperCase();
-  		this.testers.label.innerHTML = CREDITS.testers.label[this.main.lang].toUpperCase();
+		this.disclaimer.innerHTML = CREDITS.disclaimer[this.main.lang];
 
-  		this.traductionsTitle.innerHTML = CREDITS.traductions.title[this.main.lang].toUpperCase();
-  		for (let i = 0; i < 4; i++) this.traductionsList[i].label.innerHTML = CREDITS.traductions.label[i][this.main.lang].toUpperCase();
-
-  		this.assetsTitle.innerHTML = CREDITS.assets.title[this.main.lang].toUpperCase();
-  		for (let i = 0; i < 7; i++) this.assetsList[i].label.innerHTML = CREDITS.assets.label[i][this.main.lang].toUpperCase();
-
-  		this.disclaimer.innerHTML = CREDITS.disclaimer[this.main.lang]
-
-  		//DATA
-  		this.deleteData.innerHTML = text.menu.data.delete[this.main.lang].toUpperCase();
-  		this.exportData.innerHTML = text.menu.data.export[this.main.lang].toUpperCase();
+		this.deleteData.innerHTML = text.menu.data.delete[this.main.lang].toUpperCase();
+		this.exportData.innerHTML = text.menu.data.export[this.main.lang].toUpperCase();
 		this.importData.innerHTML = text.menu.data.import[this.main.lang].toUpperCase();
+		this.copyPlayerCodeData.innerHTML = text.menu.data.copyPlayerCode[this.main.lang].toUpperCase();
+		this.syncExportDataButtonState();
+		this.validateRedeemButton.innerHTML = text.menu.data.validateRedeem[this.main.lang].toUpperCase();
+		this.redeemCodeInput.value.placeholder = text.menu.data.redeemCodePlaceholder[this.main.lang].toUpperCase();
+		this.redeemCodeMessage.innerText = '';
 	}
 
 	updateLanguage = (dir) => {
@@ -642,7 +581,6 @@ export class MenuScene extends GameScene {
 
         if (
         	!this.main.player.secrets.chatot &&
-        	//!this.main.area.waveActive &&
 			!this.main.area.inChallenge
         ) {
         	if (config.audio['master'] == 0 && config.audio['music'] == 4 && config.audio['ui'] == 4 && config.audio['effects'] == 1) {
@@ -679,8 +617,8 @@ export class MenuScene extends GameScene {
 
     updateDisplayHealth = (dir) => {
     	let pos = Number(this.main.displayHealth) + dir;
-		if (pos < 0) pos = 2;
-		else if (pos == 3) pos = 0;
+		if (pos < 0) pos = 3;
+		else if (pos == 4) pos = 0;
 		this.main.displayHealth = pos;
 
   		const data = JSON.parse(window.localStorage.getItem("data"));
@@ -693,8 +631,8 @@ export class MenuScene extends GameScene {
 
     updateMapEffects = (dir) => {
     	let pos = Number(this.main.mapEffects) + dir;
-		if (pos < 0) pos = 2;
-		else if (pos == 3) pos = 0;
+		if (pos < 0) pos = 3;
+		else if (pos == 4) pos = 0;
 		this.main.mapEffects = pos;
 
   		const data = JSON.parse(window.localStorage.getItem("data"));
@@ -725,26 +663,7 @@ export class MenuScene extends GameScene {
 
         this.update();
         playSound('option', 'ui');
-    }
-
-    // ENDLESS MOD: Toggle wave info panel
-    updateWaveInfo = () => {
-    	this.main.UI.toggleWaveInfo();
-        this.update();
-        playSound('option', 'ui');
     }	
-
-    // updateShowTC = () => {
-    // 	this.main.showTC = !this.main.showTC;
-
-  	// 	const data = JSON.parse(window.localStorage.getItem("data"));
-    //     data.config.showTC = this.main.showTC;
-    //     window.localStorage.setItem("data", JSON.stringify(data));
-
-    //     this.update();
-    //     playSound('option', 'ui');
-    //     this.main.UI.update();
-    // }	
 
     updateShowDamage = () => {
     	this.main.showDamage = !this.main.showDamage;
@@ -757,22 +676,159 @@ export class MenuScene extends GameScene {
         playSound('option', 'ui');
     };
 
-    // updateShowRoute = () => {
-    // 	this.main.showRoute = !this.main.showRoute;
-
-  	// 	const data = JSON.parse(window.localStorage.getItem("data"));
-    //     data.config.showRoute = this.main.showRoute;
-    //     window.localStorage.setItem("data", JSON.stringify(data));
-
-    //     this.update();
-    //     this.main.UI.update();
-    //     playSound('option', 'ui');
-    // };
-
 	open() {
+		if (this.isOpen) return this.close();
+		this.main.sections.forEach(section => {
+			if (section.isOpen && section != this) section.close();
+		})
+		
 		super.open();
 		this.update();
+		this.main.UI.section['menu'].classList.add('is-selected');
+		if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit()
 		if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+	}
+
+	close() {
+		super.close();
+		this.main.UI.section['menu'].classList.remove('is-selected');
+	}
+
+	async copyPlayerCode() {
+		const playerCode = await this.main.player.getPlayerCode();
+		if (!playerCode) return;
+
+		let copied = false;
+		try {
+			if (navigator?.clipboard?.writeText) {
+				await navigator.clipboard.writeText(playerCode);
+				copied = true;
+			}
+		} catch (err) {
+			copied = false;
+		}
+
+		if (!copied) {
+			const tempInput = document.createElement('textarea');
+			tempInput.value = playerCode;
+			document.body.appendChild(tempInput);
+			tempInput.select();
+			try {
+				document.execCommand('copy');
+				copied = true;
+			} catch (err) {
+				copied = false;
+			}
+			document.body.removeChild(tempInput);
+		}
+
+		playSound('key1', 'ui');
+		const previous = text.menu.data.copyPlayerCode[this.main.lang].toUpperCase();
+		this.copyPlayerCodeData.innerText = copied
+			? text.menu.data.codeCopied[this.main.lang].toUpperCase()
+			: previous;
+		setTimeout(() => {
+			this.copyPlayerCodeData.innerText = previous;
+		}, 1200);
+	}
+
+	playerHasMissingNo() {
+		const missingNoSpecie = pokemonData.missingNo;
+		if (!missingNoSpecie) return false;
+		const missingNoId = missingNoSpecie?.id;
+		if (typeof missingNoId !== 'number') return false;
+		const playerPokemon = [...this.main.team.pokemon, ...this.main.box.pokemon];
+		return playerPokemon.some((poke) => poke?.id === missingNoId || poke?.specie?.id === missingNoId);
+	}
+
+	setRedeemMessage(message, ok = false) {
+		this.redeemCodeMessage.style.color = ok ? 'var(--green)' : 'var(--red)';
+		this.redeemCodeMessage.innerText = message.toUpperCase();
+	}
+
+	redeemMissingNo() {
+		if (this.playerHasMissingNo()) {
+			return { ok: false, message: text.menu.data.redeemAlreadyOwned[this.main.lang] };
+		}
+
+		if (!pokemonData.missingNo) {
+			return { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
+		}
+
+		this.main.UI.getSecret('missingNo');
+		return { ok: true, message: text.menu.data.redeemSuccess[this.main.lang] };
+	}
+
+	redeemGold25k() {
+		const rewardId = 'gold25k';
+		if (this.main.player.hasRedeemedReward(rewardId)) {
+			return { ok: false, message: text.menu.data.redeemAlreadyOwned[this.main.lang] };
+		}
+
+		this.main.player.changeGold(25000);
+		this.main.player.markRewardAsRedeemed(rewardId);
+		return { ok: true, message: text.menu.data.redeemSuccess[this.main.lang] };
+	}
+
+	async handleRedeemCode() {
+		const redeemCode = this.redeemCodeInput.value.value.trim().toUpperCase();
+		if (!redeemCode) {
+			playSound('pop0', 'ui');
+			this.setRedeemMessage(text.menu.data.redeemInvalidFormat[this.main.lang], false);
+			return;
+		}
+
+		const resolvedFeature = resolveRedeemCodeFeature(redeemCode);
+		if (!resolvedFeature.ok) {
+			playSound('pop0', 'ui');
+			if (resolvedFeature.reason === 'invalid_format') {
+				this.setRedeemMessage(text.menu.data.redeemInvalidFormat[this.main.lang], false);
+			} else {
+				this.setRedeemMessage(text.menu.data.redeemUnavailable[this.main.lang], false);
+			}
+			return;
+		}
+
+		const featureId = resolvedFeature.featureId;
+		let playerCode = null;
+		if (featureRequiresPlayerCode(featureId)) {
+			playerCode = await this.main.player.getPlayerCode();
+			if (!playerCode) {
+				playSound('pop0', 'ui');
+				this.setRedeemMessage(text.menu.data.redeemUnavailable[this.main.lang], false);
+				return;
+			}
+		}
+
+		const validation = await validateRedeemCode(featureId, playerCode, redeemCode);
+		if (!validation.ok) {
+			playSound('pop0', 'ui');
+			if (validation.reason === 'invalid_format') {
+				this.setRedeemMessage(text.menu.data.redeemInvalidFormat[this.main.lang], false);
+			} else if (validation.reason === 'invalid_feature' || validation.reason === 'unknown_feature') {
+				this.setRedeemMessage(text.menu.data.redeemUnavailable[this.main.lang], false);
+			} else {
+				this.setRedeemMessage(text.menu.data.redeemInvalidProfile[this.main.lang], false);
+			}
+			return;
+		}
+
+		let redeemResult = { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
+		if (featureId === 'missingno') {
+			redeemResult = this.redeemMissingNo();
+		} else if (featureId === 'gold25k') {
+			redeemResult = this.redeemGold25k();
+		}
+
+		if (!redeemResult.ok) {
+			playSound('pop0', 'ui');
+			this.setRedeemMessage(redeemResult.message, false);
+			return;
+		}
+
+		playSound('purchase', 'ui');
+		this.redeemCodeInput.value.value = '';
+		this.setRedeemMessage(redeemResult.message, true);
 	}
 }
 
@@ -927,6 +983,7 @@ export class ExportData extends GameScene {
 		this.exportMessage = new Element(this.container, { className: 'import-scene-message' }).element;
 		this.exportButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
 		this.exportButton.addEventListener('click', () => {
+			if (isSaveExportDisabled()) return;
 		    playSound('key1', 'ui');
 
 		    const tempInput = document.createElement('textarea');
@@ -946,6 +1003,7 @@ export class ExportData extends GameScene {
 
 		this.downloadButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') });
 	    this.downloadButton.addEventListener('click', () => {
+	    	if (isSaveExportDisabled()) return;
 	        playSound('key1', 'ui');
 
 	        const blob = new Blob([this.code], { type: 'text/plain' });
@@ -974,6 +1032,7 @@ export class ExportData extends GameScene {
 
 
 	open() {
+		if (isSaveExportDisabled()) return;
 		super.open();
 		this.update();
 	}

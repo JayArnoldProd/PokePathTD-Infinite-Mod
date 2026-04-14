@@ -1,12 +1,12 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.4
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.4.4** ✅
+**Compatible with PokePath TD v1.5 on Windows** ✅
 
-A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
+A comprehensive mod pack for **PokePath TD** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
 
-> **v1.4.4 Update:** Compatible with the latest game version. Merged all 1.4.4 changes including Pokemon stat rebalancing, new abilities, item changes, pause improvements, and bug fixes, while preserving all core mod features.
+> **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
@@ -45,11 +45,19 @@ A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds 
 - **Shiny Reveal** - Special SHINY prompt with sparkle animation
 - **Shinies Have No Level Cap** - Can level infinitely unlike regular Pokemon
 
+### 💀 Shiny Enemy Variant
+- **Dedicated Installer Toggle** - Separate from the player shiny sprite system
+- **1 in 50 Shiny Enemies/Bosses**
+- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, 10x gold
+- **Profile Tracking** - Shiny enemy defeats are recorded in Profile
+
 ### 🔧 Quality of Life
 - **Item Tooltips**
 - **Save/Load Tooltips**
 - **Challenge Party Preserve**
 - **Attack Type Sorting**
+- **Unlockables Profile Tab**
+- **Live Profile Updates**
 
 ### 🐛 Vanilla Bug Fixes
 - **Tower Placement Persistence**
@@ -74,13 +82,14 @@ A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds 
 
 ## 📥 Downloads
 
-**Use the latest release only:**
-- **Windows:** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
-- **macOS ZIP:** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
-- **macOS DMG:** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
+**Latest + fallback releases:**
+- **Windows (latest):** [PokePath-TD-INFINITE-Windows-v1.5.0.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.5.0/PokePath-TD-INFINITE-Windows-v1.5.0.zip)
+- **Windows (older):** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
+- **macOS ZIP (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
+- **macOS DMG (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
 
-> 💡 **Match your game version.** This mod pack is for **PokePath TD 1.4.4**.
-> If you are on an older game version, update the game first instead of using older mod releases.
+> 💡 **Match your game version.** Windows v1.5.0 targets **PokePath TD 1.5**.
+> macOS is still on the older **1.4.4** release track for now.
 
 ---
 
@@ -103,7 +112,7 @@ A comprehensive mod pack for **PokePath TD** on **Windows and macOS** that adds 
 
 ### Windows
 
-1. Download **`PokePath-TD-INFINITE-Windows-v1.4.4.zip`** from the latest release.
+1. Download **`PokePath-TD-INFINITE-Windows-v1.5.0.zip`** from the latest release.
 2. Extract it anywhere.
 3. Copy the included **`mods`** folder into your game directory:
    ```
@@ -197,7 +206,8 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
   - `windows/mods/`
   - `mac/PokePath-TD-INFINITE-Mac/`
 - The Windows release intentionally includes a top-level **`mods`** folder so users can drop it directly into the game directory.
-- Older releases are not recommended. Use **v1.4.4**.
+- Recommended for Windows: **v1.5.0**.
+- Older fallback release: **v1.4.4 (older)**.
 
 ---
 

@@ -1,0 +1,67 @@
+{
+  "source": "https://pokemondb.net/pokedex/shiny",
+  "selection_rule": "pokemon_data.json keys that still evolve and do not yet have a bundled shiny sprite in windows/mods/patches/shiny_sprites",
+  "pokemon_count": 2,
+  "pokemon": {
+    "cherubi": {
+      "pokemondb_slug": "cherubi",
+      "normal_url": "https://img.pokemondb.net/sprites/home/normal/2x/cherubi.jpg",
+      "shiny_url": "https://img.pokemondb.net/sprites/home/shiny/2x/cherubi.jpg",
+      "normal": {
+        "pixel_count": 20700,
+        "average_rgb": [
+          157,
+          126,
+          108
+        ],
+        "average_hex": "#9D7E6C",
+        "average_hue_deg": 14.26,
+        "average_saturation": 0.7057,
+        "average_value": 0.8389
+      },
+      "shiny": {
+        "pixel_count": 20815,
+        "average_rgb": [
+          215,
+          163,
+          98
+        ],
+        "average_hex": "#D7A362",
+        "average_hue_deg": 34.05,
+        "average_saturation": 0.5675,
+        "average_value": 0.8737
+      },
+      "hue_shift_deg": 19.79
+    },
+    "rockruff": {
+      "pokemondb_slug": "rockruff",
+      "normal_url": "https://img.pokemondb.net/sprites/home/normal/2x/rockruff.jpg",
+      "shiny_url": "https://img.pokemondb.net/sprites/home/shiny/2x/rockruff.jpg",
+      "normal": {
+        "pixel_count": 17935,
+        "average_rgb": [
+          176,
+          155,
+          145
+        ],
+        "average_hex": "#B09B91",
+        "average_hue_deg": 20.63,
+        "average_saturation": 0.2123,
+        "average_value": 0.6984
+      },
+      "shiny": {
+        "pixel_count": 16827,
+        "average_rgb": [
+          157,
+          168,
+          174
+        ],
+        "average_hex": "#9DA8AE",
+        "average_hue_deg": 202.82,
+        "average_saturation": 0.2347,
+        "average_value": 0.733
+      },
+      "hue_shift_deg": -177.81
+    }
+  }
+}

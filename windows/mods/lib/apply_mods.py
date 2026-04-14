@@ -39,8 +39,25 @@ def get_version():
             return json.load(f).get('version', '1.4.1')
     return '1.4.1'
 
+def detect_game_root():
+    """Resolve the actual installed game root.
+    
+    In distributed installs, mods/ lives inside the game directory so MODS_DIR.parent is
+    correct. In the GitHub repo, mods/ lives under .../windows/mods, so we need to fall
+    back to the standard installed game path.
+    """
+    candidates = [
+        MODS_DIR.parent,
+        Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'pokePathTD_Electron',
+        Path.home() / 'AppData' / 'Local' / 'Programs' / 'pokePathTD_Electron',
+    ]
+    for candidate in candidates:
+        if candidate and (candidate / 'resources' / 'app.asar').exists():
+            return candidate
+    return MODS_DIR.parent
+
 MOD_VERSION = get_version()
-GAME_ROOT = MODS_DIR.parent
+GAME_ROOT = detect_game_root()
 RESOURCES = GAME_ROOT / "resources"
 APP_EXTRACTED = RESOURCES / "app_extracted"
 APP_ASAR = RESOURCES / "app.asar"
@@ -54,11 +71,11 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  44439,
-    "src/js/game/component/Pokemon.js":     20520,
-    "src/js/game/scenes/PokemonScene.js":   46814,
-    "src/js/game/core/Area.js":             12838,
-    "src/js/game/core/Team.js":             1744,
+    "src/js/game/Game.js":                  42586,
+    "src/js/game/component/Pokemon.js":     24099,
+    "src/js/game/scenes/PokemonScene.js":   58007,
+    "src/js/game/core/Area.js":             18848,
+    "src/js/game/core/Team.js":             1784,
     "src/js/game/core/Box.js":              703,
 }
 
@@ -344,14 +361,20 @@ MOD_FEATURES = {
     },
     'shiny': {
         'name': 'Shiny Pokemon (1/30)',
-        'description': '1 in 30 chance for any new Pokemon to be shiny — eggs, starters, and secret/hidden unlocks. Includes shiny reveal animation, custom sprites for all non-max evolutions, and shiny Ditto fix',
-        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites', 'apply_secret_shiny'],
+        'description': '1 in 30 chance for new player-owned Pokemon to be shiny — eggs, starters, challenge rewards, and secret/hidden unlocks. Includes shiny reveal animation, custom sprites for all non-max evolutions, and shiny Ditto fix',
+        'functions': ['apply_shiny_eggs', 'apply_shiny_starters', 'apply_shiny_reveal', 'apply_shiny_sprites', 'apply_secret_shiny', 'apply_challenge_reward_shiny'],
+        'default': True,
+    },
+    'shiny_enemies': {
+        'name': 'Shiny Enemies (1/9000)',
+        'description': 'Adds 1 in 50 shiny enemies and bosses with shiny sprites, +50% health, +50% armor, 2-heart damage, 10x gold, and profile tracking for shiny enemies defeated',
+        'functions': ['apply_enemy_shiny_spawn'],
         'default': True,
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), live profile stats',
-        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_live_update'],
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), live profile stats, and map hover star counts',
+        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_live_update', 'apply_map_hover_stars'],
         'default': True,
     },
     'box_expansion': {
@@ -500,66 +523,52 @@ def apply_menu_autoreset_range():
     """Change auto-reset to cycle through 4 options (0-3) instead of 3 (0-2)."""
     path = JS_ROOT / "game" / "scenes" / "MenuScene.js"
     content = read_file(path)
-    
-    # Check if already applied
-    if 'pos == 4' in content and 'pos = 3' in content:
-        log_skip("MenuScene.js: Auto-reset range")
-        return True
-    
+    changed = False
+
     old_pattern = """updateAutoReset = (dir) => {
     	let pos = Number(this.main.autoReset) + dir;
 		if (pos < 0) pos = 2;
 		else if (pos == 3) pos = 0;"""
-    
+
     new_pattern = """updateAutoReset = (dir) => {
     	let pos = Number(this.main.autoReset) + dir;
 		if (pos < 0) pos = 3;
 		else if (pos == 4) pos = 0;"""
-    
+
     if old_pattern in content:
         content = content.replace(old_pattern, new_pattern)
-        
-        # Also fix the display code to show option 3 (Continue)
-        display_old = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
-        
-        display_new = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
-  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
-        
-        if display_old in content:
-            content = content.replace(display_old, display_new)
-        
+        changed = True
+
+    display_old = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
+
+    display_new = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
+		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
+		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
+		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
+		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
+
+    if display_old in content:
+        content = content.replace(display_old, display_new)
+        changed = True
+    elif 'else if (data.config.autoReset == 3)' not in content:
+        fallback_old = "else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();\n\t\telse this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"
+        fallback_new = "else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();\n\t\telse if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();\n\t\telse this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"
+        if fallback_old in content:
+            content = content.replace(fallback_old, fallback_new)
+            changed = True
+
+    if changed:
         write_file(path, content)
-        log_success("MenuScene.js: Auto-reset range 0-3")
+        log_success("MenuScene.js: Auto-reset range/display 0-3")
         return True
-    
-    # Check if cycle is already fixed but display isn't
-    if 'pos == 4' in content and 'pos = 3' in content:
-        display_old = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
-        
-        display_new = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-  		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-  		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
-  		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
-        
-        if display_old in content:
-            content = content.replace(display_old, display_new)
-            write_file(path, content)
-            log_success("MenuScene.js: Auto-reset display fix")
-            return True
-        
-        log_skip("MenuScene.js: Auto-reset range")
+
+    if 'pos == 4' in content and 'else if (data.config.autoReset == 3)' in content:
+        log_skip("MenuScene.js: Auto-reset range/display 0-3")
         return True
-    
+
     log_fail("MenuScene.js: Auto-reset range")
     return False
 
@@ -567,21 +576,60 @@ def apply_menu_autoreset_range():
 # MAPSCENE.JS - Remove wave 100 cap on record display
 # ============================================================================
 def apply_map_record_uncap():
-    """Remove Math.min(100, ...) cap on wave record display."""
+    """Remove legacy wave-100 caps and make preview selection endless-safe."""
     path = JS_ROOT / "game" / "scenes" / "MapScene.js"
     content = read_file(path)
-    
-    # Check if already applied (no Math.min(100 in record display)
-    if 'Math.min(100' not in content:
-        log_skip("MapScene.js: Record display uncapped")
-        return True
-    
-    # Replace both occurrences
-    content = content.replace('Math.min(100, recordValue)', 'recordValue')
-    content = content.replace('Math.min(100, this.main.player.records[i])', 'this.main.player.records[i]')
-    
-    write_file(path, content)
-    log_success("MapScene.js: Record display uncapped")
+
+    changed = False
+
+    # Remove legacy wave-100 caps in record display
+    new_content = content.replace('Math.min(100, recordValue)', 'recordValue')
+    new_content = new_content.replace('Math.min(100, this.main.player.records[i])', 'this.main.player.records[i]')
+    if new_content != content:
+        content = new_content
+        changed = True
+
+    # Endless-safe preview lookup (wave > 100 no longer indexes this.main.area.waves directly)
+    old_preview_line = "\t\tthis.main.UI.displayEnemyInfo(this.main.area.waves[this.main.area.waveNumber].preview[0], 0);\n"
+    new_preview_block = "\t\tconst previewEnemy = this.main.area.getWavePreview(this.main.area.waveNumber);\n\t\tif (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);\n"
+    if old_preview_line in content:
+        content = content.replace(old_preview_line, new_preview_block)
+        changed = True
+
+    if changed:
+        write_file(path, content)
+        log_success("MapScene.js: Record display uncapped + endless-safe preview")
+    else:
+        log_skip("MapScene.js: Record display uncapped + endless-safe preview")
+
+    return True
+
+# ============================================================================
+# MAP.CSS - Show route star counts on hover
+# ============================================================================
+def apply_map_hover_stars():
+    """Show per-route star totals on hover without changing endless-specific record logic."""
+    css_path = APP_EXTRACTED / "src" / "css" / "map.css"
+    css_content = read_file(css_path)
+    changed = False
+
+    hover_record_rule = ".maps-scene-route:hover .maps-scene-route-record-container {\n\tdisplay: block;\n}"
+    if hover_record_rule not in css_content:
+        old_css = ".maps-scene-route:hover .maps-scene-route-name {\n\topacity: 1;\n}\n"
+        new_css = ".maps-scene-route:hover .maps-scene-route-name {\n\topacity: 1;\n}\n\n.maps-scene-route:hover .maps-scene-route-record-container {\n\tdisplay: block;\n}\n"
+        if old_css in css_content:
+            css_content = css_content.replace(old_css, new_css)
+            changed = True
+        else:
+            log_fail("map.css: Hover star display", "hover name rule not found")
+            return False
+
+    if changed:
+        write_file(css_path, css_content)
+        log_success("map.css: Hover star display")
+    else:
+        log_skip("map.css: Hover star display")
+
     return True
 
 # ============================================================================
@@ -799,12 +847,10 @@ def apply_secret_shiny():
     
     content = read_file(path)
     
-    # Check if already applied
-    if '1 / 30' in content and 'getSecret' in content and 'isShiny' in content:
+    if 'const isShiny = Math.random() < (1 / 30);' in content and 'getSecret' in content:
         log_skip("UI.js: Secret shiny")
         return True
     
-    # Vanilla getSecret pattern (matches both vanilla and our reverted UI.modded.js)
     old = """	getSecret(poke) {
 		const pokemon = pokemonData[poke];
 
@@ -818,19 +864,14 @@ def apply_secret_shiny():
     
     new = """	getSecret(poke) {
 		const pokemon = pokemonData[poke];
-		// 1 in 30 chance for shiny secret Pokemon
 		const isShiny = Math.random() < (1 / 30);
 
 		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
 			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			const newPoke = this.main.team.pokemon.at(-1);
-			if (isShiny) { newPoke.isShiny = true; newPoke.setShiny(); }
-			this.main.shopScene.displayPokemon.open(newPoke, isShiny)
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny)
 		} else {
 			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			const newPoke = this.main.box.pokemon.at(-1);
-			if (isShiny) { newPoke.isShiny = true; newPoke.setShiny(); }
-			this.main.shopScene.displayPokemon.open(newPoke, isShiny)
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny)
 		}"""
     
     if old in content:
@@ -840,6 +881,144 @@ def apply_secret_shiny():
         return True
     
     log_fail("UI.js: Secret shiny", "getSecret pattern not found")
+    return False
+
+
+def apply_challenge_reward_shiny():
+    """Patch ChallengeScene reward Pokemon claims to roll 1/30 shiny odds."""
+    path = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
+
+    if not path.exists():
+        log_skip("ChallengeScene.js: Reward shiny (file not yet installed)")
+        return True
+
+    content = read_file(path)
+
+    if 'const isShiny = Math.random() < (1 / 30);' in content and 'claimPokemon(rewardIndex, pokemon)' in content:
+        log_skip("ChallengeScene.js: Reward shiny")
+        return True
+
+    old = """\tclaimPokemon(rewardIndex, pokemon) {
+\t\tconst price = this.prices[rewardIndex];
+
+\t\tif (
+\t\t\tthis.main.player.rewards[rewardIndex][this.main.area.routeNumber] ||
+\t\t\tthis.main.challengeScene.ribbonsMap < price
+\t\t) return;
+
+\t\tplaySound('purchase', 'ui');
+
+\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
+\t\t\tthis.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1));
+\t\t} else {
+\t\t\tthis.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1));
+\t\t}
+"""
+
+    new = """\tclaimPokemon(rewardIndex, pokemon) {
+\t\tconst price = this.prices[rewardIndex];
+
+\t\tif (
+\t\t\tthis.main.player.rewards[rewardIndex][this.main.area.routeNumber] ||
+\t\t\tthis.main.challengeScene.ribbonsMap < price
+\t\t) return;
+
+\t\tplaySound('purchase', 'ui');
+\t\tconst isShiny = Math.random() < (1 / 30);
+
+\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
+\t\t\tthis.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny);
+\t\t} else {
+\t\t\tthis.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny);
+\t\t}
+"""
+
+    if old in content:
+        content = content.replace(old, new)
+        write_file(path, content)
+        log_success("ChallengeScene.js: Reward shiny (1/30 chance for reward Pokemon)")
+        return True
+
+    log_fail("ChallengeScene.js: Reward shiny", "claimPokemon pattern not found")
+    return False
+
+
+def apply_enemy_shiny_spawn():
+    """Patch Enemy.js to add the shiny enemy gameplay variant."""
+    path = JS_ROOT / "game" / "component" / "Enemy.js"
+    
+    if not path.exists():
+        log_skip("Enemy.js: Shiny enemy spawn (file not yet installed)")
+        return True
+    
+    content = read_file(path)
+    
+    if "this.isShiny = Math.random() < (1 / 9000);" in content and "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content:
+        log_skip("Enemy.js: Shiny enemy spawn")
+        return True
+    
+    old_constructor = """		this.enemy = enemy;
+		this.hp = enemy.hp;
+		this.hpMax = enemy.hp;
+		this.armor = enemy.armor || 0;
+		this.armorMax = enemy.armor || 0;
+		this.regeneration = enemy.regeneration || 0; 
+		this.regenTimer = 0; 
+		this.speed = enemy.speed; 
+		this.baseSpeed = this.speed; 
+		this.power = enemy.power;
+		this.gold = enemy.gold + this.main.player.extraGold;
+"""
+    new_constructor = """		this.enemy = enemy;
+		this.isShiny = Math.random() < (1 / 9000);
+		if (this.isShiny && typeof this.sprite?.src === 'string' && this.sprite.src.includes('/normal/')) {
+			this.sprite.src = this.sprite.src.replace(/\\/normal\\//g, '/shiny/');
+		}
+		this.hp = enemy.hp;
+		this.hpMax = enemy.hp;
+		this.armor = enemy.armor || 0;
+		this.armorMax = enemy.armor || 0;
+		this.regeneration = enemy.regeneration || 0; 
+		this.regenTimer = 0; 
+		this.speed = enemy.speed; 
+		this.baseSpeed = this.speed; 
+		this.power = enemy.power;
+		this.gold = enemy.gold + this.main.player.extraGold;
+		if (this.isShiny) {
+			this.hp = Math.floor(this.hp * 2);
+			this.hpMax = Math.floor(this.hpMax * 2);
+			this.armor = Math.floor(this.armor * 2);
+			this.armorMax = Math.floor(this.armorMax * 2);
+			this.power = 2;
+			this.gold = Math.floor(this.gold * 1000);
+		}
+"""
+    old_defeat = """	    	this.main.player.stats.defeatedEnemies++;
+	    	this.main.player.stats.defeatedSpecies.add(this.enemy.id);
+"""
+    new_defeat = """	    	this.main.player.stats.defeatedEnemies++;
+	    	if (this.isShiny) this.main.player.stats.shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;
+	    	this.main.player.stats.defeatedSpecies.add(this.enemy.id);
+"""
+
+    changed = False
+    if old_constructor in content:
+        content = content.replace(old_constructor, new_constructor, 1)
+        changed = True
+    if old_defeat in content:
+        content = content.replace(old_defeat, new_defeat, 1)
+        changed = True
+
+    if changed:
+        write_file(path, content)
+        log_success("Enemy.js: Shiny enemy spawn (1/9000 gameplay variant)")
+        return True
+    
+    log_fail("Enemy.js: Shiny enemy spawn", "enemy constructor or defeat pattern not found")
     return False
 
 # ============================================================================
@@ -1330,7 +1509,7 @@ def apply_endless_stat_safety():
     
     This patches updateStats() and setStatsLevel() to clamp the effective level at 100
     for stat calculation, and clamps cost calculation level at 100.
-    The Pokemon's actual level is preserved — only the formulas are capped.
+    The Pokemon's actual level is preserved, only the formulas are capped.
     """
     path = JS_ROOT / "game" / "component" / "Pokemon.js"
     content = read_file(path)
@@ -1343,58 +1522,68 @@ def apply_endless_stat_safety():
     if '// MOD: Clamp stat level at 100' in content:
         log_skip("Pokemon.js: Endless stat safety")
         return True
-    
-    # Patch updateStats: clamp level for formulas at 100
-    # After our lvlCap fix, the line reads: level = Math.min(this.lvl, ...)
-    # We need to also clamp at 100 for vanilla formulas
-    old_update = """this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
-		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
-	}
 
-	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+    changed = False
+
+    old_update_stats = """	updateStats() {
+		let level = this.lvl;
+		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;
+
 		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
 		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);"""
-    
-    new_update = """// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
-		const statLevel = Math.min(level, 100);
-		this.speed = Math.max(200, Math.floor(this.specie.speed.base + (this.specie.speed.scale * statLevel)));
-		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * statLevel));
-		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * statLevel));
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * statLevel);
-	}
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
+	}"""
 
-	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+    new_update_stats = """	updateStats() {
+		let level = this.lvl;
+		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;
+
 		// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
 		const statLevel = Math.min(level, 100);
 		this.speed = Math.max(200, Math.floor(this.specie.speed.base + (this.specie.speed.scale * statLevel)));
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * statLevel));
 		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * statLevel));
-		this.critical = this.specie.critical.base + (this.specie.critical.scale * statLevel);"""
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * statLevel);
+	}"""
+
+    if old_update_stats in content:
+        content = content.replace(old_update_stats, new_update_stats)
+        changed = True
+
+    old_set_stats = """	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
+		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
+		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
+	}"""
+
+    new_set_stats = """	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+		// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
+		const statLevel = Math.min(level, 100);
+		this.speed = Math.max(200, Math.floor(this.specie.speed.base + (this.specie.speed.scale * statLevel)));
+		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * statLevel));
+		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * statLevel));
+		this.critical = this.specie.critical.base + (this.specie.critical.scale * statLevel);
+	}"""
+
+    if old_set_stats in content:
+        content = content.replace(old_set_stats, new_set_stats)
+        changed = True
+
+    cost_replacements = [
+        ("Math.ceil(27 * Math.pow(1.12, this.lvl))", "Math.ceil(27 * Math.pow(1.12, Math.min(this.lvl, 100)))"),
+        ("Math.ceil(35 * Math.pow(1.12, this.lvl))", "Math.ceil(35 * Math.pow(1.12, Math.min(this.lvl, 100)))"),
+        ("Math.ceil(51 * Math.pow(1.12, this.lvl))", "Math.ceil(51 * Math.pow(1.12, Math.min(this.lvl, 100)))"),
+        ("Math.ceil(27 * Math.pow(1.12, this.lvl+i))", "Math.ceil(27 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"),
+        ("Math.ceil(35 * Math.pow(1.12, this.lvl+i))", "Math.ceil(35 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"),
+        ("Math.ceil(51 * Math.pow(1.12, this.lvl+i))", "Math.ceil(51 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"),
+    ]
+    for old_cost, new_cost in cost_replacements:
+        if old_cost in content:
+            content = content.replace(old_cost, new_cost)
+            changed = True
     
-    if old_update in content:
-        content = content.replace(old_update, new_update)
-    else:
-        log_fail("Pokemon.js: Endless stat safety", "updateStats/setStatsLevel pattern not found")
-        return False
-    
-    # Patch cost: clamp level at 100 in checkCost loop
-    old_cost = "Math.ceil(27 * Math.pow(1.12, this.lvl+i))"
-    new_cost = "Math.ceil(27 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"
-    content = content.replace(old_cost, new_cost)
-    
-    old_cost2 = "Math.ceil(35 * Math.pow(1.12, this.lvl+i))"
-    new_cost2 = "Math.ceil(35 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"
-    content = content.replace(old_cost2, new_cost2)
-    
-    old_cost3 = "Math.ceil(51 * Math.pow(1.12, this.lvl+i))"
-    new_cost3 = "Math.ceil(51 * Math.pow(1.12, Math.min(this.lvl+i, 100)))"
-    content = content.replace(old_cost3, new_cost3)
-    
-    # Patch transformADN (Ditto) — same linear formulas
     old_adn = """this.speed = Math.floor(this.adn.speed.base + (this.adn.speed.scale * level));
 		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
 		this.range = Math.floor(this.adn.range.base + (this.adn.range.scale * level));
@@ -1419,7 +1608,11 @@ def apply_endless_stat_safety():
     
     if old_adn in content:
         content = content.replace(old_adn, new_adn)
-        write_file(path, content)
+        changed = True
+
+    if not changed:
+        log_fail("Pokemon.js: Endless stat safety", "1.5 stat/cost patterns not found")
+        return False
     
     write_file(path, content)
     log_success("Pokemon.js: Endless stat safety (stats capped at level 100, min speed 200ms)")
@@ -1927,37 +2120,58 @@ def apply_profile_live_update():
         log_skip("ProfileScene.js: Live update")
         return True
 
-    # Patch open() to add refresh interval
-    old_open = """\topen() {
+    open_replaced = False
+    close_replaced = False
+
+    current_open = """\t\tthis.update();
+\t\tthis.main.UI.section['profile'].classList.add('is-selected');"""
+    current_open_new = """\t\tthis.update();
+\t\tthis._refreshInterval = setInterval(() => this.update(), 500);
+\t\tthis.main.UI.section['profile'].classList.add('is-selected');"""
+    if current_open in content:
+        content = content.replace(current_open, current_open_new)
+        open_replaced = True
+
+    legacy_open = """\topen() {
 \t\tsuper.open();
 \t\tthis.update();
 \t}"""
-
-    new_open = """\topen() {
+    legacy_open_new = """\topen() {
 \t\tsuper.open();
 \t\tthis.update();
 \t\tthis._refreshInterval = setInterval(() => this.update(), 500);
 \t}"""
+    if not open_replaced and legacy_open in content:
+        content = content.replace(legacy_open, legacy_open_new)
+        open_replaced = True
 
-    if old_open not in content:
-        log_fail("ProfileScene.js: Live update", "open() pattern not found")
-        return False
+    current_close = """\tclose() {
+\t\tsuper.close();
+\t\tthis.main.tooltip.hide();"""
+    current_close_new = """\tclose() {
+\t\tif (this._refreshInterval) { clearInterval(this._refreshInterval); this._refreshInterval = null; }
+\t\tsuper.close();
+\t\tthis.main.tooltip.hide();"""
+    if current_close in content:
+        content = content.replace(current_close, current_close_new)
+        close_replaced = True
 
-    content = content.replace(old_open, new_open)
-
-    # Patch close() to clear interval
-    old_close = """\tclose() {
+    legacy_close = """\tclose() {
 \t\tthis.main.tooltip.hide();
 \t\tsuper.close();"""
-
-    new_close = """\tclose() {
+    legacy_close_new = """\tclose() {
 \t\tif (this._refreshInterval) { clearInterval(this._refreshInterval); this._refreshInterval = null; }
 \t\tthis.main.tooltip.hide();
 \t\tsuper.close();"""
+    if not close_replaced and legacy_close in content:
+        content = content.replace(legacy_close, legacy_close_new)
+        close_replaced = True
 
-    if old_close in content:
-        content = content.replace(old_close, new_close)
-    else:
+    if not open_replaced:
+        log_fail("ProfileScene.js: Live update", "open() pattern not found")
+        return False
+
+    if not close_replaced:
         log_fail("ProfileScene.js: Live update", "close() pattern not found")
         return False
 
@@ -2372,6 +2586,10 @@ def apply_emoji_font_fix():
     content = read_file(path)
 
     if "'Segoe UI Emoji'" in content:
+        log_skip("scenes.css: Emoji font fix")
+        return True
+
+    if '.msrre' not in content:
         log_skip("scenes.css: Emoji font fix")
         return True
 
@@ -2902,7 +3120,10 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             progress_callback(total, total, "Setting up modded saves...")
         try:
             import importlib
-            from lib import save_manager
+            try:
+                from lib import save_manager
+            except ImportError:
+                import save_manager
             importlib.reload(save_manager)
             save_ok, save_msg = save_manager.setup_modded_saves()
             save_manager.set_mod_flag()
@@ -3273,6 +3494,9 @@ def main():
     
     # QoL: Live profile stats
     apply_profile_live_update()
+
+    # QoL: Map hover star counts
+    apply_map_hover_stars()
     
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()

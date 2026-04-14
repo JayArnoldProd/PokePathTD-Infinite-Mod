@@ -28,9 +28,13 @@ export class Pokemon {
 		// MOD: ENDLESS MODE - Asymptotic/endless scaling for all stats
 		// AOE Pokemon get slower speed decay (4x) and slower range growth (2x)
 		const isAOE = this.attackType === 'area';
+		const isOrbital = this.attackType === 'orbital';
 		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, lvl, isAOE);
+		this.orbitalSpeed = isOrbital ? this.calculateOrbitalAngularSpeed(lvl) : 0;
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * lvl));
-		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, lvl, isAOE);
+		this.range = isOrbital
+			? this.calculateOrbitalRange(this.specie.range.base, this.specie.range.scale, lvl)
+			: this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, lvl, isAOE);
 
 		if (item) {
 			const indx = this.main.player.items.findIndex(i => i.id === item.id);
@@ -42,6 +46,7 @@ export class Pokemon {
 
 		//HABILIDADES
 		this.ricochet = this.specie.ricochet ?? 0;
+		this.orbital = this.calculateOrbitalCount(this.specie.orbital ?? 0, lvl);
 		
 		this.innerRange = this.specie.range.inner;
 		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, lvl);
@@ -145,6 +150,86 @@ export class Pokemon {
 		return Math.floor(range100 * rangeMultiplier);
 	}
 
+	calculateOrbitalAngularSpeed(level) {
+		const clampedLevel = Math.max(1, level);
+		const degToRad = Math.PI / 180;
+		const level1Degrees = 36;
+		const level100Degrees = 70;
+		const level1000Degrees = 190;
+		const level40000Degrees = 980;
+		const asymptoticMaxDegrees = 1370;
+		const earlyGrowthExponent = 2.07;
+		const midGrowthExponent = 1.0;
+		const post40000Softness = 2;
+
+		if (clampedLevel <= 100) {
+			const t = (clampedLevel - 1) / 99;
+			const degrees = level1Degrees + ((level100Degrees - level1Degrees) * t);
+			return degrees * degToRad;
+		}
+
+		if (clampedLevel <= 1000) {
+			const t = Math.max(0, Math.min(1, Math.log(clampedLevel / 100) / Math.log(1000 / 100)));
+			const degrees = level100Degrees + ((level1000Degrees - level100Degrees) * Math.pow(t, earlyGrowthExponent));
+			return degrees * degToRad;
+		}
+
+		if (clampedLevel <= 40000) {
+			const t = Math.max(0, Math.min(1, Math.log(clampedLevel / 1000) / Math.log(40000 / 1000)));
+			const degrees = level1000Degrees + ((level40000Degrees - level1000Degrees) * Math.pow(t, midGrowthExponent));
+			return degrees * degToRad;
+		}
+
+		const extraLogLevels = Math.max(0, Math.log2(clampedLevel / 40000));
+		const saturation = extraLogLevels / (extraLogLevels + post40000Softness);
+		const degrees = level40000Degrees + ((asymptoticMaxDegrees - level40000Degrees) * saturation);
+		return degrees * degToRad;
+	}
+
+	calculateOrbitalRange(base, scale, level) {
+		if (level <= 100) {
+			return Math.floor(base + (scale * level));
+		}
+
+		const range100 = base + (scale * 100);
+		const capMultiplier = 2.0;
+		const maxBonus = capMultiplier - 1;
+		const logLevels = Math.max(0, Math.log2(level / 100));
+		const saturation = logLevels / (logLevels + 5);
+		return Math.floor(range100 * (1 + maxBonus * saturation));
+	}
+
+	// MOD: Endless orbital scaling - stronger early endless growth, then a smooth soft-cap into absurd hacked levels
+	calculateOrbitalCount(baseOrbitals, level) {
+		if (!baseOrbitals) return 0;
+		if (level <= 100) return baseOrbitals;
+
+		const clampedLevel = Math.max(100, level);
+		const level1000Multiplier = 20 / 8;
+		const level40000Multiplier = 15;
+		const asymptoticMaxMultiplier = 29;
+		const earlyGrowthExponent = 2.07;
+		const midGrowthExponent = 1.0;
+		const post40000Softness = 2;
+
+		if (clampedLevel <= 1000) {
+			const t = Math.max(0, Math.min(1, Math.log(clampedLevel / 100) / Math.log(1000 / 100)));
+			const multiplier = 1 + ((level1000Multiplier - 1) * Math.pow(t, earlyGrowthExponent));
+			return Math.max(baseOrbitals, Math.round(baseOrbitals * multiplier));
+		}
+
+		if (clampedLevel <= 40000) {
+			const t = Math.max(0, Math.min(1, Math.log(clampedLevel / 1000) / Math.log(40000 / 1000)));
+			const multiplier = level1000Multiplier + ((level40000Multiplier - level1000Multiplier) * Math.pow(t, midGrowthExponent));
+			return Math.max(baseOrbitals, Math.round(baseOrbitals * multiplier));
+		}
+
+		const extraLogLevels = Math.max(0, Math.log2(clampedLevel / 40000));
+		const saturation = extraLogLevels / (extraLogLevels + post40000Softness);
+		const multiplier = level40000Multiplier + ((asymptoticMaxMultiplier - level40000Multiplier) * saturation);
+		return Math.max(baseOrbitals, Math.round(baseOrbitals * multiplier));
+	}
+
 	getOriginalData() {
 	    if (this.specie?.key) {
 	        return {
@@ -230,13 +315,16 @@ export class Pokemon {
         		else this.updateSpecie('lycanrocNight');
         	}
         	this.main.player.achievementProgress.evolutionCount++;
-        	if (this.main.player.achievementProgress.evolutionCount == 210) this.main.player.unlockAchievement(1);
+        	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
+        	if (this.id === 124) {
+        		this.main.UI.getSecret('shedinja');
+        	}
         }
 
         if (this.lvl >= this.specie.evolution?.level && this.id == 95 && this.item?.id == 'inverter') {
         	this.updateSpecie(this.specie.evolution.pokemon);
         	this.main.player.achievementProgress.evolutionCount++;
-        	if (this.main.player.achievementProgress.evolutionCount == 210) this.main.player.unlockAchievement(1);
+        	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
         }
 
         this.updateStats();
@@ -351,18 +439,28 @@ export class Pokemon {
 		// MOD: Use asymptotic/endless scaling for all stats
 		// AOE Pokemon get slower speed decay (4x) and slower range growth (2x)
 		const isAOE = this.attackType === 'area';
+		const isOrbital = this.attackType === 'orbital';
 		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level, isAOE);
+		this.orbitalSpeed = isOrbital ? this.calculateOrbitalAngularSpeed(level) : 0;
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level, isAOE);
+		this.range = isOrbital
+			? this.calculateOrbitalRange(this.specie.range.base, this.specie.range.scale, level)
+			: this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level, isAOE);
 		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, level);
+		this.orbital = this.calculateOrbitalCount(this.specie.orbital ?? 0, level);
 	}
 
 	setStatsLevel(level = 50) {
 		const isAOE = this.attackType === 'area';
+		const isOrbital = this.attackType === 'orbital';
 		this.speed = this.calculateAsymptoticSpeed(this.specie.speed.base, this.specie.speed.scale, level, isAOE);
+		this.orbitalSpeed = isOrbital ? this.calculateOrbitalAngularSpeed(level) : 0;
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
-		this.range = this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level, isAOE);
+		this.range = isOrbital
+			? this.calculateOrbitalRange(this.specie.range.base, this.specie.range.scale, level)
+			: this.calculateEndlessRange(this.specie.range.base, this.specie.range.scale, level, isAOE);
 		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, level);
+		this.orbital = this.calculateOrbitalCount(this.specie.orbital ?? 0, level);
 	}
 
 	updateSpecie(specieName) {
@@ -370,6 +468,7 @@ export class Pokemon {
 		this.specie = newSpecie;
 
 		this.ricochet = newSpecie.ricochet ?? 0;
+		this.orbital = this.calculateOrbitalCount(newSpecie.orbital ?? 0, this.lvl);
 		this.sprite = newSpecie.sprite;
 		this.name = newSpecie.name;
 		this.ability = newSpecie.ability;
@@ -377,6 +476,7 @@ export class Pokemon {
 		this.projectile = newSpecie.projectile;
 		this.rangeType = newSpecie.rangeType;
 		this.attackType = newSpecie.attackType;
+		this.form = (this.specie.form) ? this.specie.key : false;
 
 		this.updateStats(); 
 		this.setCost();
@@ -407,12 +507,17 @@ export class Pokemon {
 		if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);
 
 		const isAOE = this.attackType === 'area';
+		const isOrbital = this.attackType === 'orbital';
 		this.speed = this.calculateAsymptoticSpeed(this.adn.speed.base, this.adn.speed.scale, level, isAOE);
+		this.orbitalSpeed = isOrbital ? this.calculateOrbitalAngularSpeed(level) : 0;
 		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
-		this.range = this.calculateEndlessRange(this.adn.range.base, this.adn.range.scale, level, isAOE);
+		this.range = isOrbital
+			? this.calculateOrbitalRange(this.adn.range.base, this.adn.range.scale, level)
+			: this.calculateEndlessRange(this.adn.range.base, this.adn.range.scale, level, isAOE);
 
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;
+		this.orbital = this.calculateOrbitalCount(this.adn.orbital ?? 0, level);
 		
 		this.innerRange = this.adn.range.inner;
 		this.critical = this.calculateEndlessCrit(this.adn.critical.base, this.adn.critical.scale, level);
@@ -454,7 +559,7 @@ export class Pokemon {
 		if (item.id == 'inverter' && this.lvl > 30 && this.id == 95 && this.specie.evolution) {
 			this.updateSpecie(this.specie.evolution.pokemon);
         	this.main.player.achievementProgress.evolutionCount++;
-        	if (this.main.player.achievementProgress.evolutionCount == 210) this.main.player.unlockAchievement(1);
+        	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
 		}
 
 		if (

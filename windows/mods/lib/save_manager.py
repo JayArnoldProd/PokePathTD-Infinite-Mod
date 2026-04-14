@@ -48,10 +48,24 @@ MODDED_USERDATA = APPDATA / 'pokePathTD_Electron_modded'
 VANILLA_SAVE = VANILLA_USERDATA / 'Local Storage' / 'leveldb'
 MODDED_SAVE = MODDED_USERDATA / 'Local Storage' / 'leveldb'
 
-# .modded flag lives next to app.asar in the game's resources folder
+# .modded flag lives next to app.asar in the game's resources folder.
 SCRIPT_DIR = Path(__file__).parent.resolve()
 MODS_DIR = SCRIPT_DIR.parent  # mods/ root
-GAME_ROOT = MODS_DIR.parent
+
+
+def detect_game_root():
+    candidates = [
+        MODS_DIR.parent,
+        Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'pokePathTD_Electron',
+        Path.home() / 'AppData' / 'Local' / 'Programs' / 'pokePathTD_Electron',
+    ]
+    for candidate in candidates:
+        if candidate and (candidate / 'resources' / 'app.asar').exists():
+            return candidate
+    return MODS_DIR.parent
+
+
+GAME_ROOT = detect_game_root()
 RESOURCES = GAME_ROOT / 'resources'
 MOD_FLAG = RESOURCES / '.modded'
 
@@ -170,12 +184,29 @@ def is_game_running():
 
 def is_modded():
     """Check if the game is currently modded."""
-    return MOD_FLAG.exists()
+    if MOD_FLAG.exists():
+        return True
+
+    main_js_candidates = [
+        RESOURCES / 'app_extracted' / 'src' / 'main.js',
+        RESOURCES / 'app_extracted' / 'main.js',
+    ]
+    for main_js in main_js_candidates:
+        try:
+            if main_js.exists():
+                content = main_js.read_text(encoding='utf-8', errors='replace')
+                if 'pokePathTD_Electron_modded' in content:
+                    return True
+        except Exception:
+            pass
+
+    return False
 
 
 def set_mod_flag():
     """Set the .modded flag."""
     try:
+        MOD_FLAG.parent.mkdir(parents=True, exist_ok=True)
         MOD_FLAG.write_text('modded', encoding='utf-8')
     except Exception as e:
         print(f"  [WARN] Could not set mod flag: {e}")

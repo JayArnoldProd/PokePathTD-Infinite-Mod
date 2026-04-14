@@ -272,6 +272,9 @@ export class PokemonScene extends GameScene {
 	update() {
 		this.setBlocked(this.isBlocked);
 		DATA.forEach(data => { this.data[data].label.innerText = text.pokemon[data][this.main.lang] });
+		this.data['speed'].label.innerText = this.pokemon?.attackType === 'orbital'
+			? (text.pokemon.orbitalSpeed?.[this.main.lang] ?? 'Orbital Speed')
+			: text.pokemon.speed[this.main.lang];
 
 		if (this.pokemon?.item?.id == 'inverter' && this.pokemon?.ability?.id != 'defiant') {
 			this.window.style.transform = `translate(-50%, -50%) scale(1, -1)`;
@@ -288,7 +291,7 @@ export class PokemonScene extends GameScene {
 		}
 
 		this.data['power'].value.innerHTML = `${this.pokemon.power}`;
-		this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s`;
+		this.data['speed'].value.innerHTML = this.formatSpeedValue(this.pokemon);
 		this.data['critical'].value.innerHTML = `${this.pokemon.critical.toFixed(1)}%`;
 		this.data['range'].value.innerHTML = `${this.pokemon.range}`;
 		this.data['rangeType'].value.innerHTML = `${text.pokemon[this.pokemon.rangeType][this.main.lang]}`;
@@ -308,6 +311,9 @@ export class PokemonScene extends GameScene {
 			this.pokemon.id == 45 || this.pokemon?.adn?.id == 45 ||
 			this.pokemon.id == 72 || this.pokemon?.adn?.id == 72) {
 			this.abilityDescription.innerHTML += `<br><br> * ${this.pokemon.ricochet} ${text.pokemon.ricochets[this.main.lang]}`;
+		} else if (
+			this.pokemon?.orbital) {
+			this.abilityDescription.innerHTML += `<br><br> * ${this.pokemon.orbital} ${text.pokemon.orbitals[this.main.lang]}`;
 		} else if (this.pokemon?.adn?.id == 19 || this.pokemon?.adn?.id == 57) {
 			this.abilityDescription.innerHTML += `<br><br> * ${text.pokemon.notStack[this.main.lang]}`;
 		}
@@ -403,7 +409,8 @@ export class PokemonScene extends GameScene {
 
 		if (
 			(this.pokemon.id == 76 && this.pokemon.lvl >= 100) ||
-			this.pokemon.id == 80
+			(this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword') ||
+			(this.pokemon.id == 109  && this.pokemon.lvl >= 40)
 		) {
 			this.buttonChangeForm.style.display = 'block';
 
@@ -413,6 +420,9 @@ export class PokemonScene extends GameScene {
 			} else if (this.pokemon.id == 80) {
 				this.buttonChangeForm.style.backgroundImage = (this.pokemon.ability.id == "slow") ? 
 				`url("${pokemonData['aegislash'].sprite.base}")` : `url("${pokemonData['aegislashSword'].sprite.base}")`
+			} else if (this.pokemon.id == 109) {
+				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == "armarouge") ? 
+				`url("${pokemonData['armarouge'].sprite.base}")` : `url("${pokemonData['ceruledge'].sprite.base}")`
 			}
 
 			if (this.pokemon.isDeployed) {
@@ -468,6 +478,16 @@ export class PokemonScene extends GameScene {
 		playSound('option', 'ui');
 	}
 
+	formatLevelUpCost(cost) {
+		if (cost >= 1000000000) {
+			const billions = cost / 1000000000;
+			const formattedBillions = Number.isInteger(billions) ? billions.toString() : billions.toFixed(2).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
+			return `$${formattedBillions} BILLION`;
+		}
+
+		return `$${this.main.utility.numberDot(cost, this.main.lang)}`;
+	}
+
 	updateLevelButton() {
 		// MOD: During challenge lvlCap, allow leveling freely (stats capped by updateStats)
 		const inLvlCapChallenge = typeof this.main?.area?.inChallenge?.lvlCap === 'number';
@@ -479,7 +499,7 @@ export class PokemonScene extends GameScene {
 			this.levelUp.style.lineHeight = '28px';
 		} else {
 			this.levelUp.style.lineHeight = 'revert-layer';
-			this.levelUp.innerHTML = `${text.pokemon.lvlUp[this.main.lang]} <br>($${this.main.utility.numberDot(this.pokemon.cost, this.main.lang)})`;
+			this.levelUp.innerHTML = `${text.pokemon.lvlUp[this.main.lang]} <br>(${this.formatLevelUpCost(this.pokemon.cost)})`;
 			this.levelUp.style.pointerEvents = 'all';
 			if (this.main.player.gold < this.pokemon.cost) {
 				this.levelUp.style.filter = 'brightness(0.8)';
@@ -496,7 +516,7 @@ export class PokemonScene extends GameScene {
 			this.levelUpFive.style.lineHeight = '28px';
 		} else {
 			this.levelUpFive.style.lineHeight = 'revert-layer';
-			this.levelUpFive.innerHTML = `${text.pokemon.lvlUp[this.main.lang]} x5 <br>($${this.main.utility.numberDot(this.pokemon.checkCost(5), this.main.lang)})`;
+			this.levelUpFive.innerHTML = `${text.pokemon.lvlUp[this.main.lang]} x5 <br>(${this.formatLevelUpCost(this.pokemon.checkCost(5))})`;
 			this.levelUpFive.style.pointerEvents = 'all';
 			if (this.main.player.gold < this.pokemon.checkCost(5)) {
 				this.levelUpFive.style.filter = 'brightness(0.8)';
@@ -513,7 +533,7 @@ export class PokemonScene extends GameScene {
 			this.levelUpTen.style.lineHeight = '28px';
 		} else {
 			this.levelUpTen.style.lineHeight = 'revert-layer';
-			this.levelUpTen.innerHTML = `${text.pokemon.lvlUp[this.main.lang]} x10 <br>($${this.main.utility.numberDot(this.pokemon.checkCost(10), this.main.lang)})`;
+			this.levelUpTen.innerHTML = `${text.pokemon.lvlUp[this.main.lang]} x10 <br>(${this.formatLevelUpCost(this.pokemon.checkCost(10))})`;
 			this.levelUpTen.style.pointerEvents = 'all';
 			if (this.main.player.gold < this.pokemon.checkCost(10)) {
 				this.levelUpTen.style.filter = 'brightness(0.8)';
@@ -560,14 +580,21 @@ export class PokemonScene extends GameScene {
 		const specie = (this.pokemon.specie.evolution != undefined && (this.pokemon.lvl >= this.pokemon.specie.evolution.level - levels)) ? pokemonData[this.pokemon.specie.evolution.pokemon] : this.pokemon.specie;
 		const newLevel = this.pokemon.lvl + levels;
 
-		const isAOE = this.pokemon.attackType === 'area';
+		const isAOE = specie.attackType === 'area';
+		const isOrbital = specie.attackType === 'orbital';
 		const newPower = Math.floor(specie.power.base + (specie.power.scale * newLevel));
-		const newSpeed = this.calculatePreviewSpeed(specie.speed.base, specie.speed.scale, newLevel, isAOE);
+		const newSpeed = isOrbital
+			? this.calculatePreviewOrbitalSpeed(newLevel)
+			: this.calculatePreviewSpeed(specie.speed.base, specie.speed.scale, newLevel, isAOE);
 		const newCritical = this.calculatePreviewCrit(specie.critical.base, specie.critical.scale, newLevel);
-		const newRange = this.calculatePreviewRange(specie.range.base, specie.range.scale, newLevel, isAOE);
+		const newRange = isOrbital
+			? this.calculatePreviewOrbitalRange(specie.range.base, specie.range.scale, newLevel)
+			: this.calculatePreviewRange(specie.range.base, specie.range.scale, newLevel, isAOE);
 		
 		const powerDiff = newPower - this.pokemon.power;
-		const speedDiff = Math.abs((newSpeed / 1000).toFixed(2) - (this.pokemon.speed / 1000).toFixed(2)).toFixed(2);
+		const speedDiff = isOrbital
+			? newSpeed - (this.pokemon.orbitalSpeed ?? 0)
+			: Math.abs((newSpeed / 1000).toFixed(2) - (this.pokemon.speed / 1000).toFixed(2)).toFixed(2);
 		const criticalDiff = (newCritical.toFixed(1) - this.pokemon.critical.toFixed(1)).toFixed(1);
 		const rangeDiff = newRange - this.pokemon.range;
 
@@ -575,7 +602,9 @@ export class PokemonScene extends GameScene {
 			this.data['power'].value.innerHTML = `${this.pokemon.power} <span style="color:var(--green)">(+${powerDiff})</span>`;
 		}
 		if (speedDiff > 0) {
-			this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s <span style="color:var(--green)">(-${(speedDiff)}s)</span>`;
+			this.data['speed'].value.innerHTML = isOrbital
+				? `${this.formatSpeedValue(this.pokemon)} <span style="color:var(--green)">(+${this.formatOrbitalSpeedDiff(speedDiff)})</span>`
+				: `${(this.pokemon.speed / 1000).toFixed(2)}s <span style="color:var(--green)">(-${(speedDiff)}s)</span>`;
 		} 
 		if (criticalDiff > 0) {
 			this.data['critical'].value.innerHTML = `${this.pokemon.critical.toFixed(1)}% <span style="color:var(--green)">(+${criticalDiff}%)</span>`;
@@ -583,6 +612,66 @@ export class PokemonScene extends GameScene {
 		if (rangeDiff > 0) {
 			this.data['range'].value.innerHTML = `${this.pokemon.range} <span style="color:var(--green)">(+${rangeDiff})</span>`;
 		}
+	}
+
+	formatSpeedValue(pokemon) {
+		if (pokemon.attackType === 'orbital') {
+			const angularSpeed = pokemon.orbitalSpeed ?? 0;
+			return `${((angularSpeed * 180) / Math.PI).toFixed(1)}°/s`;
+		}
+		return `${(pokemon.speed / 1000).toFixed(2)}s`;
+	}
+
+	formatOrbitalSpeedDiff(angularSpeedDiff) {
+		return `${((angularSpeedDiff * 180) / Math.PI).toFixed(1)}°/s`;
+	}
+
+	calculatePreviewOrbitalSpeed(level) {
+		const clampedLevel = Math.max(1, level);
+		const degToRad = Math.PI / 180;
+		const level1Degrees = 36;
+		const level100Degrees = 70;
+		const level1000Degrees = 190;
+		const level40000Degrees = 980;
+		const asymptoticMaxDegrees = 1370;
+		const earlyGrowthExponent = 2.07;
+		const midGrowthExponent = 1.0;
+		const post40000Softness = 2;
+
+		if (clampedLevel <= 100) {
+			const t = (clampedLevel - 1) / 99;
+			const degrees = level1Degrees + ((level100Degrees - level1Degrees) * t);
+			return degrees * degToRad;
+		}
+
+		if (clampedLevel <= 1000) {
+			const t = Math.max(0, Math.min(1, Math.log(clampedLevel / 100) / Math.log(1000 / 100)));
+			const degrees = level100Degrees + ((level1000Degrees - level100Degrees) * Math.pow(t, earlyGrowthExponent));
+			return degrees * degToRad;
+		}
+
+		if (clampedLevel <= 40000) {
+			const t = Math.max(0, Math.min(1, Math.log(clampedLevel / 1000) / Math.log(40000 / 1000)));
+			const degrees = level1000Degrees + ((level40000Degrees - level1000Degrees) * Math.pow(t, midGrowthExponent));
+			return degrees * degToRad;
+		}
+
+		const extraLogLevels = Math.max(0, Math.log2(clampedLevel / 40000));
+		const saturation = extraLogLevels / (extraLogLevels + post40000Softness);
+		const degrees = level40000Degrees + ((asymptoticMaxDegrees - level40000Degrees) * saturation);
+		return degrees * degToRad;
+	}
+
+	calculatePreviewOrbitalRange(base, scale, level) {
+		if (level <= 100) {
+			return Math.floor(base + (scale * level));
+		}
+		const range100 = base + (scale * 100);
+		const capMultiplier = 2.0;
+		const maxBonus = capMultiplier - 1;
+		const logLevels = Math.max(0, Math.log2(level / 100));
+		const saturation = logLevels / (logLevels + 5);
+		return Math.floor(range100 * (1 + maxBonus * saturation));
 	}
 
 	// Mirror of Pokemon.calculateAsymptoticSpeed — MUST match exactly
@@ -641,11 +730,19 @@ export class PokemonScene extends GameScene {
 	        flatSpeed -= this.main.player.fossilInTeam * 500;
 	    }
 
+	    if (this.pokemon?.ability?.id == 'armorCannon') {
+	    	flatSpeed -= (100 * (14 - this.main.player.health[this.main.area.routeNumber]));
+	    }
+
+	    if (this.pokemon?.item?.id == 'maliciousArmor') {
+	    	flatSpeed -= (20 * (14 - this.main.player.health[this.main.area.routeNumber]));
+	    }
+
 	    if (this.pokemon.isDeployed) {
 	        let tower = this.main.area.towers.find(t => t.pokemon === this.pokemon);
 
 	        if (
-	            (tower.tile && (tower.tile.land === 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser')) && (tower.pokemon.ability.id === 'toughClawsNight'  || tower.pokemon.ability.id === 'toughClaws')) ||
+	            (tower.tile && (tower.tile.land === 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassyTerrain') && (tower.pokemon.ability.id === 'toughClawsNight'  || tower.pokemon.ability.id === 'toughClaws')) ||
 	            (tower.tile && ((tower.tile.land === 4 || tower.tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && (tower.pokemon.ability.id === 'toughClawsDay')))
 	        ) flatCritical = 100 - baseCritical;
 	    }
@@ -660,7 +757,7 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'bicycle':
-	            if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'chatot') {
+	            if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'chatot' && typeof this.main?.area?.inChallenge.lvlCap !== 'number') {
 	        		flatSpeed -= 4000;
 	        		flatCritical -= 4;
 	        	}
@@ -669,7 +766,8 @@ export class PokemonScene extends GameScene {
 	        case 'silphScope':
 	            if (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk') {
 	            	flatRange += 15;
-	            	flatPower += 60; 
+	            	flatPower += 175; 
+	            	mulSpeed *= 1 - 0.25;
 	            }
 	            break;
 

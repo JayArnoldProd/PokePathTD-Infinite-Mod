@@ -1,21 +1,20 @@
-import { GameScene } from '../../utils/GameScene.js';
+import { SectionScene } from '../../utils/SectionScene.js';
 import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { routeData } from '../data/routeData.js';
 import { saveData } from '../../file/data.js';
 import { playSound } from '../../file/audio.js';
 
-export class MapScene extends GameScene {
+export class MapScene extends SectionScene {
 	constructor(main) {
-	    super(560, 404);
+	    super();
 	    this.main = main;
 
 	    // console.log("routeData:", routeData);
 	    // console.log("typeof routeData:", typeof routeData);
 	    // console.log("keys de routeData:", routeData ? Object.keys(routeData) : "routeData es null/undefined");
 
-	    this.sortedRoutes = Object.values(routeData || {})
-	        .sort((a, b) => a.order - b.order);
+	    this.sortedRoutes = Object.values(routeData || {}).sort((a, b) => a.order - b.order);
 
 	    // console.log("sortedRoutes después de crear:", this.sortedRoutes);
 	    // console.log("longitud:", this.sortedRoutes?.length);
@@ -24,69 +23,73 @@ export class MapScene extends GameScene {
 	}
 
 	render() {
-		this.title.innerHTML = text.map.title[this.main.lang].toUpperCase();
+	    this.routeContainer = new Element(this.container, { className: 'maps-scene-route-container' }).element;
+	    this.routes = [];
+	    this.secretRoutes = [];
 
-		this.routeContainer = new Element(this.container, { className: 'maps-scene-route-container' }).element;
-		this.routes = [];
+	    const routesByPos = {};
+	    this.sortedRoutes.forEach(r => { routesByPos[r.pos] = r; });
 
-		this.sortedRoutes.forEach((route, index) => {
-            const routeElement = new Element(this.routeContainer, {
-                className: 'maps-scene-route',
-                image: route.background
-            }).element;
+	    for (let i = 0; i < 54; i++) {
+	        const route = routesByPos[i];
 
-            routeElement.dataset.routeId = route.id;      
-            routeElement.dataset.routeIndex = index;
+	        if (!route) {
+	            new Element(this.routeContainer, { 
+	                className: 'maps-scene-route-empty', 
+	                text: '?' 
+	            });
+	            continue;
+	        }
 
-            const nameEl = new Element(routeElement, {
-                className: 'maps-scene-route-name',
-                text: route.name[this.main.lang].toUpperCase()
-            }).element;
+	        const routeElement = new Element(this.routeContainer, {
+	            className: 'maps-scene-route',
+	            image: route.background
+	        }).element;
 
-            const recordContainer = new Element(routeElement, {
-                className: 'maps-scene-route-record-container'
-            }).element;
+	        routeElement.style.gridColumn = (i % 9) + 1;
+	        routeElement.style.gridRow = Math.floor(i / 9) + 1;
 
-            const recordEl = new Element(recordContainer, {
-                className: 'maps-scene-route-record'
-            }).element;
+	        routeElement.dataset.routeId = route.id;      
 
-            const requiresEl = new Element(routeElement, {
-                className: 'maps-scene-route-requires'
-            }).element;
+	        const nameEl = new Element(routeElement, {
+	            className: 'maps-scene-route-name',
+	            text: route.name[this.main.lang].toUpperCase()
+	        }).element;
 
-            this.routes.push({
-                element: routeElement,
-                name: nameEl,
-                recordContainer,
-                record: recordEl,
-                requires: requiresEl,
-                data: route
-            });
+	        const recordContainer = new Element(routeElement, {
+	            className: 'maps-scene-route-record-container'
+	        }).element;
 
-            routeElement.addEventListener('click', () => {
-                this.changeMap(route.id); 
-            });
+	        const recordEl = new Element(recordContainer, {
+	            className: 'maps-scene-route-record'
+	        }).element;
 
-            routeElement.addEventListener('mouseenter', () => {
-                playSound('hover2', 'ui');
-            });
-        });
+	        const requiresEl = new Element(routeElement, {
+	            className: 'maps-scene-route-requires'
+	        }).element;
 
-		this.background.addEventListener('click', (e) => { if (e.target == this.background) this.close() })
+	        this.routes.push({
+	            element: routeElement,
+	            name: nameEl,
+	            recordContainer,
+	            record: recordEl,
+	            requires: requiresEl,
+	            data: route
+	        });
+
+	        routeElement.addEventListener('click', () => this.changeMap(route.id));
+	        routeElement.addEventListener('mouseenter', () => playSound('hover2', 'ui'));
+	    }
 	}
 
 	update() {
-        this.title.innerHTML = text.map.title[this.main.lang].toUpperCase();
-
-        this.routes.forEach(({ element, record, requires, name, data: route }) => {
+        this.routes.forEach(({ element, record, requires, name, data: route }) => {      	
             const current = this.main.area.routeNumber;
             const stars = this.main.player.stars;
             const recordValue = this.main.player.records[route.id] || 0;
             
             name.innerText = route.name[this.main.lang].toUpperCase();
 
-            // Highlight de la ruta actual
             if (current === route.id) {
                 element.style.borderColor = 'var(--red)';
                 record.parentElement.style.backgroundColor = 'var(--red)';
@@ -99,7 +102,6 @@ export class MapScene extends GameScene {
                 record.parentElement.style.backgroundColor = 'revert-layer';
             }
 
-            // Unlock / bloqueo
             if (stars >= route.unlock) {
                 requires.innerHTML = '';
                 if (!this.main.area.waveActive) {
@@ -115,7 +117,6 @@ export class MapScene extends GameScene {
                 requires.innerHTML = `<span class="msrre">⭐</span>${route.unlock}`;
             }
 
-            // Actualizar nombre y récord
             record.innerHTML = `<span class="msrre">⭐</span>${recordValue}`;
         });
     }
@@ -127,57 +128,71 @@ export class MapScene extends GameScene {
 	}
 
 	changeMap(pos) {
-		if (pos === this.main.area.routeNumber) return;
+		if (pos === this.main.area.routeNumber) return this.close();
 		this.main.area.loadArea(pos);
 		this.main.UI.update();
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
-		const _wv = this.main.area.waves?.[this.main.area.waveNumber]?.preview?.[0] || this.main.area.waves?.[((this.main.area.waveNumber - 1) % 100) + 1]?.preview?.[0];
-		if (_wv) this.main.UI.displayEnemyInfo(_wv, 0);
+		const previewEnemy = this.main.area.getWavePreview(this.main.area.waveNumber);
+		if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
 		this.main.area.checkWeather();
 		this.close();
 		playSound('step', 'ui');
 	}
 
-	displayRoutes() {
-		for (let i = 0; i < 12; i++) {
-				if (this.main.area.routeNumber === i) { 
-					this.routes[i].style.borderColor = 'var(--red)';
-					this.routes[i].recordContainer.style.backgroundColor = 'var(--red)';
-				} else {
-					if (this.main.player.records[i] >= 100) {
-						this.routes[i].style.borderColor = '#2d70e3';
-						this.routes[i].recordContainer.style.backgroundColor = '#2d70e3';
-					} else {
-						this.routes[i].style.borderColor = 'revert-layer';
-						this.routes[i].recordContainer.style.backgroundColor = 'revert-layer';
-					}
-				}
+	// displayRoutes() {
+	// 	for (let i = 0; i < 12; i++) {
+	// 		if (this.main.area.routeNumber === i) { 
+	// 			this.routes[i].style.borderColor = 'var(--red)';
+	// 			this.routes[i].recordContainer.style.backgroundColor = 'var(--red)';
+	// 		} else {
+	// 			if (this.main.player.records[i] >= 100) {
+	// 				this.routes[i].style.borderColor = '#2d70e3';
+	// 				this.routes[i].recordContainer.style.backgroundColor = '#2d70e3';
+	// 			} else {
+	// 				this.routes[i].style.borderColor = 'revert-layer';
+	// 				this.routes[i].recordContainer.style.backgroundColor = 'revert-layer';
+	// 			}
+	// 		}
 
-				if (this.main.player.stars >= routeData[i].unlock) {
-					this.routes[i].requires.innerHTML = ``;
-					if (!this.main.area.waveActive) {
-						this.routes[i].style.filter = `revert-layer`;
-						this.routes[i].style.pointerEvents = `all`;
-					} else {
-						this.routes[i].style.filter = `brightness(0.8)`;
-						this.routes[i].style.pointerEvents = `none`;
-					}	
-				} else {
-					this.routes[i].style.filter = `brightness(0.5)`;
-					this.routes[i].style.pointerEvents = `none`;
-					this.routes[i].requires.innerHTML = `<span class="msrre">⭐</span>${routeData[i].unlock}`;
-				}
+	// 		if (this.main.player.stars >= routeData[i].unlock) {
+	// 			this.routes[i].requires.innerHTML = ``;
+	// 			if (!this.main.area.waveActive) {
+	// 				this.routes[i].style.filter = `revert-layer`;
+	// 				this.routes[i].style.pointerEvents = `all`;
+	// 			} else {
+	// 				this.routes[i].style.filter = `brightness(0.8)`;
+	// 				this.routes[i].style.pointerEvents = `none`;
+	// 			}	
+	// 		} else {
+	// 			this.routes[i].style.filter = `brightness(0.5)`;
+	// 			this.routes[i].style.pointerEvents = `none`;
+	// 			this.routes[i].requires.innerHTML = `<span class="msrre">⭐</span>${routeData[i].unlock}`;
+	// 		}
 
-				if (this.main.area.routeNumber === i) this.routes[i].style.pointerEvents = `none`;
-				this.routes[i].name.innerText = routeData[i].name[this.main.lang].toUpperCase();
-				this.routes[i].record.innerHTML = `<span class="msrre">⭐</span>${this.main.player.records[i]}`;
-			}	
-	}
+	// 		if (this.main.area.routeNumber === i) this.routes[i].style.pointerEvents = `none`;
+	// 		this.routes[i].name.innerText = routeData[i].name[this.main.lang].toUpperCase();
+	// 		this.routes[i].record.innerHTML = `<span class="msrre">⭐</span>${Math.min(100, this.main.player.records[i])}`;
+	// 	}	
+	// }
 
 	open() {
 		if (this.main.area.inChallenge) return;
+		if (this.main.game.stopped) return playSound('pop0', 'ui');
+		if (this.isOpen) return this.close();
+		
+		this.main.sections.forEach(section => {
+			if (section.isOpen && section != this) section.close();
+		})
+		
 		super.open();
 		this.update();
+		this.main.game.cancelDeployUnit()
+		this.main.UI.section['map'].classList.add('is-selected');
 		if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+	}
+
+	close() {
+		super.close();
+		this.main.UI.section['map'].classList.remove('is-selected');
 	}
 }

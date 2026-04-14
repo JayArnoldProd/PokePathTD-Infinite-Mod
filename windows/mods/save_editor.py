@@ -10,6 +10,7 @@ PokePath TD Save Editor
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -62,7 +63,14 @@ def find_paths():
         Path.home() / 'AppData' / 'Local' / 'Programs' / 'pokePathTD_Electron',
     ]
     
-    result = {'game_root': None, 'sprites': None, 'sprites_shiny': None, 'mod_shiny_sprites': None}
+    result = {
+        'game_root': None,
+        'sprites': None,
+        'sprites_shiny': None,
+        'mod_shiny_sprites': None,
+        'mod_normal_sprites': None,
+        'extracted_normal_sprites': None,
+    }
     
     # Check for mod's bundled sprites first (works in distributed installs)
     # These are the MOST RELIABLE source — never overwrite them with extracted paths
@@ -72,6 +80,7 @@ def find_paths():
     
     mod_normal_path = script_dir / 'patches' / 'normal_sprites'
     if mod_normal_path.exists():
+        result['mod_normal_sprites'] = mod_normal_path
         result['sprites'] = mod_normal_path
     
     for check_dir in check_dirs:
@@ -85,8 +94,10 @@ def find_paths():
                 # and verify the extracted path actually has sprite files
                 extracted_normal = pokemon_base / 'normal'
                 extracted_shiny = pokemon_base / 'shiny'
-                if not result['sprites'] and extracted_normal.exists() and any(extracted_normal.glob('*.png')):
-                    result['sprites'] = extracted_normal
+                if extracted_normal.exists() and any(extracted_normal.glob('*.png')):
+                    result['extracted_normal_sprites'] = extracted_normal
+                    if not result['sprites']:
+                        result['sprites'] = extracted_normal
                 if not result.get('sprites_shiny') and extracted_shiny.exists() and any(extracted_shiny.glob('*.png')):
                     result['sprites_shiny'] = extracted_shiny
                 if result['sprites']:
@@ -143,6 +154,43 @@ def _has_feature(key):
     """Check if a specific mod feature is installed."""
     return key in INSTALLED_FEATURES
 
+
+def _ensure_node_save_deps():
+    """Install Node dependencies required by the save helper if they're missing."""
+    node_modules_dir = SCRIPT_DIR / 'node_modules'
+    level_module_dir = node_modules_dir / 'level'
+    if level_module_dir.exists():
+        return True, None
+
+    npm_cmd = shutil.which('npm.cmd') or shutil.which('npm')
+    if not npm_cmd:
+        return False, 'Node dependencies missing and npm was not found. Please install Node.js with npm included.'
+
+    try:
+        result = subprocess.run(
+            [npm_cmd, 'install', '--no-fund', '--no-audit'],
+            capture_output=True,
+            text=True,
+            cwd=str(SCRIPT_DIR),
+            encoding='utf-8',
+            errors='replace',
+            timeout=120,
+            creationflags=0x08000000
+        )
+    except subprocess.TimeoutExpired:
+        return False, 'Timed out while installing required save editor dependencies with npm install.'
+    except Exception as e:
+        return False, f'Failed to install save editor dependencies: {e}'
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or 'npm install failed'
+        return False, f'Failed to install save editor dependencies: {detail}'
+
+    if not level_module_dir.exists():
+        return False, 'npm install completed, but the level package is still missing.'
+
+    return True, None
+
 # ============================================================================
 # SAVE DATA
 # ============================================================================
@@ -158,6 +206,12 @@ class SaveData:
         if not SAVE_HELPER.exists():
             return False
         self.last_error = None
+
+        deps_ok, deps_error = _ensure_node_save_deps()
+        if not deps_ok:
+            self.last_error = deps_error
+            return False
+
         try:
             cmd = ['node', str(SAVE_HELPER), 'export']
             if modded:
@@ -189,6 +243,12 @@ class SaveData:
         if not self.data or not SAVE_HELPER.exists():
             return False
         self.last_error = None
+
+        deps_ok, deps_error = _ensure_node_save_deps()
+        if not deps_ok:
+            self.last_error = deps_error
+            return False
+
         try:
             with open(TEMP_SAVE, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f)
@@ -342,18 +402,30 @@ class PokemonData:
                         except:
                             pass
             
-            # Normal sprite (or fallback if shiny not found)
+            # Normal sprite lookup, prefer bundled mod sprites but fall back to extracted runtime sprites
+            normal_paths = []
+            if PATHS.get('mod_normal_sprites'):
+                normal_paths.append(PATHS['mod_normal_sprites'] / f"{sprite_key}.png")
             if PATHS.get('sprites'):
-                path = PATHS['sprites'] / f"{sprite_key}.png"
-                if path.exists():
-                    try:
-                        # Use NEAREST for pixel art to keep crisp edges
-                        img = Image.open(path).resize((size, size), Image.Resampling.NEAREST)
-                        self.sprites[cache_key] = ImageTk.PhotoImage(img)
-                    except:
-                        self.sprites[cache_key] = None
-            else:
-                self.sprites[cache_key] = None
+                fallback_path = PATHS['sprites'] / f"{sprite_key}.png"
+                if fallback_path not in normal_paths:
+                    normal_paths.append(fallback_path)
+            if PATHS.get('extracted_normal_sprites'):
+                extracted_path = PATHS['extracted_normal_sprites'] / f"{sprite_key}.png"
+                if extracted_path not in normal_paths:
+                    normal_paths.append(extracted_path)
+
+            self.sprites[cache_key] = None
+            for path in normal_paths:
+                if not path.exists():
+                    continue
+                try:
+                    # Use NEAREST for pixel art to keep crisp edges
+                    img = Image.open(path).resize((size, size), Image.Resampling.NEAREST)
+                    self.sprites[cache_key] = ImageTk.PhotoImage(img)
+                    break
+                except:
+                    continue
         return self.sprites.get(cache_key)
     
     # Display name overrides for Pokemon with unclear internal keys
@@ -436,6 +508,20 @@ class PokemonData:
             current = evos[current]['evolves_to']
             chain.append(current)
         return chain
+
+    def get_unlock_roots(self):
+        """Return one unlockable root per obtainable line/standalone species.
+        Uses actual metadata relationships instead of the older baseForms list so
+        newly added standalone Pokemon and new lines are included automatically."""
+        roots = []
+        for key in self.all_pokemon:
+            if key.startswith('mega'):
+                continue
+            if key in self.FORM_TO_MAIN:
+                continue
+            if self.get_prev_evo(key) == key:
+                roots.append(key)
+        return roots
     
     def create_new_pokemon(self, species_key):
         return {
@@ -819,10 +905,21 @@ class App(tk.Tk):
                     f"Try closing the game and loading again.\n\n"
                     f"Error: {error_detail}")
             else:
-                messagebox.showwarning("Load Failed",
+                title = "Load Failed"
+                message = (
                     f"Could not load save data.\n\n"
                     f"Make sure the game is closed and try again.\n\n"
-                    f"Error: {error_detail}")
+                    f"Error: {error_detail}"
+                )
+                lower_error = error_detail.lower()
+                if 'cannot find module' in lower_error or 'npm install' in lower_error or 'dependencies missing' in lower_error:
+                    title = "Save Editor Setup Failed"
+                    message = (
+                        f"The save editor is missing required Node.js packages and could not repair itself automatically.\n\n"
+                        f"Try running ModManager.bat again, or run npm install inside the mods folder.\n\n"
+                        f"Error: {error_detail}"
+                    )
+                messagebox.showwarning(title, message)
     
     def load_file(self):
         path = filedialog.askopenfilename(filetypes=[("Save files", "*.json *.txt")])
@@ -1098,9 +1195,7 @@ class App(tk.Tk):
         
         count = 0
         skipped = 0
-        for key in self.poke_data.get_base_forms():
-            if key.startswith('mega'):
-                continue
+        for key in self.poke_data.get_unlock_roots():
             # Skip if any Pokemon in this chain is already owned
             if key in covered_chains:
                 skipped += 1

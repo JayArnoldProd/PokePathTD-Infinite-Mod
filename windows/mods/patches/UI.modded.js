@@ -8,7 +8,7 @@ import { weatherData } from './data/weatherData.js';
 import { saveData } from '../file/data.js';
 import { songData } from './data/songData.js';
 
-const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];  // RESTORED: Vanilla inventory
+const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
 
 export class UI {
 	constructor(main) {
@@ -16,14 +16,141 @@ export class UI {
 		this.render();
 
 		this.damageDealtDisplay = false;
-		this.damageDealtType = 'trueDamage';  // RESTORED: Vanilla damage type toggle
+		this.damageDealtType = 'trueDamage';
 		this.enemyPositionDisplay = 0;
 		this.tileTerrainHover = null;
 
-		// ENDLESS MOD: Wave Info Panel (bottom-left) - default off
 		this.waveInfoDisplay = false;
 
 		this.fastScene = new FastScene(this.main, this);
+	}
+
+	getEffectiveWP(wavesPast100) {
+		if (wavesPast100 <= 900) return wavesPast100;
+		return 900 + (wavesPast100 - 900) / 2;
+	}
+
+	getCurrentWavePreviewList() {
+		const waveNumber = this.main.area.waveNumber;
+		if (waveNumber <= 100) {
+			return this.main.area.waves[waveNumber]?.preview || [];
+		}
+
+		if (waveNumber % 100 === 0) {
+			const preview = [];
+			const boss = this.main.area.getWavePreview(waveNumber);
+			if (boss) preview.push(boss);
+			if (waveNumber >= 300 && typeof this.main.area.getEscortTypes === 'function') {
+				preview.push(...(this.main.area.getEscortTypes(waveNumber, 3) || []));
+			}
+			return preview;
+		}
+
+		const templateWaveNum = ((waveNumber - 1) % 100) + 1;
+		return this.main.area.waves[templateWaveNum]?.preview || [];
+	}
+
+	scalePreviewEnemy(enemy, waveNumber) {
+		if (!enemy) return enemy;
+
+		let hp = enemy.hp ?? 0;
+		let armor = enemy.armor ?? 0;
+		let gold = (enemy.gold ?? 0) + this.main.player.extraGold;
+		let speed = enemy.speed ?? 0;
+		let power = enemy.power ?? 0;
+		let regeneration = enemy.regeneration ?? 0;
+		let invisible = !!enemy.invisible;
+
+		if (waveNumber > 100) {
+			const wavesPast100 = waveNumber - 100;
+			const ewp = this.getEffectiveWP(wavesPast100);
+
+			if (waveNumber % 100 === 0) {
+				const bossTemplate = this.main.area.getWavePreview(waveNumber);
+				const bossCount = Math.floor(waveNumber / 100);
+				let bossHpMult = Math.pow(2, ewp / 335);
+				if (ewp > 1500) {
+					const anchor = Math.pow(2, 1500 / 335);
+					const extra = ewp - 1500;
+					bossHpMult = anchor * Math.pow(extra / 200 + 1, 0.85);
+				}
+				const bossCountFactor = 1 / Math.pow(Math.max(1, bossCount), 2 / 3);
+				const bossSpeedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500);
+				const bossRegenScale = 0.0167 * ewp / (ewp + 3000);
+				gold = Math.floor((enemy.gold ?? 0) * (1 + wavesPast100 * 0.11)) + this.main.player.extraGold;
+
+				if (bossTemplate && enemy.id === bossTemplate.id) {
+					hp = Math.floor((enemy.hp ?? 0) * bossHpMult * 2 * bossCountFactor * 0.775);
+					armor = Math.floor((enemy.armor ?? 0) * (1 + 0.03 * ewp));
+					speed = (enemy.speed ?? 0) * bossSpeedMult;
+					regeneration = Math.max(enemy.regeneration ?? 0, Math.floor(hp * bossRegenScale));
+				} else {
+					const escortCount = Math.min(100, Math.floor((waveNumber - 200) / 50) * 5);
+					const escortCountFactor = 1 / Math.pow(Math.max(1, escortCount), 0.35);
+					hp = Math.floor((enemy.hp ?? 0) * bossHpMult * 0.75 * escortCountFactor * 0.775);
+					armor = Math.floor((enemy.armor ?? 0) * (1 + 0.03 * ewp));
+					speed = (enemy.speed ?? 0) * bossSpeedMult;
+					regeneration = Math.max(enemy.regeneration ?? 0, Math.floor(hp * bossRegenScale));
+				}
+			} else {
+				const wavePreview = this.getCurrentWavePreviewList();
+				const baseBudget = 160000;
+				let hpMult;
+				if (ewp <= 1300) {
+					hpMult = Math.pow(1.00558, ewp);
+				} else {
+					const base = Math.pow(1.00558, 1300);
+					const extra = ewp - 1300;
+					hpMult = base * Math.pow(extra / 100 + 1, 0.6);
+				}
+				const powerBudget = Math.floor(baseBudget * hpMult * 0.775);
+				const speedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500);
+				const regenScale = 0.0333 * ewp / (ewp + 3000);
+				const linearCount = Math.floor(20 + wavesPast100 * 1.2);
+				const asymptoticCount = Math.floor(200 + 600 * wavesPast100 / (wavesPast100 + 3000));
+				const totalEnemyCount = Math.min(linearCount, asymptoticCount, 600);
+				const hpValues = wavePreview.map(p => p.hp || 100);
+				const inverseHp = hpValues.map(baseHp => 1 / baseHp);
+				const totalInverse = inverseHp.reduce((sum, value) => sum + value, 0);
+				const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+				let totalBaseHp = 0;
+				wavePreview.forEach((previewEnemy, idx) => {
+					totalBaseHp += (previewEnemy.hp || 100) * enemyCounts[idx];
+				});
+				const hpScaleFactor = totalBaseHp > 0 ? powerBudget / totalBaseHp : 1;
+				const minHpPerEnemy = Math.floor(powerBudget / Math.max(1, totalEnemyCount));
+				const invisCap = Math.floor(1000 * wavesPast100 / (wavesPast100 + 6000));
+				const enemyIndex = Math.max(0, wavePreview.findIndex(previewEnemy => previewEnemy.id === enemy.id));
+				const wouldBeInvisible = wavePreview
+					.slice(0, enemyIndex + 1)
+					.filter(previewEnemy => previewEnemy.invisible)
+					.length;
+
+				hp = Math.floor(Math.max(enemy.hp ?? 0, (enemy.hp ?? 0) * hpScaleFactor, minHpPerEnemy));
+				armor = Math.floor((enemy.armor ?? 0) * (1 + 0.03 * ewp));
+				if (armor === 0) armor = Math.floor(hp * 0.05);
+				speed = (enemy.speed ?? 0) * speedMult;
+				regeneration = Math.max(enemy.regeneration ?? 0, Math.floor(hp * regenScale));
+				gold = Math.floor((enemy.gold ?? 0) * (1 + wavesPast100 * 0.11)) + this.main.player.extraGold;
+				invisible = invisible && wouldBeInvisible <= invisCap;
+			}
+		}
+
+		if (typeof this.main.area.inChallenge.toughEnemies == 'number') {
+			hp += Math.floor(hp * (this.main.area.inChallenge.toughEnemies / 100));
+			armor += Math.floor(armor * (this.main.area.inChallenge.toughEnemies / 100));
+		}
+
+		return {
+			...enemy,
+			hp,
+			armor,
+			gold,
+			speed,
+			power,
+			regeneration,
+			invisible,
+		};
 	}
 
 	render() {
@@ -41,7 +168,8 @@ export class UI {
 			this.saveTeamButton[i].addEventListener('mouseleave', () => {
 				if (this.main.tooltip) this.main.tooltip.hide();
 			})
-			this.saveTeamButton[i].addEventListener('click', () => {
+			this.saveTeamButton[i].addEventListener('click', () => { 
+				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.saveTeamButtonHandle(i);
 			});
 		}
@@ -58,7 +186,8 @@ export class UI {
 			this.importTeamButton[i].addEventListener('mouseleave', () => {
 				if (this.main.tooltip) this.main.tooltip.hide();
 			})
-			this.importTeamButton[i].addEventListener('click', () => {
+			this.importTeamButton[i].addEventListener('click', () => { 
+				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.importTeamButtonHandle(i);
 			});
 		}
@@ -94,7 +223,6 @@ export class UI {
 		this.waveSelectorTenMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorBlock.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 
-		// ENDLESS MOD: Wave Info Panel (bottom-left corner)
 		this.waveInfoPanel = new Element(this.main.scene, { className: 'ui-wave-info-panel' }).element;
 		this.waveInfoPanel.style.cssText = `
 			position: absolute;
@@ -121,7 +249,7 @@ export class UI {
 		this.tilesCountContainer = new Element(this.bottomBar, { className: 'ui-tiles-count-container' }).element;
 		this.tilesCount = [];
 		this.tilesCountNum = [0, 0, 0, 0];
-
+		
 		for (let i = 0; i < 4; i++) {
 			this.tilesCount[i] = new Element(this.tilesCountContainer, { className: 'ui-tiles-count' }).element;
 			this.tilesCount[i].addEventListener('mouseenter', () => {
@@ -165,19 +293,22 @@ export class UI {
 			this.pokemon[i].noPokemon = new Element(this.pokemon[i].buttonContainer, { className: 'ui-pokemon-button', text: '+' }).element;
 
 			this.pokemon[i].deploy.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
-			this.pokemon[i].deploy.addEventListener('click', () => this.main.game.tryDeployUnit(i, true));
+			this.pokemon[i].deploy.addEventListener('click', () => {
+				this.main.game.tryDeployUnit(i, true)
+			});
 
 			this.pokemon[i].info.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
-			this.pokemon[i].info.addEventListener('click', () => this.main.pokemonScene.open(this.main.team.pokemon[i], i));
+			this.pokemon[i].info.addEventListener('click', () => {
+				if (!this.main.boxScene.isOpen && !this.main.inventoryScene.isOpen) this.main.pokemonScene.open(this.main.team.pokemon[i], i);
+				else this.main.pokemonScene.open(this.main.team.pokemon[i], i, this.main.team.pokemon);
+			});
 
 			this.pokemon[i].levelUp.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 			this.pokemon[i].levelUp.addEventListener('click', () => {
-				const pokemon = this.main.team.pokemon[i];
-				// Only shiny Pokemon can level past 100
-				if (pokemon.lvl >= 100 && !pokemon.isShiny) return;
-				if (this.main.player.gold >= pokemon.cost) {
-					this.main.player.changeGold(-pokemon.cost);
-					pokemon.levelUp();
+				if (this.main.game.stopped) return playSound('pop0', 'ui');
+				if (this.main.team.pokemon[i].lvl < 100 && this.main.player.gold >= this.main.team.pokemon[i].cost) {
+					this.main.player.changeGold(-this.main.team.pokemon[i].cost);
+					this.main.team.pokemon[i].levelUp();
 					this.updatePokemon();
 					playSound('obtain', 'ui');
 					if (this.fastScene.isOpen) this.fastScene.close();
@@ -191,28 +322,32 @@ export class UI {
 			this.pokemon[i].noPokemon.addEventListener('click', () => { this.fastScene.open('pokemon', i) });
 
 			this.pokemon[i].sprite.addEventListener('dblclick', () => {
-				if (this.main.team.pokemon[i] != undefined && !this.main.area.inChallenge.draft) {
-					if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
-					if (this.main.team.pokemon[i].isDeployed) {
-						this.main.team.pokemon[i].isDeployed = false;
+				if (this.main.game.stopped) return playSound('pop0', 'ui');
 
-						// RETIRAR TORRE
-						const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this.main.team.pokemon[i]);
-						this.tilesCountNum[this.main.area.towers[index].tile.land-1]--;
-						this.main.area.towers[index].tile.tower = false;
-						this.main.area.towers.splice(index, 1)
-					}
+				const pokemon = this.main.team.pokemon[i];
+				if (!pokemon || this.main.area.inChallenge.draft) return;
+
+				if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
+
+				if (pokemon.isDeployed) {
+					this.main.game.deployingUnit = pokemon;
+					this.main.game.retireUnit();
+				} else {
 					playSound('unequip', 'ui');
-					this.main.box.addPokemon(this.main.team.pokemon[i]);
-					this.main.team.removePokemon(this.main.team.pokemon[i]);
-					this.main.area.checkWeather();
-					this.update();
-					if (this.fastScene.isOpen) this.fastScene.close();
 				}
-			})
+
+				this.main.box.addPokemon(pokemon);
+				this.main.team.removePokemon(pokemon);
+
+				this.main.area.checkWeather();
+				this.update();
+
+				if (this.fastScene.isOpen) this.fastScene.close();
+			});
 
 			this.pokemon[i].shiny.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 			this.pokemon[i].shiny.addEventListener('click', () => {
+				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				if (this.main.team.pokemon[i] != undefined) {
 					if (this.main.team.pokemon[i].isShiny) {
 						this.main.team.pokemon[i].toggleShiny();
@@ -237,17 +372,17 @@ export class UI {
 			this.section[section] = new Element(this.sectionContainer, { className: 'ui-section' }).element;
 			this.section[section].img = new Element(this.section[section], { className: 'ui-section-img', image: `./src/assets/images/icons/${section}.png` }).element;
 			this.section[section].addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-		})
+		}) 
 
 		this.section['profile'].addEventListener('click', () => { this.main.profileScene.open() });
 		this.section['box'].addEventListener('click', () => { this.main.boxScene.open() });
-		this.section['inventory'].addEventListener('click', () => { this.main.inventoryScene.open() });  // RESTORED
+		this.section['inventory'].addEventListener('click', () => { this.main.inventoryScene.open() });
 		this.section['shop'].addEventListener('click', () => { this.main.shopScene.open() });
 		this.section['map'].addEventListener('click', () => { this.main.mapScene.open() });
 		this.section['challenge'].addEventListener('click', () => { this.main.challengeScene.open()  });
 		this.section['damageDealt'].addEventListener('click', () => { this.damageDealtSwitch() });
 		this.section['menu'].addEventListener('click', () => { this.main.menuScene.open() });
-
+		
 		this.mapPanelBackground = new Element(this.mapPanel, { className: 'ui-map-panel-background' }).element;
 		this.mapWavePokemonContainer = new Element(this.mapPanelBackground, { className: 'ui-map-wave-pokemon-container' }).element;
 		this.mapWavePokemon = [];
@@ -294,14 +429,13 @@ export class UI {
 
 		this.autoWave = new Element(this.mapPanel, { className: 'ui-auto-wave' }).element;
 		this.autoWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
-		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());
+		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());	
 
 		this.speedWave = new Element(this.mapPanel, { className: 'ui-speed-wave', text: '🚀' }).element;
 		this.speedWave.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 		this.speedWave.addEventListener('click', () => { this.main.game.toggleSpeed() });
 
 		this.damageDealtContainer = new Element(this.mapPanel, { className: 'ui-damage-dealt-container' }).element;
-		// RESTORED: Vanilla damage type toggle button
 		this.damageDealtButton = new Element(this.mapPanel, { className: 'ui-damage-dealt-button' }).element;
 		this.damageDealtButton.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 		this.damageDealtButton.addEventListener('click', () => { this.changeDamageType() });
@@ -315,26 +449,46 @@ export class UI {
 			this.damageDealtUnit[i].barContainer = new Element(this.damageDealtUnit[i], { className: 'ui-damage-dealt-unit-bar-container' }).element;
 			this.damageDealtUnit[i].barPrevious = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar-previous' }).element;
 			this.damageDealtUnit[i].bar = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar' }).element;
-		}
+		}	
 
+		this.renderInteractiveMap();
+	}
+
+	renderInteractiveMap() {
 		this.secretCacnea = new Element(this.main.scene, { className: 'secret-cacnea' }).element;
-		this.secretCacnea.addEventListener('click', () => {
+		this.secretCacnea.addEventListener('click', () => { 
 			this.secretCacnea.style.pointerEvents = 'none';
 			this.main.player.secrets.cacnea = true;
 			this.getSecret('cacnea');
 		});
+
 		this.secretGreavard = new Element(this.main.scene, { className: 'secret-greavard' }).element;
-		this.secretGreavard.addEventListener('click', () => {
+		this.secretGreavard.addEventListener('click', () => { 
 			this.secretGreavard.style.pointerEvents = 'none';
 			this.main.player.secrets.greavard = true;
-			this.getSecret('greavard');
+			this.getSecret('greavard'); 
 		});
-		// this.secretAipom = new Element(this.main.scene, { className: 'secret-aipom' }).element;
-		// this.secretAipom.addEventListener('click', () => {
-		// 	this.secretAipom.style.pointerEvents = 'none';
-		// 	this.main.player.secrets.greavard = true;
-		// 	this.getSecret('aipom');
-		// });
+
+		this.secretSandygast = new Element(this.main.scene, { className: 'secret-sandygast' }).element;
+		this.secretSandygast.addEventListener('click', () => { 
+			this.secretSandygast.style.pointerEvents = 'none';
+			this.main.player.secrets.sandygast = true;
+			this.getSecret('sandygast'); 
+		});
+
+		this.secretDucklett = new Element(this.main.scene, { className: 'secret-ducklett' }).element;
+		this.secretDucklett.addEventListener('click', () => { 
+			this.secretDucklett.style.pointerEvents = 'none';
+			this.main.player.secrets.ducklett = true;
+			this.getSecret('ducklett'); 
+		});
+
+		this.secretManaphyCave = new Element(this.main.scene, { className: 'secret-manaphy-cave' }).element;
+		this.secretManaphyCave.addEventListener('click', () => { 
+			this.secretManaphyCave.style.pointerEvents = 'none';
+			this.main.player.secretMaps.manaphyCave = true;
+			this.getSecretMap(20); 
+		});
 	}
 
 	update() {
@@ -342,36 +496,22 @@ export class UI {
 		this.updatePokemon();
 		this.updateMap();
 
-		// ENDLESS MODE: Get wave preview safely for any wave number
-		let wavePreview;
-		if (this.main.area.waves && this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
-			wavePreview = this.main.area.waves[this.main.area.waveNumber].preview;
-		} else if (this.main.area.waves) {
-			// Endless mode - use template
-			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
-			wavePreview = this.main.area.waves[templateWaveNum]?.preview || this.main.area.waves[1]?.preview;
-		}
-		// MOD: Guard against out-of-bounds index (e.g. boss wave with fewer preview entries than template)
-		if (wavePreview && wavePreview.length > 0) {
-			const safeEnemyPos = Math.min(this.enemyPositionDisplay, wavePreview.length - 1);
-			if (wavePreview[safeEnemyPos]) {
-				this.displayEnemyInfo(wavePreview[safeEnemyPos], safeEnemyPos);
-				this.enemyPositionDisplay = safeEnemyPos;
-			}
-		}
+		const wavePreview = this.getCurrentWavePreviewList();
+		const previewPos = wavePreview.length > 0 ? Math.min(this.enemyPositionDisplay, wavePreview.length - 1) : 0;
+		const previewEnemy = wavePreview[previewPos] || this.main.area.getWavePreview(this.main.area.waveNumber);
+		if (previewEnemy) this.displayEnemyInfo(previewEnemy, previewPos);
 
 		this.waveSelectorContainer.style.display = 'none';
 		this.waveSelectorLabel.innerText = text.ui.waveManager[this.main.lang].toUpperCase();
-		// ENDLESS MODE: Show wave selector if record >= 100 (not just exactly 100)
 		if (!this.main.area.inChallenge && this.main.player.records[this.main.area.map.id] >= 100 && this.main.player.hasBike) this.waveSelectorContainer.style.display = 'revert-layer';
-
+		
 		this.musicContainer.style.display = 'none';
 		if (this.main.player.hasSubwoofer) {
 			this.musicContainer.style.display = 'revert-layer';
-			this.musicName.innerHTML = `ΓÖ¬ ${this.main.area.music.name[this.main.lang].toUpperCase()}`
+			this.musicName.innerHTML = `♪ ${this.main.area.music.name[this.main.lang].toUpperCase()}`
 		}
 
-		this.mapRoute.innerHTML = `${this.main.area.map.name[this.main.lang].toUpperCase()} <br>${text.map.wave[this.main.lang].toUpperCase()} ${this.main.area.waveNumber}`;
+		if (!this.main.area.map.isSecret) this.mapRoute.innerHTML = `${this.main.area.map.name[this.main.lang].toUpperCase()} <br>${text.map.wave[this.main.lang].toUpperCase()} ${this.main.area.waveNumber}`;
 		this.tilesCount.forEach((tc, i) => { tc.innerHTML = `${this.tilesCountNum[i]}/${this.main.area.map.tilesNum[i]}`});
 
 		if (
@@ -380,7 +520,7 @@ export class UI {
 			(this.main.team.pokemon.length + this.main.box.pokemon.length) > 30
 		) {
 			this.section['challenge'].style.opacity = 1;
-			this.section['challenge'].style.pointerEvents = 'revert-layer';
+			this.section['challenge'].style.pointerEvents = 'revert-layer';	
 		} else {
 			this.section['challenge'].style.opacity = 0.4;
 			this.section['challenge'].style.pointerEvents = 'none';
@@ -394,7 +534,6 @@ export class UI {
 			this.section['box'].style.opacity = (this.main.area.inChallenge.draft) ? 0.4 : 1;
 			this.section['box'].style.pointerEvents = (this.main.area.inChallenge.draft) ? 'none' : 'revert-layer';
 
-			// RESTORED: Inventory challenge handling
 			this.section['inventory'].style.opacity = (this.main.area.inChallenge.noItems) ? 0.4 : 1;
 			this.section['inventory'].style.pointerEvents = (this.main.area.inChallenge.noItems) ? 'none' : 'revert-layer';
 
@@ -407,7 +546,6 @@ export class UI {
 			this.section['map'].style.pointerEvents = 'revert-layer';
 			this.section['box'].style.opacity = 1;
 			this.section['box'].style.pointerEvents = 'revert-layer';
-			// RESTORED: Inventory reset when not in challenge
 			this.section['inventory'].style.opacity = 1;
 			this.section['inventory'].style.pointerEvents = 'revert-layer';
 		}
@@ -435,19 +573,17 @@ export class UI {
 		}
 
 		if (
-			this.main.area.routeNumber == 4 &&
-			//!this.main.area.waveActive &&
+			this.main.area.routeNumber == 4 && 
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.cacnea
 		) {
 			this.secretCacnea.style.pointerEvents = 'revert-layer';
 		} else {
 			this.secretCacnea.style.pointerEvents = 'none';
-		}
+		} 
 
 		if (
-			this.main.area.routeNumber == 2 &&
-			//!this.main.area.waveActive &&
+			this.main.area.routeNumber == 2 && 
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.greavard
 		) {
@@ -456,13 +592,40 @@ export class UI {
 			this.secretGreavard.style.pointerEvents = 'none';
 		}
 
-		// ENDLESS MOD: Update wave info panel
-		this.updateWaveInfo();
+		if (
+			this.main.area.routeNumber == 16 && 
+			!this.main.area.inChallenge &&
+			!this.main.player.secrets.sandygast
+		) {
+			this.secretSandygast.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretSandygast.style.pointerEvents = 'none';
+		}
 
+		if (
+			this.main.area.routeNumber == 13 && 
+			!this.main.area.inChallenge &&
+			!this.main.player.secrets.ducklett
+		) {
+			this.secretDucklett.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretDucklett.style.pointerEvents = 'none';
+		}
+
+		if (
+			this.main.area.routeNumber == 11 && 
+			!this.main.area.inChallenge &&
+			!this.main.area.waveActive
+		) {
+			this.secretManaphyCave.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretManaphyCave.style.pointerEvents = 'none';
+		}
+
+		this.updateWaveInfo();
 		this.displayWeather();
 	}
 
-	// ENDLESS MOD: Update wave info panel display
 	updateWaveInfo() {
 		if (!this.waveInfoDisplay) {
 			this.waveInfoPanel.style.display = 'none';
@@ -471,12 +634,10 @@ export class UI {
 
 		this.waveInfoPanel.style.display = 'block';
 
-		// Wave number
 		const waveNum = this.main.area.waveNumber;
 		const isEndless = waveNum > 100;
-		this.waveInfoWave.innerHTML = `WAVE ${waveNum}${isEndless ? ' <span style="color:#e94560;">(Γê₧)</span>' : ''}`;
+		this.waveInfoWave.innerHTML = `WAVE ${waveNum}${isEndless ? ' <span style="color:#e94560;">(∞)</span>' : ''}`;
 
-		// Enemies remaining
 		const enemiesRemaining = this.main.area.enemies?.length || 0;
 		const waveActive = this.main.area.waveActive;
 		if (waveActive) {
@@ -485,7 +646,6 @@ export class UI {
 			this.waveInfoEnemies.innerHTML = `<span style="color:#666;">Wave Complete</span>`;
 		}
 
-		// Time elapsed (if wave is active)
 		if (waveActive && this.main.area.waveStartTime) {
 			const elapsed = Math.floor((Date.now() - this.main.area.waveStartTime) / 1000);
 			const mins = Math.floor(elapsed / 60);
@@ -496,7 +656,6 @@ export class UI {
 		}
 	}
 
-	// ENDLESS MOD: Toggle wave info panel
 	toggleWaveInfo() {
 		this.waveInfoDisplay = !this.waveInfoDisplay;
 		this.updateWaveInfo();
@@ -515,8 +674,18 @@ export class UI {
 	updatePlayer() {
 		this.playerPortrait.style.backgroundImage = `url("./src/assets/images/portraits/${this.main.player.portrait}.png")`;
 		this.playerName.innerText = this.main.player.name.toUpperCase();
-		this.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;
-		// ENDLESS MODE: No cap on star display
+		const gold = this.main.player.gold;
+		const goldText = gold >= 1e15
+			? `$${(gold / 1e15).toFixed(2)} QUADRILLION`
+			: gold >= 1e12
+				? `$${(gold / 1e12).toFixed(2)} TRILLION`
+				: gold >= 1e9
+					? `$${(gold / 1e9).toFixed(2)} BILLION`
+					: `$${this.main.utility.numberDot(gold)}`;
+		this.playerGold.innerText = goldText;
+		this.playerGold.style.whiteSpace = 'nowrap';
+		this.playerGold.style.lineHeight = '10px';
+		this.playerGold.style.fontSize = gold >= 1e9 ? '9px' : '10px';
 		this.playerStars.innerHTML = `<span class="msrre">⭐</span>${this.main.player.stars}`;
 		this.playerRibbonsText.innerHTML = `${this.main.player.ribbons}`;
 
@@ -540,7 +709,7 @@ export class UI {
 			this.pokemon[i].sprite.style.cursor = "";
 			this.pokemon[i].style.transform = `revert-layer`
 			this.pokemon[i].sprite.style.transform = `revert-layer`
-
+			
 			this.pokemon[i].item.style.background = "revert-layer";
 			this.pokemon[i].item.style.pointerEvents = 'none';
 			this.pokemon[i].item.style.display = 'none';
@@ -573,26 +742,30 @@ export class UI {
 		}
 
 		this.main.team.pokemon.forEach((pokemon, i) => {
+			let lang = this.main.lang;
+			if (pokemon.name[lang] == undefined) lang = 0;
+
 			this.pokemon[i].noPokemon.style.display = 'none';
-			this.pokemon[i].name.innerText = (pokemon.alias != undefined) ? pokemon.alias.toUpperCase() : pokemon.name[this.main.lang].toUpperCase();
-
+			
+			this.pokemon[i].name.innerText = (pokemon.alias != undefined) ? pokemon.alias.toUpperCase() : pokemon.name[lang].toUpperCase();
+			
 			if (pokemon.id == 70) this.pokemon[i].dittoBg.style.display = 'revert-layer';
-
+	
 			if (typeof this.main.area.inChallenge.lvlCap == 'number') {
 				this.pokemon[i].level.innerText = `Lv ${Math.min(pokemon.lvl, this.main.area.inChallenge.lvlCap)}`;
 			} else this.pokemon[i].level.innerText = `Lv ${pokemon.lvl}`;
-
+			
 			this.pokemon[i].sprite.style.backgroundImage = `url("${pokemon.sprite.base}")`;
 			if (pokemon.item != undefined) {
 				this.pokemon[i].item.innerText = '';
 				this.pokemon[i].item.style.background = `url("${pokemon.item.sprite}") center/contain no-repeat, linear-gradient(180deg,rgba(251, 205, 43, 1) 0%, rgba(217, 175, 30, 1) 100%)`;
 				if (pokemon.item.id == 'inverter') {
-					if (pokemon.ability.id != 'defiant') this.pokemon[i].style.transform = `scale(1, -1)`;
+					if (pokemon.ability.id != 'contrary') this.pokemon[i].style.transform = `scale(1, -1)`;
 					else this.pokemon[i].sprite.style.transform = `translate(-50%, 0) scale(1, -1)`;
 				}
 			}
 			if (pokemon.isShiny) this.pokemon[i].shiny.style = 'revert-layer';
-
+			
 			this.pokemon[i].sprite.style.cursor = "grab";
 			this.damageDealtUnit[i].sprite.style.display = 'revert-layer';
 			this.damageDealtUnit[i].number.style.display = 'revert-layer';
@@ -604,7 +777,7 @@ export class UI {
 			this.damageDealtUnit[i].barPrevious.style.backgroundColor = `${pokemon.specie.color}4D`;
 
 			this.pokemon[i].name.style.color = pokemon.specie.color;
-			this.pokemon[i].style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 0%, ${pokemon.specie.color}5D 100%)`;
+			this.pokemon[i].style.backgroundColor = `${pokemon.specie.color}33`
 
 			this.pokemon[i].deploy.style.pointerEvents = 'all';
 			this.pokemon[i].deploy.style.filter = 'revert-layer';
@@ -617,25 +790,23 @@ export class UI {
 			this.pokemon[i].item.style.display = 'revert-layer';
 			this.pokemon[i].item.style.pointerEvents = 'all';
 
-			// Level-up works during challenges too (cap only limits stats/display)
-			if (pokemon.lvl >= 100 && !pokemon.isShiny) {
-				this.pokemon[i].levelUp.style.display = 'none';
-				this.pokemon[i].levelUp.style.pointerEvents = 'none';
-			} else {
-				this.pokemon[i].levelUp.style.display = 'revert-layer';
-				if (this.main.player.gold >= pokemon.cost) {
+			if (typeof this.main.area.inChallenge.lvlCap !== 'number') {
+				if (pokemon.lvl < 100) this.pokemon[i].levelUp.style.display = 'revert-layer';
+				if (pokemon.lvl < 100 && this.main.player.gold >= pokemon.cost) {
 					this.pokemon[i].levelUp.style.pointerEvents = 'all';
 					this.pokemon[i].levelUp.style.filter = 'revert-layer';
-				}
-			}
+				}	
+			}	
 
 			if (pokemon.isDeployed) {
-				// RESTORED: silphScope added back to vanilla disabled items list
-				if (['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'ejectButton'].includes(pokemon?.item?.id)) {
+				if (
+					['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 
+					'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
+					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(pokemon?.item?.id)) {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
-				this.pokemon[i].deploy.style.background =
+				this.pokemon[i].deploy.style.background = 
 					`url("./src/assets/images/icons/pokeball-open.png") center / 50% no-repeat, linear-gradient(180deg,rgba(178, 61, 39, 1) 0%, rgba(157, 56, 41, 1) 100%)`
 			}
 		})
@@ -644,7 +815,7 @@ export class UI {
 			this.pokemon[i].noPokemon.style.display = 'none';
 			this.pokemon[i].style.background = 'rgba(0, 0, 0, 0.55)';
 			this.pokemon[i].name.innerText = text.ui.locked[this.main.lang].toUpperCase();
-			this.pokemon[i].stars.style.display = 'revert-layer';
+			this.pokemon[i].stars.style.display = 'revert-layer';		
 		}
 
 		if (typeof this.main.area.inChallenge.slotLimit == 'number') {
@@ -654,7 +825,7 @@ export class UI {
 		}
 
 		this.pokemon.forEach((slot, i) => {
-	        slot.dataset.index = i;
+	        slot.dataset.index = i;  
 	    });
 
 	    this.setupPokemonDragAndDrop();
@@ -667,6 +838,7 @@ export class UI {
 	    this.playerPanel.style.pointerEvents = 'all';
 	    this.pokemonContainer.style.pointerEvents = 'auto';
 	    this.pokemon.forEach(slot => slot.style.pointerEvents = 'auto');
+	    this.isDragging = false;
 
 	    const THRESHOLD = 5; // px para distinguir click de drag
 
@@ -677,6 +849,7 @@ export class UI {
 	    let slotElement = null;
 
 	    const clearDragState = () => {
+	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (clone) {
 	            clone.remove();
 	            clone = null;
@@ -687,9 +860,18 @@ export class UI {
 	        draggedIndex = null;
 	        activePointerId = null;
 	        slotElement = null;
+	        this.isDragging = false;
+	        // limpiar coordenadas del canvas para que las tiles dejen de mostrarse
+	        if (this.main?.game?.mouse) {
+	            this.main.game.mouse.x = undefined;
+	            this.main.game.mouse.y = undefined;
+	            // forzar redraw inmediato para que desaparezcan los highlights
+	            try { this.main.game.animate(performance.now()); } catch (err) {}
+	        }
 	    };
 
 	    const onPointerMoveDuringDrag = (e) => {
+	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!clone) return;
 	        clone.style.left = `${e.pageX - clone.offsetWidth / 2}px`;
 	        clone.style.top = `${e.pageY - clone.offsetHeight / 2}px`;
@@ -704,13 +886,253 @@ export class UI {
 	        if (targetSlot && parseInt(targetSlot.dataset.index) !== draggedIndex) {
 	            targetSlot.classList.add('drag-over');
 	        }
+
+	        // --- NUEVO: actualizar mouse del juego si el cursor está sobre el canvas ---
+	        try {
+	            const canvasEl = this.main.game.canvas;
+	            const rect = canvasEl.getBoundingClientRect();
+
+	            if (
+	                e.clientX >= rect.left && e.clientX <= rect.right &&
+	                e.clientY >= rect.top && e.clientY <= rect.bottom
+	            ) {
+	                const scaleX = canvasEl.width / rect.width;
+	                const scaleY = canvasEl.height / rect.height;
+	                const canvasX = (e.clientX - rect.left) * scaleX;
+	                const canvasY = (e.clientY - rect.top) * scaleY;
+
+	                // actualizar coordenadas globales del juego para que PlacementTile.update las use
+	                this.main.game.mouse.x = canvasX;
+	                this.main.game.mouse.y = canvasY;
+	            } else {
+	                // fuera del canvas -> limpiar coordenadas para que no quede highlight
+	                this.main.game.mouse.x = undefined;
+	                this.main.game.mouse.y = undefined;
+	            }
+	        } catch (err) {
+	            // si no hay game/canvas, noop
+	        }
+
+	        // forzar render (intento inmediato)
+	        try { this.main.game.animate(performance.now()); } catch (err) {}
 	    };
 
 	    const onPointerUpDuringDrag = (e) => {
+	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
+
+	        // quitar listeners de arrastre
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
 	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
 
 	        if (clone) clone.remove();
+
+	        // --- Intentar detectar drop sobre canvas/mapa ---
+	        const canvasEl = this.main.game.canvas;
+	        const rect = canvasEl.getBoundingClientRect();
+
+	        // comprobamos si el pointer up ocurrió dentro del canvas (cliente)
+	        const cx = e.clientX;
+	        const cy = e.clientY;
+
+	        let tile = null;
+	        if (
+	            cx >= rect.left && cx <= rect.right &&
+	            cy >= rect.top && cy <= rect.bottom &&
+	            draggedIndex != null
+	        ) {
+	            // convertir a coordenadas de canvas (teniendo en cuenta escalado CSS)
+	            const scaleX = canvasEl.width / rect.width;
+	            const scaleY = canvasEl.height / rect.height;
+	            const canvasX = (cx - rect.left) * scaleX;
+	            const canvasY = (cy - rect.top) * scaleY;
+
+	            // buscar tile bajo esas coordenadas
+	            tile = this.main.area.placementTiles.find(t =>
+	                canvasX > t.position.x &&
+	                canvasX < t.position.x + t.size &&
+	                canvasY > t.position.y &&
+	                canvasY < t.position.y + t.size
+	            );
+	        }
+
+	        // Si hay tile, intentar desplegar / swap / retirar según corresponda
+	        if (tile && draggedIndex != null) {
+	            const pokemon = this.main.team.pokemon[draggedIndex];
+	            const clickedPokemon = tile.tower || null;
+
+	            // poner el juego en modo deploy (tryDeployUnit puede llamar retireUnit internamente)
+	            this.main.game.tryDeployUnit(draggedIndex, true);
+
+	            // si tryDeployUnit retiró la unidad (deployingUnit quedó vacío), reasignar temporalmente
+	            if (!this.main.game.deployingUnit) {
+	                this.main.game.deployingUnit = pokemon;
+	            }
+
+	            // Si el jugador hizo click sobre la misma torre que estaba desplegando -> cancelar
+	            if (clickedPokemon === this.main.game.deployingUnit) {
+	                this.main.game.cancelDeployUnit();
+	            } else {
+	                // validar si la unidad puede colocarse en ese tipo de tile
+	                const canPlace = tile?.canPlacePokemonHere 
+				    ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
+				    : (
+				        this.main.game.deployingUnit.tiles.includes(tile.land) ||
+				        (this.main.game.deployingUnit?.item?.id == 'airBalloon' && tile.land == 4) ||
+				        (this.main.game.deployingUnit?.item?.id == 'heavyDutyBoots' && tile.land == 2) ||
+				        (this.main.game.deployingUnit?.item?.id == 'assaultVest' && tile.land == 2) ||
+				        (this.main.game.deployingUnit?.item?.id == 'dampMulch' && tile.land == 1) ||
+				        (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(this.main.game.deployingUnit.id))
+				    );
+
+	                if (!canPlace) {
+	                    // no se puede colocar ahí -> cancelar deploy
+	                    this.main.game.cancelDeployUnit();
+	                } else {
+	                    if (!clickedPokemon) {
+	                        // tile vacío -> desplegar normalmente
+	                        this.main.game.moveUnitToTile(tile);
+	                    } else {
+						    // tile ocupado -> decidir swap o passenger o reemplazo
+						    if (this.main.game.deployingUnit.isDeployed) {
+						        // la que arrastramos ya estaba desplegada -> swap
+						        const sourceTile = this.main.area.placementTiles.find(t => t.tower === this.main.game.deployingUnit);
+						        if (sourceTile) {
+						            this.main.game.swapUnits(sourceTile, this.main.game.deployingUnit, tile, clickedPokemon);
+						        } else {
+						            // fallback: retirar la torre objetivo y colocar nueva
+						            this.main.game.retireUnit();
+						            this.main.game.moveUnitToTile(tile);
+						        }
+						        this.main.game.cancelDeployUnit();
+						        playSound('equip', 'ui');
+						        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+						        if (!this.main.area.waveActive) {
+						            this.main.UI.revertUI();
+						            this.main.UI.nextWave.style.filter = 'revert-layer';
+						            this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
+						        }
+						    } else {
+						        // la que arrastramos no estaba desplegada -> intentar passenger si la base lo permite
+						        const base = clickedPokemon; // pokemon que hace de base en la tile
+						        const hasPassenger = !!tile.passenger;
+
+						        // helper: comprobar si la unidad arrastrada puede ir sobre esta tile (incluye reglas para grassyTerrain)
+						        const canBePlacedHere = tile?.canPlacePokemonHere
+						            ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
+						            : (
+						                this.main.game.deployingUnit.tiles && this.main.game.deployingUnit.tiles.includes(tile.land) ||
+						                (this.main.game.deployingUnit?.item?.id == 'airBalloon' && tile.land == 4) ||
+						                (this.main.game.deployingUnit?.item?.id == 'heavyDutyBoots' && tile.land == 2) ||
+						                (this.main.game.deployingUnit?.item?.id == 'assaultVest' && tile.land == 2) ||
+						                (this.main.game.deployingUnit?.item?.id == 'dampMulch' && tile.land == 1) ||
+						                (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(this.main.game.deployingUnit.id))
+						            );
+
+						        // Si la base permite passenger (grassyTerrain)
+						        if (base?.ability?.id === 'grassyTerrain' || base?.ability?.id === 'mount') {
+						            if (!hasPassenger) {
+						                // no hay pasajero -> moveUnitToTile colocará como passenger
+						                this.main.game.moveUnitToTile(tile);
+						            } else {
+						                // ya hay pasajero: si la unidad arrastrada PUEDE ser passenger -> reemplazar pasajero
+						                if (canBePlacedHere) {
+						                    const oldPassenger = tile.passenger;
+						                    // retirar el pasajero actual: retireUnit usa this.deployingUnit, así que lo ajustamos temporalmente
+						                    this.main.game.deployingUnit = oldPassenger;
+						                    this.main.game.retireUnit();
+
+						                    // ahora colocar la unidad que arrastramos como passenger
+						                    this.main.game.deployingUnit = pokemon; // pokemon es la variable del arrastre
+						                    this.main.game.moveUnitToTile(tile);
+						                } else {
+						                    // no puede ser pasajero -> retirar base (lo que también limpia al pasajero) y colocar como base
+						                    const tempDeploying = this.main.game.deployingUnit;
+						                    this.main.game.deployingUnit = base;
+						                    this.main.game.retireUnit(); // elimina base y pasajero
+						                    this.main.game.deployingUnit = tempDeploying;
+						                    this.main.game.moveUnitToTile(tile); // ahora la tile está libre, colocará la nueva unidad como base
+						                }
+						            }
+						        } else {
+						            // base no permite passenger -> comportamiento clásico: sustituir la base
+						            const tempDeploying = this.main.game.deployingUnit;
+						            this.main.game.deployingUnit = clickedPokemon;
+						            this.main.game.retireUnit();
+						            this.main.game.deployingUnit = tempDeploying;
+						            this.main.game.moveUnitToTile(tile);
+						        }
+						    }
+						}
+	                }
+	            }
+
+	            // UI updates y limpieza
+	            this.updatePokemon();
+	            this.pokemon.forEach(s => s.classList.remove('drag-over'));
+	            clearDragState();
+	            this.pokemon.forEach(slot => {
+	                const sprite = slot.querySelector('.ui-pokemon-sprite');
+	                if (sprite) sprite.style.opacity = '1';
+	            });
+
+	            // asegurarse de limpiar mouse del juego y forzar redraw final
+	            if (this.main?.game?.mouse) {
+	                this.main.game.mouse.x = undefined;
+	                this.main.game.mouse.y = undefined;
+	            }
+	            try { this.main.game.animate(performance.now()); } catch (err) {}
+
+	            document.body.style.cursor = '';
+	            return; // fin del flujo de drop en mapa
+	        }
+
+	        // A la caja
+	        const domTarget = document.elementFromPoint(e.clientX, e.clientY);
+			const droppedOnBox = domTarget && (
+			    domTarget.closest('.box-scene') ||
+			    domTarget.closest('.box-scene-unit-container') ||
+			    domTarget.closest('.box-scene-unit')
+			);
+
+			if (droppedOnBox && draggedIndex != null) {
+			    try {
+			        if (slotElement) {
+			            const originSprite = slotElement.querySelector('.ui-pokemon-sprite');
+			            if (originSprite) originSprite.style.opacity = '1';
+			            slotElement.classList?.remove('is-dragging', 'drag-over');
+			        }
+			    } catch (e) {
+			       
+			    }
+
+			    const pokemon = this.main.team.pokemon[draggedIndex];
+			    if (!pokemon) { clearDragState(); return; }
+
+			    if (this.fastScene?.isOpen) this.fastScene.close();
+
+			    if (pokemon.isDeployed) {
+			        if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
+			        this.main.game.deployingUnit = pokemon;
+			        this.main.game.retireUnit();
+			    } else {
+			        playSound('unequip', 'ui');
+			    }
+
+			    this.main.box.addPokemon(pokemon);
+			    this.main.team.removePokemon(pokemon);
+
+			    if (this.main.area.checkWeather) this.main.area.checkWeather();
+			    this.updatePokemon(); 
+
+			    if (this.main.boxScene && this.main.boxScene.isOpen) this.main.boxScene.update();
+			    if (this.main.UI) this.main.UI.update();
+
+			    try { saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager); } catch (err) {}
+
+			    playSound('click1', 'ui');
+			    clearDragState();
+			    return;
+			}
 
 	        const targetElement = document.elementFromPoint(e.clientX, e.clientY);
 	        const targetSlot = targetElement?.closest('.ui-pokemon');
@@ -736,35 +1158,18 @@ export class UI {
 	                playSound('click1', 'ui');
 
 	                if (this.main.team.pokemon[0] !== firstBefore) {
-		                const ditto = this.main.team.pokemon.find(p => p.id === 70);
-		                if (ditto != undefined) {
-							playSound('teleport', 'effect')
+	                    const ditto = this.main.team.pokemon.find(p => p.id === 70);
+	                    if (ditto != undefined && !ditto.isDeployed) {
+	                        playSound('teleport', 'effect')
 
-							if (ditto.adn && [58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
-							if (this.main.team.pokemon[0] === ditto) {
-								// Ditto is now slot 1 - revert to base form
-								ditto.adn = undefined;
-								ditto.sprite = JSON.parse(JSON.stringify(ditto.specie.sprite));
-								ditto.ability = ditto.specie.ability;
-								ditto.tiles = ditto.specie.tiles;
-								ditto.projectile = ditto.specie.projectile;
-								ditto.rangeType = ditto.specie.rangeType;
-								ditto.attackType = ditto.specie.attackType;
-								ditto.updateStats();
-								if (ditto.isShiny) ditto.setShiny();
-							} else {
-								ditto.adn = this.main.team.pokemon[0].specie;
-								if ([58, 59, 63, 64, 65, 66, 94].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
-								ditto.transformADN();
-							}
-							if (ditto.isDeployed) {
-								const tower = this.main.area?.towers?.find(t => t.pokemon === ditto);
-								if (tower) tower.updateStatsFromPokemon();
-							}
-							this.main.UI.updatePokemon();
-							this.update();
-						}
-		            }
+	                        if ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
+	                        ditto.adn = this.main.team.pokemon[0].specie;
+	                        if ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
+	                        ditto.transformADN();
+	                        this.main.UI.updatePokemon();
+	                        this.update();
+	                    }
+	                }
 	            }
 	        }
 
@@ -772,18 +1177,36 @@ export class UI {
 	        clearDragState();
 
 	        this.pokemon.forEach(slot => {
-			    const sprite = slot.querySelector('.ui-pokemon-sprite');
-			    if (sprite) sprite.style.opacity = '1';
-			});
+	            const sprite = slot.querySelector('.ui-pokemon-sprite');
+	            if (sprite) sprite.style.opacity = '1';
+	        });
+
+	        if (!tile) {
+	            // if (this.main.game.deployingUnit && !this.main.game.deployingUnit.isDeployed) {
+	            //     this.main.game.deployingUnit = undefined;
+	            // }
+	            if (this.main.game.deployingUnit) {
+			        this.main.game.deployingUnit = undefined;
+			    }
+	        }
+
+	        if (this.main?.game?.mouse) {
+	            this.main.game.mouse.x = undefined;
+	            this.main.game.mouse.y = undefined;
+	            try { this.main.game.animate(performance.now()); } catch (err) {}
+	        }
 
 	        document.body.style.cursor = '';
 	    };
 
 	    const startDragActual = (e, index, originatingSlot) => {
+	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!this.main.team.pokemon[index] || index >= this.main.player.teamSlots) {
 	            clearDragState();
 	            return;
 	        }
+
+	        this.main.game.deployingUnit = this.main.team.pokemon[index];
 
 	        if (this.fastScene.isOpen) this.fastScene.close();
 
@@ -797,11 +1220,12 @@ export class UI {
 	        clone.style.position = 'absolute';
 	        clone.style.zIndex = '10000';
 	        clone.style.opacity = '0.9';
-	        clone.style.pointerEvents = 'none';
+	        clone.style.pointerEvents = 'none'; // importante para elementFromPoint
 	        clone.classList.add('dragging');
 	        document.body.appendChild(clone);
 
 	        spriteEl.style.opacity = '0%';
+	        this.isDragging = true;
 
 	        clone.style.width = `${spriteEl ? spriteEl.offsetWidth : this.pokemon[index].offsetWidth}px`;
 	        clone.style.height = `${spriteEl ? spriteEl.offsetHeight : this.pokemon[index].offsetHeight}px`;
@@ -860,8 +1284,8 @@ export class UI {
 	    };
 
 	    this.pokemon.forEach((slot, index) => {
-	        if (slot._dragSetup) return;
-	        slot._dragSetup = true;
+	        if (slot.dragSetup) return;
+	        slot.dragSetup = true;
 
 	        slot.dataset.index = index;
 
@@ -874,157 +1298,34 @@ export class UI {
 	        slot.addEventListener('dragstart', (e) => e.preventDefault());
 	    });
 	}
-
+	
 	displayEnemyInfo(enemy, pos) {
-		if (pos >= this.mapWavePokemon.length) {
-			const wavePreview = this.main.area.waves?.[this.main.area.waveNumber]?.preview;
-			if (!wavePreview || wavePreview.length === 0) return;
+		const wavePreview = this.getCurrentWavePreviewList();
+		if (pos >= this.mapWavePokemon.length || !enemy) {
 			enemy = wavePreview[0];
 			pos = 0;
 		}
+		if (!enemy) return;
 
 		this.mapWavePokemon.forEach((pokemon, i) => {
 			pokemon.style.filter = `brightness(0.8)`;
 			if (pos === i) pokemon.style.filter = `brightness(1) drop-shadow(0 0 1px white)`;
 		})
 
-		const wave = this.main.area.waveNumber;
-		const bonusSteps = Math.floor((wave-1) / 5);
+		const scaledEnemy = this.scalePreviewEnemy(enemy, this.main.area.waveNumber);
 
-		let hp = enemy.hp;
-		let armor = enemy.armor;
-		let gold = enemy.gold + this.main.player.extraGold;
-		let speed = enemy.speed;
-		let regeneration = enemy.regeneration || 0;
-
-		// ENDLESS MODE: Use power budget system for waves > 100
-		if (wave > 100 && wave % 100 !== 0) {
-			// Match spawnEndlessWave calculation exactly
-			const wavesPast100 = wave - 100;
-			// MOD: Flat /2 compression - matches Area.modded.js getEffectiveWP()
-			let ewp;
-			if (wavesPast100 <= 900) ewp = wavesPast100;
-			else ewp = 900 + (wavesPast100 - 900) / 2;
-			const baseBudget = 160000; // Matches Area.modded.js
-			let hpMult;
-			// MOD: Stretched scaling - matches Area.modded.js (uses effective wp)
-			if (ewp <= 1300) {
-				hpMult = Math.pow(1.00558, ewp);
-			} else {
-				const base = Math.pow(1.00558, 1300);
-				const extra = ewp - 1300;
-				hpMult = base * Math.pow(extra / 100 + 1, 0.6);
-			}
-			const powerBudget = Math.floor(baseBudget * hpMult * 0.775); // shifted W5200→W5000
-			// MOD: Asymptotic enemy count - matches Area.modded.js
-			const linearCount = Math.floor(20 + wavesPast100 * 1.2);
-			const asymptoticCount = Math.floor(200 + 600 * wavesPast100 / (wavesPast100 + 3000));
-			const totalEnemyCount = Math.min(linearCount, asymptoticCount, 600);
-
-			// Get wave preview (same as spawning)
-			const templateWaveNum = ((wave - 1) % 100) + 1;
-			const waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
-			const endlessPreview = waveData?.preview || [enemy];
-
-			// Calculate inverse HP distribution (same as spawning)
-			const hpValues = endlessPreview.map(p => p.hp || 100);
-			const inverseHp = hpValues.map(h => 1 / h);
-			const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
-			const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
-
-			// Calculate total base HP of all enemies that will spawn
-			let totalBaseHp = 0;
-			endlessPreview.forEach((p, idx) => {
-				totalBaseHp += (p.hp || 100) * enemyCounts[idx];
-			});
-
-			// HP scale factor (same as spawning)
-			const hpScaleFactor = powerBudget / totalBaseHp;
-
-			// MOD: Minimum HP floor - matches Area.modded.js spawning logic
-			const minHpPerEnemy = Math.floor(powerBudget / totalEnemyCount);
-
-			// MOD: Exact per-type stats matching what spawns in Area.modded.js
-			hp = Math.floor(Math.max(enemy.hp, enemy.hp * hpScaleFactor, minHpPerEnemy));
-			// MOD: All endless enemies get minimum 5% HP as armor if base armor is 0
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * ewp));
-			if (armor === 0) {
-				armor = Math.floor(hp * 0.05);
-			}
-
-			// MOD: Speed scaling - matches Area.modded.js (uses effective wp)
-			const speedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500);
-			speed = +(enemy.speed * speedMult).toFixed(2);
-
-			// MOD: Regen scaling — flat percentage of max HP, no DPS-based cap
-			// Asymptotically approaches 3.33% of max HP/sec (reduced from 5%)
-			const regenScale = 0.0333 * ewp / (ewp + 3000);
-			regeneration = Math.max(enemy.regeneration || 0, Math.floor(hp * regenScale));
-
-			// Gold scales linearly: 100x at wave 1000
-			gold = Math.floor(gold * (1 + wavesPast100 * 0.11));
-		} else if (wave % 100 === 0 && wave > 100) {
-			// MOD: Boss waves - uses effective wp + bossCount^(2/3) divisor
-			const bossWP = wave - 100;
-			let bossEWP;
-			if (bossWP <= 900) bossEWP = bossWP;
-			else bossEWP = 900 + (bossWP - 900) / 2;
-			const bossCount = Math.floor(wave / 100);
-			let hpMult = 1 + 0.02 * bonusSteps;
-			// MOD: Boss HP - exponential up to ewp 1500, polynomial tail after
-			if (bossEWP <= 1500) {
-				hpMult *= Math.pow(2, bossEWP / 335);
-			} else {
-				const anchor = Math.pow(2, 1500 / 335);
-				const extra = bossEWP - 1500;
-				hpMult *= anchor * Math.pow(extra / 200 + 1, 0.85);
-			}
-			const bossCountFactor = 1 / Math.pow(Math.max(1, bossCount), 2/3);
-			const escortCount = Math.min(100, Math.floor((wave - 200) / 50) * 5);
-			const escortCountFactor = 1 / Math.pow(Math.max(1, escortCount), 0.35);
-			// MOD: Check if this enemy is boss (index 0) or escort (index 1+) in preview
-			const isBossEnemy = (pos === 0);
-			if (isBossEnemy) {
-				hp = Math.floor(enemy.hp * hpMult * 2 * bossCountFactor * 0.775);
-			} else {
-				hp = Math.floor(enemy.hp * hpMult * 0.75 * escortCountFactor * 0.775); // Escorts = balanced support threats
-			}
-			armor = Math.floor((enemy.armor || 0) * (1 + 0.03 * bossEWP));
-			// MOD: Boss speed and regen scaling - matches Area.modded.js
-			const bossSpeedMult = 1 + 0.3 * Math.log2(1 + bossEWP / 2500);
-			speed = +(enemy.speed * bossSpeedMult).toFixed(2);
-			// MOD: Boss regen at 1.67% asymptotic — flat % of max HP, no DPS-based cap
-			const bossRegenScale = 0.0167 * bossEWP / (bossEWP + 3000);
-			regeneration = Math.max(enemy.regeneration || 0, Math.floor(hp * bossRegenScale));
-			gold = Math.floor(gold * (1 + (wave - 100) * 0.11));
-		} else if (bonusSteps > 0) {
-			// Waves 1-100: Original scaling
-			let hpMult = 1 + 0.02 * bonusSteps;
-			let armorMult = 1 + 0.01 * bonusSteps;
-			let goldMult = 1 + 0.15 * bonusSteps;
-
-			hp = Math.floor(enemy.hp * hpMult);
-			armor = Math.floor(enemy.armor * armorMult);
-			gold = Math.floor(gold * goldMult);
-		}
-
-		if (typeof this.main.area.inChallenge.toughEnemies == 'number') {
-			hp += Math.floor(hp * (this.main.area.inChallenge.toughEnemies / 100));
-			armor += Math.floor(armor * (this.main.area.inChallenge.toughEnemies / 100));
-		}
-
-		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase();
-		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${hp}</span>`;
-		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${armor || 0}</span>`;
-		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${speed}</span>`;
-		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${enemy.power}</span>`;
-		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${regeneration}/s</span>`;
+		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
+		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.hp}</span>`;
+		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.armor || 0}</span>`;
+		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.speed}</span>`;
+		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.power}</span>`;
+		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.regeneration}/s</span>`;
 		this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;
 		this.infoSlow.innerHTML = `${text.ui.slow[this.main.lang].toUpperCase()}`;
 		this.infoBurn.innerHTML = `${text.ui.burn[this.main.lang].toUpperCase()}`;
 		this.infoPoison.innerHTML = `${text.ui.poison[this.main.lang].toUpperCase()}`;
-		this.infoInvisible.innerHTML = `${text.ui.invisible[this.main.lang].toUpperCase()} <span class="pos-right">${(enemy.invisible) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase()}</span>`;
-		this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${gold}</span>`;
+		this.infoInvisible.innerHTML = `${text.ui.invisible[this.main.lang].toUpperCase()} <span class="pos-right">${(scaledEnemy.invisible) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase()}</span>`;
+		this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${scaledEnemy.gold}</span>`;
 
 		if ([6,7,8].includes(this.main.lang)) {
 			this.infoStatContainer.style.lineHeight = '10px'
@@ -1039,101 +1340,31 @@ export class UI {
 		} else {
 			this.infoPassive.style.display = 'none';
 		}
-
+		
 		this.infoStun.innerHTML += (enemy.canStun) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
 		this.infoSlow.innerHTML += (enemy.canSlow) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
 		this.infoBurn.innerHTML += (enemy.canBurn) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
-		this.infoPoison.innerHTML += (enemy.canPoison) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
+		this.infoPoison.innerHTML += (enemy.canPoison) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`	
 
 		this.enemyPositionDisplay = pos;
 	}
 
 	updateMap() {
-		// ENDLESS MODE: No cap on star display
 		this.mapRecord.innerHTML = `<span class="msrre">⭐</span>${this.main.player.records[this.main.area.map.id]}`;
 
-		// ENDLESS MODE: Get wave data (use templates for waves > 100)
-		let waveData, wavePreview;
-		if (this.main.area.waves && this.main.area.waveNumber <= 100 && this.main.area.waves[this.main.area.waveNumber]) {
-			waveData = this.main.area.waves[this.main.area.waveNumber];
-			wavePreview = waveData.preview;
-		} else if (this.main.area.waves) {
-			// Endless mode - use template wave
-			const templateWaveNum = ((this.main.area.waveNumber - 1) % 100) + 1;
-			waveData = this.main.area.waves[templateWaveNum] || this.main.area.waves[1];
-			wavePreview = waveData?.preview;
-
-			// Boss wave override (every 100 waves)
-			if (this.main.area.waveNumber % 100 === 0 && this.main.area.waveNumber > 100) {
-				const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon',
-					'registeel', 'regice', 'regigigas', 'zapdos', 'hooh', 'articuno'];
-				const bossKey = BOSS_KEYS[this.main.area.routeNumber] || 'shaymin';
-				const boss = this.main.area.main.area.waves[100]?.preview?.[0];
-				if (boss) {
-					wavePreview = [boss];
-					// MOD: Show escort enemies in preview at wave 300+
-					if (this.main.area.waveNumber >= 300) {
-						const escortTypes = this.main.area.getEscortTypes(this.main.area.waveNumber, 3);
-						wavePreview = [boss, ...escortTypes];
-					}
-				}
-			}
-		}
-		let pokemonCount = waveData ? this.countPokemon(waveData) : {};
-
-		// ENDLESS MODE: Override enemy count for waves > 100
-		const wave = this.main.area.waveNumber;
-		if (wave > 100 && wavePreview) {
-			const wavesPast100 = wave - 100;
-			// Boss waves (200, 300, etc.) show boss count + escort counts
-			if (wave % 100 === 0) {
-				const bossCount = Math.floor(wave / 100);
-				const escortTotal = wave >= 300 ? Math.floor((wave - 200) / 50) * 5 : 0;
-				const escortTypes = wavePreview.length - 1; // first entry is boss
-				pokemonCount = wavePreview.map((p, i) => {
-					if (i === 0) return bossCount;
-					// Distribute escort count matching actual spawn cycling (i % escortTypes)
-					if (escortTypes <= 0) return 0;
-					const typeIndex = i - 1; // 0-based escort type index
-					let count = Math.floor(escortTotal / escortTypes);
-					if (typeIndex < (escortTotal % escortTypes)) count++;
-					return count;
-				});
-			} else {
-				// Regular endless waves: asymptotic count matching Area.modded.js
-				const linCount = Math.floor(20 + wavesPast100 * 1.2);
-				const asyCount = Math.floor(200 + 300 * wavesPast100 / (wavesPast100 + 2000));
-				const totalEnemies = Math.min(linCount, asyCount);
-				// Distribute count inversely by HP (more weak enemies, fewer strong ones)
-				const hpValues = wavePreview.map(p => p.hp || 100);
-				const inverseHp = hpValues.map(hp => 1 / hp);
-				const totalInverse = inverseHp.reduce((a, b) => a + b, 0);
-				pokemonCount = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemies * (inv / totalInverse))));
-			}
-		}
+		const wavePreview = this.getCurrentWavePreviewList();
+		const pokemonCount = this.getWavePreviewCounts(wavePreview);
 
 		this.mapWavePokemonContainer.innerHTML = "";
 		this.mapWavePokemon = [];
-		if (!wavePreview) return;
-
-		// MOD: Calculate slot width based on max digit count to prevent overlap
-		// Default 34px works for 1-3 digit counts; wider slots for 4+ digits
-		const allCounts = wavePreview.map((p, i) => wave > 100 ? (pokemonCount[i] || 0) : Math.max(0, (pokemonCount[i] || 1) - 1));
-		const maxCount = Math.max(1, ...allCounts);
-		const maxDigits = `x${maxCount}`.length; // e.g. "x1234" = 5 chars
-		const slotWidth = maxDigits > 4 ? Math.max(34, 20 + maxDigits * 7) : 34;
-
 		wavePreview.forEach((pokemon, i) => {
 			this.mapWavePokemon[i] = new Element(this.mapWavePokemonContainer, { className: 'ui-map-wave-pokemon', image: pokemon.sprite.base }).element;
-			this.mapWavePokemon[i].style.width = `${slotWidth}px`;
-			this.mapWavePokemon[i].addEventListener('click', () => {
+			this.mapWavePokemon[i].addEventListener('click', () => { 
 				playSound('click1', 'ui');
 				this.displayEnemyInfo(pokemon, i);
 			})
 			this.mapWavePokemon[i].addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
-			// ENDLESS MODE: Don't subtract 1 for endless waves (already exact count), hide 0 counts
-			const displayCount = wave > 100 ? pokemonCount[i] : pokemonCount[i] - 1;
-			this.mapWavePokemon[i].count = new Element(this.mapWavePokemon[i], { className: 'stroke', text: displayCount > 0 ? `x${displayCount}` : '' }).element;
+			this.mapWavePokemon[i].count = new Element(this.mapWavePokemon[i], { className: 'stroke', text: `x${pokemonCount[i]}` }).element;
 			this.mapWavePokemon[i].count.style.position = 'absolute';
 			this.mapWavePokemon[i].count.style.color = 'var(--white)';
 			this.mapWavePokemon[i].count.style.width = '100%';
@@ -1144,11 +1375,11 @@ export class UI {
 
 		this.autoWave.innerHTML = text.ui.autoWave[this.main.lang].toUpperCase();
 		this.nextWave.innerText = text.ui.nextWave[this.main.lang].toUpperCase();
-
+	
 		this.autoWave.style.filter = `revert-layer`;
 		this.autoWave.style.pointerEvents = `revert-layer`;
 		this.speedWave.style.filter = `revert-layer`;
-		this.speedWave.style.pointerEvents = `revert-layer`;
+		this.speedWave.style.pointerEvents = `revert-layer`;	
 
 		if (this.main.area.waveActive) {
 			this.nextWave.style.filter = `brightness(0.8)`;
@@ -1157,32 +1388,68 @@ export class UI {
 			this.nextWave.style.filter = `revert-layer`;
 			this.nextWave.style.pointerEvents = 'all';
 		}
+
+		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
+
+		if (this.main.area.map.isSecret) {
+			this.mapRecord.innerHTML = `<span class="msrre">⭐</span>???`;
+			this.mapRoute.innerHTML = this.main.area.map.name[this.main.lang].toUpperCase()
+		}
 	}
 
-	countPokemon(grupo) {
-	    const res = {};
+	getWavePreviewCounts(wavePreview) {
+		const waveNumber = this.main.area.waveNumber;
+		const countsById = {};
 
-	    const arrayCount = (arr) => {
-	        arr.forEach(pokemon => {
-	            if (pokemon !== null) {
-	                const id = pokemon.id;
-	                res[id] = (res[id] || 0) + 1;
-	            }
-	        });
-	    };
+		if (waveNumber <= 100) {
+			const actualWave = this.main.area.waves[((waveNumber - 1) % 100) + 1]?.wave || [];
+			actualWave.forEach(pokemon => {
+				if (!pokemon) return;
+				countsById[pokemon.id] = (countsById[pokemon.id] || 0) + 1;
+			});
+			return wavePreview.map(pokemon => countsById[pokemon.id] || 0);
+		}
 
-	    arrayCount(grupo.preview);
-	    arrayCount(grupo.wave);
+		if (waveNumber % 100 === 0) {
+			const boss = this.main.area.getWavePreview(waveNumber);
+			if (boss) countsById[boss.id] = Math.floor(waveNumber / 100);
 
-	    return grupo.preview.map(pokemon => res[pokemon.id]);
+			if (waveNumber >= 300 && typeof this.main.area.getEscortTypes === 'function') {
+				const escortTypes = this.main.area.getEscortTypes(waveNumber, 3) || [];
+				const escortCount = Math.min(100, Math.floor((waveNumber - 200) / 50) * 5);
+				for (let i = 0; i < escortCount && escortTypes.length > 0; i++) {
+					const escort = escortTypes[i % escortTypes.length];
+					countsById[escort.id] = (countsById[escort.id] || 0) + 1;
+				}
+			}
+
+			return wavePreview.map(pokemon => countsById[pokemon.id] || 0);
+		}
+
+		const wavesPast100 = waveNumber - 100;
+		const linearCount = Math.floor(20 + wavesPast100 * 1.2);
+		const asymptoticCount = Math.floor(200 + 600 * wavesPast100 / (wavesPast100 + 3000));
+		const totalEnemyCount = Math.min(linearCount, asymptoticCount, 600);
+		const hpValues = wavePreview.map(pokemon => pokemon.hp || 100);
+		const inverseHp = hpValues.map(hp => 1 / hp);
+		const totalInverse = inverseHp.reduce((sum, value) => sum + value, 0);
+		const enemyCounts = inverseHp.map(inv => Math.max(1, Math.floor(totalEnemyCount * (inv / totalInverse))));
+
+		wavePreview.forEach((pokemon, idx) => {
+			countsById[pokemon.id] = (countsById[pokemon.id] || 0) + enemyCounts[idx];
+		});
+
+		return wavePreview.map(pokemon => countsById[pokemon.id] || 0);
 	}
 
 	updateDamageDealt() {
 		this.main.team.pokemon.forEach((pokemon, i) => {
-			if (pokemon.damageDealt > 0) {
-				const per = Math.ceil((pokemon.damageDealt/this.main.area.totalDamageDealt)*100)
+			const totalDamageDealt = (this.damageDealtType == 'trueDamage') ? this.main.area.totalTrueDamageDealt : this.main.area.totalDamageDealt
+			const damageDealt = (this.damageDealtType == 'trueDamage') ? pokemon.trueDamageDealt : pokemon.damageDealt;
+			if (damageDealt > 0) {
+				const per = Math.ceil((damageDealt / totalDamageDealt) * 100)
 				this.damageDealtUnit[i].number.innerHTML = `
-					${this.main.utility.numberDot(pokemon.damageDealt, this.main.lang)}
+					${this.main.utility.numberDot(damageDealt, this.main.lang)} 
 					<span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(${per}%)</span>
 				`;
 				this.damageDealtUnit[i].bar.style.width = `${per}%`;
@@ -1196,9 +1463,12 @@ export class UI {
 		});
 	}
 
-	refreshDamageDealt(force = false) {
+	refreshDamageDealt(force = false) {	
 		for (let i = 0; i < 10; i++) {
-			if (this.main.team.pokemon[i]) this.main.team.pokemon[i].damageDealt = 0;
+			if (this.main.team.pokemon[i]) {
+				this.main.team.pokemon[i].damageDealt = 0;
+				this.main.team.pokemon[i].trueDamageDealt = 0;
+			}
 			this.damageDealtUnit[i].number.innerHTML = `0 <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(0%)</span>`;
 			this.damageDealtUnit[i].barPrevious.style.width = (force) ? '0%' : this.damageDealtUnit[i].bar.style.width;
 			this.damageDealtUnit[i].bar.style.width = '0%';
@@ -1208,8 +1478,13 @@ export class UI {
 	damageDealtSwitch() {
 		playSound('option', 'ui');
 		this.damageDealtDisplay =! this.damageDealtDisplay;
-		if (this.damageDealtDisplay) this.damageDealtContainer.style.display = 'block';
-		else this.damageDealtContainer.style.display = 'none';
+		if (this.damageDealtDisplay) {
+			this.damageDealtContainer.style.display = 'block';
+			this.damageDealtButton.style.display = 'block';
+		} else {
+			this.damageDealtContainer.style.display = 'none';
+			this.damageDealtButton.style.display = 'none';
+		}
 	}
 
 	blockRightUI() {
@@ -1254,29 +1529,41 @@ export class UI {
 
 	getSecret(poke) {
 		const pokemon = pokemonData[poke];
+		const isShiny = Math.random() < (1 / 30);
 
 		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
+			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny)
 		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
+			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny)
 		}
 
 		this.main.player.stats.pokemonOwned++;
 		this.main.player.stats.totalPokemonLevel++;
 		this.main.player.achievementProgress.evolutionCount++;
-
-		if (this.main.player.achievementProgress.evolutionCount === 210) this.main.player.unlockAchievement(1);
+		
+		if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
 
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		this.main.UI.update();	
+	}
+
+	getSecretMap(mapId) {
+		this.main.area.loadArea(mapId);
 		this.main.UI.update();
+		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		const previewEnemy = this.main.area.getWavePreview(this.main.area.waveNumber);
+		if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
+		this.main.area.checkWeather();
+		playSound('step', 'ui');
 	}
 
 	importTeamButtonHandle(i) {
+		if (this.main.isSectionOpen()) return playSound('pop0', 'ui');
 		if (!this.main.area.inChallenge && this.main.teamManager.teams[i][this.main.area.routeNumber].length == 0) return
 		if (this.main.area.inChallenge && this.main.teamManager.teamChallenge[i].length == 0) return
-
+			
 		const msg = new Element(this.main.scene, {
 			className: 'team-saved-message',
 			text: text.ui.loadTeam[this.main.lang].toUpperCase()
@@ -1292,8 +1579,8 @@ export class UI {
 			setTimeout(() => msg.remove(), 500);
 		}, 1500);
 
-		if (this.main.area.inChallenge) this.main.teamManager.importTeam(i, true);
-		else this.main.teamManager.importTeam(i);
+		if (this.main.area.inChallenge) this.main.teamManager.importTeam(i, true); 
+		else this.main.teamManager.importTeam(i); 
 	}
 
 	saveTeamButtonHandle(i) {
@@ -1312,17 +1599,19 @@ export class UI {
 			setTimeout(() => msg.remove(), 500);
 		}, 1500);
 
-		if (this.main.area.inChallenge) this.main.teamManager.saveTeam(i, true);
-		else this.main.teamManager.saveTeam(i);
+		if (this.main.area.inChallenge) this.main.teamManager.saveTeam(i, true); 
+		else this.main.teamManager.saveTeam(i); 
 	}
 
 	waveSelectorBlockHandle() {
 		this.main.area.repeat = !this.main.area.repeat;
 		playSound('option', 'ui');
 		if (this.main.area.repeat) {
-			this.waveSelectorBlock.style.background = 'var(--green)';
+			this.waveSelectorBlock.style.background = '#70ac4c';
+			this.waveSelectorBlock.style.boxShadow = 'inset 0 2px 0 #99c978, inset 0 -2px 0 #4d7a33';
 		} else {
 			this.waveSelectorBlock.style.background = 'revert-layer';
+			this.waveSelectorBlock.style.boxShadow = 'revert-layer';
 		}
 	}
 
@@ -1336,18 +1625,18 @@ export class UI {
 	    else if (currentIndex >= songData.length) currentIndex = 0;
 
 	    this.main.area.music = songData[currentIndex];
-	    this.musicName.innerHTML = `ΓÖ¬ ${this.main.area.music.name[this.main.lang].toUpperCase()}`;
+	    this.musicName.innerHTML = `♪ ${this.main.area.music.name[this.main.lang].toUpperCase()}`;
 
 	    playMusic(this.main.area.music.song);
 	}
 
-	// RESTORED: Vanilla damage type toggle method
 	changeDamageType() {
 		this.damageDealtType = (this.damageDealtType == 'trueDamage') ? 'overdamage' : 'trueDamage';
 		playSound('option', 'ui');
 		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
 		this.updateDamageDealt();
 	}
+	
 }
 
 class FastScene {
@@ -1362,7 +1651,7 @@ class FastScene {
 		this.pokemonArray = [];
 		this.itemArray = [];
 
-		this.render();
+		this.render(); 
 	}
 
 	render() {
@@ -1370,7 +1659,7 @@ class FastScene {
 		this.window.className = 'item-scene-window';
 
         this.container = new Element(this.window, { className: 'fast-scene-container' }).element;
-        this.prompt = new Element(this.window, { className: 'fast-scene-prompt' }).element;
+        this.prompt = new Element(this.window, { className: 'fast-scene-prompt' }).element; 
 
         //ITEM
         this.itemSlot = [];
@@ -1380,9 +1669,10 @@ class FastScene {
 	}
 
 	open(scene, position) {
+		if (this.main.game.stopped) return playSound('pop0', 'ui');
 		if (this.isOpen && this.position == position) return this.close();
 		if (this.main.area.inChallenge.noItems && scene == 'item') {
-			playSound('pop0', 'ui')
+			playSound('pop0', 'ui');
 			return;
 		}
 		if (
@@ -1390,11 +1680,11 @@ class FastScene {
 			typeof this.main.area.inChallenge.slotLimit == 'number' &&
 			position >= this.main.area.inChallenge.slotLimit
 		) {
-			playSound('pop0', 'ui')
+			playSound('pop0', 'ui');
 			return;
 		}
 
-		playSound('open', 'ui')
+		playSound('open', 'ui');
 
 		this.pokemonArray = [];
 		this.itemArray = [];
@@ -1439,66 +1729,32 @@ class FastScene {
 	}
 
 	openItemScene() {
-		const pokemon = this.main.team.pokemon[this.position];
+	  	const pokemon = this.main.team.pokemon[this.position];
 
-		this.itemArray = this.main.player.items.filter(item => this.checkRestriction(item));
+	  	this.itemArray = this.main.itemController
+	    	.getItems()
+	    	.filter(item => this.main.itemController.canEquip(item, pokemon));
 
-		this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
+	  	this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
 
-		this.itemArray.forEach((item, i) => {
-			this.itemSlot[i] = new Element(this.container, { className: 'fast-scene-pokemon-item' }).element;
-			this.itemSlot[i].style.backgroundImage = `url("${item.sprite}")`;
+	  	this.itemArray.forEach((item, i) => {
+	    	const slot = new Element(this.container, {
+	      		className: 'fast-scene-pokemon-item'
+	    	}).element;
 
-			// Add tooltip for item info
-			this.main.tooltip.bindTo(this.itemSlot[i], item, 'item');
+		    slot.equiped = new Element(slot, {
+		      	className: 'item-scene-slot-equiped stroke'
+		    }).element;
 
-			this.itemSlot[i].addEventListener('click', () => {
-				playSound('equip', 'ui');
-				this.equipItem(item)
-				this.close();
-			})
-		})
-	}
+	    	slot.style.backgroundImage = `url("${item.sprite}")`;
+	    	slot.equiped.innerHTML = this.main.itemController.isEquipped(item) ? 'E' : '';
 
-	checkRestriction(item) {
-		const pokemon = this.main.team.pokemon[this.position];
-		const key = Object.keys(item.restriction)[0];
-
-		switch(key) {
-			case 'key':
-				if (item.restriction[key] == pokemon.specie.key) return true;
-			break;
-			case 'id':
-				if (item.restriction[key].includes(pokemon.id)) return true;
-				break;
-			case 'idForbidden':
-				if (!item.restriction[key].includes(pokemon.id)) return true;
-				break;
-			case 'tile':
-				if (pokemon.id == 70) return false;
-				if (item.restriction[key].some(tile => pokemon.tiles.includes(tile))) return true;
-				break;
-			case 'tileForbidden':
-				if (pokemon.id == 70) return false;
-				if (!item.restriction[key].some(tile => pokemon.tiles.includes(tile)))  return true;
-				break;
-			case 'attackType':
-				if (pokemon.id == 70) return false;
-				if (item.restriction[key] == pokemon.attackType) return true;
-				break;
-			case 'rangeType':
-				if (pokemon.id == 70) return false;
-				if (item.restriction[key] == pokemon.rangeType) return true;
-				break;
-		}
-		return false;
-	}
-
-	equipItem(item) {
-		const pokemon = this.main.team.pokemon[this.position];
-
-		pokemon.equipItem(item);
-		this.UI.update();
+	    	slot.addEventListener('click', () => {
+		      	playSound('equip', 'ui');
+		      	this.main.itemController.equip(item, pokemon);
+		      	this.UI.update();
+		      	this.close();
+	    	});
+	  	});
 	}
 }
-

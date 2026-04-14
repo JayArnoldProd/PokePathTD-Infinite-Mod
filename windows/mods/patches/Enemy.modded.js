@@ -27,7 +27,7 @@ export class Enemy extends Sprite {
 		this.speed = enemy.speed; 
 		this.baseSpeed = this.speed; 
 		this.power = enemy.power;
-		this.gold = enemy.gold + this.main.player.extraGold
+		this.gold = enemy.gold + this.main.player.extraGold;
 		this.invisible = enemy.invisible;
 		this.cursed = false;
 		this.invulnerable = false;

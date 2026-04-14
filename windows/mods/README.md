@@ -1,12 +1,12 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.4.4
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.4.4** ✅
+**Compatible with PokePath TD v1.5 on Windows** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
-> **v1.4.4 Update:** Compatible with latest game version. Merged all 1.4.4 changes including Pokemon stat rebalancing (30+ Pokemon), new abilities (Grassy Terrain, Vigilant-Frisk, Armor Breaker Splash), item changes (Wide Lens, Leftovers, etc.), pause improvements, and bug fixes. All mod features preserved.
+> **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -43,15 +43,23 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
 - **Shiny Starters** - 1 in 30 chance when selecting starter
-- **Pre-Packaged Shiny Sprites** - 212 custom shinies for all non-max-evolution Pokemon
+- **Pre-Packaged Shiny Sprites** - 800+ custom shinies for non-max-evolution Pokemon
 - **Shiny Reveal** - ⭐ SHINY! ⭐ prompt with sparkle animation
 - **Shinies Have No Level Cap** - Can level to infinity unlike regular Pokemon
+
+### 💀 Shiny Enemy Variant
+- **Dedicated Installer Toggle** - Enemy shinies are a separate feature from player shiny sprites
+- **1 in 50 Shiny Enemies/Bosses** - Rare shiny combat variants can appear naturally
+- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, and 10x gold
+- **Profile Tracking** - Records shiny enemies defeated in the Profile screen
 
 ### 🔧 Quality of Life
 - **Item Tooltips** - Hover over items in the selection panel to see descriptions
 - **Save/Load Tooltips** - Hover over team save/load buttons for labels
 - **Challenge Party Preserve** - Team lineup, items, and tower positions are saved and restored when entering/leaving challenges
 - **Attack Type Sorting** - Sort your box by Attack Type (AOE, Aura, Single) with colored labels
+- **Unlockables Profile Tab** - Profile screen now includes a scrollable unlockables view with verified secrets and challenge rewards
+- **Live Profile Updates** - Profile stats refresh while the menu is open, including shiny enemy defeat tracking
 
 ### 🐛 Vanilla Bug Fixes
 - **Tower Placement Persistence** - Tower positions are saved and restored on load
@@ -88,10 +96,11 @@ A graphical save editor with full control over your game:
 
 ### Individual Pokemon
 - **Edit Level** - Set any level (1-9999+)
-- **Change Species** - Swap to any Pokemon
+- **Change Species** - Swap to any Pokemon (1.5 roster synced, including newer added species)
 - **Evolve / Devolve** - Advance or revert evolution
 - **Toggle Shiny** - Make any Pokemon shiny
 - **Add / Delete** - Manage roster
+- **Runtime Sprite Fallback** - Newer 1.5 species render even when not in bundled sprite patch folders
 
 ### Usage
 1. **Close the game first!**
@@ -107,8 +116,9 @@ A graphical save editor with full control over your game:
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.4.4** (Latest) | Windows | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
-| **v1.4.4** (Latest) | macOS | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
+| **v1.5.0** (Latest) | Windows | PokePath TD 1.5 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.0) |
+| **v1.4.4** (older) | Windows | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
+| **v1.4.4** (older) | macOS | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
 | v1.4.3 | Windows | PokePath TD 1.4.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.3) |
 | v1.4.1 | Windows | PokePath TD 1.4.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.1) |
 | v1.4 | Windows | PokePath TD 1.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4) |
@@ -127,7 +137,7 @@ A graphical save editor with full control over your game:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest mod version (v1.4.4) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.0) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```

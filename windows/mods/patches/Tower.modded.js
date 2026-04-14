@@ -27,15 +27,18 @@ export class Tower extends Sprite {
 
         this.speed = pokemon.speed;      
         this.attackSpeed = this.speed;
+        this.orbitalSpeed = pokemon.orbitalSpeed ?? 0;
 
         // HABILIDADES
         this.ricochet = pokemon.ricochet;
+        this.orbital = pokemon.orbital;
         this.revealInvisible = (this.ability.id === 'frisk' || this.ability.id === 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? true : false;
         this.damageBoost = 0;
         this.speedBoost = 0;
         this.teleport = 0;
         this.teleportBuff = teleportBuff;
         this.moxieBuff = 0;
+        this.shiftGearSpeed = 0;
         this.cherrimForm = false;
         this.lastTarget = null;
 
@@ -80,6 +83,10 @@ export class Tower extends Sprite {
             this.projectile.sprite = { image: this.pokemon.item.sprite, frames: 1 };
             this.projectile.effect = 'ding';
         }
+
+        if (this.attackType === 'orbital') {
+            this.spawnOrbitales();
+        }
     }
 
     updateTowerSprite(spriteImage = undefined, spriteFrames = undefined, projectileSprite = undefined) {
@@ -106,10 +113,13 @@ export class Tower extends Sprite {
         this.projectile.power = this.basePower;
         this.speed = this.pokemon.speed;
         this.attackSpeed = this.pokemon.speed;
+        this.orbitalSpeed = this.pokemon.orbitalSpeed ?? 0;
         this.critical = this.pokemon.critical;
         this.range = this.pokemon.range;
         this.innerRange = this.pokemon.innerRange;
         this.ability = this.pokemon.ability;
+        this.attackType = this.pokemon.attackType;
+        this.orbital = this.pokemon.orbital;
         this.projectile.sprite = this.pokemon.projectile.sprite;
         this.projectile.effect = this.pokemon.specie.projectileSound;
 
@@ -122,6 +132,9 @@ export class Tower extends Sprite {
             if (p) p.power = this.projectile.power ?? this.basePower;
         });
 
+        if (this.attackType === 'orbital') this.refreshOrbitalProjectiles();
+        else this.projectiles = this.projectiles.filter(p => !p?.orbit);
+
         this.updateTowerSprite();
     }
 
@@ -133,6 +146,7 @@ export class Tower extends Sprite {
         this.power = this.basePower;
         this.speed = this.pokemon.speed;
         this.attackSpeed = this.speed; 
+        this.orbitalSpeed = this.pokemon.orbitalSpeed ?? 0;
         this.attackCooldown = Math.min(this.attackCooldown, this.attackSpeed);
        
         if (this.pokemon.id == 65 || this.pokemon?.adn?.id == 65) this.speed -= (500 * this.main.player.fossilInTeam);
@@ -625,6 +639,54 @@ export class Tower extends Sprite {
         }
     }
 
+    refreshOrbitalProjectiles() {
+        this.projectiles = this.projectiles.filter(p => !p?.orbit);
+        this.spawnOrbitales();
+    }
+
+    getOrbitalAngularSpeed() {
+        let angularSpeed = this.orbitalSpeed || (Math.PI / 5);
+        if (this.ability?.id == 'shiftGear' && this.shiftGearSpeed > 0) angularSpeed = this.shiftGearSpeed;
+        if (this.pokemon?.item?.id == 'lustrousOrb') angularSpeed *= 2;
+        return angularSpeed;
+    }
+
+    spawnOrbitales() {
+        let numMax = this.orbital;
+        const angularSpeed = this.getOrbitalAngularSpeed();
+
+        if (!numMax || numMax <= 0) return;
+
+        if (this.pokemon?.item?.id == 'jadeOrb') numMax += 2;
+
+        for (let i = 0; i < numMax; i++) {
+            const angle = (i * Math.PI * 2) / numMax;
+
+            const orbitProjectileConfig = {
+                ...this.projectile,
+                power: this.projectile.power ?? this.basePower,
+                orbit: {
+                    radius: this.range,
+                    angularSpeed: angularSpeed,
+                    duration: Infinity,
+                    hitCooldown: 350,
+                    startAngle: angle
+                }
+            };
+
+            const proj = new Projectile(
+                this.center.x,
+                this.center.y,
+                null,
+                this.ctx,
+                orbitProjectileConfig,
+                this
+            );
+
+            this.projectiles.push(proj);
+        }
+    }
+
     update(enemiesInRange, deltaTime = 1000 / 60) {
 
         const simDelta = deltaTime;
@@ -947,7 +1009,7 @@ export class Tower extends Sprite {
         // Safety: clamp attack speed to minimum 0.01ms to prevent infinite loops while allowing extreme fire rates
         const attackSpeed = Math.max(0.01, this.speed * (this.snowCloakNear ? 1.5 : 1));
         
-        while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME) {
+        while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && this.pokemon.attackType !== 'orbital') {
             let maxShots =
                 this.ability && this.ability.id === 'cradily' ? this.main.player.fossilInTeam :
                 this.ability && (this.ability.id === 'quadraShot' || this.ability.id === 'quadraShotSand') ? 4 :
@@ -1038,7 +1100,9 @@ export class Tower extends Sprite {
                 continue;
             }
 
-            if (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible'))) {
+            if (this.pokemon.attackType === 'orbital') {
+
+            } else if (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible'))) {
                 // MOD: Retarget within tower's range from tower position
                 const towerRange = p.tower ? (p.tower.range || 100) : 200;
                 const newTarget = p.tower ? p.tower.findClosestEnemy(p.tower, towerRange) : null;

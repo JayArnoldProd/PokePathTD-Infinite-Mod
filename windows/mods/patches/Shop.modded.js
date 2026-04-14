@@ -1,7 +1,7 @@
 import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
 import { saveData } from '../../file/data.js';
 import { itemData, itemListData, itemBackup } from '../data/itemData.js';
-import { pokemonData } from '../data/pokemonData.js';
+import { pokemonData, eggListData } from '../data/pokemonData.js';	
 import { playSound } from '../../file/audio.js';
 
 export class Shop {
@@ -30,22 +30,25 @@ export class Shop {
 
 		this.itemBackup = Array.isArray(itemBackup) ? [...itemBackup] : [];
 		this.restoreItemBackup();
-		this.generateStock();
-		this.removeOwnedItems();
-		this.removeGimmighoulIfGholdengo();
 
-		// MOD: Remove eggs for Pokemon already owned (prevents duplicate starter after save migration)
-		const ownedBaseKeys = new Set();
+		this.ownedBaseKeys = new Set();
 		for (const poke of [...(this.main.team?.pokemon || []), ...(this.main.box?.pokemon || [])]) {
 			if (!poke?.specie) continue;
 			let base = poke.specie;
 			while (base.preEvolution && pokemonData[base.preEvolution]) base = pokemonData[base.preEvolution];
-			for (const key in pokemonData) { if (pokemonData[key] === base) { ownedBaseKeys.add(key); break; } }
-		}
-		if (ownedBaseKeys.size > 0) {
-			this.eggList = this.eggList.filter(egg => !ownedBaseKeys.has(egg));
+			for (const key in pokemonData) {
+				if (pokemonData[key] === base) {
+					this.ownedBaseKeys.add(key);
+					break;
+				}
+			}
 		}
 
+		this.generateStock();
+		this.removeOwnedItems();
+		this.removeGimmighoulIfGholdengo();
+
+		this.updateEggList();
 		if (this.eggList.length == 0) this.main.player.unlockAchievement(0);
 	}
 
@@ -65,23 +68,21 @@ export class Shop {
 
 		let index = Math.floor(Math.random() * this.eggList.length);
 
-		if (this.eggList.length == 83) index = Math.floor(Math.random() * 3) + 2;
+		if (this.eggList.length == 108) index = Math.floor(Math.random() * 3) + 2;
 		
 		let egg = this.eggList[index];
 		let pokemon;
-		
+
+		const isShinyEgg = Math.random() < (1 / 30);
+
 		if (typeof egg === "string" || egg instanceof String) pokemon = pokemonData[egg];
 		else {
 			let pk = findSpecieInCatalog(egg)
 			pokemon = pk;
 		}
 
-		// MOD: 1/30 chance of shiny egg!
-		const isShinyEgg = Math.random() < (1/30);
-
 		if (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
 			const newPokemon = new Pokemon(pokemon, 1, null, this.main);
-			// MOD: Apply shiny status
 			if (isShinyEgg) {
 				newPokemon.isShiny = true;
 				newPokemon.setShiny();
@@ -90,7 +91,6 @@ export class Shop {
 			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShinyEgg)
 		} else {
 			const newPokemon = new Pokemon(pokemon, 1, null, this.main);
-			// MOD: Apply shiny status
 			if (isShinyEgg) {
 				newPokemon.isShiny = true;
 				newPokemon.setShiny();
@@ -123,12 +123,12 @@ export class Shop {
 	    playSound('purchase', 'ui');
 	    this.main.player.changeGold(-itemBought.price);
 	   
-	    if (itemBought.id != "gimmighoul") {
+	    if (itemBought.isEquipable) {
 	    	this.main.player.obtainItem(itemBought);
 	    	this.main.player.itemAmount++;
 	    } 
 
-	    // Reemplazar el slot i con el siguiente elemento v├ílido de itemList (no duplicado)
+	    // Reemplazar el slot i con el siguiente elemento válido de itemList (no duplicado)
 	    this.itemStock[i] = this.getNextNonDuplicateFromList();
 
 	    this.main.shopScene.update();
@@ -143,17 +143,73 @@ export class Shop {
 	}
 
 	generateStock() {
-	    for (let i = 0; i < 5; i++) {
+	    for (let i = 0; i < 8; i++) {
 	        if (!this.itemStock[i]) { 
-	            // tomamos el siguiente id v├ílido desde itemList evitando duplicados
+	            // tomamos el siguiente id válido desde itemList evitando duplicados
 	            this.itemStock[i] = this.getNextNonDuplicateFromList();
 	        }
 	    }
 	}
 
+	updateEggList() {
+		if (!Array.isArray(eggListData)) return;
+
+		const playerPokemon = [...this.main.team.pokemon, ...this.main.box.pokemon];
+
+		const pidFromEntry = (entry) => {
+			if (!entry) return null;
+
+			if (typeof entry === 'string') {
+				const pd = pokemonData[entry];
+				return pd ? pd.id : null;
+			}
+
+			if (entry.id) {
+				if (pokemonData[entry.id]) return pokemonData[entry.id].id;
+				return entry.id;
+			}
+
+			if (entry.species && pokemonData[entry.species]) return pokemonData[entry.species].id;
+			if (entry.name && pokemonData[String(entry.name).toLowerCase()]) return pokemonData[String(entry.name).toLowerCase()].id;
+
+			return null;
+		};
+
+		const present = new Set();
+		for (const e of this.eggList) {
+			const pid = pidFromEntry(e);
+			if (pid != null) present.add(String(pid));
+		}
+
+		const playerHasPid = (pid) => {
+			if (pid == null) return false;
+			const pidStr = String(pid);
+			for (const p of playerPokemon) {
+				if (!p) continue;
+				if (String(p.id) === pidStr) return true;
+			}
+			return false;
+		};
+
+		for (const entry of eggListData) {
+			if (typeof entry === 'string' && this.ownedBaseKeys?.has(entry)) continue;
+			if (!entry) continue;
+
+			const pid = pidFromEntry(entry);
+			if (pid == null) continue;
+
+			const pidStr = String(pid);
+			if (present.has(pidStr)) continue;
+			if (playerHasPid(pid)) continue;
+
+			this.eggList.push(entry);
+			present.add(pidStr);
+		}
+	}
+
 	dedupeInitialLists() {
 		const seen = new Set();
-		// dedupe itemStock: conservar primera aparici├│n, poner null en duplicados
+		// dedupe itemStock: conservar primera aparición, poner null en duplicados
 		for (let i = 0; i < this.itemStock.length; i++) {
 			const entry = this.itemStock[i];
 			if (!entry || !entry.id) {
@@ -167,7 +223,7 @@ export class Shop {
 				seen.add(id);
 			}
 		}
-		// dedupe itemList: eliminar ids que ya est├ín en seen y eliminar duplicados dentro de itemList
+		// dedupe itemList: eliminar ids que ya están en seen y eliminar duplicados dentro de itemList
 		const newList = [];
 		for (const id of this.itemList) {
 			if (!id) continue;
@@ -175,7 +231,7 @@ export class Shop {
 				seen.add(id);
 				newList.push(id);
 			}
-			// si estaba en seen (ya en stock o ya a├▒adido), se omite => se elimina duplicado
+			// si estaba en seen (ya en stock o ya añadido), se omite => se elimina duplicado
 		}
 		this.itemList = newList;
 	}
@@ -189,7 +245,7 @@ export class Shop {
 		return false;
 	}
 
-	// Extrae del itemList el primer id que no est├⌐ presente actualmente en itemStock.
+	// Extrae del itemList el primer id que no esté presente actualmente en itemStock.
 	// Devuelve el objeto itemData[id] o null si no hay ninguno.
 	getNextNonDuplicateFromList() {
 		while (this.itemList.length > 0) {
@@ -209,7 +265,7 @@ export class Shop {
 
 	        // Comprobar si el jugador ya posee este item
 	        if (this.main.player.hasItem(entry.id)) {
-	            // Reemplazar con el siguiente ├¡tem no duplicado y que no tenga el jugador
+	            // Reemplazar con el siguiente ítem no duplicado y que no tenga el jugador
 	            let newItem = null;
 	            while (this.itemList.length > 0) {
 	                const nextId = this.itemList.shift();
@@ -237,7 +293,7 @@ export class Shop {
 			if (this.itemList.includes(id)) continue;
 
 			let placed = false;
-			for (let i = 0; i < Math.max(5, this.itemStock.length); i++) {
+			for (let i = 0; i < Math.max(8, this.itemStock.length); i++) {
 				if (typeof this.itemStock[i] === 'undefined') this.itemStock[i] = null;
 
 				if (!this.itemStock[i]) {

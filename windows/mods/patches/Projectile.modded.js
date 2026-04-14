@@ -41,12 +41,81 @@ export class Projectile extends Sprite {
             color: '#ffffff'
         };
         this.impacting = false;
+
+        this.orbit = projectile.orbit ?? null;
+        this.simulatedTime = 0;
+
+        if (this.orbit) {
+            this.angle = this.orbit.startAngle ?? 0;
+            this.orbitRadius = this.orbit.radius ?? 28;
+            this.angularSpeed = this.orbit.angularSpeed ?? (Math.PI * 2);
+            this.orbitDuration = this.orbit.duration ?? Infinity;
+            this.orbitHitCooldown = this.orbit.hitCooldown ?? 300;
+            this.perEnemyLastHit = new WeakMap();
+
+            this.lifeTime = Infinity;
+            this.enemy = null;
+        }
     }
 
     update(deltaTime = 1000 / 60) {
         const simDelta = deltaTime;
         const frameFactor = simDelta / (1000 / 60);
         const secs = simDelta / 1000;
+
+        if (this.orbit) {
+            this.age += simDelta;
+            this.simulatedTime += simDelta;
+
+            if (!this.tower || !this.tower.center) {
+                this.markedForDeletion = true;
+                return;
+            }
+
+            const arcPerFrame = Math.abs(this.angularSpeed) * secs * this.orbitRadius;
+            const MAX_ARC_PER_STEP = 4;
+            const steps = Math.max(1, Math.ceil(arcPerFrame / MAX_ARC_PER_STEP));
+            const subSecs = secs / steps;
+
+            const cx = this.tower.center.x;
+            const cy = this.tower.center.y;
+            const hitRadius = Math.max(6, (this.width || 6) / 2) + 2;
+            const enemies = this.tower.main.area.enemies;
+
+            for (let s = 0; s < steps; s++) {
+                this.angle += this.angularSpeed * subSecs;
+
+                this.position.x = cx + Math.cos(this.angle) * this.orbitRadius - (this.width ? this.width / 2 : 0);
+                this.position.y = cy + Math.sin(this.angle) * this.orbitRadius - (this.height ? this.height / 2 : 0);
+                this.center = {
+                    x: this.position.x + (this.width ? this.width / 2 : 0),
+                    y: this.position.y + (this.height ? this.height / 2 : 0)
+                };
+
+                for (const e of enemies) {
+                    if (!e || e.hp <= 0 || e.invulnerable) continue;
+                    if (e.invisible && !(this.tower.revealInvisible || this.tower.targetMode === 'invisible')) continue;
+
+                    const dx = e.center.x - this.center.x;
+                    const dy = e.center.y - this.center.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist <= hitRadius) {
+                        const last = this.perEnemyLastHit.get(e) || 0;
+                        if (this.simulatedTime - last >= this.orbitHitCooldown) {
+                            e.getDamaged(this.power, 'physical', this.tower?.pokemon?.ability, false, new Set(), this.tower?.pokemon, this.tower);
+                            this.perEnemyLastHit.set(e, this.simulatedTime);
+                        }
+                    }
+                }
+            }
+
+            if (!this.tower?._skipDraw) this.draw();
+
+            if (this.orbitDuration !== Infinity && this.age >= this.orbitDuration) {
+                this.markedForDeletion = true;
+            }
+            return;
+        }
 
         // MOD: If target is dead, retarget within tower's range from tower position
         // Note: Tower.modded.js updateProjectiles also handles this BEFORE update() is called
