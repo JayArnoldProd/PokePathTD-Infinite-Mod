@@ -1,13 +1,12 @@
 {
     "version": "1.5.0",
-    "game_version": "1.5",
-    "release_date": "2026-04-13",
+    "game_version": "1.5.0",
+    "release_date": "2026-04-14",
     "changes": [
-        "WORK IN PROGRESS: Windows 1.5 compatibility rebase started",
-        "Updated version metadata and compatibility targets for PokePath TD 1.5 on Windows",
-        "Added dedicated PRPs for 1.5 core compatibility, content/editor sync, and shiny generator recovery",
-        "Added dedicated shiny enemy feature toggle with 1 in 50 enemy/boss variants and profile tracking",
-        "Added Profile unlockables tab for verified secrets and challenge rewards",
+        "Validated Windows compatibility against live PokePath TD 1.5.0 vanilla files",
+        "Fixed non-Endless star display installer patch for the new vanilla star-cap pattern",
+        "Re-ran installer matrix validation for full, speed-only, pause-only, no-Endless, and Endless-only installs",
+        "Confirmed the existing Windows v1.5.0 release remains the current release artifact",
         "macOS compatibility for 1.5 pending dedicated validation"
     ]
 }

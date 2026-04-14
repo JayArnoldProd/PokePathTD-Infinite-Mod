@@ -2782,10 +2782,10 @@ def apply_star_display_cap():
         log_skip("UI.js: Star display cap")
         return True
     
-    # Find and replace the star display line
-    # Vanilla: this.playerStars.innerHTML = `<span class="msrre">⭐</span>${Math.min(1200, this.main.player.stars)}`;
-    # We need to compute capped stars: sum of min(100, record) for each route
-    old_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{Math\.min\(1200,\s*this\.main\.player\.stars\)\}`;'
+    # Find and replace the star display line.
+    # Vanilla caps changed over time (1200 in older builds, 2000 in 1.5),
+    # so match any Math.min(<number>, this.main.player.stars) form.
+    old_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{Math\.min\(\d+,\s*this\.main\.player\.stars\)\}`;'
     match = re.search(old_pattern, content)
     
     if match:
@@ -2805,11 +2805,13 @@ def apply_star_display_cap():
         log_success("UI.js: Star display capped (100 per route without Endless)")
         return True
     
-    # Fallback: try simple string replacement
-    if 'Math.min(1200' in content and 'playerStars' in content:
+    # Fallback: handle newer vanilla caps without depending on the exact number
+    fallback_match = re.search(r'Math\.min\(\d+,\s*this\.main\.player\.stars\)', content)
+    if fallback_match and 'playerStars' in content:
         content = content.replace(
-            'Math.min(1200, this.main.player.stars)',
-            'this.main.player.records.reduce((sum, r) => sum + Math.min(100, r), 0)'
+            fallback_match.group(0),
+            'this.main.player.records.reduce((sum, r) => sum + Math.min(100, r), 0)',
+            1
         )
         write_file(path, content)
         log_success("UI.js: Star display capped (100 per route without Endless)")
