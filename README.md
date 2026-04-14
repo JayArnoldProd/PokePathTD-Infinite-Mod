@@ -56,20 +56,18 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Profile Tracking** - Shiny enemy defeats are recorded in Profile
 
 ### 🔧 Quality of Life
-- **Item Tooltips**
-- **Save/Load Tooltips**
-- **Challenge Party Preserve**
-- **Attack Type Sorting**
-- **Unlockables Profile Tab**
-- **Live Profile Updates**
+- **Item Tooltips** - Identify items as you hover over them in the inventory slot in the Party UI
+- **Save/Load Tooltips** - Never Miss-click save instead of load again!
+- **Challenge Party Preserve** - Keep your party when you start a Challenge
+- **Attack Type Sorting** - New sorting Mode
+- **Unlockables Profile Tab** - See what hidden content can be unlocked and how; keep track of progress
+- **Live Profile Updates** - Stats in profile update while the menu is open
+- **Tower Placement Persistence** - When you close and open the game, your Tower Placement and Party Remains
 
 ### 🐛 Vanilla Bug Fixes
-- **Tower Placement Persistence**
-- **Off-Screen Projectile Fix**
-- **Challenge Level Cap Fix**
-- **Shiny Ditto Fix**
-- **Projectile Retargeting Fix**
-- **Shell Bell & Clefairy Doll Compatibility Guard** (kept aligned with vanilla 1.5 behavior)
+- **Off-Screen Projectile Fix** - Projectiles can now no longer target off screen enemies
+- **Challenge Level Cap Fix** - Challenge mode now no longer levels up your pokemon
+- **Projectile Retargeting Fix** - Projectiles no longer retarget enemies outside the Tower's range
 
 ### ⚡ Performance Optimizations
 - **Delta Time Accuracy** at high speed
