@@ -7,6 +7,8 @@
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
 > **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
+>
+> **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -22,6 +24,8 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### 📈 Removed Caps
 - **Level Cap Removed** - Pokemon can level past 100 (to 9999+)
 - **No Star Cap** - Earn as many stars as you physically can
+- **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
+- **Orbital Speed Scaling** - Replaced the unused orbital attack-rate stat with an orbital speed stat that scales infinitely
 
 ### 🌊 Endless Mode
 - **Continue Button** - After beating wave 100, choose to continue to wave 101+
@@ -35,10 +39,10 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Enemy Speed Scaling** - Enemies gradually get faster in endless mode (logarithmic curve)
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 
-### 🐱 Hidden Content Unlocked
+### 🐱 Hidden Content Notes
 
-- **Hidden Item(s):** Unlocks cut/WIP items the developer left in the code but disabled
-  - **Magma Stone** (currently the only hidden item) — Doubles burn duration from 10s → 20s. Costs 50,000g in the shop. Restricted to fire-type burn Pokémon.
+- **Magma Stone is now in vanilla 1.5** (no longer a mod-only unlock)
+- No additional fully verified hidden item unlocks were added in this pass
 
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
@@ -48,9 +52,8 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Shinies Have No Level Cap** - Can level to infinity unlike regular Pokemon
 
 ### 💀 Shiny Enemy Variant
-- **Dedicated Installer Toggle** - Enemy shinies are a separate feature from player shiny sprites
-- **1 in 50 Shiny Enemies/Bosses** - Rare shiny combat variants can appear naturally
-- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, and 10x gold
+- **1 in 1,000 Shiny Enemies/Bosses** - Rare shiny combat variants can appear naturally
+- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, and 1000x gold
 - **Profile Tracking** - Records shiny enemies defeated in the Profile screen
 
 ### 🔧 Quality of Life
@@ -67,7 +70,7 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Challenge Level Cap Fix** - Level cap no longer boosts low-level Pokemon instead of only capping high-level ones
 - **Shiny Ditto Fix** - Untransformed shiny Ditto now correctly displays its blue sprite
 - **Projectile Retargeting Fix** - Projectiles only retarget enemies within the firing tower's range
-- **Shell Bell & Clefairy Doll Now Function as Intended** - In vanilla these items do literally nothing
+- **Shell Bell & Clefairy Doll Compatibility Guard** - Preserves intended trigger behavior and stays aligned with vanilla 1.5 tracking
 
 ### ⚡ Performance Optimizations
 - **Delta Time Accuracy** - High-speed attacks process correctly at 5x/10x speed

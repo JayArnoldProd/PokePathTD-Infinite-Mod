@@ -355,8 +355,8 @@ MOD_FEATURES = {
     },
     'infinite_levels': {
         'name': 'Infinite Levels',
-        'description': 'Remove level 100 cap, asymptotic stat scaling, recharge precision at sub-0.1s',
-        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods', 'apply_recharge_precision'],
+        'description': 'Remove level 100 cap, asymptotic stat scaling, recharge precision at sub-0.1s, and uncap star-scaled bonuses',
+        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods', 'apply_recharge_precision', 'apply_star_scaling_uncap'],
         'default': True,
     },
     'shiny': {
@@ -366,8 +366,8 @@ MOD_FEATURES = {
         'default': True,
     },
     'shiny_enemies': {
-        'name': 'Shiny Enemies (1/9000)',
-        'description': 'Adds 1 in 50 shiny enemies and bosses with shiny sprites, +50% health, +50% armor, 2-heart damage, 10x gold, and profile tracking for shiny enemies defeated',
+        'name': 'Shiny Enemies (1/1000)',
+        'description': 'Adds 1 in 1000 shiny enemies and bosses with shiny sprites, +50% health, +50% armor, 2-heart damage, 1000x gold, and profile tracking for shiny enemies defeated',
         'functions': ['apply_enemy_shiny_spawn'],
         'default': True,
     },
@@ -957,7 +957,7 @@ def apply_enemy_shiny_spawn():
     
     content = read_file(path)
     
-    if "this.isShiny = Math.random() < (1 / 9000);" in content and "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content:
+    if "this.isShiny = Math.random() < (1 / 1000);" in content and "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content:
         log_skip("Enemy.js: Shiny enemy spawn")
         return True
     
@@ -974,7 +974,7 @@ def apply_enemy_shiny_spawn():
 		this.gold = enemy.gold + this.main.player.extraGold;
 """
     new_constructor = """		this.enemy = enemy;
-		this.isShiny = Math.random() < (1 / 9000);
+		this.isShiny = Math.random() < (1 / 1000);
 		if (this.isShiny && typeof this.sprite?.src === 'string' && this.sprite.src.includes('/normal/')) {
 			this.sprite.src = this.sprite.src.replace(/\\/normal\\//g, '/shiny/');
 		}
@@ -1015,7 +1015,7 @@ def apply_enemy_shiny_spawn():
 
     if changed:
         write_file(path, content)
-        log_success("Enemy.js: Shiny enemy spawn (1/9000 gameplay variant)")
+        log_success("Enemy.js: Shiny enemy spawn (1/1000 gameplay variant)")
         return True
     
     log_fail("Enemy.js: Shiny enemy spawn", "enemy constructor or defeat pattern not found")
@@ -1474,6 +1474,106 @@ def apply_recharge_precision():
     
     log_fail("PokemonScene.js: Recharge precision - no matching patterns")
     return False
+
+
+def apply_star_scaling_uncap():
+    """Remove 1200-star cap behavior for star-scaled Clefairy/Star Candy effects.
+
+    Targets:
+    - PlacementTile range preview for Star Candy (remove Math.min 120 cap)
+    - Projectile Clefairy star ability damage (remove Math.min 1200 cap if present)
+    - Tower Star Candy range bonus (remove Math.min 120 cap if present)
+    - Star/Candy descriptions (remove stale "max 1200" text)
+
+    Notes:
+    - Some versions already use uncapped formulas; this patch is idempotent.
+    - This is grouped under Infinite Levels by design (requested coupling).
+    """
+    changed_any = False
+
+    # PlacementTile.js - Star Candy preview range cap
+    placement_path = JS_ROOT / "game" / "component" / "PlacementTile.js"
+    if placement_path.exists():
+        placement = read_file(placement_path)
+        if "drawRangeValue += Math.min(120, this.main.player.stars * 0.1);" in placement:
+            placement = placement.replace(
+                "drawRangeValue += Math.min(120, this.main.player.stars * 0.1);",
+                "drawRangeValue += (this.main.player.stars * 0.1);"
+            )
+            write_file(placement_path, placement)
+            changed_any = True
+
+    # Projectile.js - Clefairy star ability damage cap (if present in this version)
+    projectile_path = JS_ROOT / "game" / "component" / "Projectile.js"
+    if projectile_path.exists():
+        projectile = read_file(projectile_path)
+        replacements = [
+            (
+                "finalDamage += Math.min(1200, this.tower.main.player.stars);",
+                "finalDamage += this.tower.main.player.stars;"
+            ),
+            (
+                "finalDamage += Math.min(1200, this.main.player.stars);",
+                "finalDamage += this.main.player.stars;"
+            ),
+        ]
+        local_change = False
+        for old, new in replacements:
+            if old in projectile:
+                projectile = projectile.replace(old, new)
+                local_change = True
+        if local_change:
+            write_file(projectile_path, projectile)
+            changed_any = True
+
+    # Tower.js - Star Candy range cap (if present in this version)
+    tower_path = JS_ROOT / "game" / "component" / "Tower.js"
+    if tower_path.exists():
+        tower = read_file(tower_path)
+        local_change = False
+        for old in [
+            "this.range += Math.min(120, this.main.player.stars * 0.1);",
+            "this.range = this.range + Math.min(120, this.main.player.stars * 0.1);",
+        ]:
+            if old in tower:
+                tower = tower.replace(old, "this.range += (this.main.player.stars * 0.1);")
+                local_change = True
+        if local_change:
+            write_file(tower_path, tower)
+            changed_any = True
+
+    # abilityData.js / itemData.js - remove stale description caps
+    for rel in [
+        ("game", "data", "abilityData.js"),
+        ("game", "data", "itemData.js"),
+    ]:
+        data_path = JS_ROOT.joinpath(*rel)
+        if not data_path.exists():
+            continue
+        data = read_file(data_path)
+        updated = data
+        for token in [
+            "(max 1200)",
+            "(máx. 1200)",
+            "(max. 1200)",
+            "(최대 1200)",
+            "（最大1200）",
+            "（最大 1200）",
+            "(maks. 1200)",
+        ]:
+            updated = updated.replace(token, "")
+        # punctuation cleanup after token removal (e.g. "obtained ." -> "obtained.")
+        updated = re.sub(r'\s+\.', '.', updated)
+        if updated != data:
+            write_file(data_path, updated)
+            changed_any = True
+
+    if changed_any:
+        log_success("Star-scaled bonuses: 1200 cap removed")
+    else:
+        log_skip("Star-scaled bonuses: already uncapped")
+
+    return True
 
 
 # ============================================================================
@@ -2546,33 +2646,32 @@ def apply_offscreen_target_fix():
 
 
 def apply_shellbell_fix():
-    """Fix vanilla bug: Shell Bell and Clefairy Doll never trigger.
-    
-    The vanilla game checks pokemon.trueDamageDealt but never increments it.
-    Only pokemon.damageDealt gets incremented. This adds the missing increment.
-    Skipped when Enemy.modded.js is installed (Endless mode already includes the fix).
+    """Fix Shell Bell / Clefairy Doll trigger tracking if trueDamageDealt is missing.
+
+    Newer vanilla versions already track trueDamageDealt correctly. In that case this
+    patch is skipped to avoid changing vanilla behavior.
     """
     path = JS_ROOT / "game" / "component" / "Enemy.js"
     content = read_file(path)
-    
-    # Skip if Enemy.modded.js is installed (has the fix baked in)
-    if 'pokemon.trueDamageDealt += amount' in content:
+
+    # Already present in vanilla or other patches (supports both capped and uncapped forms)
+    if 'pokemon.trueDamageDealt' in content and 'totalTrueDamageDealt' in content:
         log_skip("Enemy.js: Shell Bell / Clefairy Doll fix")
         return True
-    
-    # Find the damageDealt increment line and add trueDamageDealt after it
+
+    # Find the damageDealt increment line and add trueDamageDealt tracking with overkill-safe min
     old = "    this.main.area.totalDamageDealt += amount;\n\t    pokemon.damageDealt += amount;"
     new = ("    this.main.area.totalDamageDealt += amount;\n"
-           "\t    this.main.area.totalTrueDamageDealt += amount;  // MOD: Fix vanilla bug\n"
-           "\t    pokemon.damageDealt += amount;\n"
-           "\t    pokemon.trueDamageDealt += amount;  // MOD: Fix Shell Bell / Clefairy Doll")
-    
+           "\t    pokemon.damageDealt += amount;\n\n"
+           "\t    this.main.area.totalTrueDamageDealt += Math.min((this.hp + this.armor), amount);\n"
+           "\t    pokemon.trueDamageDealt += Math.min((this.hp + this.armor), amount);")
+
     if old in content:
         content = content.replace(old, new, 1)
         write_file(path, content)
         log_success("Enemy.js: Shell Bell / Clefairy Doll fix (trueDamageDealt increment)")
         return True
-    
+
     log_fail("Enemy.js: Shell Bell fix", "damageDealt pattern not found")
     return False
 

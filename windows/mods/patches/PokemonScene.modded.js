@@ -1101,10 +1101,21 @@ export class PokemonScene extends GameScene {
 	    const criticalGains = Math.round(criticalAfterFlats - baseCritical);
 	    const rangeGains = Math.round(rangeAfterFlats - baseRange);
 
-    	if (powerGains != 0) {
-			this.data['power'].value.innerHTML += (powerGains > 0) ? 
-			` <span style="color: var(--green)"> (+${powerGains})<span>` : 
-			` <span style="color: var(--red)"> (${powerGains})</span>`;
+	    // Include Star ability's direct per-star damage bonus in power preview
+	    let starPowerBonus = 0;
+	    if (this.pokemon?.ability?.id === 'star') {
+	    	starPowerBonus += this.main.player.stars;
+	    	if (this.pokemon?.favorite) starPowerBonus++;
+	    	if (this.pokemon?.isShiny) starPowerBonus++;
+	    	if (this.pokemon?.item?.id == 'starCandy') starPowerBonus++;
+	    	starPowerBonus += this.main.team.pokemon.filter((poke) => poke.id == 32).length;
+	    }
+	    const totalPowerGains = powerGains + starPowerBonus;
+
+    	if (totalPowerGains != 0) {
+			this.data['power'].value.innerHTML += (totalPowerGains > 0) ? 
+			` <span style="color: var(--green)"> (+${totalPowerGains})<span>` : 
+			` <span style="color: var(--red)"> (${totalPowerGains})</span>`;
 		}
 		if (speedGains !== 0) {
 	        const speedSec = (Math.abs(speedGains) / 1000).toFixed(2);
@@ -1129,121 +1140,130 @@ class ItemWindow {
 	constructor(main) {
 		this.main = main;
 		this.isOpen = false;
-		this.render(); 
-
-		this.pokemon;
+		this.pokemon = undefined;
+		this.itemArray = [];
+		this.render();
 	}
 
 	render() {
 		this.window = document.createElement('div');
 		this.window.className = 'item-scene-window';
+		this.window.style.overflow = 'hidden';
 
-        this.container = new Element(this.window, { className: 'item-scene-container' }).element;
-        this.slot = [];
+		this.container = new Element(this.window, { className: 'item-scene-container' }).element;
 
-        for (let i = 0; i < 100; i++) {
-        	this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
-        	this.slot[i].addEventListener('click', () => { this.equipItem(i) })
-        	this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: 'E' }).element;
-        }
+		this.slot = [];
+		for (let i = 0; i < 100; i++) {
+			this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
+			this.slot[i].itemRef = undefined;
+			this.slot[i].addEventListener('click', () => { this.equipItem(i); });
+			this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: '' }).element;
+		}
 
-        this.removeItem = new Element(this.container, { className: 'item-scene-slot item-scene-slot-x', text: 'X' }).element;
-        this.removeItem.addEventListener('click', () => { 
-        	this.pokemon.retireItem();
-        	this.main.UI.update();
+		this.removeItem = new Element(this.container, { className: 'item-scene-slot item-scene-slot-x', text: 'X' }).element;
+		this.removeItem.addEventListener('click', () => {
+			if (!this.pokemon?.item) return;
+			this.pokemon.retireItem();
+			this.main.UI.update();
 			this.main.pokemonScene.update();
+			if (this.main.boxScene.isOpen) this.main.boxScene.update();
+			this.update();
 			playSound('equip', 'ui');
-        })
+		});
 	}
 
 	open(pokemon) {
 		if (this.main.area.inChallenge.noItems) {
-			playSound('pop0', 'ui')
+			playSound('pop0', 'ui');
 			return;
 		}
 
-        if (!this.isOpen) {
-            playSound('open', 'ui');
-        	this.isOpen = true;
-        	this.pokemon = pokemon;
+		if (this.isOpen) {
+			this.close();
+			return;
+		}
 
-        	this.main.pokemonScene.window.appendChild(this.window)
-        	this.window.style.display = 'block';
-        	this.update();
+		playSound('open', 'ui');
+		this.isOpen = true;
+		this.pokemon = pokemon;
+		this.main.pokemonScene.window.appendChild(this.window);
+		this.window.style.display = 'block';
+		this.update();
+	}
 
-        } else {
-        	this.close();
-        }
-    }
+	close() {
+		this.isOpen = false;
+		playSound('close', 'ui');
+		this.window.style.display = 'none';
+		this.main.tooltip.hide();
+	}
 
-    close() {
-        this.isOpen = false;
-        playSound('close', 'ui');
-        this.window.style.display = 'none';
-        this.main.tooltip.hide();
-    }
+	getAvailableItems() {
+		const itemController = this.main.itemController;
+		if (itemController?.getItems && itemController?.canEquip) {
+			return itemController.getItems().filter(item => itemController.canEquip(item, this.pokemon));
+		}
+
+		// Legacy fallback if itemController is unavailable.
+		return this.main.player.items || [];
+	}
+
+	isItemEquipped(item) {
+		const itemController = this.main.itemController;
+		if (itemController?.isEquipped) return itemController.isEquipped(item);
+		return item?.equipedBy != undefined;
+	}
 
 	update() {
 		this.slot.forEach(slot => {
-			slot.style.backgroundImage = "";
+			slot.itemRef = undefined;
+			slot.style.display = 'none';
+			slot.style.backgroundImage = '';
 			slot.style.pointerEvents = 'none';
-			slot.equiped.innerHTML = "";
+			slot.style.filter = 'none';
+			slot.equiped.innerHTML = '';
 		});
 
-		this.main.player.items.forEach((item, i) => {
+		this.itemArray = this.getAvailableItems();
+
+		this.itemArray.forEach((item, i) => {
+			if (!this.slot[i]) return;
+			this.slot[i].itemRef = item;
+			this.slot[i].style.display = 'block';
 			this.slot[i].style.backgroundImage = `url(${item.sprite})`;
 			this.slot[i].style.pointerEvents = 'revert-layer';
 			this.main.tooltip.bindTo(this.slot[i], item, 'item');
 
-			let able = this.checkRestriction(item);
+			if (this.isItemEquipped(item)) {
+				this.slot[i].equiped.innerHTML = 'E';
+				this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--yellow))';
+			} else {
+				this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--white))';
+			}
+		});
 
-			if (item.equipedBy != undefined) { this.slot[i].equiped.innerHTML = 'E'; }
-
-			if (!able) this.slot[i].style.filter = 'brightness(0)';
-			else if (item.equipedBy != undefined) this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--yellow)) ';
-			else this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--white))';
-		})
-	}
-
-	checkRestriction(item) {
-		const key = Object.keys(item.restriction)[0];
-		switch(key) {
-			case 'key':
-				if (item.restriction[key] == this.pokemon.specie.key) return true;
-			break;
-			case 'id':
-				if (item.restriction[key].includes(this.pokemon.id)) return true;
-				break;
-			case 'idForbidden':	
-				if (!item.restriction[key].includes(this.pokemon.id)) return true;
-				break;
-			case 'tile': 
-				if (this.pokemon.id == 70 || this.pokemon.id == 101) return false;	
-				if (item.restriction[key].some(tile => this.pokemon.tiles.includes(tile))) return true;
-				break;
-			case 'tileForbidden':
-				if (this.pokemon.id == 70) return false;	
-				if (!item.restriction[key].some(tile => this.pokemon.tiles.includes(tile)))  return true;
-				break;
-			case 'attackType':
-				if (this.pokemon.id == 70) return false;	
-				if (item.restriction[key] == this.pokemon.attackType) return true;
-				break;
-			case 'rangeType':
-				if (this.pokemon.id == 70) return false;	
-				if (item.restriction[key] == this.pokemon.rangeType) return true;
-				break;
+		if (this.pokemon?.item) {
+			this.removeItem.style.pointerEvents = 'revert-layer';
+			this.removeItem.style.filter = 'none';
+		} else {
+			this.removeItem.style.pointerEvents = 'none';
+			this.removeItem.style.filter = 'brightness(0.45)';
 		}
-		return false;
 	}
 
 	equipItem(pos) {
-		let able = this.checkRestriction(this.main.player.items[pos])
-		if (!able) return;
-		this.pokemon.equipItem(this.main.player.items[pos]);
+		const item = this.slot[pos]?.itemRef;
+		if (!item) return;
+
+		const itemController = this.main.itemController;
+		if (itemController?.equip) itemController.equip(item, this.pokemon);
+		else this.pokemon.equipItem(item);
+
 		this.main.UI.update();
 		this.main.pokemonScene.update();
 		if (this.main.boxScene.isOpen) this.main.boxScene.update();
+		this.update();
+		playSound('equip', 'ui');
 	}
 }
 	

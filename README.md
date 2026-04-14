@@ -7,6 +7,8 @@
 A comprehensive mod pack for **PokePath TD** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
 
 > **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
+>
+> **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
@@ -22,6 +24,8 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 ### 📈 Removed Caps
 - **Level Cap Removed** - Pokemon can level past 100 (to 9999+)
 - **No Star Cap** - Earn as many stars as you physically can
+- **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
+- **Orbital Speed Scaling** - Replaced the unused orbital attack-rate stat with an orbital speed stat that scales infinitely
 
 ### 🌊 Endless Mode
 - **Continue Button** - After beating wave 100, choose to continue to wave 101+
@@ -35,8 +39,9 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Enemy Speed Scaling** - Enemies gradually get faster in endless mode
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 
-### 🐱 Hidden Content Unlocked
-- **Magma Stone** - Unlocks a hidden item left in the code, doubling burn duration from 10s to 20s
+### 🐱 Hidden Content Notes
+- **Magma Stone is now in vanilla 1.5** (no longer a mod-only unlock)
+- No additional fully verified hidden item unlocks were added in this pass
 
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs
@@ -46,9 +51,8 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Shinies Have No Level Cap** - Can level infinitely unlike regular Pokemon
 
 ### 💀 Shiny Enemy Variant
-- **Dedicated Installer Toggle** - Separate from the player shiny sprite system
-- **1 in 50 Shiny Enemies/Bosses**
-- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, 10x gold
+- **1 in 1,000 Shiny Enemies/Bosses**
+- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, 1000x gold
 - **Profile Tracking** - Shiny enemy defeats are recorded in Profile
 
 ### 🔧 Quality of Life
@@ -65,7 +69,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Challenge Level Cap Fix**
 - **Shiny Ditto Fix**
 - **Projectile Retargeting Fix**
-- **Shell Bell & Clefairy Doll Fix**
+- **Shell Bell & Clefairy Doll Compatibility Guard** (kept aligned with vanilla 1.5 behavior)
 
 ### ⚡ Performance Optimizations
 - **Delta Time Accuracy** at high speed

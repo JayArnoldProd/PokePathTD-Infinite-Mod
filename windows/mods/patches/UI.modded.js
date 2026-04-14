@@ -1706,6 +1706,7 @@ class FastScene {
 	close() {
 		this.isOpen = false;
 		playSound('close', 'ui');
+		if (this.main.tooltip) this.main.tooltip.hide();
 		this.UI.pokemon[this.position].removeChild(this.container);
 	}
 
@@ -1748,6 +1749,7 @@ class FastScene {
 
 	    	slot.style.backgroundImage = `url("${item.sprite}")`;
 	    	slot.equiped.innerHTML = this.main.itemController.isEquipped(item) ? 'E' : '';
+	    	if (this.main.tooltip) this.main.tooltip.bindTo(slot, item, 'item');
 
 	    	slot.addEventListener('click', () => {
 		      	playSound('equip', 'ui');

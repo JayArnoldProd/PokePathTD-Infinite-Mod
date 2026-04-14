@@ -730,9 +730,9 @@ export class Enemy extends Sprite {
 	    let armorDamage = amount;
 
 	    this.main.area.totalDamageDealt += amount;
-	    this.main.area.totalTrueDamageDealt += amount;  // MOD: Fix vanilla bug — trueDamageDealt was never incremented
+	    this.main.area.totalTrueDamageDealt += Math.min((this.hp + this.armor), amount);
 	    pokemon.damageDealt += amount;
-	    pokemon.trueDamageDealt += amount;  // MOD: Fix Shell Bell / Clefairy Doll (checks trueDamageDealt)
+	    pokemon.trueDamageDealt += Math.min((this.hp + this.armor), amount);
 
 	    if (pokemon?.item?.id == 'litCoal' && this.canBurn && Math.random() < 0.1) {
 			this.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon); 

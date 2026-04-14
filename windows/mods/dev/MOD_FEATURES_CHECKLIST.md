@@ -106,9 +106,9 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Enemy.modded.js
 - [ ] Endless scaling - enemy HP/power scales for waves 100+
-- [ ] Shiny enemy spawn roll: `this.isShiny = Math.random() < (1 / 50);`
+- [ ] Shiny enemy spawn roll: `this.isShiny = Math.random() < (1 / 1000);`
 - [ ] Shiny enemies swap to `/shiny/` sprite path when available
-- [ ] Shiny enemy gameplay modifiers: +50% HP, +50% armor, 2-heart damage, 10x gold
+- [ ] Shiny enemy gameplay modifiers: +50% HP, +50% armor, 2-heart damage, 1000x gold
 - [ ] Shiny enemy defeats increment `this.main.player.stats.shinyEnemiesDefeated`
 - [ ] **PERF**: Center point mutation (not new object) in update loop
 - [ ] **PERF**: `_markedForRemoval` flag for batch removal (not indexOf+splice per enemy)
