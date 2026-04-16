@@ -2,7 +2,7 @@
 
 # PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.5 on Windows** ✅
+**Compatible with PokePath TD v1.5.2 on Windows** ✅
 
 A comprehensive mod pack for **PokePath TD** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
 
@@ -26,6 +26,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **No Star Cap** - Earn as many stars as you physically can
 - **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
 - **Orbital Speed Scaling** - Replaced the unused orbital attack-rate stat with an orbital speed stat that scales infinitely
+- **Orbital Direction Control** - Orbital targeting now cycles between clockwise and counterClockwise orbit directions
 
 ### 🌊 Endless Mode
 - **Continue Button** - After beating wave 100, choose to continue to wave 101+
@@ -52,7 +53,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 
 ### 💀 Shiny Enemy Variant
 - **1 in 1,000 Shiny Enemies/Bosses**
-- **Gameplay Bonus Variant** - +100% HP, +100% armor, 2-heart damage, 1000x gold
+- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, 1000x gold
 - **Profile Tracking** - Shiny enemy defeats are recorded in Profile
 
 ### 🔧 Quality of Life
@@ -85,12 +86,12 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 ## 📥 Downloads
 
 **Latest + fallback releases:**
-- **Windows (latest):** [PokePath-TD-INFINITE-Windows-v1.5.1.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.5.1/PokePath-TD-INFINITE-Windows-v1.5.1.zip)
+- **Windows (latest):** [PokePath-TD-INFINITE-Windows-v1.5.2.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.5.2/PokePath-TD-INFINITE-Windows-v1.5.2.zip)
 - **Windows (older):** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
 - **macOS ZIP (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
 - **macOS DMG (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
 
-> 💡 **Match your game version.** Windows v1.5.1 targets **PokePath TD 1.5.1**.
+> 💡 **Match your game version.** Windows v1.5.2 targets **PokePath TD 1.5.2**.
 > macOS is still on the older **1.4.4** release track for now.
 
 ---
@@ -114,7 +115,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 
 ### Windows
 
-1. Download **`PokePath-TD-INFINITE-Windows-v1.5.1.zip`** from the latest release.
+1. Download **`PokePath-TD-INFINITE-Windows-v1.5.2.zip`** from the latest release.
 2. Extract it anywhere.
 3. Copy the included **`mods`** folder into your game directory:
    ```
@@ -208,7 +209,7 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
   - `windows/mods/`
   - `mac/PokePath-TD-INFINITE-Mac/`
 - The Windows release intentionally includes a top-level **`mods`** folder so users can drop it directly into the game directory.
-- Recommended for Windows: **v1.5.1**.
+- Recommended for Windows: **v1.5.2**.
 - Older fallback release: **v1.4.4 (older)**.
 
 ---
