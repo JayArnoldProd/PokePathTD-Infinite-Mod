@@ -60,7 +60,8 @@ export class Pokemon {
 		this.trueDamageDealt = 0;
 
 		if (targetMode == undefined) {
-			if (this.attackType == 'area') this.targetMode = 'area';
+			if (this.attackType == 'orbital') this.targetMode = 'clockwise';
+			else if (this.attackType == 'area') this.targetMode = 'area';
 			else if (
 				this.ability.id == 'quadraShot' || this.ability.id == 'tripleShot' || this.ability.id == 'doubleShot' || 
 				this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily' || this.ability.id == 'poisonDoubleShot' || 
@@ -75,7 +76,8 @@ export class Pokemon {
 			else this.targetMode = 'first';
 		} else this.targetMode = targetMode;
 		if (this.ability.id == 'poisonDoubleShot') this.targetMode = 'available';
-		if (this.attackType == 'area') this.targetMode = 'area';
+		if (this.attackType == 'orbital' && this.targetMode != 'counterClockwise' && this.targetMode != 'clockwise') this.targetMode = 'clockwise';
+		else if (this.attackType == 'area') this.targetMode = 'area';
 
 		if (
 			this.item?.id == 'inverter' && 
@@ -301,7 +303,10 @@ export class Pokemon {
 		this.targetMode = mode;
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
-            if (tower) tower.targetMode = mode;       
+            if (tower) {
+				tower.targetMode = mode;
+				if (this.attackType === 'orbital') tower.refreshOrbitalProjectiles();
+			}
         }
 	}
 
@@ -525,7 +530,8 @@ export class Pokemon {
 		this.damageDealt = 0;
 		this.trueDamageDealt = 0;
 
-		if (this.attackType == 'area') this.targetMode = 'area';
+		if (this.attackType == 'orbital') this.targetMode = 'clockwise';
+		else if (this.attackType == 'area') this.targetMode = 'area';
 		else if (
 			this.ability.id == 'quadraShot' || this.ability.id == 'tripleShot' || this.ability.id == 'doubleShot' || 
 			this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily'

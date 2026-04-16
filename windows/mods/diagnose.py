@@ -152,10 +152,10 @@ def main():
     print("\n[Checking game version compatibility...]")
     # Expected vanilla file sizes for the game version this mod targets
     EXPECTED_VANILLA_FILES = {
-        "src/js/game/Game.js":                  42586,
+        "src/js/game/Game.js":                  42952,
         "src/js/game/component/Pokemon.js":     24099,
-        "src/js/game/scenes/PokemonScene.js":   58007,
-        "src/js/game/core/Area.js":             18848,
+        "src/js/game/scenes/PokemonScene.js":   58084,
+        "src/js/game/core/Area.js":             18954,
         "src/js/game/core/Team.js":             1784,
         "src/js/game/core/Box.js":              703,
     }
@@ -179,12 +179,12 @@ def main():
     
     if vanilla_asar and vanilla_asar.exists():
         vanilla_size = vanilla_asar.stat().st_size
-        # Known vanilla asar size for Windows v1.5
-        expected_vanilla_asar_size = 75087632
+        # Known vanilla asar size for Windows v1.5.2
+        expected_vanilla_asar_size = 75092931
         version_ok = vanilla_size == expected_vanilla_asar_size
         check(f"Vanilla backup size ({vanilla_size:,} bytes)", version_ok,
-              f"Expected {expected_vanilla_asar_size:,} bytes for Windows v1.5.\n"
-              "      Your game may be a different version. This mod currently targets PokePath TD v1.5 on Windows.\n"
+              f"Expected {expected_vanilla_asar_size:,} bytes for Windows v1.5.2.\n"
+              "      Your game may be a different version. This mod currently targets PokePath TD v1.5.2 on Windows.\n"
               "      Update your game or download the matching mod version.")
         if not version_ok:
             all_good = False

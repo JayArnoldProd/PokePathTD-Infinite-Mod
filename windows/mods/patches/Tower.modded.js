@@ -68,6 +68,7 @@ export class Tower extends Sprite {
 
         this.attackCooldown = this.speed * (this.snowCloakNear ? 1.5 : 1);
         this.targetMode = pokemon.targetMode;
+        if (this.attackType === 'orbital' && this.targetMode !== 'clockwise' && this.targetMode !== 'counterClockwise') this.targetMode = 'clockwise';
 
         if (this.pokemon.specie.id == 61) {
             if (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser')) this.updateTowerSprite(this.pokemon.sprite.imageGrass, this.pokemon.sprite.framesGrass, this.pokemon.specie.projectileGrass);
@@ -119,6 +120,8 @@ export class Tower extends Sprite {
         this.innerRange = this.pokemon.innerRange;
         this.ability = this.pokemon.ability;
         this.attackType = this.pokemon.attackType;
+        this.targetMode = this.pokemon.targetMode;
+        if (this.attackType === 'orbital' && this.targetMode !== 'clockwise' && this.targetMode !== 'counterClockwise') this.targetMode = 'clockwise';
         this.orbital = this.pokemon.orbital;
         this.projectile.sprite = this.pokemon.projectile.sprite;
         this.projectile.effect = this.pokemon.specie.projectileSound;
@@ -648,7 +651,10 @@ export class Tower extends Sprite {
         let angularSpeed = this.orbitalSpeed || (Math.PI / 5);
         if (this.ability?.id == 'shiftGear' && this.shiftGearSpeed > 0) angularSpeed = this.shiftGearSpeed;
         if (this.pokemon?.item?.id == 'lustrousOrb') angularSpeed *= 2;
-        return angularSpeed;
+
+        const baseSpeed = Math.abs(angularSpeed);
+        if (this.targetMode === 'counterClockwise') return -baseSpeed;
+        return baseSpeed;
     }
 
     spawnOrbitales() {

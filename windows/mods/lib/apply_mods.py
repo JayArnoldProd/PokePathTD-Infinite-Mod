@@ -73,8 +73,8 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 EXPECTED_VANILLA_FILES = {
     "src/js/game/Game.js":                  42952,
     "src/js/game/component/Pokemon.js":     24099,
-    "src/js/game/scenes/PokemonScene.js":   58007,
-    "src/js/game/core/Area.js":             18848,
+    "src/js/game/scenes/PokemonScene.js":   58084,
+    "src/js/game/core/Area.js":             18954,
     "src/js/game/core/Team.js":             1784,
     "src/js/game/core/Box.js":              703,
 }

@@ -1,12 +1,12 @@
 {
-    "version": "1.5.1",
-    "game_version": "1.5.1",
-    "release_date": "2026-04-14",
+    "version": "1.5.2",
+    "game_version": "1.5.2",
+    "release_date": "2026-04-16",
     "changes": [
-        "Validated Windows compatibility against live PokePath TD 1.5.1 vanilla files",
-        "Updated installer vanilla compatibility fingerprint for 1.5.1 Game.js",
-        "Rebased drag-and-drop patch files to preserve 1.5.1 pointer-cancel hotfix behavior",
-        "Updated in-game mod version label to 1.5.1",
+        "Validated Windows compatibility against live PokePath TD 1.5.2 vanilla files",
+        "Updated installer vanilla compatibility fingerprints for 1.5.2 PokemonScene.js and Area.js",
+        "Orbital Pokémon now use directional targeting modes (clockwise / counterClockwise) instead of inert target selection",
+        "Orbital direction updates now refresh active orbitals immediately for deployed towers",
         "macOS compatibility for 1.5.x remains pending dedicated validation"
     ]
 }
