@@ -20,8 +20,7 @@ const TERRAINS = {
 
 const TARGET_MODES = [
 	'first', 'last', 'highHP', 'lowHP', 'highArmor', 'noArmor', 'faster', 'slower', 'poisoned', 'notPoisoned', 
-	'burned', 'notBurned', 'stuned', 'notStuned', 'slowed', 'notSlowed', 'cursed', 'curseable', 'nightmared', 'random', 'invisible',
-	'clockwise', 'counterClockwise'
+	'burned', 'notBurned', 'stuned', 'notStuned', 'slowed', 'notSlowed', 'cursed', 'curseable', 'nightmared', 'random', 'invisible'
 ]
 
 const TARGET_MODES_TRADUCTIONS = {
@@ -61,8 +60,6 @@ const TARGET_MODES_TRADUCTIONS = {
 
 	random: ['Random', 'Aleatorio', 'Al├⌐atoire', 'Aleat├│rio', 'Casuale', 'Zuf├ñllig', 'πâ⌐πâ│πâÇπâá', 'δ¼┤∞₧æ∞£ä', 'ΘÜÅµ£║', 'Losowy'],
 	invisible: ['Invisible', 'Invisible', 'Invisible', 'Invis├¡vel', 'Invisibile', 'Unsichtbar', 'ΘÇÅµÿÄ', 'φê¼δ¬à', 'ΘÜÉσ╜ó', 'Niewidzialny'],
-	clockwise: ['Clockwise', 'Horario', 'Sens horaire', 'Sentido hor├írio', 'Senso orario', 'Im Uhrzeigersinn', '時計回り', '시계 방향', '顺时针', 'Zgodnie z ruchem wskazówek zegara'],
-	counterClockwise: ['Counterclockwise', 'Antihorario', 'Sens antihoraire', 'Sentido anti-hor├írio', 'Senso antiorario', 'Gegen den Uhrzeigersinn', '反時計回り', '반시계 방향', '逆时针', 'Przeciwnie do ruchu wskazówek zegara']
 }
 
 const LARGE_NUMBER_UNITS = {
@@ -355,15 +352,6 @@ export class PokemonScene extends GameScene {
 			this.data['attackType'].style.opacity = 'revert-layer';
 		}
 
-		if (this.pokemon.attackType === 'orbital') {
-			this.data['attackType'].style.pointerEvents = 'revert-layer';
-			this.data['attackType'].style.opacity = 'revert-layer';
-			if (this.pokemon.targetMode !== 'clockwise' && this.pokemon.targetMode !== 'counterClockwise') {
-				this.pokemon.changeTargetMode('clockwise');
-			}
-			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
-		}
-
 		if (
 			(this.pokemon.ability.id == 'spinda' && this.pokemon?.item?.id != 'ringTarget') ||
 			(this.pokemon?.item?.id == 'spindaCocktail' && this.pokemon.ability.id != 'defiant')
@@ -484,17 +472,6 @@ export class PokemonScene extends GameScene {
 	}
 
 	changeAttackType(dir) {
-		if (this.pokemon?.attackType === 'orbital') {
-			const orbitalModes = ['clockwise', 'counterClockwise'];
-			let index = orbitalModes.findIndex((mode) => mode === this.pokemon.targetMode);
-			if (index < 0) index = 0;
-			index = (index + dir + orbitalModes.length) % orbitalModes.length;
-			this.pokemon.changeTargetMode(orbitalModes[index]);
-			this.update();
-			playSound('option', 'ui');
-			return;
-		}
-
 		let index = TARGET_MODES.findIndex((targetMode) => targetMode == this.pokemon.targetMode);
 		let indexMax = (this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
 		let indexMin = 0;

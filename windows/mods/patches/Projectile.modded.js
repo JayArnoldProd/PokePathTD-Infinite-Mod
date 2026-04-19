@@ -11,8 +11,11 @@ export class Projectile extends Sprite {
         // MOD: Scale projectile speed with attack rate — faster attacks = faster projectiles
         // Smooth linear ramp: 1x at 500ms+ recharge, 10x at 50ms recharge
         // Prevents high-wave enemies from outrunning bullets at machine-gun fire rates
-        if (tower?.speed && tower.speed < 500) {
+        if (tower?.speed && tower.speed > 0 && tower.speed < 500) {
             baseSpeed *= (500 / tower.speed);
+        }
+        if (!Number.isFinite(baseSpeed) || baseSpeed <= 0) {
+            baseSpeed = rawSpeed <= 30 ? rawSpeed * 60 : 300;
         }
         this.speed = baseSpeed;
 
@@ -49,6 +52,7 @@ export class Projectile extends Sprite {
             this.angle = this.orbit.startAngle ?? 0;
             this.orbitRadius = this.orbit.radius ?? 28;
             this.angularSpeed = this.orbit.angularSpeed ?? (Math.PI * 2);
+            if (this.tower?.pokemon?.item?.id == 'inverter') this.angularSpeed = -1 * Math.abs(this.angularSpeed);
             this.orbitDuration = this.orbit.duration ?? Infinity;
             this.orbitHitCooldown = this.orbit.hitCooldown ?? 300;
             this.perEnemyLastHit = new WeakMap();

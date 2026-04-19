@@ -1,12 +1,12 @@
 {
-    "version": "1.5.2",
-    "game_version": "1.5.2",
-    "release_date": "2026-04-16",
+    "version": "1.5.3",
+    "game_version": "1.5.3",
+    "release_date": "2026-04-18",
     "changes": [
-        "Validated Windows compatibility against live PokePath TD 1.5.2 vanilla files",
-        "Updated installer vanilla compatibility fingerprints for 1.5.2 PokemonScene.js and Area.js",
-        "Orbital Pokémon now use directional targeting modes (clockwise / counterClockwise) instead of inert target selection",
-        "Orbital direction updates now refresh active orbitals immediately for deployed towers",
+        "Validated Windows compatibility against live PokePath TD 1.5.3 vanilla files",
+        "Updated installer vanilla compatibility fingerprints for 1.5.3 Game.js, Pokemon.js, PokemonScene.js, Area.js, Team.js, and Box.js",
+        "Removed custom orbital direction targeting override now that vanilla 1.5.3 Inverter handles opposite orbital rotation",
+        "Rebased orbital behavior to vanilla 1.5.3 direction logic for compatibility",
         "macOS compatibility for 1.5.x remains pending dedicated validation"
     ]
 }

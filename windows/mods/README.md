@@ -2,7 +2,7 @@
 
 # PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.5.2 on Windows** ✅
+**Compatible with PokePath TD v1.5.3 on Windows** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
@@ -26,7 +26,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **No Star Cap** - Earn as many stars as you physically can
 - **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
 - **Orbital Speed Scaling** - Replaced the unused orbital attack-rate stat with an orbital speed stat that scales infinitely
-- **Orbital Direction Control** - Orbital targeting now cycles between clockwise and counterClockwise orbit directions
 
 ### 🌊 Endless Mode
 - **Continue Button** - After beating wave 100, choose to continue to wave 101+
@@ -120,7 +119,8 @@ A graphical save editor with full control over your game:
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.5.2** (Latest) | Windows | PokePath TD 1.5.2 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.2) |
+| **v1.5.3** (Latest) | Windows | PokePath TD 1.5.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.3) |
+| v1.5.2 | Windows | PokePath TD 1.5.2 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.2) |
 | v1.5.1 | Windows | PokePath TD 1.5.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.1) |
 | **v1.4.4** (older) | Windows | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
 | **v1.4.4** (older) | macOS | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
@@ -142,7 +142,7 @@ A graphical save editor with full control over your game:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.2) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.3) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```
@@ -208,6 +208,10 @@ You can **re-run the installer at any time** to change your mod configuration:
 ---
 
 ## 📋 Full Changelog
+
+### v1.5.3
+- Rebased Windows compatibility fingerprints for vanilla PokePath TD 1.5.3
+- Removed custom orbital direction target-mode override; now aligned to vanilla Inverter orbital direction behavior
 
 ### Game Modifications
 | File | Changes |
