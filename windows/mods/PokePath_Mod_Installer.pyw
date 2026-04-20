@@ -25,15 +25,22 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 GAME_ROOT = SCRIPT_DIR.parent
 RESOURCES = GAME_ROOT / "resources"
 
-# Load version from version.json
-def get_version():
+# Load version metadata from version.json
+def get_version_info():
     version_file = SCRIPT_DIR / "version.json"
+    default_mod_version = '1.4.1'
+    default_game_version = default_mod_version
+
     if version_file.exists():
         with open(version_file, 'r') as f:
-            return json.load(f).get('version', '1.4.1')
-    return '1.4.1'
+            data = json.load(f)
+        mod_version = data.get('version', default_mod_version)
+        game_version = data.get('game_version', mod_version)
+        return mod_version, game_version
 
-MOD_VERSION = get_version()
+    return default_mod_version, default_game_version
+
+MOD_VERSION, GAME_VERSION = get_version_info()
 
 def check_node_installed():
     """Check if Node.js is installed and accessible."""
@@ -388,7 +395,7 @@ class ModInstaller(tk.Tk):
         
         subtitle = tk.Label(
             self,
-            text=f"Mod Installer v{MOD_VERSION}",
+            text=f"Mod Installer v{MOD_VERSION} (Game v{GAME_VERSION})",
             font=('Segoe UI', 12),
             fg='#888888',
             bg='#1a1a2e'

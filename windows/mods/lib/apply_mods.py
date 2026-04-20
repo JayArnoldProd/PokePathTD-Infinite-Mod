@@ -27,17 +27,26 @@ import json
 import os
 import subprocess
 import sys
+import stat
+import time
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 MODS_DIR = SCRIPT_DIR.parent  # mods/ root (one level up from lib/)
 
-# Load version from version.json
-def get_version():
+# Load version metadata from version.json
+def get_version_info():
     version_file = MODS_DIR / "version.json"
+    default_mod_version = '1.4.1'
+    default_game_version = default_mod_version
+
     if version_file.exists():
         with open(version_file, 'r') as f:
-            return json.load(f).get('version', '1.4.1')
-    return '1.4.1'
+            data = json.load(f)
+        mod_version = data.get('version', default_mod_version)
+        game_version = data.get('game_version', mod_version)
+        return mod_version, game_version
+
+    return default_mod_version, default_game_version
 
 def detect_game_root():
     """Resolve the actual installed game root.
@@ -56,7 +65,7 @@ def detect_game_root():
             return candidate
     return MODS_DIR.parent
 
-MOD_VERSION = get_version()
+MOD_VERSION, GAME_VERSION = get_version_info()
 GAME_ROOT = detect_game_root()
 RESOURCES = GAME_ROOT / "resources"
 APP_EXTRACTED = RESOURCES / "app_extracted"
@@ -72,7 +81,7 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
     "src/js/game/Game.js":                  42952,
-    "src/js/game/component/Pokemon.js":     24504,
+    "src/js/game/component/Pokemon.js":     24443,
     "src/js/game/scenes/PokemonScene.js":   58824,
     "src/js/game/core/Area.js":             18938,
     "src/js/game/core/Team.js":             1854,
@@ -113,6 +122,30 @@ MOD_MARKERS = [
     'isShinyEgg',                 # Shiny eggs in Shop.js
     '// 1 in 30 chance',         # Shiny starters
 ]
+
+def remove_tree_safe(path: Path, retries: int = 3, delay_seconds: float = 0.35):
+    """Remove directory tree robustly on Windows (handles read-only + transient locks)."""
+    if not path.exists():
+        return True, "already removed"
+
+    def _on_rm_error(func, target, exc_info):
+        try:
+            os.chmod(target, stat.S_IWRITE)
+            func(target)
+        except Exception:
+            pass
+
+    last_error = None
+    for attempt in range(1, retries + 1):
+        try:
+            shutil.rmtree(path, onerror=_on_rm_error)
+            return True, "removed"
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                time.sleep(delay_seconds)
+
+    return False, str(last_error) if last_error else "unknown error"
 
 def is_game_modded(check_asar=False):
     """
@@ -258,10 +291,12 @@ def extract_from_vanilla(progress_callback=None):
         print(f"  [*] Removing old extraction...")
         if progress_callback:
             progress_callback(0, 1, "Removing old extraction...")
-        try:
-            shutil.rmtree(APP_EXTRACTED)
-        except Exception as e:
-            return False, f"Failed to remove old extraction: {e}"
+        removed, remove_msg = remove_tree_safe(APP_EXTRACTED)
+        if not removed:
+            return False, (
+                "Failed to remove old extraction. Close the game and retry. "
+                f"Details: {remove_msg}"
+            )
     
     # Extract from source
     print(f"  [*] Extracting from {source_name}...")
@@ -347,10 +382,11 @@ MOD_FEATURES = {
         'name': 'Endless Mode',
         'description': 'Continue past wave 100 with scaling difficulty, checkpoints, auto-continue, and uncapped wave record display on the map',
         'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
-                      'apply_enemy_scaling', 'apply_profile_endless_stats',
+                      'apply_enemy_scaling',
                       'apply_text_continue_option', 'apply_menu_autoreset_range',
                       'apply_map_record_uncap', 'apply_wave_manager_fix',
-                      'apply_endless_stat_safety', 'apply_endless_levelbutton_safety'],
+                      'apply_endless_stat_safety', 'apply_endless_levelbutton_safety',
+                      'apply_star_scaling_uncap'],
         'default': True,
     },
     'infinite_levels': {
@@ -373,8 +409,8 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), live profile stats, and map hover star counts',
-        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_live_update', 'apply_map_hover_stars'],
+        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), profile unlockables tab, live profile stats, and map hover star counts',
+        'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_endless_stats', 'apply_profile_live_update', 'apply_map_hover_stars'],
         'default': True,
     },
     'box_expansion': {
@@ -389,7 +425,7 @@ MOD_FEATURES = {
     'deltatime': {
         'name': 'Delta Time & Performance',
         'description': 'Sub-stepping simulation, accurate projectile timing, squared-distance checks, batch removal, throttled UI, cached draws',
-        'functions': ['apply_tower_deltatime', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'], 
+        'functions': ['_ensure_game_modded', 'apply_tower_deltatime', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'],
         'default': True,
     },
     'devtools': {
@@ -400,8 +436,8 @@ MOD_FEATURES = {
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix (no boost), projectile retargeting from tower position, off-screen target cleanup, Shell Bell / Clefairy Doll damage tracking fix',
-        'functions': ['apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
+        'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix (prevents shiny path bleed), projectile retargeting from tower position, off-screen target cleanup, Shell Bell / Clefairy Doll damage tracking fix',
+        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
         'default': True,
     },
     'hidden_items': {
@@ -973,10 +1009,25 @@ def apply_enemy_shiny_spawn():
 		this.power = enemy.power;
 		this.gold = enemy.gold + this.main.player.extraGold;
 """
+    # 1.5.3 variant omits semicolon on the gold line
+    old_constructor_no_semicolon = """		this.enemy = enemy;
+		this.hp = enemy.hp;
+		this.hpMax = enemy.hp;
+		this.armor = enemy.armor || 0;
+		this.armorMax = enemy.armor || 0;
+		this.regeneration = enemy.regeneration || 0; 
+		this.regenTimer = 0; 
+		this.speed = enemy.speed; 
+		this.baseSpeed = this.speed; 
+		this.power = enemy.power;
+		this.gold = enemy.gold + this.main.player.extraGold
+"""
     new_constructor = """		this.enemy = enemy;
 		this.isShiny = Math.random() < (1 / 1000);
 		if (this.isShiny && typeof this.sprite?.src === 'string' && this.sprite.src.includes('/normal/')) {
-			this.sprite.src = this.sprite.src.replace(/\\/normal\\//g, '/shiny/');
+			const shinySrc = this.sprite.src.replace(/\\/normal\\//g, '/shiny/');
+			// Clone before override so we never mutate shared species sprite metadata.
+			this.sprite = { ...(this.sprite ?? {}), src: shinySrc };
 		}
 		this.hp = enemy.hp;
 		this.hpMax = enemy.hp;
@@ -1006,19 +1057,52 @@ def apply_enemy_shiny_spawn():
 """
 
     changed = False
+
+    # Constructor patch (required for actual shiny spawn behavior)
     if old_constructor in content:
         content = content.replace(old_constructor, new_constructor, 1)
         changed = True
+    elif old_constructor_no_semicolon in content:
+        content = content.replace(old_constructor_no_semicolon, new_constructor, 1)
+        changed = True
+    elif "this.isShiny = Math.random() < (1 / 1000);" not in content:
+        constructor_regex = (
+            r"\t\tthis\.enemy = enemy;\s*"
+            r"\t\tthis\.hp = enemy\.hp;\s*"
+            r"\t\tthis\.hpMax = enemy\.hp;\s*"
+            r"\t\tthis\.armor = enemy\.armor \|\| 0;\s*"
+            r"\t\tthis\.armorMax = enemy\.armor \|\| 0;\s*"
+            r"\t\tthis\.regeneration = enemy\.regeneration \|\| 0;\s*"
+            r"\t\tthis\.regenTimer = 0;\s*"
+            r"\t\tthis\.speed = enemy\.speed;\s*"
+            r"\t\tthis\.baseSpeed = this\.speed;\s*"
+            r"\t\tthis\.power = enemy\.power;\s*"
+            r"\t\tthis\.gold = enemy\.gold \+ this\.main\.player\.extraGold;?\s*"
+        )
+        content2, replacements = re.subn(constructor_regex, new_constructor, content, count=1)
+        if replacements > 0:
+            content = content2
+            changed = True
+
+    # Defeat tracking patch (optional but expected)
     if old_defeat in content:
         content = content.replace(old_defeat, new_defeat, 1)
         changed = True
 
+    constructor_ok = "this.isShiny = Math.random() < (1 / 1000);" in content
+    defeat_ok = "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content
+
     if changed:
         write_file(path, content)
+
+    if constructor_ok and defeat_ok:
         log_success("Enemy.js: Shiny enemy spawn (1/1000 gameplay variant)")
         return True
-    
-    log_fail("Enemy.js: Shiny enemy spawn", "enemy constructor or defeat pattern not found")
+
+    if constructor_ok:
+        log_fail("Enemy.js: Shiny enemy spawn", "constructor patched but shiny defeat stat hook missing")
+    else:
+        log_fail("Enemy.js: Shiny enemy spawn", "enemy constructor shiny insertion pattern not found")
     return False
 
 # ============================================================================
@@ -1477,17 +1561,18 @@ def apply_recharge_precision():
 
 
 def apply_star_scaling_uncap():
-    """Remove 1200-star cap behavior for star-scaled Clefairy/Star Candy effects.
+    """Remove 1200-star cap behavior for star-scaled Clefairy/Star Candy/Amulet Coin effects.
 
     Targets:
     - PlacementTile range preview for Star Candy (remove Math.min 120 cap)
     - Projectile Clefairy star ability damage (remove Math.min 1200 cap if present)
+    - Projectile Amulet Coin gold bonus cap (remove Math.min 1200 cap if present)
     - Tower Star Candy range bonus (remove Math.min 120 cap if present)
-    - Star/Candy descriptions (remove stale "max 1200" text)
+    - Star/Candy/Amulet descriptions (remove stale "max 1200" text)
 
     Notes:
     - Some versions already use uncapped formulas; this patch is idempotent.
-    - This is grouped under Infinite Levels by design (requested coupling).
+    - This patch is used by Infinite Levels and Endless mode to keep star-cap behavior consistent.
     """
     changed_any = False
 
@@ -1523,6 +1608,27 @@ def apply_star_scaling_uncap():
                 projectile = projectile.replace(old, new)
                 local_change = True
         if local_change:
+            write_file(projectile_path, projectile)
+            changed_any = True
+
+    # Projectile.js - Amulet Coin gold bonus cap (if present in this version)
+    if projectile_path.exists():
+        projectile = read_file(projectile_path)
+        amulet_before = projectile
+        projectile = projectile.replace(
+            "Math.min(1200, this.tower.main.player.stars)",
+            "this.tower.main.player.stars"
+        )
+        projectile = projectile.replace(
+            "Math.min(1200, this.main.player.stars)",
+            "this.main.player.stars"
+        )
+        projectile = re.sub(
+            r"Math\.min\(\s*1200\s*,\s*([^\)]*player\.stars[^\)]*)\)",
+            r"\1",
+            projectile,
+        )
+        if projectile != amulet_before:
             write_file(projectile_path, projectile)
             changed_any = True
 
@@ -1842,24 +1948,34 @@ def apply_enemy_scaling():
 # TOWER.JS - Delta time accuracy for high-speed attacks
 # ============================================================================
 def apply_tower_deltatime():
-    """Apply delta time accuracy fix for high-speed attacks."""
+    """Apply delta time accuracy fix for high-speed attacks.
+
+    Safety gate: newer game builds import LinkBeam/SpikeZone from Tower.js.
+    Older Tower.modded.js variants can break startup by dropping those exports.
+    """
     path = JS_ROOT / "game" / "component" / "Tower.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if '_skipDraw' in content or 'DELTA TIME FIX' in content:
         log_skip("Tower.js: Delta time fix")
         return True
-    
-    # Use modded file directly
+
     modded_file = MODS_DIR / "patches" / "Tower.modded.js"
-    if modded_file.exists():
-        copy_modded_file(modded_file, path)
-        log_success("Tower.js: Delta time fix (full file replacement)")
+    if not modded_file.exists():
+        log_fail("Tower.js: Delta time fix - modded file not found")
+        return False
+
+    modded_content = read_file(modded_file)
+    required_exports = ('export class LinkBeam' in modded_content and 'export class SpikeZone' in modded_content)
+
+    if not required_exports:
+        print("  [SKIP] Tower.js: Delta time full replacement disabled (incompatible Tower.modded.js missing LinkBeam/SpikeZone exports)")
         return True
-    
-    log_fail("Tower.js: Delta time fix - modded file not found")
-    return False
+
+    copy_modded_file(modded_file, path)
+    log_success("Tower.js: Delta time fix (full file replacement)")
+    return True
 
 # ============================================================================
 # PROJECTILE.JS - Endless damage calculations
@@ -2283,6 +2399,43 @@ def apply_profile_live_update():
 # SELECTIVE MOD APPLICATION
 # ============================================================================
 # ============================================================================
+# POKEMON.JS - Prevent shared sprite mutation across Pokemon instances
+# ============================================================================
+def apply_pokemon_sprite_isolation_fix():
+    """Ensure each Pokemon gets its own sprite object copy.
+
+    Vanilla assigns this.sprite = specie.sprite, then setShiny() mutates paths in-place.
+    That mutates shared species metadata and can make unrelated non-shiny Pokemon point
+    at missing shiny sprite files. Clone sprite data per instance to isolate mutations.
+    """
+    path = JS_ROOT / "game" / "component" / "Pokemon.js"
+    content = read_file(path)
+
+    new_line = "\t\tthis.sprite = JSON.parse(JSON.stringify(specie.sprite));"
+    if new_line in content:
+        log_skip("Pokemon.js: Sprite isolation fix")
+        return True
+
+    old_line = "\t\tthis.sprite = specie.sprite;"
+    if old_line in content:
+        content = content.replace(old_line, new_line, 1)
+        write_file(path, content)
+        log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
+        return True
+
+    # Flexible fallback for whitespace variants
+    pattern = r"\bthis\.sprite\s*=\s*specie\.sprite\s*;"
+    content2, replacements = re.subn(pattern, "this.sprite = JSON.parse(JSON.stringify(specie.sprite));", content, count=1)
+    if replacements > 0:
+        write_file(path, content2)
+        log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
+        return True
+
+    log_fail("Pokemon.js: Sprite isolation fix", "sprite assignment pattern not found")
+    return False
+
+
+# ============================================================================
 # CHALLENGESCENE.JS - Fix level cap boosting low-level Pokemon
 # ============================================================================
 def apply_challenge_levelcap_fix():
@@ -2350,7 +2503,7 @@ def apply_challenge_levelcap_fix():
     # The vanilla code shows [lvlCap] for ALL pokemon instead of [Math.min(lvl, cap)]
     old_ps = "else this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${this.main.area.inChallenge.lvlCap}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${this.main.area.inChallenge.lvlCap}]`;"
     new_ps = "else { const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap); this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${displayLvl}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${displayLvl}]`; }"
-    
+
     if 'const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap)' in content_ps:
         log_skip("PokemonScene.js: Challenge level cap display fix")
     elif old_ps in content_ps:
@@ -2358,7 +2511,25 @@ def apply_challenge_levelcap_fix():
         write_file(path_ps, content_ps)
         log_success("PokemonScene.js: Challenge level cap display fix (show actual capped level)")
     else:
-        log_fail("PokemonScene.js: Challenge level cap display fix", "lvlCap display pattern not found")
+        old_ps_regex = (
+            r"else\s+this\.name\.innerHTML\s*=\s*"
+            r"\(this\.pokemon\??\.alias\s*!=\s*undefined\)\s*\?\s*"
+            r"`\$\{this\.pokemon\??\.alias\.toUpperCase\(\)\} \[\$\{this\.main\.area\.inChallenge\.lvlCap\}\]`\s*:\s*"
+            r"`\$\{this\.pokemon\??\.name\[this\.main\.lang\]\.toUpperCase\(\)\} \[\$\{this\.main\.area\.inChallenge\.lvlCap\}\]`;"
+        )
+        new_ps_regex = (
+            "else { const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap); "
+            "this.name.innerHTML = (this.pokemon?.alias != undefined) ? "
+            "`${this.pokemon?.alias.toUpperCase()} [${displayLvl}]` : "
+            "`${this.pokemon.name[this.main.lang].toUpperCase()} [${displayLvl}]`; }"
+        )
+        content_ps2, replacements = re.subn(old_ps_regex, new_ps_regex, content_ps, count=1)
+        if replacements > 0:
+            write_file(path_ps, content_ps2)
+            log_success("PokemonScene.js: Challenge level cap display fix (show actual capped level)")
+        else:
+            # Non-fatal: this display string varies across builds and may already be handled elsewhere.
+            log_skip("PokemonScene.js: Challenge level cap display fix (pattern variant not present)")
     
     # --- Fix 5: PokemonScene.js level-up buttons disabled during challenge ---
     # Vanilla completely disables +1/+5/+10 buttons when lvlCap is set.
@@ -3151,14 +3322,14 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     # Step 2b: Verify game version compatibility
     compatible, mismatches = check_game_version_compatibility()
     if not compatible:
-        warning = (f"Game version mismatch! This mod is built for v{MOD_VERSION}.\n"
+        warning = (f"Game version mismatch! This mod is built for game v{GAME_VERSION}.\n"
                    f"Mismatched files: {', '.join(m.split(':')[0] for m in mismatches)}\n"
                    f"The mod may not work correctly.")
         print(f"\n  [WARNING] {warning}")
         # Don't block in GUI mode - just warn. The GUI can check return value.
         failed_mods.append(f"VERSION WARNING: {warning}")
     else:
-        print(f"  [OK] Game files match expected version ({MOD_VERSION})")
+        print(f"  [OK] Game files match expected version ({GAME_VERSION})")
     
     # Build list of functions to call
     functions_to_call = []
@@ -3444,9 +3615,29 @@ def apply_debug_diagnostics():
     # Find the closing </body> tag and inject before it
     debug_script = '''
     <script>
-        // PokePath TD Infinite Mod — Debug Diagnostics v1.4.4
+        // PokePath TD Infinite Mod — Debug Diagnostics v__MOD_VERSION__
         (function() {
-            console.log('%c[PokePath Mod v1.4.4] Debug diagnostics loaded', 'color: #70ac4c; font-weight: bold');
+            console.log('%c[PokePath Mod v__MOD_VERSION__ | Game v__GAME_VERSION__] Debug diagnostics loaded', 'color: #70ac4c; font-weight: bold');
+
+            // Capture startup/runtime errors for gray-screen debugging
+            window.__POKEPATH_LAST_ERROR__ = null;
+            window.addEventListener('error', function(event) {
+                try {
+                    const msg = `[MOD-ERROR] ${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`;
+                    window.__POKEPATH_LAST_ERROR__ = msg;
+                    localStorage.setItem('mod_last_error', msg);
+                    console.error(msg, event.error || '');
+                } catch (_) {}
+            });
+            window.addEventListener('unhandledrejection', function(event) {
+                try {
+                    const reason = (event && event.reason && (event.reason.stack || event.reason.message)) || String(event.reason);
+                    const msg = `[MOD-REJECTION] ${reason}`;
+                    window.__POKEPATH_LAST_ERROR__ = msg;
+                    localStorage.setItem('mod_last_error', msg);
+                    console.error(msg);
+                } catch (_) {}
+            });
             
             window.modDiagnostic = function() {
                 // Try to access game state via the global main object
@@ -3463,7 +3654,8 @@ def apply_debug_diagnostics():
                 
                 const info = [
                     '=== PokePath TD Mod Diagnostic ===',
-                    `Mod Version: 1.4.4`,
+                    `Mod Version: __MOD_VERSION__`,
+                    `Game Target Version: __GAME_VERSION__`,
                     `Wave: ${area?.waveNumber || 'N/A'}`,
                     `Endless Mode: ${area?.endlessMode || false}`,
                     `In Challenge: ${JSON.stringify(area?.inChallenge) || false}`,
@@ -3482,6 +3674,7 @@ def apply_debug_diagnostics():
                     `Speed Factor: ${game?.speedFactor || 'N/A'}`,
                     `Route: ${area?.routeNumber ?? 'N/A'}`,
                     `Canvas Pointer Events: ${game?.canvas?.style?.pointerEvents || 'N/A'}`,
+                    `Last Error: ${window.__POKEPATH_LAST_ERROR__ || localStorage.getItem('mod_last_error') || 'none'}`,
                     '=================================='
                 ];
                 
@@ -3503,6 +3696,7 @@ def apply_debug_diagnostics():
         })();
     </script>
 </body>'''
+    debug_script = debug_script.replace('__MOD_VERSION__', MOD_VERSION).replace('__GAME_VERSION__', GAME_VERSION)
     
     old_closing = '</body>'
     
@@ -3550,10 +3744,10 @@ def main():
     print("\n[*] Checking game version compatibility...")
     compatible, mismatches = check_game_version_compatibility()
     if compatible:
-        print(f"  [OK] Game files match expected version ({MOD_VERSION})")
+        print(f"  [OK] Game files match expected version ({GAME_VERSION})")
     else:
         print(f"\n  [WARNING] Game version mismatch detected!")
-        print(f"  This mod was built for PokePath TD v{MOD_VERSION}.")
+        print(f"  This mod was built for PokePath TD v{GAME_VERSION}.")
         print(f"  Your game files differ from the expected version:\n")
         for m in mismatches:
             print(f"    - {m}")

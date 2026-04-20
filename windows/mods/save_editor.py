@@ -14,15 +14,22 @@ import shutil
 import subprocess
 from pathlib import Path
 
-# Load version from version.json
-def get_version():
+# Load version metadata from version.json
+def get_version_info():
     version_file = Path(__file__).parent / "version.json"
+    default_mod_version = '1.4.1'
+    default_game_version = default_mod_version
+
     if version_file.exists():
         with open(version_file, 'r') as f:
-            return json.load(f).get('version', '1.4.1')
-    return '1.4.1'
+            data = json.load(f)
+        mod_version = data.get('version', default_mod_version)
+        game_version = data.get('game_version', mod_version)
+        return mod_version, game_version
 
-MOD_VERSION = get_version()
+    return default_mod_version, default_game_version
+
+MOD_VERSION, GAME_VERSION = get_version_info()
 
 try:
     from PIL import Image, ImageTk
@@ -623,7 +630,7 @@ class PokemonCell(tk.Frame):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f"PokePath TD Save Editor v{MOD_VERSION}")
+        self.title(f"PokePath TD Save Editor v{MOD_VERSION} (Game v{GAME_VERSION})")
         self.geometry("1100x800")
         self.configure(bg='#2b2b2b')
         

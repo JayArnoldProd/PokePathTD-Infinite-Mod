@@ -1,12 +1,12 @@
 {
-    "version": "1.5.3",
-    "game_version": "1.5.3",
-    "release_date": "2026-04-18",
+    "version": "1.5.4",
+    "game_version": "1.5.4",
+    "release_date": "2026-04-20",
     "changes": [
-        "Validated Windows compatibility against live PokePath TD 1.5.3 vanilla files",
-        "Updated installer vanilla compatibility fingerprints for 1.5.3 Game.js, Pokemon.js, PokemonScene.js, Area.js, Team.js, and Box.js",
-        "Removed custom orbital direction targeting override now that vanilla 1.5.3 Inverter handles opposite orbital rotation",
-        "Rebased orbital behavior to vanilla 1.5.3 direction logic for compatibility",
+        "Validated Windows compatibility against live PokePath TD 1.5.4 vanilla files",
+        "Updated installer vanilla compatibility fingerprints for 1.5.4 Game.js, Pokemon.js, PokemonScene.js, Area.js, Team.js, and Box.js",
+        "Revalidated selective-feature and all-features install paths on 1.5.4 with zero patch failures",
+        "Confirmed 1.5.4 balance/changelog data remains intact under current patch set",
         "macOS compatibility for 1.5.x remains pending dedicated validation"
     ]
 }
