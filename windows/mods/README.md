@@ -2,13 +2,18 @@
 
 # PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.5.3 on Windows** ✅
+**Compatible with PokePath TD v1.5.4 on Windows** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
 > **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
+>
+> **Windows v1.5.4 refresh (2026-04-21):**
+> - Save Editor upgrades for item slot editing/manipulation
+> - Save Editor route + wave set support
+> - Stability/UX polish over the previous v1.5.4 package
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -105,6 +110,10 @@ A graphical save editor with full control over your game:
 - **Add / Delete** - Manage roster
 - **Runtime Sprite Fallback** - Newer 1.5 species render even when not in bundled sprite patch folders
 
+### Items + Progress Controls
+- **Item Slot Editing** - Add/manipulate inventory item slots from the Items tab
+- **Route/Wave Setters** - Directly set route and wave values in save data
+
 ### Usage
 1. **Close the game first!**
 2. Run `PokePath_ModManager.bat`
@@ -115,13 +124,22 @@ A graphical save editor with full control over your game:
 
 ---
 
+## 🔄 Restore Vanilla / Change Features
+You can **re-run the installer at any time** to change your mod configuration:
+- **Add/remove individual features** — just check/uncheck and reinstall
+- **Fully uninstall the mod** — deselect all features and the button changes to **"Restore Vanilla"**, which restores your game to its original unmodded state
+- **Your save data is always safe** — saves are stored separately and never touched by the installer
+- **No need to reinstall the game** — the installer keeps a backup of your vanilla game files and re-extracts from it every time, so you can freely switch between modded and unmodded
+
+---
+
 ## 📥 Downloads
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.5.3** (Latest) | Windows | PokePath TD 1.5.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.3) |
+| **v1.5.4** (Latest) | Windows | PokePath TD 1.5.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.4) |
+| v1.5.3 | Windows | PokePath TD 1.5.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.3) |
 | v1.5.2 | Windows | PokePath TD 1.5.2 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.2) |
-| v1.5.1 | Windows | PokePath TD 1.5.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.1) |
 | **v1.4.4** (older) | Windows | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
 | **v1.4.4** (older) | macOS | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
 | v1.4.3 | Windows | PokePath TD 1.4.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.3) |
@@ -142,7 +160,7 @@ A graphical save editor with full control over your game:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.3) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.4) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```
@@ -198,45 +216,35 @@ A graphical save editor with full control over your game:
 
 > See `README.md` inside the Mac mod folder for detailed macOS instructions, save editor usage, and troubleshooting.
 
-### 🔄 Restore Vanilla / Change Features
-You can **re-run the installer at any time** to change your mod configuration:
-- **Add/remove individual features** — just check/uncheck and reinstall
-- **Fully uninstall the mod** — deselect all features and the button changes to **"Restore Vanilla"**, which restores your game to its original unmodded state
-- **Your save data is always safe** — saves are stored separately and never touched by the installer
-- **No need to reinstall the game** — the installer keeps a backup of your vanilla game files and re-extracts from it every time, so you can freely switch between modded and unmodded
+## 📋 Release Notes (Windows v1.5.4)
 
----
+This release notes section covers the main additions delivered across the Windows 1.5 update track.
 
-## 📋 Full Changelog
+### New and Expanded Features
+- Endless mode flow improvements (continue/restart behavior, wave progression beyond 100, checkpoint support)
+- Infinite-level gameplay scaling updates for cost/stat progression and late-wave pacing
+- Dedicated **Shiny Enemies** feature path with profile tracking
+- Expanded shiny sprite coverage for non-max-evolution species
+- Unlockables/Profile improvements, including challenge reward and secret tracking support
+- Orbital direction behavior aligned with vanilla 1.5.3+ expectations
 
-### v1.5.3
-- Rebased Windows compatibility fingerprints for vanilla PokePath TD 1.5.3
-- Removed custom orbital direction target-mode override; now aligned to vanilla Inverter orbital direction behavior
+### Save Editor Improvements
+- 1.5 roster refresh and broader species compatibility handling
+- Runtime sprite fallback support for newer species
+- Item-slot editing/manipulation tools in the Items tab
+- Route and wave setter support for save progression editing
+- Stability and UX polish pass for item/pokemon editing workflows
 
-### Game Modifications
-| File | Changes |
-|------|---------|
-| `Game.js` | Speed options 2x/3x/5x/10x with text display |
-| `Pokemon.js` | Level cap removed, asymptotic speed scaling, cost formula |
-| `UI.js` | Level-up button works past 100, item/save tooltips |
-| `PokemonScene.js` | +1/+5/+10 buttons work at any level, no MAX display |
-| `Area.js` | Endless mode flag, power budget wave spawning, boss/escort waves, tower placement persistence |
-| `DefeatScene.js` | Checkpoints every 50 waves in endless |
-| `FinalScene.js` | Continue/Restart buttons, auto-continue logic |
-| `Shop.js` | 1/30 shiny egg chance |
-| `ShopScene.js` | Shiny reveal display with sparkle |
-| `NewGameScene.js` | 1/30 shiny starter chance |
-| `MenuScene.js` | Auto-reset has 4 options (Off/Restart/Retry/Continue) |
-| `text.js` | "Continue" text in all languages |
-| `Enemy.js` | Endless HP/armor scaling, speed scaling, regeneration |
-| `Tower.js` | Delta time accuracy for high-speed attacks |
-| `Projectile.js` | Endless damage calculations, off-screen targeting fix |
-| `Tooltip.js` | Enhanced tooltip for items |
+### Compatibility + Installer
+- Windows compatibility rebases through game version 1.5.4
+- Updated installer compatibility fingerprints and diagnostics metadata
+- Continued support for feature mix-and-match install, selective uninstall, and vanilla restore flow
 
-### Shiny Sprite Generation
-- Auto-detects color mappings from existing shiny sprites
-- Generates accurate shinies for ~100 non-evolved Pokemon
-- Preserves original game shinies for fully-evolved Pokemon
+### Included Bug Fixes
+- Off-screen projectile targeting constraints
+- Projectile retargeting range safety checks
+- Challenge mode level-cap behavior corrections
+- Tower placement persistence and related UI/QoL fixes included in the 1.5 patch line
 
 ---
 

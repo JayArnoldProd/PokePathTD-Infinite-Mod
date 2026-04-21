@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 PokePath TD Save Editor
-- Complete All Stages button (1200 stars)
+- Complete All Stages button (2000 stars)
 - Editable Gold
 - Delete All Pokemon button
 - Global Mods section at top for visibility
@@ -9,7 +9,9 @@ PokePath TD Save Editor
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import copy
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -49,7 +51,8 @@ except ImportError:
 # CONSTANTS
 # ============================================================================
 
-GRID_COLS = 7
+DEFAULT_GRID_COLS = 7
+CELL_PAD = 2
 TEAM_SLOTS = 10
 BOX_SLOTS = 200  # Increased from 64 to support unlock all
 CELL_SIZE = 58  # Fixed cell size
@@ -130,6 +133,8 @@ SCRIPT_DIR = Path(__file__).parent
 TEMP_SAVE = SCRIPT_DIR / 'lib' / 'current_save.json'
 POKEMON_DATA_FILE = SCRIPT_DIR / 'dev' / 'pokemon_data.json'
 SAVE_HELPER = SCRIPT_DIR / 'lib' / 'save_helper.js'
+ROUTE_DATA_FILE = (PATHS.get('game_root') / 'resources' / 'app_extracted' / 'src' / 'js' / 'game' / 'data' / 'routeData.js') if PATHS.get('game_root') else None
+ITEM_DATA_FILE = (PATHS.get('game_root') / 'resources' / 'app_extracted' / 'src' / 'js' / 'game' / 'data' / 'itemData.js') if PATHS.get('game_root') else None
 
 # Auto-detect if game is modded (uses separate save location)
 def _is_game_modded():
@@ -160,6 +165,67 @@ INSTALLED_FEATURES = _get_installed_features()
 def _has_feature(key):
     """Check if a specific mod feature is installed."""
     return key in INSTALLED_FEATURES
+
+
+def _load_route_options():
+    """Load route labels from routeData.js (route id + display order + English name)."""
+    route_options = []
+    if not ROUTE_DATA_FILE or not ROUTE_DATA_FILE.exists():
+        return route_options
+
+    try:
+        text = ROUTE_DATA_FILE.read_text(encoding='utf-8', errors='replace')
+        pattern = re.compile(
+            r"id\s*:\s*(\d+).*?order\s*:\s*(\d+).*?name\s*:\s*\[\s*'([^']+)'",
+            re.DOTALL,
+        )
+
+        found = {}
+        for match in pattern.finditer(text):
+            route_id = int(match.group(1))
+            order = int(match.group(2))
+            english_name = match.group(3).strip()
+            found[route_id] = {
+                'id': route_id,
+                'order': order,
+                'name': english_name,
+            }
+
+        route_options = sorted(found.values(), key=lambda x: (x['order'], x['id']))
+    except Exception:
+        pass
+
+    return route_options
+
+
+def _load_item_catalog_from_data():
+    """Load base item definitions from itemData.js."""
+    catalog = {}
+    if not ITEM_DATA_FILE or not ITEM_DATA_FILE.exists():
+        return catalog
+
+    try:
+        text = ITEM_DATA_FILE.read_text(encoding='utf-8', errors='replace')
+        pattern = re.compile(
+            r"id\s*:\s*'([^']+)'.*?name\s*:\s*\[\s*['\"]([^'\"]+)['\"].*?sprite\s*:\s*'([^']+)'",
+            re.DOTALL,
+        )
+
+        for match in pattern.finditer(text):
+            item_id = match.group(1).strip()
+            display_name = match.group(2).strip()
+            sprite = match.group(3).strip()
+            if item_id:
+                catalog[item_id] = {
+                    'id': item_id,
+                    'name': [display_name],
+                    'sprite': sprite,
+                    'isEquipable': True,
+                }
+    except Exception:
+        pass
+
+    return catalog
 
 
 def _ensure_node_save_deps():
@@ -356,6 +422,88 @@ class SaveData:
             self.data['save']['player'][key] = val
         else:
             self.data['player'][key] = val
+
+    @property
+    def area(self):
+        return self.save_obj.setdefault('area', {}) if self.data else {}
+
+    @property
+    def items(self):
+        if not self.data:
+            return []
+
+        player = self.player
+        if isinstance(player, dict):
+            items = player.get('items')
+            if isinstance(items, list):
+                return items
+            player['items'] = []
+            return player['items']
+
+        return self.save_obj.setdefault('items', [])
+
+    @property
+    def shop(self):
+        return self.save_obj.get('shop', {}) if self.data else {}
+
+    def get_current_route_number(self):
+        area = self.area
+        try:
+            route_number = int(area.get('routeNumber', 0) or 0)
+        except Exception:
+            route_number = 0
+        return max(0, route_number)
+
+    def get_current_wave_number(self):
+        area = self.area
+        route_number = self.get_current_route_number()
+        route_waves = area.setdefault('routeWaves', [])
+        if len(route_waves) <= route_number:
+            route_waves.extend([1] * (route_number + 1 - len(route_waves)))
+        try:
+            wave = int(route_waves[route_number])
+        except Exception:
+            wave = 1
+        return max(1, wave)
+
+    def set_route_and_wave(self, route_number, wave_number):
+        if not self.data:
+            return
+
+        route_number = max(0, int(route_number))
+        wave_number = max(1, int(wave_number))
+
+        area = self.area
+        route_waves = area.setdefault('routeWaves', [])
+        if len(route_waves) <= route_number:
+            route_waves.extend([1] * (route_number + 1 - len(route_waves)))
+
+        area['routeNumber'] = route_number
+        route_waves[route_number] = wave_number
+
+    def set_item_at_slot(self, slot_index, item_obj):
+        if not self.data:
+            return
+        items = self.items
+        while len(items) <= slot_index:
+            items.append(None)
+        items[slot_index] = item_obj
+
+    def get_pokemon_item(self, slot_index):
+        pokemon = self.get_pokemon_at_slot(slot_index)
+        if not isinstance(pokemon, dict):
+            return None
+        item_obj = pokemon.get('item')
+        return item_obj if isinstance(item_obj, dict) else None
+
+    def set_pokemon_item(self, slot_index, item_obj):
+        pokemon = self.get_pokemon_at_slot(slot_index)
+        if not isinstance(pokemon, dict):
+            return
+        if item_obj is None:
+            pokemon.pop('item', None)
+        else:
+            pokemon['item'] = item_obj
 
 # ============================================================================
 # POKEMON DATA
@@ -562,6 +710,7 @@ class PokemonCell(tk.Frame):
                                         highlightthickness=0)
         self.sprite_canvas.pack(pady=(3, 0))
         self.sprite_image = None
+        self.held_item_image = None
         self.sprite_id = None
         
         # Level label
@@ -577,32 +726,51 @@ class PokemonCell(tk.Frame):
     def _on_click(self, event=None):
         self.on_click(self.slot_index)
     
-    def set_pokemon(self, sprite_image, level, is_shiny=False):
+    def set_pokemon(self, sprite_image, level, is_shiny=False, held_item_sprite=None):
         """Update cell with Pokemon data."""
         self.has_pokemon = True
         self.sprite_image = sprite_image
-        
+        self.held_item_image = held_item_sprite
+
         # Clear and redraw sprite
         self.sprite_canvas.delete('all')
         if sprite_image:
             self.sprite_id = self.sprite_canvas.create_image(24, 24, image=sprite_image)
-        
+        if held_item_sprite:
+            self.sprite_canvas.create_image(47, 47, image=held_item_sprite, anchor='se')
+
         # Update level
         color = '#FFD700' if is_shiny else '#FFFFFF'
         self.level_label.config(text=f"Lv{level}", fg=color)
-        
+
         # Set background
         self._update_bg()
     
-    def set_empty(self):
+    def set_item(self, sprite_image, label='item'):
+        """Update cell with item data."""
+        self.has_pokemon = True
+        self.sprite_image = sprite_image
+        self.held_item_image = None
+
+        self.sprite_canvas.delete('all')
+        if sprite_image:
+            self.sprite_id = self.sprite_canvas.create_image(24, 24, image=sprite_image)
+        else:
+            self.sprite_canvas.create_text(24, 24, text="?", font=('Arial', 16), fill='#dddddd')
+
+        self.level_label.config(text=label, fg='#9ad0ff')
+        self._update_bg()
+
+    def set_empty(self, label="empty"):
         """Set cell as empty slot."""
         self.has_pokemon = False
         self.sprite_image = None
-        
+        self.held_item_image = None
+
         self.sprite_canvas.delete('all')
         self.sprite_canvas.create_text(24, 24, text="+", font=('Arial', 16), fill='#444444')
-        self.level_label.config(text="empty", fg='#444444')
-        
+        self.level_label.config(text=label, fg='#444444')
+
         self._update_bg()
     
     def set_selected(self, selected):
@@ -636,8 +804,25 @@ class App(tk.Tk):
         
         self.save = SaveData()
         self.poke_data = PokemonData()
+        self.route_options = _load_route_options()
+        self.route_name_to_number = {}
+        self.route_id_to_display = {}
+        self.valid_route_ids = set()
+        self.base_item_catalog = _load_item_catalog_from_data()
+        self.item_catalog = {}
+        self.item_display_to_id = {}
+        self.item_display_to_obj = {}
+        self.held_item_display_to_obj = {}
+        self.item_sprite_cache = {}
+        self.item_visible_slots = []
+        self.item_cell_to_visible_index = {}
+        self.editor_mode = 'pokemon'  # pokemon | items
+        self.selected_item_slot = None
         self.selected_slot = None
         self.cells = {}  # slot_index -> PokemonCell
+        self.team_cols = TEAM_SLOTS
+        self.box_cols = DEFAULT_GRID_COLS
+        self._relayout_job = None
         
         self.build_ui()
         self.auto_load()
@@ -699,40 +884,72 @@ class App(tk.Tk):
         ttk.Label(stats, text="Stars:").grid(row=0, column=6, padx=5, sticky='e')
         self.stars_var = tk.StringVar(value="0")
         ttk.Label(stats, textvariable=self.stars_var, font=('Arial', 11, 'bold')).grid(row=0, column=7, padx=5, sticky='w')
+
+        # Route/Wave recovery controls
+        ttk.Label(stats, text="Route:").grid(row=1, column=0, padx=5, pady=(8, 0), sticky='e')
+        self.route_var = tk.StringVar(value='')
+        self.route_combo = ttk.Combobox(stats, textvariable=self.route_var, state='readonly', width=16)
+        self.route_combo.grid(row=1, column=1, padx=5, pady=(8, 0), sticky='w')
+
+        ttk.Label(stats, text="Wave:").grid(row=1, column=2, padx=5, pady=(8, 0), sticky='e')
+        self.wave_var = tk.StringVar(value='1')
+        self.wave_entry = ttk.Entry(stats, textvariable=self.wave_var, width=10)
+        self.wave_entry.grid(row=1, column=3, padx=5, pady=(8, 0), sticky='w')
+        self.wave_entry.bind('<Return>', self.set_route_wave)
+
+        route_wave_btns = ttk.Frame(stats)
+        route_wave_btns.grid(row=1, column=4, columnspan=4, padx=5, pady=(8, 0), sticky='w')
+        ttk.Button(route_wave_btns, text='-10', width=5, command=lambda: self.adjust_wave(-10)).pack(side='left', padx=1)
+        ttk.Button(route_wave_btns, text='-1', width=5, command=lambda: self.adjust_wave(-1)).pack(side='left', padx=1)
+        ttk.Button(route_wave_btns, text='+1', width=5, command=lambda: self.adjust_wave(1)).pack(side='left', padx=1)
+        ttk.Button(route_wave_btns, text='+10', width=5, command=lambda: self.adjust_wave(10)).pack(side='left', padx=1)
+        ttk.Button(route_wave_btns, text='Set Route/Wave', command=self.set_route_wave).pack(side='left', padx=(6, 0))
         
+        # Global mode tabs (visible above grids)
+        self.mode_tabs = ttk.Notebook(main)
+        self.mode_tabs.pack(fill='x', pady=(0, 8))
+        self.mode_tabs_pokemon = ttk.Frame(self.mode_tabs, height=1)
+        self.mode_tabs_items = ttk.Frame(self.mode_tabs, height=1)
+        self.mode_tabs.add(self.mode_tabs_pokemon, text='Pokemon')
+        self.mode_tabs.add(self.mode_tabs_items, text='Items')
+        self.mode_tabs.bind('<<NotebookTabChanged>>', self.on_editor_tab_changed)
+        self.bind_all('<F12>', self.debug_ui_state)
+
         # Content
         content = ttk.Frame(main)
         content.pack(fill='both', expand=True)
         
         # Left - Grid
-        left_frame = ttk.LabelFrame(content, text="Pokemon Grid", padding=5)
-        left_frame.pack(side='left', fill='both', expand=True, padx=(0, 10))
+        self.left_frame = ttk.LabelFrame(content, text="Pokemon Grid", padding=5)
+        self.left_frame.pack(side='left', fill='both', expand=True, padx=(0, 10))
         
         # Team section
-        self.team_header = tk.Label(left_frame, text="TEAM (6 slots)", font=('Arial', 9, 'bold'), 
+        self.team_header = tk.Label(self.left_frame, text="TEAM (6 slots)", font=('Arial', 9, 'bold'), 
                                bg='#2b2b2b', fg='#88ff88')
         self.team_header.pack(anchor='w', pady=(0, 5))
         
-        team_grid = tk.Frame(left_frame, bg='#1e1e1e')
-        team_grid.pack(fill='x', pady=(0, 10))
+        self.team_grid = tk.Frame(self.left_frame, bg='#1e1e1e')
+        self.team_grid.pack(fill='x', pady=(0, 10))
         
         for i in range(TEAM_SLOTS):
-            cell = PokemonCell(team_grid, i, self.on_cell_click)
+            cell = PokemonCell(self.team_grid, i, self.on_cell_click)
             cell.grid(row=0, column=i, padx=2, pady=2)
             self.cells[i] = cell
         
         # Box section
-        box_header = tk.Label(left_frame, text="BOX (200 slots)", font=('Arial', 9, 'bold'), 
+        self.box_header = tk.Label(self.left_frame, text="BOX (200 slots)", font=('Arial', 9, 'bold'), 
                               bg='#2b2b2b', fg='#88ff88')
-        box_header.pack(anchor='w', pady=(5, 5))
+        self.box_header.pack(anchor='w', pady=(5, 5))
         
         # Scrollable box frame
-        box_container = tk.Frame(left_frame, bg='#1e1e1e')
-        box_container.pack(fill='both', expand=True)
+        self.box_container = tk.Frame(self.left_frame, bg='#1e1e1e')
+        self.box_container.pack(fill='both', expand=True)
         
-        box_canvas = tk.Canvas(box_container, bg='#1e1e1e', highlightthickness=0)
-        box_scrollbar = ttk.Scrollbar(box_container, orient='vertical', command=box_canvas.yview)
+        box_canvas = tk.Canvas(self.box_container, bg='#1e1e1e', highlightthickness=0)
+        box_scrollbar = ttk.Scrollbar(self.box_container, orient='vertical', command=box_canvas.yview)
         box_inner = tk.Frame(box_canvas, bg='#1e1e1e')
+        self.box_canvas = box_canvas
+        self.box_inner = box_inner
         
         box_canvas.configure(yscrollcommand=box_scrollbar.set)
         box_scrollbar.pack(side='right', fill='y')
@@ -744,10 +961,10 @@ class App(tk.Tk):
         # Create box slots
         for i in range(BOX_SLOTS):
             slot_index = TEAM_SLOTS + i
-            row = i // GRID_COLS
-            col = i % GRID_COLS
+            row = i // DEFAULT_GRID_COLS
+            col = i % DEFAULT_GRID_COLS
             cell = PokemonCell(box_inner, slot_index, self.on_cell_click)
-            cell.grid(row=row, column=col, padx=2, pady=2)
+            cell.grid(row=row, column=col, padx=CELL_PAD, pady=CELL_PAD)
             self.cells[slot_index] = cell
         
         # Right - Editor (with scrollbar for small screens)
@@ -756,119 +973,185 @@ class App(tk.Tk):
         right_outer.pack_propagate(False)
         
         # Create canvas and scrollbar for right panel
-        right_canvas = tk.Canvas(right_outer, bg='#2b2b2b', highlightthickness=0, width=300)
-        right_scrollbar = ttk.Scrollbar(right_outer, orient='vertical', command=right_canvas.yview)
-        right_frame = ttk.Frame(right_canvas)
+        self.right_canvas = tk.Canvas(right_outer, bg='#2b2b2b', highlightthickness=0, width=300)
+        right_scrollbar = ttk.Scrollbar(right_outer, orient='vertical', command=self.right_canvas.yview)
+        right_frame = ttk.Frame(self.right_canvas)
         
-        right_canvas.configure(yscrollcommand=right_scrollbar.set)
+        self.right_canvas.configure(yscrollcommand=right_scrollbar.set)
         right_scrollbar.pack(side='right', fill='y')
-        right_canvas.pack(side='left', fill='both', expand=True)
+        self.right_canvas.pack(side='left', fill='both', expand=True)
         
-        right_canvas.create_window((0, 0), window=right_frame, anchor='nw')
-        right_frame.bind('<Configure>', lambda e: right_canvas.configure(scrollregion=right_canvas.bbox('all')))
+        self.right_canvas.create_window((0, 0), window=right_frame, anchor='nw')
+        right_frame.bind('<Configure>', lambda e: self.right_canvas.configure(scrollregion=self.right_canvas.bbox('all')))
         
         # Enable mouse wheel scrolling on right panel
         def on_right_mousewheel(event):
-            right_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        right_canvas.bind_all('<MouseWheel>', on_right_mousewheel)
+            self.right_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.right_canvas.bind_all('<MouseWheel>', on_right_mousewheel)
         
         # Global Mods at top
         mods_frame = ttk.LabelFrame(right_frame, text="Global Mods", padding=8)
         mods_frame.pack(fill='x', pady=(0, 10), padx=5)
-        
-        # Pokemon form buttons row
-        form_row = ttk.Frame(mods_frame)
+
+        self.pokemon_mods_frame = ttk.Frame(mods_frame)
+        self.pokemon_mods_frame.pack(fill='x', pady=(0, 2))
+
+        # Pokemon-only global actions
+        form_row = ttk.Frame(self.pokemon_mods_frame)
         form_row.pack(fill='x', pady=1)
         ttk.Button(form_row, text="Evolve All", command=self.evolve_all).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(form_row, text="Devolve All", command=self.devolve_all).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(form_row, text="Toggle Shiny", command=self.toggle_all_shiny).pack(side='left', expand=True, fill='x', padx=1)
-        
-        ttk.Button(mods_frame, text="Unlock All Pokemon", command=self.unlock_all).pack(fill='x', pady=1)
-        ttk.Button(mods_frame, text="Max All Levels (Evolve + Lv100)", command=self.max_all).pack(fill='x', pady=1)
-        ttk.Button(mods_frame, text="Complete All Stages (1200 Stars)", command=self.complete_all_stages).pack(fill='x', pady=1)
-        ttk.Button(mods_frame, text="Reset Egg Shop", command=self.reset_eggs).pack(fill='x', pady=1)
-        ttk.Button(mods_frame, text="Delete All Pokemon", command=self.delete_all).pack(fill='x', pady=1)
+
+        ttk.Button(self.pokemon_mods_frame, text="Unlock All Pokemon", command=self.unlock_all).pack(fill='x', pady=1)
+        ttk.Button(self.pokemon_mods_frame, text="Max All Levels (Evolve + Lv100)", command=self.max_all).pack(fill='x', pady=1)
+        ttk.Button(self.pokemon_mods_frame, text="Complete All Stages (2000 Stars)", command=self.complete_all_stages).pack(fill='x', pady=1)
+        ttk.Button(self.pokemon_mods_frame, text="Delete All Pokemon", command=self.delete_all).pack(fill='x', pady=1)
+
+        # Always-visible shared action
+        self.shared_mods_frame = ttk.Frame(mods_frame)
+        self.shared_mods_frame.pack(fill='x', pady=1)
+        ttk.Button(self.shared_mods_frame, text="Reset Egg Shop", command=self.reset_eggs).pack(fill='x', pady=1)
+
+        self.item_mods_frame = ttk.Frame(mods_frame)
+        ttk.Button(self.item_mods_frame, text="Clear All Items", command=self.clear_all_items).pack(fill='x', pady=1)
+        ttk.Button(self.item_mods_frame, text="Unlock All Items", command=self.unlock_all_items).pack(fill='x', pady=1)
         
         ttk.Separator(right_frame, orient='horizontal').pack(fill='x', pady=5, padx=5)
-        
-        self.selected_label = ttk.Label(right_frame, text="Select a slot", font=('Arial', 12))
+
+        self.editor_panel = ttk.Frame(right_frame)
+        self.editor_panel.pack(fill='both', expand=True, padx=5, pady=(0, 10))
+
+        pokemon_tab = ttk.Frame(self.editor_panel)
+        items_tab = ttk.Frame(self.editor_panel)
+        self.pokemon_editor_tab = pokemon_tab
+        self.items_editor_tab = items_tab
+        self.pokemon_editor_tab.pack(fill='both', expand=True)
+
+        self.selected_label = ttk.Label(pokemon_tab, text="Select a slot", font=('Arial', 12))
         self.selected_label.pack(pady=5, padx=5)
-        
+
         # Sprite display
-        self.sprite_display = tk.Canvas(right_frame, width=80, height=80, bg='#1e1e1e', highlightthickness=1)
+        self.sprite_display = tk.Canvas(pokemon_tab, width=80, height=80, bg='#1e1e1e', highlightthickness=1)
         self.sprite_display.pack(pady=5, padx=5)
         self.display_sprite = None
-        
+
         # Species
-        species_frame = ttk.Frame(right_frame)
+        species_frame = ttk.Frame(pokemon_tab)
         species_frame.pack(fill='x', pady=10, padx=5)
-        
+
         ttk.Label(species_frame, text="Species:").pack(anchor='w')
         self.species_var = tk.StringVar()
         self.species_combo = ttk.Combobox(species_frame, textvariable=self.species_var, state='readonly', width=28)
         self.species_combo['values'] = [''] + [self.poke_data.get_display_name(k) for k in self.poke_data.all_pokemon]
         self.species_combo.pack(fill='x', pady=2)
         self.species_combo.bind('<<ComboboxSelected>>', self.on_species_change)
-        
+
         # Level
-        level_frame = ttk.LabelFrame(right_frame, text="Level", padding=10)
+        level_frame = ttk.LabelFrame(pokemon_tab, text="Level", padding=10)
         level_frame.pack(fill='x', pady=10, padx=5)
-        
+
         entry_row = ttk.Frame(level_frame)
         entry_row.pack(fill='x', pady=5)
-        
+
         ttk.Label(entry_row, text="Level:").pack(side='left')
         self.level_var = tk.StringVar(value="1")
         self.level_entry = ttk.Entry(entry_row, textvariable=self.level_var, width=8)
         self.level_entry.pack(side='left', padx=5)
         self.level_entry.bind('<Return>', self.on_level_entry)
         ttk.Button(entry_row, text="Set", command=self.on_level_entry, width=5).pack(side='left')
-        
+
         btn_row = ttk.Frame(level_frame)
         btn_row.pack(fill='x', pady=5)
-        
+
         for delta, text in [(-10, "-10"), (-1, "-1"), (1, "+1"), (10, "+10")]:
             ttk.Button(btn_row, text=text, width=5, command=lambda d=delta: self.change_level(d)).pack(side='left', padx=2)
-        
+
+        held_item_frame = ttk.LabelFrame(pokemon_tab, text="Held Item", padding=8)
+        held_item_frame.pack(fill='x', pady=(0, 10), padx=5)
+        self.held_item_var = tk.StringVar(value='(Empty)')
+        self.held_item_combo = ttk.Combobox(held_item_frame, textvariable=self.held_item_var, state='readonly')
+        self.held_item_combo.pack(fill='x')
+        self.held_item_combo.bind('<<ComboboxSelected>>', self.on_held_item_change)
+
         # Slot Actions (individual Pokemon)
-        slot_actions = ttk.LabelFrame(right_frame, text="Selected Pokemon", padding=5)
+        slot_actions = ttk.LabelFrame(pokemon_tab, text="Selected Pokemon", padding=5)
         slot_actions.pack(fill='x', pady=(5, 15), padx=5)
-        
+
         # Row 1: Evolve, Devolve, Toggle Shiny
         action_row1 = ttk.Frame(slot_actions)
         action_row1.pack(fill='x', pady=2)
         ttk.Button(action_row1, text="Evolve", command=self.evolve_pokemon).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(action_row1, text="Devolve", command=self.devolve_pokemon).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(action_row1, text="Toggle Shiny", command=self.toggle_shiny).pack(side='left', expand=True, fill='x', padx=1)
-        
+
         # Row 1b: Switch Form (for Pokemon with alternate forms like Lycanroc, Aegislash)
         action_row1b = ttk.Frame(slot_actions)
         action_row1b.pack(fill='x', pady=2)
         ttk.Button(action_row1b, text="Switch Form", command=self.switch_form).pack(side='left', expand=True, fill='x', padx=1)
-        
+
         # Row 2: Add Pokemon
         action_row2 = ttk.Frame(slot_actions)
         action_row2.pack(fill='x', pady=2)
         ttk.Button(action_row2, text="Add Pokemon", command=self.add_pokemon).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(action_row2, text="Delete", command=self.delete_pokemon).pack(side='left', expand=True, fill='x', padx=1)
+
+        # Items tab
+        items_info = ttk.Label(items_tab, text="Item Slots", font=('Arial', 11, 'bold'))
+        items_info.pack(anchor='w', padx=5, pady=(5, 2))
+
+        item_picker_frame = ttk.Frame(items_tab)
+        item_picker_frame.pack(fill='x', padx=5, pady=(0, 6))
+
+        ttk.Label(item_picker_frame, text="Set Slot To:").pack(anchor='w')
+        self.item_var = tk.StringVar(value='')
+        self.item_combo = ttk.Combobox(item_picker_frame, textvariable=self.item_var, state='readonly')
+        self.item_combo.pack(fill='x', pady=(2, 0))
+
+        item_btns = ttk.Frame(items_tab)
+        item_btns.pack(fill='x', padx=5, pady=(0, 6))
+        ttk.Button(item_btns, text='Set Selected Slot', command=self.set_item_slot).pack(side='left', expand=True, fill='x', padx=1)
+        ttk.Button(item_btns, text='Clear Slot', command=self.clear_item_slot).pack(side='left', expand=True, fill='x', padx=1)
+
+        item_btns2 = ttk.Frame(items_tab)
+        item_btns2.pack(fill='x', padx=5, pady=(0, 10))
+        ttk.Button(item_btns2, text='Add Item to Open Slot', command=self.add_item_slot).pack(side='left', expand=True, fill='x', padx=1)
         
         # Status
         self.status = ttk.Label(main, text="Ready", relief='sunken', padding=5)
         self.status.pack(fill='x', side='bottom', pady=(10, 0))
+
+        self.team_grid.bind('<Configure>', self._on_grid_area_configure)
+        self.box_canvas.bind('<Configure>', self._on_grid_area_configure)
     
+    def _sync_item_dropdown_from_selected_slot(self):
+        if not self.save.data or self.selected_item_slot is None:
+            return
+
+        actual_index = self._actual_item_index(self.selected_item_slot)
+        item_obj = self.save.items[actual_index] if actual_index is not None and actual_index < len(self.save.items) else None
+
+        if isinstance(item_obj, dict) and item_obj.get('id'):
+            item_id = item_obj['id']
+            for display, mapped_id in self.item_display_to_id.items():
+                if mapped_id == item_id:
+                    self.item_var.set(display)
+                    return
+
     def on_cell_click(self, slot_index):
-        """Handle cell click - just update selection, don't rebuild grid."""
-        # Deselect old
-        if self.selected_slot is not None and self.selected_slot in self.cells:
-            self.cells[self.selected_slot].set_selected(False)
-        
-        # Select new
+        """Handle cell click - select Pokemon slot or item slot based on active tab."""
+        if self.editor_mode == 'items':
+            visible_index = self.item_cell_to_visible_index.get(slot_index)
+            if visible_index is None:
+                return
+
+            self.selected_item_slot = visible_index
+            self.refresh_grid()
+            return
+
+        # Pokemon mode
         self.selected_slot = slot_index
-        if slot_index in self.cells:
-            self.cells[slot_index].set_selected(True)
-        
-        # Update editor panel
-        self.update_editor()
+        self.refresh_grid()
     
     def auto_load(self):
         # Warn if sprites won't load
@@ -952,45 +1235,571 @@ class App(tk.Tk):
         path = filedialog.asksaveasfilename(defaultextension=".json")
         if path and self.save.export_to_file(Path(path)):
             messagebox.showinfo("Exported", f"Saved to {path}")
-    
+
+    def _mode_from_tab_selection(self):
+        if not hasattr(self, 'mode_tabs'):
+            return 'pokemon'
+
+        try:
+            tab_id = self.mode_tabs.select()
+            tab_text = str(self.mode_tabs.tab(tab_id, 'text')).strip().lower()
+            return 'items' if tab_text == 'items' else 'pokemon'
+        except Exception:
+            try:
+                return 'items' if self.mode_tabs.index('current') == 1 else 'pokemon'
+            except Exception:
+                return 'pokemon'
+
+    def debug_ui_state(self, event=None):
+        mode_from_tab = self._mode_from_tab_selection()
+        try:
+            tab_id = self.mode_tabs.select() if hasattr(self, 'mode_tabs') else ''
+            tab_text = self.mode_tabs.tab(tab_id, 'text') if hasattr(self, 'mode_tabs') and tab_id else '?'
+        except Exception:
+            tab_text = '?'
+
+        info = (
+            f"Tab: {tab_text}\n"
+            f"editor_mode: {self.editor_mode}\n"
+            f"mode_from_tab: {mode_from_tab}\n"
+            f"team_grid manager: {self.team_grid.winfo_manager()}\n"
+            f"team_header manager: {self.team_header.winfo_manager()}\n"
+            f"box_header text: {self.box_header.cget('text')}"
+        )
+        print(f"[F12 DEBUG] {info.replace(chr(10), ' | ')}")
+        messagebox.showinfo("UI Debug", info)
+
+    def on_editor_tab_changed(self, event=None):
+        self.editor_mode = self._mode_from_tab_selection()
+
+        if hasattr(self, 'right_canvas'):
+            self.right_canvas.yview_moveto(0.0)
+            self.after_idle(lambda: self.right_canvas.yview_moveto(0.0))
+
+        if hasattr(self, 'pokemon_editor_tab') and hasattr(self, 'items_editor_tab'):
+            if self.editor_mode == 'items':
+                self.pokemon_editor_tab.pack_forget()
+                self.items_editor_tab.pack(fill='both', expand=True)
+            else:
+                self.items_editor_tab.pack_forget()
+                self.pokemon_editor_tab.pack(fill='both', expand=True)
+
+        if hasattr(self, 'pokemon_mods_frame') and hasattr(self, 'item_mods_frame'):
+            if self.editor_mode == 'items':
+                self.pokemon_mods_frame.pack_forget()
+                if not self.item_mods_frame.winfo_manager():
+                    self.item_mods_frame.pack(fill='x', pady=(2, 0))
+            else:
+                self.item_mods_frame.pack_forget()
+                if not self.pokemon_mods_frame.winfo_manager():
+                    self.pokemon_mods_frame.pack(fill='x', pady=(0, 2), before=self.shared_mods_frame)
+
+        self.refresh_grid()
+        self.after_idle(self.refresh_grid)
+        self.after(40, self.refresh_grid)
+
+    def _on_grid_area_configure(self, event=None):
+        if self._relayout_job is not None:
+            try:
+                self.after_cancel(self._relayout_job)
+            except Exception:
+                pass
+        self._relayout_job = self.after(25, self._apply_dynamic_grid_layout)
+
+    def _dynamic_cols_for_width(self, width, max_slots, fallback):
+        span = CELL_SIZE + (CELL_PAD * 2)
+        if width <= 1:
+            return max(1, min(max_slots, fallback))
+        return max(1, min(max_slots, width // span))
+
+    def _apply_dynamic_grid_layout(self):
+        self._relayout_job = None
+
+        if not self.cells:
+            return
+
+        team_width = self.team_grid.winfo_width() if hasattr(self, 'team_grid') else 0
+        if team_width <= 1 and hasattr(self, 'left_frame'):
+            team_width = max(1, self.left_frame.winfo_width() - 20)
+
+        box_width = self.box_canvas.winfo_width() if hasattr(self, 'box_canvas') else 0
+        if box_width <= 1 and hasattr(self, 'left_frame'):
+            box_width = max(1, self.left_frame.winfo_width() - 20)
+
+        self.team_cols = self._dynamic_cols_for_width(team_width, TEAM_SLOTS, TEAM_SLOTS)
+        self.box_cols = self._dynamic_cols_for_width(box_width, BOX_SLOTS, DEFAULT_GRID_COLS)
+
+        for i in range(TEAM_SLOTS):
+            cell = self.cells.get(i)
+            if cell:
+                cell.grid_configure(row=i // self.team_cols, column=i % self.team_cols, padx=CELL_PAD, pady=CELL_PAD)
+
+        for i in range(BOX_SLOTS):
+            slot_index = TEAM_SLOTS + i
+            cell = self.cells.get(slot_index)
+            if cell:
+                cell.grid_configure(row=i // self.box_cols, column=i % self.box_cols, padx=CELL_PAD, pady=CELL_PAD)
+
+    def _resolve_item_sprite_path(self, item_obj):
+        sprite = item_obj.get('sprite') if isinstance(item_obj, dict) else None
+        if not sprite or not PATHS.get('game_root'):
+            return None
+
+        relative = sprite.replace('\\', '/').lstrip('./')
+        return PATHS['game_root'] / 'resources' / 'app_extracted' / Path(relative)
+
+    def get_item_sprite(self, item_obj, size=48):
+        if not HAS_PIL or not item_obj:
+            return None
+
+        item_id = item_obj.get('id')
+        if not item_id:
+            return None
+
+        cache_key = (item_id, size)
+        if cache_key in self.item_sprite_cache:
+            return self.item_sprite_cache[cache_key]
+
+        sprite_path = self._resolve_item_sprite_path(item_obj)
+        if not sprite_path or not sprite_path.exists():
+            return None
+
+        try:
+            img = Image.open(sprite_path).convert('RGBA').resize((size, size), Image.NEAREST)
+            tk_img = ImageTk.PhotoImage(img)
+            self.item_sprite_cache[cache_key] = tk_img
+            return tk_img
+        except Exception:
+            return None
+
     def refresh_grid(self):
         """Refresh all cells with current data."""
         if not self.save.data:
             return
-        
+
+        # Keep mode synced to top tabs even if tab-change event misses.
+        self.editor_mode = self._mode_from_tab_selection()
+        self._apply_dynamic_grid_layout()
+
         # Update stats
         p = self.save.player
         self.stat_vars['name'].set(p.get('name', '?'))
         self.gold_var.set(str(p.get('gold', 0)))
         self.stars_var.set(str(p.get('stars', 0)))
-        
-        # Update each cell
-        for slot_index, cell in self.cells.items():
-            poke = self.save.get_pokemon_at_slot(slot_index)
-            
-            if poke:
-                key = poke.get('specieKey', '?')
-                lvl = poke.get('lvl', 1)
-                is_shiny = poke.get('isShiny', False)
-                sprite = self.poke_data.get_sprite(key, 48, is_shiny)
-                cell.set_pokemon(sprite, lvl, is_shiny)
-            else:
-                cell.set_empty()
-            
-            # Restore selection state
-            cell.set_selected(slot_index == self.selected_slot)
-        
-        # Update status
-        team_count = len(self.save.team)
-        box_count = len(self.save.box)
-        player_team_slots = self.save.player.get('teamSlots', TEAM_SLOTS)
-        self.team_header.config(text=f"TEAM ({player_team_slots} slots)")
-        self.status.config(text=f"Team: {team_count}/{player_team_slots} | Box: {box_count}/{BOX_SLOTS} | Total: {team_count + box_count}")
-        
+
+        if self.editor_mode == 'items':
+            self.left_frame.config(text="Item Grid")
+            self.team_header.pack_forget()
+            self.team_grid.pack_forget()
+            self.box_header.pack_forget()
+            self.box_header.config(text="ITEM SLOTS")
+            self.box_header.pack(anchor='w', pady=(0, 2), before=self.box_container)
+
+            self.item_visible_slots = self._get_visible_item_indices()
+            self.item_cell_to_visible_index = {}
+
+            for slot_index, cell in self.cells.items():
+                if slot_index < TEAM_SLOTS:
+                    cell.set_empty("empty")
+                    cell.set_selected(False)
+
+            item_cell_slots = [TEAM_SLOTS + i for i in range(BOX_SLOTS) if (TEAM_SLOTS + i) in self.cells]
+            for display_idx, cell_slot in enumerate(item_cell_slots):
+                cell = self.cells[cell_slot]
+                self.item_cell_to_visible_index[cell_slot] = display_idx
+
+                if display_idx < len(self.item_visible_slots):
+                    actual_index = self._actual_item_index(display_idx)
+                    item_obj = self.save.items[actual_index] if actual_index is not None and actual_index < len(self.save.items) else None
+                    if item_obj:
+                        sprite = self.get_item_sprite(item_obj, 48)
+                        label = self._item_label(item_obj)
+                        short_label = label[:10] + '…' if len(label) > 11 else label
+                        cell.set_item(sprite, short_label)
+                    else:
+                        cell.set_empty("empty")
+                else:
+                    cell.set_empty("empty")
+
+                cell.set_selected(display_idx == self.selected_item_slot)
+
+            total_slots = len(self.item_visible_slots)
+            filled_slots = len([idx for idx in self.item_visible_slots if self.save.items[idx]])
+            self.status.config(text=f"Item slots: {filled_slots}/{total_slots}")
+        else:
+            self.left_frame.config(text="Pokemon Grid")
+            self.team_header.config(text=f"TEAM ({self.save.player.get('teamSlots', TEAM_SLOTS)} slots)")
+            self.box_header.config(text=f"BOX ({BOX_SLOTS} slots)")
+            # Always re-pack these on Pokemon mode to avoid stale hidden layout state.
+            self.team_header.pack_forget()
+            self.team_grid.pack_forget()
+            self.box_header.pack_forget()
+            self.team_header.pack(anchor='w', pady=(0, 5), before=self.box_container)
+            self.team_grid.pack(fill='x', pady=(0, 10), before=self.box_container)
+            self.box_header.pack(anchor='w', pady=(5, 5), before=self.box_container)
+
+            self.item_visible_slots = []
+            self.item_cell_to_visible_index = {}
+
+            for slot_index, cell in self.cells.items():
+                poke = self.save.get_pokemon_at_slot(slot_index)
+
+                if poke:
+                    key = poke.get('specieKey', '?')
+                    lvl = poke.get('lvl', 1)
+                    is_shiny = poke.get('isShiny', False)
+                    sprite = self.poke_data.get_sprite(key, 48, is_shiny)
+                    held_item_sprite = self.get_item_sprite(poke.get('item'), 24)
+                    cell.set_pokemon(sprite, lvl, is_shiny, held_item_sprite)
+                else:
+                    cell.set_empty()
+
+                cell.set_selected(slot_index == self.selected_slot)
+
+            team_count = len(self.save.team)
+            box_count = len(self.save.box)
+            player_team_slots = self.save.player.get('teamSlots', TEAM_SLOTS)
+            self.status.config(text=f"Team: {team_count}/{player_team_slots} | Box: {box_count}/{BOX_SLOTS} | Total: {team_count + box_count}")
+
+        # Update route/wave controls
+        self.refresh_route_wave_controls()
+
+        # Update item editor
+        self.refresh_item_editor()
+
         # Update editor if something selected
-        if self.selected_slot is not None:
+        if self.editor_mode == 'pokemon' and self.selected_slot is not None:
             self.update_editor()
-    
+
+    def refresh_route_wave_controls(self):
+        if not self.save.data:
+            self.route_combo['values'] = []
+            self.route_var.set('')
+            self.wave_var.set('1')
+            return
+
+        route_values = []
+        self.route_name_to_number = {}
+        self.route_id_to_display = {}
+
+        for route in self.route_options:
+            route_id = route['id']
+            route_name = route['name']
+            display = f"{route_name}"
+            route_values.append(display)
+            self.route_name_to_number[display] = route_id
+            self.route_id_to_display[route_id] = display
+
+        self.valid_route_ids = set(self.route_id_to_display.keys())
+        self.route_combo['values'] = route_values
+
+        current_route = self.save.get_current_route_number()
+        current_wave = self.save.get_current_wave_number()
+
+        if current_route in self.route_id_to_display:
+            self.route_var.set(self.route_id_to_display[current_route])
+        elif route_values:
+            self.route_var.set(route_values[0])
+        else:
+            self.route_var.set(f"Unknown Route ID {current_route}")
+
+        self.wave_var.set(str(current_wave))
+
+    def adjust_wave(self, delta):
+        try:
+            wave = int(self.wave_var.get())
+        except Exception:
+            wave = 1
+        self.wave_var.set(str(max(1, wave + delta)))
+
+    def set_route_wave(self, event=None):
+        if not self.save.data:
+            return
+
+        selected = self.route_var.get().strip()
+        route_number = self.route_name_to_number.get(selected)
+        if route_number is None:
+            messagebox.showerror("Invalid Route", "Choose a route from the dropdown. Hidden/unknown route IDs are blocked.")
+            return
+
+        if self.valid_route_ids and route_number not in self.valid_route_ids:
+            messagebox.showerror("Invalid Route", "That route is not in routeData and may crash the game.")
+            return
+
+        try:
+            wave_number = int(self.wave_var.get())
+        except Exception:
+            messagebox.showerror("Invalid Wave", "Wave must be a whole number.")
+            return
+
+        self.save.set_route_and_wave(route_number, wave_number)
+        self.refresh_route_wave_controls()
+        self.status.config(text=f"Set last route/wave to {selected}, Wave {max(1, wave_number)}")
+
+    def _item_label(self, item_obj):
+        if not item_obj:
+            return "(empty)"
+        name = item_obj.get('name')
+        if isinstance(name, list) and name:
+            return str(name[0])
+        return str(item_obj.get('id', '(unknown item)'))
+
+    def _get_held_item_counts(self):
+        counts = {}
+        for poke in self.save.team + self.save.box:
+            if not isinstance(poke, dict):
+                continue
+            item_obj = poke.get('item')
+            if not isinstance(item_obj, dict):
+                continue
+            item_id = item_obj.get('id')
+            if not item_id:
+                continue
+            counts[item_id] = counts.get(item_id, 0) + 1
+        return counts
+
+    def _get_visible_item_indices(self):
+        # Items tab is inventory-only. Held items are edited from Pokemon tab.
+        return list(range(len(self.save.items)))
+
+    def _actual_item_index(self, visible_index):
+        if visible_index is None:
+            return None
+        if visible_index < 0 or visible_index >= len(self.item_visible_slots):
+            return None
+        return self.item_visible_slots[visible_index]
+
+    def _build_item_catalog(self):
+        catalog = copy.deepcopy(self.base_item_catalog)
+
+        # Current owned items
+        for item in self.save.items:
+            if isinstance(item, dict) and item.get('id'):
+                catalog[item['id']] = copy.deepcopy(item)
+
+        # Shop stock and list may contain additional items
+        if isinstance(self.save.shop, dict):
+            for key in ('itemStock', 'itemList'):
+                for item in self.save.shop.get(key, []) or []:
+                    if isinstance(item, dict) and item.get('id'):
+                        catalog[item['id']] = copy.deepcopy(item)
+
+        self.item_catalog = catalog
+        self.item_display_to_id = {}
+        self.item_display_to_obj = {}
+
+        options = []
+        name_counts = {}
+        for item_id, item_obj in sorted(catalog.items(), key=lambda kv: self._item_label(kv[1]).lower()):
+            base_name = self._item_label(item_obj)
+            count = name_counts.get(base_name, 0) + 1
+            name_counts[base_name] = count
+            display = base_name if count == 1 else f"{base_name} {count}"
+            options.append(display)
+            self.item_display_to_id[display] = item_id
+            self.item_display_to_obj[display] = item_obj
+
+        self.item_combo['values'] = options
+        if options:
+            current = self.item_var.get()
+            if current not in self.item_display_to_id:
+                self.item_var.set(options[0])
+
+        self.held_item_display_to_obj = {'(Empty)': None}
+        held_options = ['(Empty)']
+        held_name_counts = {}
+
+        for item_id, item_obj in sorted(catalog.items(), key=lambda kv: self._item_label(kv[1]).lower()):
+            base_name = self._item_label(item_obj)
+            count = held_name_counts.get(base_name, 0) + 1
+            held_name_counts[base_name] = count
+            display = base_name if count == 1 else f"{base_name} {count}"
+            held_options.append(display)
+            self.held_item_display_to_obj[display] = item_obj
+
+        self.held_item_combo['values'] = held_options
+        if self.held_item_var.get() not in self.held_item_display_to_obj:
+            self.held_item_var.set('(Empty)')
+
+    def refresh_item_editor(self):
+        if hasattr(self, 'items_listbox'):
+            self.items_listbox.delete(0, tk.END)
+
+        if not self.save.data:
+            return
+
+        self._build_item_catalog()
+        self.item_visible_slots = self._get_visible_item_indices()
+
+        # Keep empty-cell selections in item grid valid (they may be beyond current visible item count).
+        if self.selected_item_slot is not None and self.selected_item_slot >= BOX_SLOTS:
+            self.selected_item_slot = None
+
+        if hasattr(self, 'items_listbox'):
+            for visible_index, actual_index in enumerate(self.item_visible_slots):
+                item = self.save.items[actual_index] if actual_index < len(self.save.items) else None
+                self.items_listbox.insert(tk.END, f"Slot {visible_index + 1}: {self._item_label(item)}")
+
+            if self.selected_item_slot is not None:
+                self.items_listbox.selection_clear(0, tk.END)
+                if 0 <= self.selected_item_slot < len(self.item_visible_slots):
+                    self.items_listbox.selection_set(self.selected_item_slot)
+                    self.items_listbox.see(self.selected_item_slot)
+
+        self._sync_item_dropdown_from_selected_slot()
+
+    def on_item_slot_select(self, event=None):
+        if not self.save.data:
+            return
+        sel = self.items_listbox.curselection()
+        if not sel:
+            return
+        self.selected_item_slot = sel[0]
+
+        self._sync_item_dropdown_from_selected_slot()
+
+        if self.editor_mode == 'items':
+            self.refresh_grid()
+
+    def set_item_slot(self):
+        if not self.save.data:
+            return
+        if self.selected_item_slot is None:
+            messagebox.showinfo("Select Slot", "Select an item slot first.")
+            return
+
+        actual_index = self._actual_item_index(self.selected_item_slot)
+        if actual_index is None:
+            # Allow selecting empty visual cells to create/extend item slots.
+            display_count = len(self.item_visible_slots)
+            pad_slots = max(0, self.selected_item_slot - display_count)
+            if pad_slots > 0:
+                self.save.items.extend([None] * pad_slots)
+            actual_index = len(self.save.items)
+            self.save.items.append(None)
+
+        selected_item_display = self.item_var.get().strip()
+        item_id = self.item_display_to_id.get(selected_item_display)
+        if not item_id or item_id not in self.item_catalog:
+            messagebox.showerror("Invalid Item", "Choose an item from the dropdown.")
+            return
+
+        self.save.set_item_at_slot(actual_index, copy.deepcopy(self.item_catalog[item_id]))
+        self.refresh_item_editor()
+        self.refresh_grid()
+        self.status.config(text=f"Item slot {self.selected_item_slot + 1} set to {self._item_label(self.item_catalog[item_id])}")
+
+    def clear_item_slot(self):
+        if not self.save.data:
+            return
+        if self.selected_item_slot is None:
+            messagebox.showinfo("Select Slot", "Select an item slot first.")
+            return
+
+        actual_index = self._actual_item_index(self.selected_item_slot)
+        if actual_index is None:
+            messagebox.showinfo("Select Slot", "Select an existing item slot first.")
+            return
+
+        self.save.set_item_at_slot(actual_index, None)
+        self.refresh_item_editor()
+        self.refresh_grid()
+        self.status.config(text=f"Item slot {self.selected_item_slot + 1} cleared")
+
+    def add_item_slot(self):
+        if not self.save.data:
+            return
+
+        selected_item_display = self.item_var.get().strip()
+        item_id = self.item_display_to_id.get(selected_item_display)
+        item_obj = copy.deepcopy(self.item_catalog[item_id]) if item_id in self.item_catalog else None
+
+        # Fill first open slot if one exists, otherwise append a new slot.
+        try:
+            actual_index = self.save.items.index(None)
+            self.save.items[actual_index] = item_obj
+            action = "Filled open"
+        except ValueError:
+            actual_index = len(self.save.items)
+            self.save.items.append(item_obj)
+            action = "Added new"
+
+        self.refresh_item_editor()
+
+        if actual_index in self.item_visible_slots:
+            self.selected_item_slot = self.item_visible_slots.index(actual_index)
+        else:
+            self.selected_item_slot = actual_index if actual_index < BOX_SLOTS else None
+
+        self.refresh_grid()
+        if self.selected_item_slot is not None:
+            self.status.config(text=f"{action} slot {self.selected_item_slot + 1}")
+        else:
+            self.status.config(text=f"{action} slot")
+
+    def trim_empty_item_slot(self):
+        if not self.save.data or not self.save.items:
+            return
+        if self.save.items and self.save.items[-1] is None:
+            self.save.items.pop()
+            if self.selected_item_slot is not None and self.selected_item_slot >= len(self.save.items):
+                self.selected_item_slot = len(self.save.items) - 1 if self.save.items else None
+            self.refresh_item_editor()
+            self.refresh_grid()
+            self.status.config(text="Removed last empty item slot")
+        else:
+            messagebox.showinfo("Nothing Removed", "Last slot has an item. Clear the last slot first, then delete it.")
+
+    def _set_held_item_combo_from_pokemon(self, poke):
+        if not hasattr(self, 'held_item_combo'):
+            return
+
+        item_obj = poke.get('item') if isinstance(poke, dict) else None
+        item_id = item_obj.get('id') if isinstance(item_obj, dict) else None
+
+        if item_id:
+            for display, obj in self.held_item_display_to_obj.items():
+                if isinstance(obj, dict) and obj.get('id') == item_id:
+                    self.held_item_var.set(display)
+                    return
+
+            fallback_base = self._item_label(item_obj)
+            fallback = fallback_base
+            suffix = 2
+            while fallback in self.held_item_display_to_obj and self.held_item_display_to_obj.get(fallback) != item_obj:
+                fallback = f"{fallback_base} {suffix}"
+                suffix += 1
+
+            if fallback not in self.held_item_display_to_obj:
+                values = list(self.held_item_combo['values'])
+                values.append(fallback)
+                self.held_item_combo['values'] = values
+                self.held_item_display_to_obj[fallback] = item_obj
+            self.held_item_var.set(fallback)
+            return
+
+        self.held_item_var.set('(Empty)')
+
+    def on_held_item_change(self, event=None):
+        if not self.save.data or self.selected_slot is None or self.editor_mode != 'pokemon':
+            return
+
+        poke = self.save.get_pokemon_at_slot(self.selected_slot)
+        if not isinstance(poke, dict):
+            return
+
+        selected_display = self.held_item_var.get().strip()
+        selected_item = self.held_item_display_to_obj.get(selected_display)
+
+        if selected_item is None:
+            poke.pop('item', None)
+            self.status.config(text=f"Cleared held item on slot {self.selected_slot + 1}")
+        else:
+            poke['item'] = copy.deepcopy(selected_item)
+            self.status.config(text=f"Set held item: {self._item_label(selected_item)}")
+
+        self.refresh_grid()
+
     def update_editor(self):
         """Update the editor panel for selected slot."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
@@ -1007,20 +1816,22 @@ class App(tk.Tk):
             is_shiny = poke.get('isShiny', False)
             shiny = " ★" if is_shiny else ""
             self.selected_label.config(text=f"{slot_type} #{slot_num + 1}: {name}{shiny}")
-            
+
             # Show sprite (shiny texture if shiny)
             sprite = self.poke_data.get_sprite(key, 64, is_shiny)
             if sprite:
                 self.display_sprite = sprite
                 self.sprite_display.create_image(40, 40, image=sprite)
-            
+
             self.species_var.set(name)
             self.level_var.set(str(poke.get('lvl', 1)))
+            self._set_held_item_combo_from_pokemon(poke)
         else:
             self.selected_label.config(text=f"{slot_type} #{slot_num + 1}: Empty")
             self.display_sprite = None
             self.species_var.set('')
             self.level_var.set('1')
+            self.held_item_var.set('(Empty)')
     
     def on_species_change(self, event=None):
         if self.selected_slot is None or not self.save.data:
@@ -1344,6 +2155,43 @@ class App(tk.Tk):
         self.refresh_grid()
         messagebox.showinfo("Done", f"Deleted {total} Pokemon!")
     
+    def clear_all_items(self):
+        if not self.save.data:
+            return
+
+        inventory_count = len([item for item in self.save.items if item])
+        held_count = 0
+
+        for poke in self.save.team + self.save.box:
+            if isinstance(poke, dict) and 'item' in poke:
+                if poke.get('item'):
+                    held_count += 1
+                poke.pop('item', None)
+
+        self.save.items.clear()
+        self.selected_item_slot = None
+        self.refresh_grid()
+
+        if inventory_count == 0 and held_count == 0:
+            messagebox.showinfo("Done", "No items found to clear.")
+        else:
+            messagebox.showinfo("Done", f"Cleared {inventory_count} inventory items and removed {held_count} held items.")
+
+    def unlock_all_items(self):
+        if not self.save.data:
+            return
+
+        self._build_item_catalog()
+        all_items = [copy.deepcopy(item) for item in self.item_catalog.values() if isinstance(item, dict) and item.get('id')]
+        all_items.sort(key=lambda item: self._item_label(item).lower())
+
+        self.save.items.clear()
+        self.save.items.extend(all_items)
+
+        self.selected_item_slot = 0 if self.save.items else None
+        self.refresh_grid()
+        messagebox.showinfo("Done", f"Unlocked {len(all_items)} items in inventory.")
+
     def max_gold(self):
         if self.save.data:
             self.save.set_player('gold', 9007199254740991 if _has_feature('qol') else 99999999999)
@@ -1466,32 +2314,42 @@ class App(tk.Tk):
         messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} eggs\nEgg price reset to: ${starting_price}")
 
     def complete_all_stages(self):
-        """Complete all stages — raises records to at least 100, never lowers existing progress."""
+        """Complete all star-bearing stages (excludes Manaphy Cave)."""
         if not self.save.data:
             return
-        
+
         save_obj = self.save.save_obj
         records = save_obj.get('player', {}).get('records', [])
-        
-        # Ensure we have enough record slots (9 routes)
-        while len(records) < 9:
+
+        # Build target route count from route data, excluding Manaphy Cave (no stars in vanilla).
+        star_routes = [
+            r for r in (self.route_options or [])
+            if 'manaphy cave' not in str(r.get('name', '')).strip().lower()
+        ]
+        target_route_count = len(star_routes) if star_routes else 20
+
+        # Ensure we have enough record slots for all star-bearing routes.
+        while len(records) < target_route_count:
             records.append(0)
-        
-        # Only raise records to 100, never lower records already above 100
-        for i in range(len(records)):
+
+        # Raise only star-bearing routes to at least 100, never lower existing progress.
+        for i in range(target_route_count):
             if records[i] < 100:
                 records[i] = 100
-        
+
+        # Preserve any extra record entries as-is (never reduce progress).
+        total_stars = sum(records)
+
         # Update records
         if 'save' in self.save.data:
             self.save.data['save']['player']['records'] = records
-            self.save.data['save']['player']['stars'] = sum(records)
+            self.save.data['save']['player']['stars'] = total_stars
         else:
             self.save.data['player']['records'] = records
-            self.save.data['player']['stars'] = sum(records)
-        
+            self.save.data['player']['stars'] = total_stars
+
         self.refresh_grid()
-        messagebox.showinfo("Done", f"All stages completed!\n\nAll routes at 100+ stars.\nTotal stars: {sum(records)}")
+        messagebox.showinfo("Done", f"All star stages completed!\n\nStar routes at 100+ (Manaphy Cave excluded).\nTotal stars: {total_stars}")
 
 if __name__ == "__main__":
     App().mainloop()

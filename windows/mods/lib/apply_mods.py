@@ -1026,8 +1026,8 @@ def apply_enemy_shiny_spawn():
 		this.isShiny = Math.random() < (1 / 1000);
 		if (this.isShiny && typeof this.sprite?.src === 'string' && this.sprite.src.includes('/normal/')) {
 			const shinySrc = this.sprite.src.replace(/\\/normal\\//g, '/shiny/');
-			// Clone before override so we never mutate shared species sprite metadata.
-			this.sprite = { ...(this.sprite ?? {}), src: shinySrc };
+			this.loaded = false;
+			this.sprite.src = shinySrc;
 		}
 		this.hp = enemy.hp;
 		this.hpMax = enemy.hp;

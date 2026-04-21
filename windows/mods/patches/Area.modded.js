@@ -420,6 +420,48 @@ export class Area {
 		}
 	}
 
+	getSpawnPosition(waypointEnemy, travelOffset = 0, lateralOffset = 0) {
+		const start = waypointEnemy?.[0] || { x: 0, y: 0 };
+		const points = Array.isArray(waypointEnemy) ? waypointEnemy : [];
+		const minSegmentLen = 40;
+
+		let unitX = 1;
+		let unitY = 0;
+		let foundDirection = false;
+
+		for (let i = 0; i < points.length - 1; i++) {
+			const a = points[i];
+			const b = points[i + 1];
+			const segX = (b?.x ?? a?.x ?? start.x) - (a?.x ?? start.x);
+			const segY = (b?.y ?? a?.y ?? start.y) - (a?.y ?? start.y);
+			const segLen = Math.hypot(segX, segY);
+
+			if (segLen >= minSegmentLen) {
+				unitX = segX / segLen;
+				unitY = segY / segLen;
+				foundDirection = true;
+				break;
+			}
+		}
+
+		if (!foundDirection) {
+			const next = points[1] || { x: start.x + 1, y: start.y };
+			const dirX = next.x - start.x;
+			const dirY = next.y - start.y;
+			const dirLen = Math.hypot(dirX, dirY) || 1;
+			unitX = dirX / dirLen;
+			unitY = dirY / dirLen;
+		}
+
+		const perpX = -unitY;
+		const perpY = unitX;
+
+		return {
+			x: start.x - unitX * travelOffset + perpX * lateralOffset,
+			y: start.y - unitY * travelOffset + perpY * lateralOffset,
+		};
+	}
+
 	spawnEnemies() {
 		// ENDLESS MODE: Use endless wave generator for waves > 100
 		if (this.endlessMode && this.waveNumber > 100) {
@@ -440,11 +482,12 @@ export class Area {
 		wave.forEach((enemy, i) => {
 			const xOffset = (i + 1) * waveOffset;
 			const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+			const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset);
 			if (enemy) {
 				this.enemies.push(
 					new Enemy(
-						waypointEnemy[0].x - xOffset,
-						waypointEnemy[0].y,
+						spawnPos.x,
+						spawnPos.y,
 						enemy,
 						waypointEnemy,
 						this.main,
@@ -647,9 +690,11 @@ export class Area {
 			const stackPos = i % stackSize;
 			const yJitter = (stackPos - Math.floor(stackSize / 2)) * 2;
 
+			const travelOffset = xOffset + 50;
+			const spawnPos = this.getSpawnPosition(waypointEnemy, travelOffset, yJitter);
 			spawnDescriptors.push({
-				x: waypointEnemy[0].x - xOffset - 50,
-				y: waypointEnemy[0].y + yJitter,
+				x: spawnPos.x,
+				y: spawnPos.y,
 				enemy: scaledEnemy,
 				waypoints: waypointEnemy,
 				xOffset: xOffset,  // distance from screen edge — used for deferred timing
@@ -815,10 +860,11 @@ export class Area {
 
 		for (let i = 0; i < bossCount; i++) {
 			const xOffset = (i + 1) * bossSpacing;
+			const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset);
 			this.enemies.push(
 				new Enemy(
-					waypointEnemy[0].x - xOffset,
-					waypointEnemy[0].y,
+					spawnPos.x,
+					spawnPos.y,
 					scaledBoss,
 					waypointEnemy,
 					this.main,
@@ -849,10 +895,11 @@ export class Area {
 				};
 
 				const xOffset = (bossCount + 1) * bossSpacing + (i + 1) * 25;
+				const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset);
 				this.enemies.push(
 					new Enemy(
-						waypointEnemy[0].x - xOffset,
-						waypointEnemy[0].y,
+						spawnPos.x,
+						spawnPos.y,
 						scaledEscort,
 						waypointEnemy,
 						this.main,
@@ -887,10 +934,11 @@ export class Area {
 					if (!enemy) return;
 					const xOffset = (i + 1) * waveOffset;
 					const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+					const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset);
 					this.enemies.push(
 						new Enemy(
-							waypointEnemy[0].x - xOffset,
-							waypointEnemy[0].y,
+							spawnPos.x,
+							spawnPos.y,
 							enemy,
 							waypointEnemy,
 							this.main,
@@ -909,10 +957,11 @@ export class Area {
 		}
 
 		const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+		const spawnPos = this.getSpawnPosition(waypointEnemy, 150);
 		this.enemies.push(
 			new Enemy(
-				waypointEnemy[0].x - 150,
-				waypointEnemy[0].y,
+				spawnPos.x,
+				spawnPos.y,
 				boss,
 				waypointEnemy,
 				this.main,

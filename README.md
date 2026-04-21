@@ -9,6 +9,11 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 > **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
+>
+> **Windows v1.5.4 refresh (2026-04-21):**
+> - Save Editor upgrades for item slot editing/manipulation
+> - Save Editor route + wave set support
+> - Stability/UX polish pass over the previous Windows 1.5.4 package
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
@@ -79,6 +84,36 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Sub-Step Draw Skipping**
 - **Cached Tower Rendering**
 - **Power Recalculation Throttling**
+
+---
+
+## 💾 Save Editor
+
+The mod includes save editing tools for both platforms.
+
+Features include:
+- Unlock All Pokemon
+- Max All Levels
+- Complete All Stages
+- Max Gold
+- Reset Egg Shop
+- Edit or delete individual Pokemon
+- Toggle shiny status
+- Item slot editing/manipulation tools
+- Set route and wave values
+
+**Always close the game first before editing saves.**
+
+---
+
+## 🔄 Restore Vanilla / Change Features
+
+You can re-run the installer any time to:
+- add or remove individual features
+- reinstall cleanly
+- restore vanilla files
+
+Your save data is kept separate and is not overwritten by the installer.
 
 ---
 
@@ -155,34 +190,6 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 > For full platform-specific instructions, see:
 > - [Windows README](windows/mods/README.md)
 > - [macOS README](mac/PokePath-TD-INFINITE-Mac/README.md)
-
----
-
-## 💾 Save Editor
-
-The mod includes save editing tools for both platforms.
-
-Features include:
-- Unlock All Pokemon
-- Max All Levels
-- Complete All Stages
-- Max Gold
-- Reset Egg Shop
-- Edit or delete individual Pokemon
-- Toggle shiny status
-
-**Always close the game first before editing saves.**
-
----
-
-## 🔄 Restore Vanilla / Change Features
-
-You can re-run the installer any time to:
-- add or remove individual features
-- reinstall cleanly
-- restore vanilla files
-
-Your save data is kept separate and is not overwritten by the installer.
 
 ---
 
