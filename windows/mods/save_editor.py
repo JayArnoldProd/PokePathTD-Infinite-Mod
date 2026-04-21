@@ -134,6 +134,7 @@ TEMP_SAVE = SCRIPT_DIR / 'lib' / 'current_save.json'
 POKEMON_DATA_FILE = SCRIPT_DIR / 'dev' / 'pokemon_data.json'
 SAVE_HELPER = SCRIPT_DIR / 'lib' / 'save_helper.js'
 ROUTE_DATA_FILE = (PATHS.get('game_root') / 'resources' / 'app_extracted' / 'src' / 'js' / 'game' / 'data' / 'routeData.js') if PATHS.get('game_root') else None
+POKEMON_JS_DATA_FILE = (PATHS.get('game_root') / 'resources' / 'app_extracted' / 'src' / 'js' / 'game' / 'data' / 'pokemonData.js') if PATHS.get('game_root') else None
 ITEM_DATA_FILE = (PATHS.get('game_root') / 'resources' / 'app_extracted' / 'src' / 'js' / 'game' / 'data' / 'itemData.js') if PATHS.get('game_root') else None
 
 # Auto-detect if game is modded (uses separate save location)
@@ -196,6 +197,42 @@ def _load_route_options():
         pass
 
     return route_options
+
+
+def _load_route_reward_pokemon_keys():
+    """Extract route challenge Pokémon rewards from routeData.js.
+    Uses reward index 1 (the Pokémon slot in challengeReward arrays)."""
+    rewards = []
+    if not ROUTE_DATA_FILE or not ROUTE_DATA_FILE.exists():
+        return rewards
+
+    try:
+        text = ROUTE_DATA_FILE.read_text(encoding='utf-8', errors='replace')
+        for match in re.finditer(r"challengeReward\s*:\s*\[(.*?)\]", text, re.DOTALL):
+            values = re.findall(r"'([^']+)'", match.group(1))
+            if len(values) >= 2:
+                rewards.append(values[1])
+    except Exception:
+        pass
+
+    return rewards
+
+
+def _load_egg_list_keys():
+    """Extract eggListData species keys from pokemonData.js."""
+    eggs = []
+    if not POKEMON_JS_DATA_FILE or not POKEMON_JS_DATA_FILE.exists():
+        return eggs
+
+    try:
+        text = POKEMON_JS_DATA_FILE.read_text(encoding='utf-8', errors='replace')
+        match = re.search(r"eggListData\s*=\s*\[(.*?)\]\s*;", text, re.DOTALL)
+        if match:
+            eggs = re.findall(r"'([^']+)'", match.group(1))
+    except Exception:
+        pass
+
+    return eggs
 
 
 def _load_item_catalog_from_data():
@@ -913,7 +950,6 @@ class App(tk.Tk):
         self.mode_tabs.add(self.mode_tabs_pokemon, text='Pokemon')
         self.mode_tabs.add(self.mode_tabs_items, text='Items')
         self.mode_tabs.bind('<<NotebookTabChanged>>', self.on_editor_tab_changed)
-        self.bind_all('<F12>', self.debug_ui_state)
 
         # Content
         content = ttk.Frame(main)
@@ -1006,6 +1042,7 @@ class App(tk.Tk):
         ttk.Button(self.pokemon_mods_frame, text="Unlock All Pokemon", command=self.unlock_all).pack(fill='x', pady=1)
         ttk.Button(self.pokemon_mods_frame, text="Max All Levels (Evolve + Lv100)", command=self.max_all).pack(fill='x', pady=1)
         ttk.Button(self.pokemon_mods_frame, text="Complete All Stages (2000 Stars)", command=self.complete_all_stages).pack(fill='x', pady=1)
+        ttk.Button(self.pokemon_mods_frame, text="Remove Duplicate Pokemon", command=self.remove_duplicate_pokemon).pack(fill='x', pady=1)
         ttk.Button(self.pokemon_mods_frame, text="Delete All Pokemon", command=self.delete_all).pack(fill='x', pady=1)
 
         # Always-visible shared action
@@ -1088,13 +1125,21 @@ class App(tk.Tk):
         # Row 1b: Switch Form (for Pokemon with alternate forms like Lycanroc, Aegislash)
         action_row1b = ttk.Frame(slot_actions)
         action_row1b.pack(fill='x', pady=2)
-        ttk.Button(action_row1b, text="Switch Form", command=self.switch_form).pack(side='left', expand=True, fill='x', padx=1)
+        self.switch_form_button = ttk.Button(action_row1b, text="Switch Form", command=self.switch_form)
+        self.switch_form_button.pack(side='left', expand=True, fill='x', padx=1)
+        self.switch_form_button.state(['disabled'])
 
         # Row 2: Add Pokemon
         action_row2 = ttk.Frame(slot_actions)
         action_row2.pack(fill='x', pady=2)
         ttk.Button(action_row2, text="Add Pokemon", command=self.add_pokemon).pack(side='left', expand=True, fill='x', padx=1)
         ttk.Button(action_row2, text="Delete", command=self.delete_pokemon).pack(side='left', expand=True, fill='x', padx=1)
+
+        action_row3 = ttk.Frame(slot_actions)
+        action_row3.pack(fill='x', pady=2)
+        self.party_button = ttk.Button(action_row3, text="Add to Team", command=self.toggle_party_membership)
+        self.party_button.pack(side='left', expand=True, fill='x', padx=1)
+        self.party_button.state(['disabled'])
 
         # Items tab
         items_info = ttk.Label(items_tab, text="Item Slots", font=('Arial', 11, 'bold'))
@@ -1249,25 +1294,6 @@ class App(tk.Tk):
                 return 'items' if self.mode_tabs.index('current') == 1 else 'pokemon'
             except Exception:
                 return 'pokemon'
-
-    def debug_ui_state(self, event=None):
-        mode_from_tab = self._mode_from_tab_selection()
-        try:
-            tab_id = self.mode_tabs.select() if hasattr(self, 'mode_tabs') else ''
-            tab_text = self.mode_tabs.tab(tab_id, 'text') if hasattr(self, 'mode_tabs') and tab_id else '?'
-        except Exception:
-            tab_text = '?'
-
-        info = (
-            f"Tab: {tab_text}\n"
-            f"editor_mode: {self.editor_mode}\n"
-            f"mode_from_tab: {mode_from_tab}\n"
-            f"team_grid manager: {self.team_grid.winfo_manager()}\n"
-            f"team_header manager: {self.team_header.winfo_manager()}\n"
-            f"box_header text: {self.box_header.cget('text')}"
-        )
-        print(f"[F12 DEBUG] {info.replace(chr(10), ' | ')}")
-        messagebox.showinfo("UI Debug", info)
 
     def on_editor_tab_changed(self, event=None):
         self.editor_mode = self._mode_from_tab_selection()
@@ -1470,6 +1496,9 @@ class App(tk.Tk):
         # Update editor if something selected
         if self.editor_mode == 'pokemon' and self.selected_slot is not None:
             self.update_editor()
+        else:
+            self._refresh_party_button_state()
+            self._refresh_switch_form_button_state()
 
     def refresh_route_wave_controls(self):
         if not self.save.data:
@@ -1800,6 +1829,112 @@ class App(tk.Tk):
 
         self.refresh_grid()
 
+    def _get_effective_team_slots(self):
+        if not self.save.data:
+            return TEAM_SLOTS
+        raw_value = self.save.player.get('teamSlots', TEAM_SLOTS)
+        try:
+            team_slots = int(raw_value)
+        except Exception:
+            team_slots = TEAM_SLOTS
+        return max(1, min(TEAM_SLOTS, team_slots))
+
+    def _first_empty_team_slot(self):
+        max_slots = self._get_effective_team_slots()
+        for i in range(max_slots):
+            if not self.save.get_pokemon_at_slot(i):
+                return i
+        return None
+
+    def _first_empty_box_slot(self):
+        for i in range(BOX_SLOTS):
+            slot_index = TEAM_SLOTS + i
+            if not self.save.get_pokemon_at_slot(slot_index):
+                return slot_index
+        return None
+
+    def _refresh_party_button_state(self):
+        if not hasattr(self, 'party_button'):
+            return
+
+        if not self.save.data or self.editor_mode != 'pokemon' or self.selected_slot is None:
+            self.party_button.config(text='Add to Team')
+            self.party_button.state(['disabled'])
+            return
+
+        selected_poke = self.save.get_pokemon_at_slot(self.selected_slot)
+        if not selected_poke:
+            self.party_button.config(text='Add to Team')
+            self.party_button.state(['disabled'])
+            return
+
+        if self.selected_slot < TEAM_SLOTS:
+            self.party_button.config(text='Remove from Team')
+            self.party_button.state(['!disabled'])
+            return
+
+        has_open_team_slot = self._first_empty_team_slot() is not None
+        self.party_button.config(text='Add to Team')
+        if has_open_team_slot:
+            self.party_button.state(['!disabled'])
+        else:
+            self.party_button.state(['disabled'])
+
+    def toggle_party_membership(self):
+        if not self.save.data or self.editor_mode != 'pokemon' or self.selected_slot is None:
+            return
+
+        selected_poke = self.save.get_pokemon_at_slot(self.selected_slot)
+        if not selected_poke:
+            return
+
+        if self.selected_slot < TEAM_SLOTS:
+            destination_slot = self._first_empty_box_slot()
+            if destination_slot is None:
+                messagebox.showinfo('Box Full', 'No empty box slot is available.')
+                return
+
+            moved_poke = copy.deepcopy(selected_poke)
+            self.save.set_pokemon_at_slot(destination_slot, moved_poke)
+            self.save.delete_at_slot(self.selected_slot)
+            self.selected_slot = destination_slot
+            self.refresh_grid()
+            self.status.config(text=f'Moved Pokemon to Box slot {destination_slot - TEAM_SLOTS + 1}')
+            return
+
+        destination_slot = self._first_empty_team_slot()
+        if destination_slot is None:
+            messagebox.showinfo('Team Full', f'Party is full ({self._get_effective_team_slots()} slots unlocked).')
+            self._refresh_party_button_state()
+            return
+
+        moved_poke = copy.deepcopy(selected_poke)
+        self.save.set_pokemon_at_slot(destination_slot, moved_poke)
+        self.save.delete_at_slot(self.selected_slot)
+        self.selected_slot = destination_slot
+        self.refresh_grid()
+        self.status.config(text=f'Added Pokemon to Team slot {destination_slot + 1}')
+
+    def _has_switchable_form(self, poke):
+        if not isinstance(poke, dict):
+            return False
+        key = poke.get('specieKey', '')
+        return key in self.FORM_SWITCHES
+
+    def _refresh_switch_form_button_state(self):
+        if not hasattr(self, 'switch_form_button'):
+            return
+
+        if not self.save.data or self.editor_mode != 'pokemon' or self.selected_slot is None:
+            self.switch_form_button.state(['disabled'])
+            return
+
+        selected_poke = self.save.get_pokemon_at_slot(self.selected_slot)
+        if self._has_switchable_form(selected_poke):
+            self.switch_form_button.state(['!disabled'])
+        else:
+            self.switch_form_button.state(['disabled'])
+
     def update_editor(self):
         """Update the editor panel for selected slot."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
@@ -1832,6 +1967,9 @@ class App(tk.Tk):
             self.species_var.set('')
             self.level_var.set('1')
             self.held_item_var.set('(Empty)')
+
+        self._refresh_party_button_state()
+        self._refresh_switch_form_button_state()
     
     def on_species_change(self, event=None):
         if self.selected_slot is None or not self.save.data:
@@ -1990,40 +2128,110 @@ class App(tk.Tk):
             self.save.delete_at_slot(self.selected_slot)
             self.refresh_grid()
     
+    def _profile_ownership_key(self, key, obtainable_keys):
+        if not key:
+            return None
+        # Profile completion is mostly tracked by root/base species keys.
+        # Prioritize base-form ownership so max evolutions (e.g. cacturne)
+        # correctly satisfy base-counted entries (e.g. cacnea).
+        base = self.poke_data.get_base_form(key)
+        if base in obtainable_keys:
+            return base
+        if key in obtainable_keys:
+            return key
+        return None
+
     def unlock_all(self):
         if not self.save.data:
             return
-        # Collect ALL existing species keys from team AND box (any form/mega counts)
+
+        # Collect currently owned species keys
         existing_keys = set()
         for p in self.save.team + self.save.box:
             if p:
                 key = p.get('specieKey', '')
                 if key:
                     existing_keys.add(key)
-        
-        # Build set of base-form chains already represented
-        # Each owned Pokemon resolves to its chain's base form
+
+        # Build set of covered evolution chains for non-profile roots
         covered_chains = set()
         for key in existing_keys:
-            base = self.poke_data.get_base_form(key)
-            covered_chains.add(base)
-            # Also cover the key itself and all chain members
+            covered_chains.add(self.poke_data.get_base_form(key))
             for chain_key in self.poke_data.get_chain(key):
                 covered_chains.add(chain_key)
-        
+
+        # Build profile-obtainable key set (used by in-game completion counters)
+        all_keys = set(self.poke_data.all_pokemon)
+        explicit_unlockables = {
+            'greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc',
+            'chatot', 'shedinja', 'gholdengo', 'stakataka', 'missingNo',
+        }
+        route_reward_keys = set(_load_route_reward_pokemon_keys())
+        static_egg_keys = set(_load_egg_list_keys())
+        shop_egg_keys = set(self.save.save_obj.get('shop', {}).get('eggList', []) or [])
+        obtainable_keys = {
+            k for k in (explicit_unlockables | route_reward_keys | static_egg_keys | shop_egg_keys)
+            if k in all_keys
+        }
+
+        owned_profile_keys = set()
+        for key in existing_keys:
+            ownership_key = self._profile_ownership_key(key, obtainable_keys)
+            if ownership_key:
+                owned_profile_keys.add(ownership_key)
+
         count = 0
         skipped = 0
-        for key in self.poke_data.get_unlock_roots():
-            # Skip if any Pokemon in this chain is already owned
-            if key in covered_chains:
+        added_to_team = 0
+        unlock_targets = list(self.poke_data.get_unlock_roots())
+
+        # Include non-root unlockables that profile counts separately.
+        extra_unlocks = set()
+        for extra_key in obtainable_keys:
+            if self.poke_data.get_base_form(extra_key) == extra_key:
+                continue
+            extra_unlocks.add(extra_key)
+
+        for extra_key in sorted(extra_unlocks):
+            if extra_key not in unlock_targets:
+                unlock_targets.append(extra_key)
+
+        for key in unlock_targets:
+            if key in existing_keys:
                 skipped += 1
                 continue
+
+            ownership_key = self._profile_ownership_key(key, obtainable_keys)
+
+            # If this key is counted by profile completion, require exact missing ownership key.
+            if ownership_key:
+                if ownership_key in owned_profile_keys:
+                    skipped += 1
+                    continue
+            else:
+                # Fallback behavior for non-profile roots: avoid same-chain duplicates.
+                if key in covered_chains and key not in extra_unlocks:
+                    skipped += 1
+                    continue
+
             new_poke = self.poke_data.create_new_pokemon(key)
-            self.save.box.append(new_poke)
+            team_slot = self._first_empty_team_slot()
+            if team_slot is not None:
+                self.save.set_pokemon_at_slot(team_slot, new_poke)
+                added_to_team += 1
+            else:
+                self.save.box.append(new_poke)
+
             count += 1
-        
+            existing_keys.add(key)
+            covered_chains.add(self.poke_data.get_base_form(key))
+            for chain_key in self.poke_data.get_chain(key):
+                covered_chains.add(chain_key)
+            if ownership_key:
+                owned_profile_keys.add(ownership_key)
+
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Added {count} new Pokemon!\n({skipped} chains already owned)")
+        messagebox.showinfo("Done", f"Added {count} new Pokemon!\n({added_to_team} added to Team, {count - added_to_team} added to Box)\n({skipped} already covered)")
     
     def make_all_shiny(self):
         """Make all Pokemon in team and box shiny. On vanilla saves, only max evolutions."""
@@ -2155,6 +2363,72 @@ class App(tk.Tk):
         self.refresh_grid()
         messagebox.showinfo("Done", f"Deleted {total} Pokemon!")
     
+    def remove_duplicate_pokemon(self):
+        if not self.save.data:
+            return
+
+        occupied_slots = []
+        for slot_index in range(TEAM_SLOTS + BOX_SLOTS):
+            poke = self.save.get_pokemon_at_slot(slot_index)
+            if not isinstance(poke, dict):
+                continue
+            key = poke.get('specieKey') or poke.get('specie', {}).get('key', '')
+            if not key:
+                continue
+
+            base_key = self.poke_data.get_base_form(key)
+            chain = self.poke_data.get_chain(key)
+            try:
+                stage_index = chain.index(key)
+            except ValueError:
+                stage_index = 0
+            try:
+                level = int(poke.get('lvl', 1) or 1)
+            except Exception:
+                level = 1
+
+            occupied_slots.append({
+                'slot': slot_index,
+                'poke': poke,
+                'base': base_key,
+                'stage': stage_index,
+                'level': level,
+                'is_team': slot_index < TEAM_SLOTS,
+            })
+
+        if not occupied_slots:
+            messagebox.showinfo("Done", "No Pokemon found.")
+            return
+
+        keep_by_base = {}
+        for entry in occupied_slots:
+            base = entry['base']
+            current = keep_by_base.get(base)
+            if current is None:
+                keep_by_base[base] = entry
+                continue
+
+            candidate_rank = (entry['stage'], entry['level'], 1 if entry['is_team'] else 0)
+            current_rank = (current['stage'], current['level'], 1 if current['is_team'] else 0)
+            if candidate_rank > current_rank:
+                keep_by_base[base] = entry
+
+        removed = 0
+        for entry in sorted(occupied_slots, key=lambda e: e['slot'], reverse=True):
+            keep_entry = keep_by_base.get(entry['base'])
+            if keep_entry and keep_entry['slot'] == entry['slot']:
+                continue
+            self.save.delete_at_slot(entry['slot'])
+            removed += 1
+
+        if removed == 0:
+            messagebox.showinfo("Done", "No duplicates found.")
+            return
+
+        self.selected_slot = None
+        self.refresh_grid()
+        messagebox.showinfo("Done", f"Removed {removed} duplicate Pokemon (kept strongest form/level per evolution chain).")
+
     def clear_all_items(self):
         if not self.save.data:
             return
@@ -2314,31 +2588,43 @@ class App(tk.Tk):
         messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} eggs\nEgg price reset to: ${starting_price}")
 
     def complete_all_stages(self):
-        """Complete all star-bearing stages (excludes Manaphy Cave)."""
+        """Complete all normal star routes (2000 stars total, excludes Manaphy Cave)."""
         if not self.save.data:
             return
 
+        EXPECTED_STAR_ROUTE_COUNT = 20
+
         save_obj = self.save.save_obj
-        records = save_obj.get('player', {}).get('records', [])
+        records = list(save_obj.get('player', {}).get('records', []))
 
-        # Build target route count from route data, excluding Manaphy Cave (no stars in vanilla).
-        star_routes = [
-            r for r in (self.route_options or [])
-            if 'manaphy cave' not in str(r.get('name', '')).strip().lower()
-        ]
-        target_route_count = len(star_routes) if star_routes else 20
+        if self.route_options:
+            while len(records) < len(self.route_options):
+                records.append(0)
 
-        # Ensure we have enough record slots for all star-bearing routes.
-        while len(records) < target_route_count:
-            records.append(0)
+            star_indices = []
+            manaphy_indices = []
+            for idx, route in enumerate(self.route_options):
+                route_name = str(route.get('name', '')).strip().lower()
+                if 'manaphy cave' in route_name:
+                    manaphy_indices.append(idx)
+                else:
+                    star_indices.append(idx)
 
-        # Raise only star-bearing routes to at least 100, never lower existing progress.
-        for i in range(target_route_count):
-            if records[i] < 100:
-                records[i] = 100
+            # Hard-cap to vanilla 20 star routes.
+            star_indices = star_indices[:EXPECTED_STAR_ROUTE_COUNT]
+            for idx in star_indices:
+                records[idx] = 100
 
-        # Preserve any extra record entries as-is (never reduce progress).
-        total_stars = sum(records)
+            # Secret/non-star route should not contribute to the 2000-star unlock baseline.
+            for idx in manaphy_indices:
+                records[idx] = 0
+        else:
+            while len(records) < EXPECTED_STAR_ROUTE_COUNT:
+                records.append(0)
+            for idx in range(EXPECTED_STAR_ROUTE_COUNT):
+                records[idx] = 100
+
+        total_stars = EXPECTED_STAR_ROUTE_COUNT * 100
 
         # Update records
         if 'save' in self.save.data:
@@ -2349,7 +2635,7 @@ class App(tk.Tk):
             self.save.data['player']['stars'] = total_stars
 
         self.refresh_grid()
-        messagebox.showinfo("Done", f"All star stages completed!\n\nStar routes at 100+ (Manaphy Cave excluded).\nTotal stars: {total_stars}")
+        messagebox.showinfo("Done", "All normal stages completed (Manaphy Cave excluded).\n\nTotal stars set to 2000.")
 
 if __name__ == "__main__":
     App().mainloop()

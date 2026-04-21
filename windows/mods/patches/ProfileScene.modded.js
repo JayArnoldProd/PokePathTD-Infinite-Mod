@@ -387,7 +387,31 @@ export class ProfileScene extends SectionScene {
 
 	getPokemonKey(pokemon) {
 		if (!pokemon) return null;
-		return pokemon?.specie?.key ?? pokemon?.specieKey ?? pokemon?.key ?? null;
+
+		const resolveCanonicalKey = (candidate) => {
+			if (!candidate) return null;
+			if (pokemonData?.[candidate]) return candidate;
+			const normalized = String(candidate).toLowerCase();
+			const caseInsensitiveMatch = Object.keys(pokemonData || {}).find((key) => key.toLowerCase() === normalized);
+			if (caseInsensitiveMatch) return caseInsensitiveMatch;
+			const compact = normalized.replace(/[^a-z0-9]/g, '');
+			return Object.keys(pokemonData || {}).find((key) => key.toLowerCase().replace(/[^a-z0-9]/g, '') === compact) ?? null;
+		};
+
+		if (typeof pokemon?.specie == 'string') {
+			const specieKey = resolveCanonicalKey(pokemon.specie);
+			if (specieKey) return specieKey;
+		}
+
+		const directKey = pokemon?.specie?.key ?? pokemon?.specieKey ?? pokemon?.key ?? null;
+		const canonicalDirectKey = resolveCanonicalKey(directKey);
+		if (canonicalDirectKey) return canonicalDirectKey;
+
+		const id = pokemon?.id ?? pokemon?.specie?.id;
+		if (id == undefined || id == null) return null;
+
+		const matched = Object.keys(pokemonData || {}).find((key) => pokemonData?.[key]?.id === id);
+		return matched ?? null;
 	}
 
 	getObtainablePokemonKeys() {
@@ -412,26 +436,79 @@ export class ProfileScene extends SectionScene {
 		return obtainable;
 	}
 
-	countUniqueSpecies() {
+	getBasePokemonKey(key) {
+		if (!key) return null;
+
+		const formToMain = {
+			aegislashSword: 'aegislash',
+			lycanrocNight: 'lycanrocDay',
+			megaAbsol: 'absol',
+			megaCharizardX: 'charizard',
+			megaSceptile: 'sceptile',
+			megaAlakazam: 'alakazam',
+		};
+
+		let current = formToMain[key] ?? key;
+		if (current.startsWith('mega') && current !== 'meganium') {
+			const fallback = current[4]?.toLowerCase() + current.slice(5);
+			if (pokemonData?.[fallback]) current = fallback;
+		}
+
+		const reverse = {};
+		Object.keys(pokemonData || {}).forEach((k) => {
+			const evoTo = pokemonData?.[k]?.evolution?.pokemon;
+			if (evoTo) reverse[evoTo] = k;
+		});
+
+		while (reverse[current]) current = reverse[current];
+		return current;
+	}
+
+	getOwnershipKey(key, obtainable) {
+		if (!key) return null;
+
+		// Profile ownership is base-form centric for many lines.
+		// Prioritize base key so evolved forms (e.g. cacturne)
+		// satisfy base-counted ownership entries (e.g. cacnea).
+		const baseKey = this.getBasePokemonKey(key);
+		if (baseKey && obtainable.has(baseKey)) return baseKey;
+		if (obtainable.has(key)) return key;
+		return null;
+	}
+
+	getOwnershipDebugSnapshot() {
 		const owned = new Set();
 		const obtainable = this.getObtainablePokemonKeys();
 		this.getPlayerPokemon().forEach((pokemon) => {
 			const key = this.getPokemonKey(pokemon);
-			if (key && obtainable.has(key)) owned.add(key);
+			const ownershipKey = this.getOwnershipKey(key, obtainable);
+			if (ownershipKey) owned.add(ownershipKey);
 		});
-		return owned.size;
+
+		const missingKeys = [...obtainable].filter((key) => !owned.has(key)).sort();
+		return {
+			ownedCount: owned.size,
+			totalCount: obtainable.size,
+			missingKeys,
+		};
+	}
+
+	countUniqueSpecies() {
+		return this.getOwnershipDebugSnapshot().ownedCount;
 	}
 
 	countTotalSpecies() {
-		return this.getObtainablePokemonKeys().size;
+		return this.getOwnershipDebugSnapshot().totalCount;
 	}
 
 	countUniqueShinySpecies() {
 		const shinies = new Set();
 		const obtainable = this.getObtainablePokemonKeys();
 		this.getPlayerPokemon().forEach((pokemon) => {
+			if (!pokemon?.isShiny) return;
 			const key = this.getPokemonKey(pokemon);
-			if (pokemon?.isShiny && key && obtainable.has(key)) shinies.add(key);
+			const ownershipKey = this.getOwnershipKey(key, obtainable);
+			if (ownershipKey) shinies.add(ownershipKey);
 		});
 		return shinies.size;
 	}
@@ -682,8 +759,9 @@ export class ProfileScene extends SectionScene {
 
 		this.stats[0].value.innerText = this.main.utility.minutsToTime(this.main.player.stats.timePlayed);
 		this.stats[1].value.innerText = `${this.main.utility.numberDot(this.main.player.stars, this.main.lang)}`;
-		const uniqueOwned = this.countUniqueSpecies();
-		const totalSpecies = this.countTotalSpecies();
+		const ownershipDebug = this.getOwnershipDebugSnapshot();
+		const uniqueOwned = ownershipDebug.ownedCount;
+		const totalSpecies = ownershipDebug.totalCount;
 		this.stats[2].value.innerText = `${uniqueOwned}/${totalSpecies}`;
 		const uniqueShinies = this.countUniqueShinySpecies();
 		this.stats[3].value.innerText = `${uniqueShinies}/${totalSpecies}`;

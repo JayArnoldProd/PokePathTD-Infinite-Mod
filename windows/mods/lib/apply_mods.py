@@ -428,12 +428,6 @@ MOD_FEATURES = {
         'functions': ['_ensure_game_modded', 'apply_tower_deltatime', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'],
         'default': True,
     },
-    'devtools': {
-        'name': 'Developer Tools (F12)',
-        'description': 'Enable F12/Ctrl+Shift+I for browser dev tools',
-        'functions': ['apply_devtools'],
-        'default': True,
-    },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
         'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix (prevents shiny path bleed), projectile retargeting from tower position, off-screen target cleanup, Shell Bell / Clefairy Doll damage tracking fix',
@@ -2031,29 +2025,6 @@ def apply_projectile_speed_scaling():
     return True
 
 # ============================================================================
-# MAIN.JS - Enable DevTools with F12
-# ============================================================================
-def apply_devtools():
-    """Enable F12 and Ctrl+Shift+I to open DevTools."""
-    path = APP_EXTRACTED / "main.js"
-    content = read_file(path)
-    
-    # Check if already applied
-    if 'before-input-event' in content and 'toggleDevTools' in content:
-        log_skip("main.js: DevTools enabled")
-        return True
-    
-    # Use modded file directly
-    modded_file = MODS_DIR / "patches" / "main.modded.js"
-    if modded_file.exists():
-        copy_modded_file(modded_file, path)
-        log_success("main.js: DevTools enabled (F12 / Ctrl+Shift+I)")
-        return True
-    
-    log_fail("main.js: DevTools - modded file not found")
-    return False
-
-# ============================================================================
 # BOXSCENE.JS - Expand box storage to 200 slots
 # ============================================================================
 def apply_box_expansion():
@@ -3369,7 +3340,14 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         except Exception as e:
             failed_mods.append(f"userData redirect: {str(e)}")
     
-    # Step 4b: Apply wave clamp + star display cap if Endless Mode is NOT selected
+    # Step 4b: Enforce anti-duplicate behavior when Allow Duplicate Pokemon is NOT selected
+    if 'allow_dupes' not in selected_features:
+        try:
+            apply_force_no_dupes()
+        except Exception as e:
+            failed_mods.append(f"force no dupes: {str(e)}")
+
+    # Step 4c: Apply wave clamp + star display cap if Endless Mode is NOT selected
     # Prevents crashes when a save has wave > 100 but Endless isn't installed
     # Also caps star display so endless records don't inflate the total
     if 'endless' not in selected_features:
@@ -3386,7 +3364,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         except Exception as e:
             failed_mods.append(f"star record cap: {str(e)}")
     
-    # Step 4c: Apply debug diagnostics
+    # Step 4d: Apply debug diagnostics
     if progress_callback:
         progress_callback(current + 1, total, "Applying debug diagnostics...")
     try:
@@ -3569,6 +3547,230 @@ def apply_allow_dupes():
     box_content = box_content.replace(old_box_dedup, new_box_dedup)
     write_file(box_path, box_content)
     log_success("Box.js: Allow duplicate Pokemon IDs in box")
+    return True
+
+
+def apply_force_no_dupes():
+    """Force vanilla chain-level dedupe when allow_dupes is not selected.
+
+    In PokePath, evolution lines share the same specie.id, so id-based dedupe
+    naturally blocks same-chain duplicates (e.g. Charizard + Charmander).
+    Also guards runtime additions so duplicate eggs vanish instead of persisting.
+    """
+    team_path = JS_ROOT / "game" / "core" / "Team.js"
+    team_content = read_file(team_path)
+
+    team_old = """		const seenIds = new Set();
+	    this.pokemon = this.pokemon.filter(p => {
+	        if (seenIds.has(p.id)) return false; // duplicado
+	        seenIds.add(p.id);
+	        return true;
+	    });"""
+    team_old_allow = """		// MOD: Dedup filter removed — allow duplicate species IDs on team
+		// const seenIds = new Set();
+	    // this.pokemon = this.pokemon.filter(p => {
+	    //     if (seenIds.has(p.id)) return false;
+	    //     seenIds.add(p.id);
+	    //     return true;
+	    // });"""
+    team_new = """		// MOD: Force no-dupes by shared specie.id (chain-level dedupe)
+		const seenIds = new Set();
+	    this.pokemon = this.pokemon.filter(p => {
+	        if (seenIds.has(p.id)) return false;
+	        seenIds.add(p.id);
+	        return true;
+	    });"""
+
+    if team_new in team_content:
+        log_skip("Team.js: Force no-dupes dedup block (already applied)")
+    elif team_old in team_content:
+        team_content = team_content.replace(team_old, team_new)
+        write_file(team_path, team_content)
+        log_success("Team.js: Force no-dupes by specie.id")
+    elif team_old_allow in team_content:
+        team_content = team_content.replace(team_old_allow, team_new)
+        write_file(team_path, team_content)
+        log_success("Team.js: Force no-dupes by specie.id")
+    else:
+        log_fail("Team.js: Force no-dupes - dedup block not found")
+        return False
+
+    # Guard runtime additions (egg pulls, rewards, transfers)
+    team_content = read_file(team_path)
+    team_add_old = """\taddPokemon(pokemon) {
+\t\tpokemon.inGroup = true;
+\t\tpokemon.damageDealt = 0;
+\t\tpokemon.trueDamageDealt = 0;
+\t\tpokemon.tilePosition = -1;
+\t\tif ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(pokemon.specie.id)) this.main.player.fossilInTeam++;
+\t\t
+\t\tif (pokemon.id == 70) {
+\t\t\tpokemon.adn = (this.pokemon.length > 0) ? this.pokemon[0].specie : pokemonData['ditto'];
+\t\t\tif ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(pokemon.adn.id)) this.main.player.fossilInTeam++;
+\t\t\tpokemon.adnPosition = 0;
+\t\t\tpokemon.transformADN();
+\t\t}
+
+\t\tthis.pokemon.push(pokemon);
+\t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+\t}
+"""
+    team_add_new = """\taddPokemon(pokemon) {
+\t\t// MOD: Force no-dupes by shared specie.id (chain-level dedupe)
+\t\tif (this.pokemon.some(p => p.id === pokemon.id)) return false;
+\n\t\tpokemon.inGroup = true;
+\t\tpokemon.damageDealt = 0;
+\t\tpokemon.trueDamageDealt = 0;
+\t\tpokemon.tilePosition = -1;
+\t\tif ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(pokemon.specie.id)) this.main.player.fossilInTeam++;
+\t\t
+\t\tif (pokemon.id == 70) {
+\t\t\tpokemon.adn = (this.pokemon.length > 0) ? this.pokemon[0].specie : pokemonData['ditto'];
+\t\t\tif ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(pokemon.adn.id)) this.main.player.fossilInTeam++;
+\t\t\tpokemon.adnPosition = 0;
+\t\t\tpokemon.transformADN();
+\t\t}
+
+\t\tthis.pokemon.push(pokemon);
+\t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+\t\treturn true;
+\t}
+"""
+    if "if (this.pokemon.some(p => p.id === pokemon.id)) return false;" in team_content:
+        log_skip("Team.js: Force no-dupes addPokemon guard")
+    elif team_add_old in team_content:
+        team_content = team_content.replace(team_add_old, team_add_new)
+        write_file(team_path, team_content)
+        log_success("Team.js: Runtime addPokemon no-dupe guard")
+    else:
+        log_fail("Team.js: Force no-dupes addPokemon block not found")
+        return False
+
+    box_path = JS_ROOT / "game" / "core" / "Box.js"
+    box_content = read_file(box_path)
+
+    box_old = """        const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        this.pokemon = this.pokemon.filter(p => {
+            if (seenIds.has(p.id)) return false; 
+            seenIds.add(p.id); 
+            return true;
+        });"""
+    box_old_allow = """        // MOD: Box dedup filter removed — allow duplicate species IDs in box
+        // const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        // this.pokemon = this.pokemon.filter(p => {
+        //     if (seenIds.has(p.id)) return false; 
+        //     seenIds.add(p.id); 
+        //     return true;
+        // });"""
+    box_new = """        // MOD: Force no-dupes by shared specie.id (chain-level dedupe)
+        const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        this.pokemon = this.pokemon.filter(p => {
+            if (seenIds.has(p.id)) return false; 
+            seenIds.add(p.id); 
+            return true;
+        });"""
+
+    if box_new in box_content:
+        log_skip("Box.js: Force no-dupes dedup block (already applied)")
+    elif box_old in box_content:
+        box_content = box_content.replace(box_old, box_new)
+        write_file(box_path, box_content)
+        log_success("Box.js: Force no-dupes by specie.id")
+    elif box_old_allow in box_content:
+        box_content = box_content.replace(box_old_allow, box_new)
+        write_file(box_path, box_content)
+        log_success("Box.js: Force no-dupes by specie.id")
+    else:
+        log_fail("Box.js: Force no-dupes - dedup block not found")
+        return False
+
+    box_content = read_file(box_path)
+    box_add_old = """\taddPokemon(pokemon) {
+\t\tthis.pokemon.push(pokemon);
+\t}
+"""
+    box_add_new = """\taddPokemon(pokemon) {
+\t\t// MOD: Force no-dupes by shared specie.id (chain-level dedupe)
+\t\tif (this.main.team.pokemon.some(p => p.id === pokemon.id)) return false;
+\t\tif (this.pokemon.some(p => p.id === pokemon.id)) return false;
+\t\tthis.pokemon.push(pokemon);
+\t\treturn true;
+\t}
+"""
+    if "if (this.main.team.pokemon.some(p => p.id === pokemon.id)) return false;" in box_content and "if (this.pokemon.some(p => p.id === pokemon.id)) return false;" in box_content:
+        log_skip("Box.js: Force no-dupes addPokemon guard")
+    elif box_add_old in box_content:
+        box_content = box_content.replace(box_add_old, box_add_new)
+        write_file(box_path, box_content)
+        log_success("Box.js: Runtime addPokemon no-dupe guard")
+    else:
+        log_fail("Box.js: Force no-dupes addPokemon block not found")
+        return False
+
+    # Ensure egg purchases handle guarded addPokemon return values.
+    shop_path = JS_ROOT / "game" / "core" / "Shop.js"
+    shop_content = read_file(shop_path)
+    if "const addedToTeam = this.main.team.addPokemon(newPokemon);" not in shop_content:
+        shop_old = """\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
+\t\t\tconst newPokemon = new Pokemon(pokemon, 1, null, this.main);
+\t\t\tif (isShinyEgg) {
+\t\t\t\tnewPokemon.isShiny = true;
+\t\t\t\tnewPokemon.setShiny();
+\t\t\t}
+\t\t\tthis.main.team.addPokemon(newPokemon);
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShinyEgg)
+\t\t} else {
+\t\t\tconst newPokemon = new Pokemon(pokemon, 1, null, this.main);
+\t\t\tif (isShinyEgg) {
+\t\t\t\tnewPokemon.isShiny = true;
+\t\t\t\tnewPokemon.setShiny();
+\t\t\t}
+\t\t\tthis.main.box.addPokemon(newPokemon);
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShinyEgg)
+\t\t}
+
+\t\tthis.main.player.stats.pokemonOwned++;
+
+\t\tthis.main.player.stats.totalPokemonLevel++;
+\t\tthis.main.player.achievementProgress.evolutionCount++;
+"""
+        shop_new = """\t\tlet added = false;
+\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
+\t\t\tconst newPokemon = new Pokemon(pokemon, 1, null, this.main);
+\t\t\tif (isShinyEgg) {
+\t\t\t\tnewPokemon.isShiny = true;
+\t\t\t\tnewPokemon.setShiny();
+\t\t\t}
+\t\t\tconst addedToTeam = this.main.team.addPokemon(newPokemon);
+\t\t\tadded = (addedToTeam !== false);
+\t\t\tthis.main.shopScene.displayPokemon.open(newPokemon, isShinyEgg)
+\t\t} else {
+\t\t\tconst newPokemon = new Pokemon(pokemon, 1, null, this.main);
+\t\t\tif (isShinyEgg) {
+\t\t\t\tnewPokemon.isShiny = true;
+\t\t\t\tnewPokemon.setShiny();
+\t\t\t}
+\t\t\tconst addedToBox = this.main.box.addPokemon(newPokemon);
+\t\t\tadded = (addedToBox !== false);
+\t\t\tthis.main.shopScene.displayPokemon.open(newPokemon, isShinyEgg)
+\t\t}
+
+\t\tif (added) {
+\t\t\tthis.main.player.stats.pokemonOwned++;
+\t\t\tthis.main.player.stats.totalPokemonLevel++;
+\t\t\tthis.main.player.achievementProgress.evolutionCount++;
+\t\t}
+"""
+        if shop_old in shop_content:
+            shop_content = shop_content.replace(shop_old, shop_new)
+            write_file(shop_path, shop_content)
+            log_success("Shop.js: Egg duplicate pulls now vanish if no-dupes blocks add")
+        else:
+            log_fail("Shop.js: buyEgg block not found for no-dupes guard")
+            return False
+    else:
+        log_skip("Shop.js: buyEgg no-dupes guard (already applied)")
+
     return True
 
 
@@ -3757,7 +3959,6 @@ def main():
     print("\n[*] Applying all mods...\n")
     
     # Apply all mods in order
-    apply_devtools()  # Enable F12/Ctrl+Shift+I for debugging
     _ensure_game_modded()  # Install Game.modded.js base
     apply_speed_mod()  # Patch in 10x speed options
     apply_pause_micromanagement()  # Patch in pause micro
@@ -3888,7 +4089,7 @@ def main():
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='PokePath TD Mod Applier')
-    parser.add_argument('--features', type=str, help='Comma-separated feature keys to install (e.g. speed,devtools,pause_micro)')
+    parser.add_argument('--features', type=str, help='Comma-separated feature keys to install (e.g. speed,pause_micro,endless)')
     parser.add_argument('--reset', action='store_true', help='Reset game to vanilla')
     parser.add_argument('--list', action='store_true', help='List available feature keys')
     args = parser.parse_args()

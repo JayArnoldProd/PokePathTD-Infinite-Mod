@@ -466,6 +466,7 @@ export class Pokemon {
 	updateSpecie(specieName) {
 		const newSpecie = pokemonData[specieName];
 		this.specie = newSpecie;
+		this.id = newSpecie.id;
 
 		this.ricochet = newSpecie.ricochet ?? 0;
 		this.orbital = this.calculateOrbitalCount(newSpecie.orbital ?? 0, this.lvl);

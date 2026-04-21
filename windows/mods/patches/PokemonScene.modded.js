@@ -243,13 +243,14 @@ export class PokemonScene extends GameScene {
 		this.buttonChangeForm.addEventListener('click', () => {
 			playSound('teleport', 'effect')
 			
+			const specieKey = this.pokemon?.specie?.key;
 			switch (this.pokemon.id) {
 				case 76:
 					if (this.pokemon.ability.id == "toughClawsDay") this.pokemon.updateSpecie('lycanrocNight');
 					else this.pokemon.updateSpecie('lycanrocDay');
 					break;
 				case 80:
-					if (this.pokemon.ability.id == "slow") {
+					if (specieKey == 'aegislash' || this.pokemon.ability.id == 'slow') {
 						this.pokemon.updateSpecie('aegislashSword');
 						this.pokemon.targetMode = 'first';
 						this.pokemon.changeTargetMode(TARGET_MODES[0]);
@@ -261,6 +262,22 @@ export class PokemonScene extends GameScene {
 						this.data['attackType'].style.pointerEvents = 'none';
 						this.data['attackType'].style.opacity = '80%';
 						if (['sniperScope', 'silphScope', 'bicycle', 'amuletCoin', 'ancientSword'].includes(this.pokemon?.item?.id)) this.pokemon.retireItem();
+					}
+					break;
+				default:
+					if (specieKey == 'aegislash' || specieKey == 'aegislashSword') {
+						if (specieKey == 'aegislash') {
+							this.pokemon.updateSpecie('aegislashSword');
+							this.pokemon.targetMode = 'first';
+							this.pokemon.changeTargetMode(TARGET_MODES[0]);
+							if (['softSand', 'ancientShield'].includes(this.pokemon?.item?.id)) this.pokemon.retireItem();
+						} else {
+							this.pokemon.updateSpecie('aegislash');
+							this.pokemon.targetMode = 'area';
+							this.data['attackType'].style.pointerEvents = 'none';
+							this.data['attackType'].style.opacity = '80%';
+							if (['sniperScope', 'silphScope', 'bicycle', 'amuletCoin', 'ancientSword'].includes(this.pokemon?.item?.id)) this.pokemon.retireItem();
+						}
 					}
 					break;
 			}
@@ -423,19 +440,21 @@ export class PokemonScene extends GameScene {
 			if (this.pokemon.id == 76) {
 				this.buttonChangeForm.style.backgroundImage = (this.pokemon.ability.id == "toughClawsDay") ? 
 				`url("${pokemonData['lycanrocDay'].sprite.base}")` : `url("${pokemonData['lycanrocNight'].sprite.base}")`
-			} else if (this.pokemon.id == 80) {
-				this.buttonChangeForm.style.backgroundImage = (this.pokemon.ability.id == "slow") ? 
+			} else if (this.pokemon.id == 80 || this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword') {
+				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == 'aegislash' || this.pokemon.ability.id == 'slow') ? 
 				`url("${pokemonData['aegislash'].sprite.base}")` : `url("${pokemonData['aegislashSword'].sprite.base}")`
 			} else if (this.pokemon.id == 109) {
 				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == "armarouge") ? 
 				`url("${pokemonData['armarouge'].sprite.base}")` : `url("${pokemonData['ceruledge'].sprite.base}")`
 			}
 
-			if (this.pokemon.isDeployed) {
+			const allowDeployedFormSwitch = this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword';
+			if (this.pokemon.isDeployed && !allowDeployedFormSwitch) {
 				this.buttonChangeForm.style.pointerEvents = 'none';
 				this.buttonChangeForm.style.filter = 'brightness(0.8)';
 			} else {
-				this.buttonChangeForm.style.pointerEvents = 'revert-layer';
+				this.buttonChangeForm.style.pointerEvents = 'all';
+				this.buttonChangeForm.style.cursor = 'pointer';
 				this.buttonChangeForm.style.filter = 'revert-layer';
 			}
 		} else this.buttonChangeForm.style.display = 'none';

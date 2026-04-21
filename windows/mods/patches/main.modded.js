@@ -33,19 +33,6 @@ function createWindow() {
 
     win.setMenu(null);
     win.setContentSize(baseWidth, baseHeight);
-    
-    // MOD: Enable DevTools with F12 and Ctrl+Shift+I
-    win.webContents.on('before-input-event', (event, input) => {
-      if (input.key === 'F12') {
-        win.webContents.toggleDevTools();
-        event.preventDefault();
-      }
-      // Ctrl+Shift+I also opens devtools
-      if (input.control && input.shift && input.key === 'I') {
-        win.webContents.toggleDevTools();
-        event.preventDefault();
-      }
-    });
 
     win.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
