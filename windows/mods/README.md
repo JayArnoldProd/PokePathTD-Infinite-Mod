@@ -44,11 +44,6 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Enemy Speed Scaling** - Enemies gradually get faster in endless mode (logarithmic curve)
 - **Pokemon Stats** - Asymptotic curves prevent stats from breaking
 
-### 🐱 Hidden Content Notes
-
-- **Magma Stone is now in vanilla 1.5** (no longer a mod-only unlock)
-- No additional fully verified hidden item unlocks were added in this pass
-
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
 - **Shiny Starters** - 1 in 30 chance when selecting starter

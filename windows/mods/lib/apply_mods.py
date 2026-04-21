@@ -441,10 +441,10 @@ MOD_FEATURES = {
         'default': True,
     },
     'hidden_items': {
-        'name': 'Unlock Hidden Item(s)',
-        'description': 'Unlocks 1 hidden item: Magma Stone (doubles burn duration to 20s, 50000g). The game code already supports it!',
+        'name': 'Unlock Hidden Item(s) [Legacy/Disabled]',
+        'description': 'Disabled for 1.5.x: Magma Stone is already available in vanilla item data/shop list.',
         'functions': ['apply_hidden_items'],
-        'default': True,
+        'default': False,
     },
     'allow_dupes': {
         'name': 'Allow Duplicate Pokemon',
@@ -3817,8 +3817,7 @@ def main():
     apply_emoji_font_fix()
     apply_ui_emoji_font_fix()
     
-    # Unlock hidden items (Magma Stone)
-    apply_hidden_items()
+    # Hidden-items legacy patch intentionally disabled for 1.5.x
     
     # Allow duplicate Pokemon IDs on team (Cherubi/Cherrim etc.)
     apply_allow_dupes()
