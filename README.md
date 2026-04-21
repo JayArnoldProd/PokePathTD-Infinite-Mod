@@ -11,9 +11,11 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
 > **Windows v1.5.4 refresh (2026-04-21):**
-> - Save Editor upgrades for item slot editing/manipulation
-> - Save Editor route + wave set support
-> - Stability/UX polish pass over the previous Windows 1.5.4 package
+> - Profile Unlockables expanded to show unlockable items/Pokémon art and unlock conditions
+> - Localization support added for all built-in game languages (including mod-added UI text)
+> - Orbital enemy support updates
+> - Save Editor item-slot editing + route/wave setters
+> - UX polish
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
@@ -67,6 +69,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Attack Type Sorting** - New sorting Mode
 - **Unlockables Profile Tab** - See what hidden content can be unlocked and how; keep track of progress
 - **Live Profile Updates** - Stats in profile update while the menu is open
+- **Built-in Language Support** - Mod-added UI text supports all built-in game languages
 - **Tower Placement Persistence** - When you close and open the game, your Tower Placement and Party Remains
 
 ### 🐛 Vanilla Bug Fixes

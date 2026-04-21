@@ -1,34 +1,21 @@
 ## PokePath TD INFINITE - Windows v1.5.4
 
-This is the consolidated release notes file for the Windows 1.5 update line.
+These notes cover the meaningful additions in the Windows v1.5.4 refresh.
 
 ### ✅ Compatibility
-- Rebased and validated through **PokePath TD 1.5.4 (Windows)**
-- Installer compatibility fingerprints and diagnostics updated for current Windows 1.5.x builds
+- Validated for **PokePath TD 1.5.4 (Windows)**
+- Installer compatibility fingerprints and diagnostics metadata updated for current Windows 1.5.x builds
 
-### 🌊 Core Mod Features (1.5 line)
-- Endless progression flow improvements (continue/restart behavior, post-100 progression, checkpoint support)
-- Infinite-level scaling updates for progression/cost pacing in long runs
-- Orbital direction behavior aligned with newer vanilla 1.5 behavior
+### 🆕 New / Expanded Features
+- **Unlockables in Profile** expanded so players can see unlockable items/Pokémon art and how to unlock them
+- **Localization support** added for all built-in game languages for mod-added UI text
+- **Orbital enemy support** added/polished for the current 1.5 line
 
-### ✨ Shiny + Progression Features
-- Dedicated **Shiny Enemies** feature path (installer-selectable)
-- Shiny enemy/boss variant gameplay modifiers and profile tracking support
-- Expanded shiny sprite coverage for non-max-evolution species
-- Unlockables/Profile improvements for challenge rewards and verified secrets tracking
-
-### 💾 Save Editor (notable upgrades)
-- 1.5 roster/data refresh and compatibility updates
-- Runtime sprite fallback handling for newer species
+### 💾 Save Editor
 - Item slot editing/manipulation tools in the Items tab
-- Route and wave setter support
-- Stability/UX polish for item and Pokémon editing workflows
-
-### 🐛 Included Fixes and QoL
-- Off-screen projectile targeting constraints
-- Projectile retargeting range checks
-- Challenge level-cap behavior corrections
-- Ongoing UI/QoL improvements from the 1.5 patch line
+- Route and wave setters
+- UX polish
 
 ### Notes
-- macOS remains on the older 1.4.4 release track pending dedicated 1.5 validation.
+- This file intentionally excludes older pre-1.5 carryover items that were already part of previous releases.
+- macOS remains on the older 1.4.4 track pending dedicated 1.5 validation.

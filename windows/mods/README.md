@@ -218,22 +218,17 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 ## 📋 Release Notes (Windows v1.5.4)
 
-This release notes section covers the main additions delivered across the Windows 1.5 update track.
+This release notes section covers the meaningful additions in the Windows v1.5.4 refresh.
 
 ### New and Expanded Features
-- Endless mode flow improvements (continue/restart behavior, wave progression beyond 100, checkpoint support)
-- Infinite-level gameplay scaling updates for cost/stat progression and late-wave pacing
-- Dedicated **Shiny Enemies** feature path with profile tracking
-- Expanded shiny sprite coverage for non-max-evolution species
-- Unlockables/Profile improvements, including challenge reward and secret tracking support
-- Orbital direction behavior aligned with vanilla 1.5.3+ expectations
+- **Unlockables in Profile** expanded to show unlockable items/Pokémon art and unlock conditions
+- **Localization support** added for all built-in game languages for mod-added UI text
+- **Orbital enemy support** updates for the current 1.5 line
 
 ### Save Editor Improvements
-- 1.5 roster refresh and broader species compatibility handling
-- Runtime sprite fallback support for newer species
 - Item-slot editing/manipulation tools in the Items tab
 - Route and wave setter support for save progression editing
-- Stability and UX polish pass for item/pokemon editing workflows
+- UX polish
 
 ### Compatibility + Installer
 - Windows compatibility rebases through game version 1.5.4
@@ -241,10 +236,7 @@ This release notes section covers the main additions delivered across the Window
 - Continued support for feature mix-and-match install, selective uninstall, and vanilla restore flow
 
 ### Included Bug Fixes
-- Off-screen projectile targeting constraints
-- Projectile retargeting range safety checks
-- Challenge mode level-cap behavior corrections
-- Tower placement persistence and related UI/QoL fixes included in the 1.5 patch line
+- Existing 1.5-line bug-fix coverage remains in place; this refresh focuses on feature/compatibility updates listed above.
 
 ---
 
