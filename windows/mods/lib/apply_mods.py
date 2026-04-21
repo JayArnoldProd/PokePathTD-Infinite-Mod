@@ -440,12 +440,6 @@ MOD_FEATURES = {
         'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
         'default': True,
     },
-    'hidden_items': {
-        'name': 'Unlock Hidden Item(s) [Legacy/Disabled]',
-        'description': 'Disabled for 1.5.x: Magma Stone is already available in vanilla item data/shop list.',
-        'functions': ['apply_hidden_items'],
-        'default': False,
-    },
     'allow_dupes': {
         'name': 'Allow Duplicate Pokemon',
         'description': 'Removes the team deduplication filter that prevents Pokemon sharing the same species ID (e.g. Cherubi/Cherrim both have ID 75)',
