@@ -53,7 +53,7 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 
 ### 💀 Shiny Enemy Variant
 - **1 in 1,000 Shiny Enemies/Bosses** - Rare shiny combat variants can appear naturally
-- **Gameplay Bonus Variant** - +50% HP, +50% armor, 2-heart damage, and 1000x gold
+- **Gameplay Bonus Variant** - +100% HP (x2), +100% armor (x2), 2-heart damage, and 1000x gold
 - **Profile Tracking** - Records shiny enemies defeated in the Profile screen
 
 ### 🔧 Quality of Life
