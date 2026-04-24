@@ -298,8 +298,13 @@ This release notes section covers the meaningful additions in the Windows v1.5.4
 
 ## 📜 Credits
 
-- **Mod Development** — [Jay Arnold](https://instagram.com/jayarnoldproduces) | [itch.io](https://jay-arnold.itch.io) | [YouTube](https://www.youtube.com/@jayarnoldproduces)
-- **Original Game** — [PokePath TD](https://khydra98.itch.io/pokepath) by [Khydra](https://khydra98.itch.io)
-- **Pokemon** — © Nintendo, Game Freak, Creatures Inc.
+- **Mod by [Jay Arnold](https://www.youtube.com/@jayarnoldproduces)**
+- **PokéPathTD by [Khydra](https://khydra98.itch.io/pokepath)**
+
+### Special Thanks
+- **[Tok3n Gamer](https://www.youtube.com/@tok3ngamer)** for playtesting and the installation video
+- **Pondomatik** for playtesting
+
+- **Pokémon** — © Nintendo, Game Freak, Creatures Inc.
 
 *This is a fan modification. Not affiliated with Nintendo or the original developers.*
