@@ -3691,13 +3691,13 @@ def apply_force_no_dupes():
 """
     box_add_new = """\taddPokemon(pokemon) {
 \t\t// MOD: Force no-dupes by shared specie.id (chain-level dedupe)
-\t\tif (this.main.team.pokemon.some(p => p.id === pokemon.id)) return false;
+\t\tif (this.main.team.pokemon.some(p => p !== pokemon && p.id === pokemon.id)) return false;
 \t\tif (this.pokemon.some(p => p.id === pokemon.id)) return false;
 \t\tthis.pokemon.push(pokemon);
 \t\treturn true;
 \t}
 """
-    if "if (this.main.team.pokemon.some(p => p.id === pokemon.id)) return false;" in box_content and "if (this.pokemon.some(p => p.id === pokemon.id)) return false;" in box_content:
+    if "if (this.main.team.pokemon.some(p => p !== pokemon && p.id === pokemon.id)) return false;" in box_content and "if (this.pokemon.some(p => p.id === pokemon.id)) return false;" in box_content:
         log_skip("Box.js: Force no-dupes addPokemon guard")
     elif box_add_old in box_content:
         box_content = box_content.replace(box_add_old, box_add_new)
