@@ -219,8 +219,15 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
 
 ---
 
-## Credits
+## 📜 Credits
 
-- **PokePath TD** by the original game developer
-- **INFINITE Mod** by Jay Arnold
-- **macOS port** adapted for Mac compatibility
+- **Mod by [Jay Arnold](https://www.youtube.com/@jayarnoldproduces)**
+- **PokéPathTD by [Khydra](https://khydra98.itch.io/pokepath)**
+
+### Special Thanks
+- **[Tok3n Gamer](https://www.youtube.com/@tok3ngamer)** for playtesting and the installation video
+- **Pondomatik** for playtesting
+
+- **Pokémon** — © Nintendo, Game Freak, Creatures Inc.
+
+*This is a fan modification. Not affiliated with Nintendo or the original developers.*
