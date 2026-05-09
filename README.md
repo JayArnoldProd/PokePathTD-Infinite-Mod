@@ -221,7 +221,6 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
 
 ## 📜 Credits
 
-- **Mod by [Jay Arnold](https://www.youtube.com/@jayarnoldproduces)**
 - **PokéPathTD by [Khydra](https://khydra98.itch.io/pokepath)**
 
 ### Special Thanks
