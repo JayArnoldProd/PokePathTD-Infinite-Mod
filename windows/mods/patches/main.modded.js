@@ -34,14 +34,6 @@ function createWindow() {
     win.setMenu(null);
     win.setContentSize(baseWidth, baseHeight);
 
-    win.webContents.on('before-input-event', (event, input) => {
-        const key = String(input.key || '').toLowerCase();
-        if (input.key === 'F12' || (input.control && input.shift && key === 'i')) {
-            event.preventDefault();
-            win.webContents.toggleDevTools();
-        }
-    });
-
     win.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: 'deny' };

@@ -15,7 +15,6 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 > - Restored vanilla 1.5.5 projectile impact handling
 > - Fixed orbital/projectile collision rendering regressions
 > - Fixed missing per-wave heal tracking that could crash enemy damage
-> - Added F12 / Ctrl+Shift+I developer tools access for Windows debugging
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.

@@ -1134,28 +1134,7 @@ export class Tower extends Sprite {
                 }
             }
 
-            if (typeof p.update === 'function') {
-                try {
-                    p.update(deltaTime, shouldDraw); // pasamos delta ya escalado por Game
-                } catch (err) {
-                    const payload = {
-                        message: err?.message || String(err),
-                        stack: err?.stack,
-                        orbit: !!p?.orbit,
-                        tower: this.pokemon?.specie?.name || this.pokemon?.name || this.pokemon?.id,
-                        projectileCount: this.projectiles.length
-                    };
-                    console.error('[PokePath TD Infinite] Projectile update failed', payload);
-                    if (typeof window !== 'undefined') {
-                        window.__pokepathLastProjectileError = payload;
-                        window.__pokepathProjectileErrors = window.__pokepathProjectileErrors || [];
-                        window.__pokepathProjectileErrors.push(payload);
-                        if (window.__pokepathProjectileErrors.length > 20) window.__pokepathProjectileErrors.shift();
-                    }
-                    if (p?.orbit) p._lastUpdateError = payload;
-                    else p.markedForDeletion = true;
-                }
-            }
+            if (typeof p.update === 'function') p.update(deltaTime, shouldDraw); // pasamos delta ya escalado por Game
             if (p.markedForDeletion) this.projectiles.splice(i, 1);
         }
     }

@@ -100,21 +100,7 @@ export class Projectile extends Sprite {
                         const last = this.perEnemyLastHit.get(e) || 0;
                         // ← usar simulatedTime en vez de Date.now()
                         if (this.simulatedTime - last >= this.orbitHitCooldown) {
-                            const beforeHp = e.hp;
-                            const beforeArmor = e.armor ?? 0;
-                            try {
-                                this.tower.dealDirectDamage(e);
-                                this.logCollisionDebug('orbital-hit', {
-                                    tower: this.tower?.pokemon?.specie?.name || this.tower?.pokemon?.name || this.tower?.pokemon?.id,
-                                    enemy: e.enemy?.name || e.enemy?.id,
-                                    hpBefore: beforeHp,
-                                    hpAfter: e.hp,
-                                    armorBefore: beforeArmor,
-                                    armorAfter: e.armor ?? 0
-                                });
-                            } catch (err) {
-                                this.logCollisionError('orbital-hit', err, e);
-                            }
+                            this.tower.dealDirectDamage(e);
                             this.perEnemyLastHit.set(e, this.simulatedTime);
                         }
                     }
@@ -232,25 +218,7 @@ export class Projectile extends Sprite {
             const distance = Math.hypot(dx, dy);
 
             if (distance < hitRadius) {
-                let shouldTerminate = false;
-                const beforeHp = this.enemy.hp;
-                const beforeArmor = this.enemy.armor ?? 0;
-                try {
-                    shouldTerminate = this.processImpact();
-                    this.logCollisionDebug('projectile-impact', {
-                        tower: this.tower?.pokemon?.specie?.name || this.tower?.pokemon?.name || this.tower?.pokemon?.id,
-                        enemy: this.enemy?.enemy?.name || this.enemy?.enemy?.id,
-                        hpBefore: beforeHp,
-                        hpAfter: this.enemy?.hp,
-                        armorBefore: beforeArmor,
-                        armorAfter: this.enemy?.armor ?? 0
-                    });
-                } catch (err) {
-                    this.logCollisionError('projectile-impact', err, this.enemy);
-                    this.markedForDeletion = true;
-                    collided = true;
-                    break;
-                }
+                const shouldTerminate = this.processImpact();
                 if (shouldTerminate) {
                     collided = true;
                     break;
@@ -774,30 +742,4 @@ export class Projectile extends Sprite {
         return closest;
     }
 
-    logCollisionDebug(type, details = {}) {
-        if (typeof window === 'undefined' || !window.__pokepathDebugCollisions) return;
-        window.__pokepathCollisionLog = window.__pokepathCollisionLog || [];
-        window.__pokepathCollisionLog.push({ type, time: performance.now(), ...details });
-        if (window.__pokepathCollisionLog.length > 100) window.__pokepathCollisionLog.shift();
-    }
-
-    logCollisionError(type, err, enemy = null) {
-        const payload = {
-            type,
-            message: err?.message || String(err),
-            stack: err?.stack,
-            tower: this.tower?.pokemon?.specie?.name || this.tower?.pokemon?.name || this.tower?.pokemon?.id,
-            enemy: enemy?.enemy?.name || enemy?.enemy?.id,
-            hp: enemy?.hp,
-            armor: enemy?.armor,
-            orbit: !!this.orbit
-        };
-        console.error('[PokePath TD Infinite] Collision damage failed', payload);
-        if (typeof window !== 'undefined') {
-            window.__pokepathLastCollisionError = payload;
-            window.__pokepathCollisionErrors = window.__pokepathCollisionErrors || [];
-            window.__pokepathCollisionErrors.push(payload);
-            if (window.__pokepathCollisionErrors.length > 20) window.__pokepathCollisionErrors.shift();
-        }
-    }
 }

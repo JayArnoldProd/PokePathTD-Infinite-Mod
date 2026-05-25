@@ -7,7 +7,6 @@
         "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.5",
         "Rebased projectile collision handling onto vanilla 1.5.5 impact logic",
         "Fixed orbital/projectile collision rendering regressions caused by canvas state and sub-step draw drift",
-        "Initialized per-wave heal tracking so collision damage no longer crashes when heal-cap state is missing",
-        "Added F12 / Ctrl+Shift+I developer tools access for Windows debugging"
+        "Initialized per-wave heal tracking so collision damage no longer crashes when heal-cap state is missing"
     ]
 }
