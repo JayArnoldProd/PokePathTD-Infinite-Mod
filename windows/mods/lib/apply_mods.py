@@ -86,6 +86,9 @@ EXPECTED_VANILLA_FILES = {
     "src/js/game/core/Area.js":             18938,
     "src/js/game/core/Team.js":             1854,
     "src/js/game/core/Box.js":              703,
+    "src/js/game/component/Tower.js":        107380,
+    "src/js/game/component/Enemy.js":        46328,
+    "src/js/game/scenes/MenuScene.js":       49486,
 }
 
 def check_game_version_compatibility():
@@ -115,7 +118,7 @@ def check_game_version_compatibility():
 # ============================================================================
 # Mod markers to detect if game is already modded
 MOD_MARKERS = [
-    'speedFactor === 10',        # Speed mod in Game.js
+    "speedWave.innerText = '10x'", # Speed mod in Game.js
     'PAUSE MICROMANAGEMENT',      # Pause micro comment in Game.js
     'calculateAsymptoticSpeed',   # Level uncap in Pokemon.js
     'ENDLESS MODE',               # Endless mode markers
@@ -425,13 +428,13 @@ MOD_FEATURES = {
     'deltatime': {
         'name': 'Delta Time & Performance',
         'description': 'Sub-stepping simulation, accurate projectile timing, squared-distance checks, batch removal, throttled UI, cached draws',
-        'functions': ['_ensure_game_modded', 'apply_tower_deltatime', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'],
+        'functions': ['_ensure_game_modded', 'apply_tower_deltatime', 'apply_orbital_tower_guard', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'],
         'default': True,
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
         'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix (prevents shiny path bleed), projectile retargeting from tower position, off-screen target cleanup, Shell Bell / Clefairy Doll damage tracking fix',
-        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
+        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_orbital_tower_guard', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
         'default': True,
     },
     'allow_dupes': {
@@ -1168,164 +1171,129 @@ def apply_ui_mods():
 def apply_pause_micromanagement():
     """
     Surgically patch Game.js to enable pause micromanagement.
-    
-    Changes made:
-    1. Remove 'if (this.stopped) return;' from animate() so render loop continues
-    2. Add stopped ternary to totalScaledDelta so sim freezes but render continues
-    3. Remove deploy guard so Pokemon can be deployed/moved while paused
-    4. Modify switchPause() to not block canvas or show overlay (allow interaction)
-    5. Keep game loop running during pause (don't clear interval)
-    
-    Works on both vanilla Game.js and Game.modded.js (different whitespace patterns).
+
+    The current Game.modded.js is based on vanilla 1.5.5, which already has a
+    Worker-driven render loop, passenger/mount placement handling, spike zones,
+    and link-beam rendering. Pause micro keeps the render loop alive, skips
+    simulation/tower attacks while stopped, and leaves canvas input enabled so
+    paused placement persists in the real Area/Tower state.
     """
     path = JS_ROOT / "game" / "Game.js"
-    
+
     if not path.exists():
         log_skip("Game.js: Pause micromanagement (file not yet installed)")
         return True
-    
+
     content = read_file(path)
-    
-    # Check if already applied — look for the specific "No early return" comment
-    if 'PAUSE MICROMANAGEMENT - No early return' in content:
-        log_skip("Game.js: Pause micromanagement")
-        return True
-    
     changes = 0
-    
-    # 1. Remove early return from animate()
-    pattern = r'(animate\s*\(time\)\s*\{)\s*\n(\s*)if\s*\(\s*this\.stopped\s*\)\s*return\s*;'
-    match = re.search(pattern, content)
-    if match:
-        old_text = match.group(0)
-        indent = match.group(2)
-        new_text = f"{match.group(1)}\n{indent}// MOD: PAUSE MICROMANAGEMENT - No early return when stopped"
-        content = content.replace(old_text, new_text)
-        changes += 1
-    
-    # 2. Patch totalScaledDelta if it lacks the ternary
+
+    # 1. Remove early return from animate() so the render/input refresh keeps running.
+    if 'PAUSE MICROMANAGEMENT - No early return' not in content:
+        pattern = r'(animate\s*\(time\)\s*\{)\s*\n(\s*)if\s*\(\s*this\.stopped\s*\)\s*return\s*;'
+        match = re.search(pattern, content)
+        if match:
+            old_text = match.group(0)
+            indent = match.group(2)
+            new_text = f"{match.group(1)}\n{indent}// MOD: PAUSE MICROMANAGEMENT - No early return when stopped"
+            content = content.replace(old_text, new_text, 1)
+            changes += 1
+
+    # 2. Legacy Game.modded.js used totalScaledDelta; keep this for older installs.
     old_delta = 'const totalScaledDelta = this.frameDuration * this.speedFactor;'
-    new_delta = '// MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
     if old_delta in content:
-        content = content.replace(old_delta, new_delta)
+        new_delta = '// MOD: PAUSE MICROMANAGEMENT - freeze sim when stopped\n\t    const totalScaledDelta = this.stopped ? 0 : this.frameDuration * this.speedFactor;'
+        content = content.replace(old_delta, new_delta, 1)
         changes += 1
-    
-    # 3. Remove deploy guard (allow deploying while paused)
-    # Matches both: "if (this.stopped) return playSound('pop0', 'ui');" patterns
+
+    # 3. Remove deploy guard (allow deploying while paused, but keep section-open guard).
+    if "if (this.stopped || this.main.isSectionOpen()) return;" in content:
+        content = content.replace(
+            "if (this.stopped || this.main.isSectionOpen()) return;",
+            "if (this.main.isSectionOpen()) return; // MOD: PAUSE MICROMANAGEMENT - deploy allowed while paused",
+            1,
+        )
+        changes += 1
+
     deploy_pattern = r"\s*if\s*\(this\.stopped\)\s*return\s+playSound\('pop0',\s*'ui'\);"
     if re.search(deploy_pattern, content):
-        content = re.sub(deploy_pattern, '\n  \t\t// MOD: PAUSE MICROMANAGEMENT - deploy allowed while paused', content)
+        content = re.sub(deploy_pattern, '\n  \t\t// MOD: PAUSE MICROMANAGEMENT - deploy allowed while paused', content, count=1)
         changes += 1
-    
-    # 4. Inject _simSteps override and stopped redraw block (for Game.modded.js sub-stepping loop)
-    old_loop_start = '\t    for (let step = 0; step < numSteps; step++) {'
-    new_loop_start = """\t    // MOD: PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped
-\t    // Only the draw/render code below runs, so tiles highlight and clicks work
-\t    const _simSteps = this.stopped ? 0 : numSteps;
 
-\t    // When paused, still redraw background + entities so canvas doesn't smear
-\t    if (this.stopped && this.ctx) {
-\t        if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
-\t            this.ctx.drawImage(this.canvasBackground, 0, 0, canvasW, canvasH);
-\t        } else {
-\t            this.ctx.clearRect(0, 0, canvasW, canvasH);
-\t        }
-\t        // Redraw enemies and towers in place (no update, just draw)
-\t        for (let i = 0; i < enemies.length; i++) { enemies[i]._skipDraw = false; enemies[i].draw(); }
-\t        for (let t = 0; t < towers.length; t++) { towers[t]._skipDraw = false; towers[t].draw(); }
-\t    }
+    # 4. Skip the simulation sub-step loop while paused, but redraw the current frame.
+    if 'PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped' not in content:
+        loop_pattern = r'(\n[ \t]*)for \(let step = 0; step < numSteps; step\+\+\) \{'
+        match = re.search(loop_pattern, content)
+        if match:
+            indent = match.group(1)
+            redraw_block = f"""{indent}// MOD: PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped
+{indent}// Only the draw/render code below runs, so tiles highlight and clicks work
+{indent}const _simSteps = this.stopped ? 0 : numSteps;
 
-\t    for (let step = 0; step < _simSteps; step++) {"""
-    if old_loop_start in content:
-        content = content.replace(old_loop_start, new_loop_start, 1)
-        # Also update isLastStep to use _simSteps
-        content = content.replace('step === numSteps - 1', 'step === _simSteps - 1')
-        changes += 1
-    
-    # 5. Modify switchPause() — remove canvas blocking, overlay, and interval clearing
-    # Replace the pause branch to keep loop running and allow interaction
-    # Match the full switchPause for Game.modded.js pattern
-    old_switch_modded = """	switchPause() {
-	    playSound('option', 'ui');
+{indent}// When paused, still redraw background + entities so canvas doesn't smear
+{indent}if (this.stopped && this.ctx) {{
+{indent}    if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {{
+{indent}        this.ctx.drawImage(this.canvasBackground, 0, 0, this.canvas.width, this.canvas.height);
+{indent}    }} else {{
+{indent}        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+{indent}    }}
+{indent}    const _pauseEnemies = this.main.area.enemies || [];
+{indent}    const _pauseTowers = this.main.area.towers || [];
+{indent}    for (let i = 0; i < _pauseEnemies.length; i++) {{
+{indent}        _pauseEnemies[i]._skipDraw = false;
+{indent}        if (typeof _pauseEnemies[i].draw === 'function') _pauseEnemies[i].draw();
+{indent}    }}
+{indent}    for (let t = 0; t < _pauseTowers.length; t++) {{
+{indent}        _pauseTowers[t]._skipDraw = false;
+{indent}        if (typeof _pauseTowers[t].draw === 'function') _pauseTowers[t].draw();
+{indent}    }}
+{indent}}}
 
-	    // Clean up any active drag clone
-	    const activeClone = document.querySelector('.map-drag-clone');
-	    if (activeClone) activeClone.remove();
-
-	    if (!this.stopped) {
-	        // PAUSE: stop loop and block canvas
-	        this.stopped = true;
-
-	        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-
-	        // Stop the game loop interval
-	        if (this.loopId) {
-	            clearInterval(this.loopId);
-	            this.loopId = null;
-	        }
-
-	        // Block canvas interaction
-	        this.canvas.style.pointerEvents = 'none';
-	        // Clear interaction state
-	        this.deployingUnit = undefined;
-	        this.mapDragging = false;
-	        this.activeTile = null;
-	        this.mouse.x = undefined;
-	        this.mouse.y = undefined;
-
-	        this.showPauseOverlay();
-
-	        this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)`;
-	    } else {
-	        // RESUME: restart loop and enable canvas
-	        this.stopped = false;
-	        this.lastTime = performance.now();
-
-	        if (this.loopId) clearInterval(this.loopId);
-	        this.loopId = setInterval(() => this.animate(performance.now()), this.frameDuration);
-
-	        this.hidePauseOverlay();
-
-	        this.canvas.style.pointerEvents = 'auto';
-	        this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
-	    }
-	}"""
-    
-    new_switch = """	// MOD: PAUSE MICROMANAGEMENT — pause freezes sim but allows Pokemon interaction
-	switchPause() {
-	    playSound('option', 'ui');
-	    if (!this.stopped) {
-	      	this.stopped = true;
-	      	this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)`;
-	    } else {
-	    	this.stopped = false;
-	    	this.lastTime = performance.now();
-	    	this.main.UI.pauseWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
-	    }
-	}"""
-    
-    if old_switch_modded in content:
-        content = content.replace(old_switch_modded, new_switch)
-        changes += 1
-    else:
-        # Try vanilla switchPause pattern (regex for flexibility)
-        vanilla_switch_pattern = r'(\tswitchPause\(\) \{.*?// Habilitar interacci.*?\n\s*this\.main\.UI\.pauseWave\.style\.background.*?;\s*\n\s*\})'
-        vanilla_match = re.search(vanilla_switch_pattern, content, re.DOTALL)
-        if vanilla_match:
-            content = content.replace(vanilla_match.group(0), new_switch.lstrip())
+{indent}for (let step = 0; step < _simSteps; step++) {{"""
+            content = content[:match.start()] + redraw_block + content[match.end():]
+            content = content.replace('step === numSteps - 1', 'step === _simSteps - 1', 1)
             changes += 1
-    
+
+    # 5. Replace switchPause() so it toggles stopped without stopping worker/timer or blocking canvas input.
+    if 'PAUSE MICROMANAGEMENT — pause freezes sim but allows Pokemon interaction' not in content:
+        switch_pattern = r'(\n[ \t]*)switchPause\(\) \{.*?(?=\n[ \t]*stop\(\) \{)'
+        match = re.search(switch_pattern, content, re.DOTALL)
+        if match:
+            indent = match.group(1)
+            new_switch = f"""{indent}// MOD: PAUSE MICROMANAGEMENT — pause freezes sim but allows Pokemon interaction
+{indent}switchPause() {{
+{indent}    playSound('option', 'ui');
+
+{indent}    const activeClone = document.querySelector('.map-drag-clone');
+{indent}    if (activeClone) activeClone.remove();
+
+{indent}    if (!this.stopped) {{
+{indent}        this.stopped = true;
+{indent}        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+{indent}        this.main.UI.pauseWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)';
+{indent}    }} else {{
+{indent}        this.stopped = false;
+{indent}        this.lastTime = performance.now();
+{indent}        this.main.UI.pauseWave.style.background = 'url("./src/assets/images/textures/texture1.png"), #6B7280';
+{indent}    }}
+{indent}}}
+"""
+            content = content[:match.start()] + new_switch + content[match.end():]
+            changes += 1
+
     if changes > 0:
         write_file(path, content)
         log_success(f"Game.js: Pause micromanagement ({changes} patches)")
         return True
-    
-    # Check if it's already good (no early return exists at all)
-    if not re.search(r'animate\s*\(time\)\s*\{\s*\n\s*if\s*\(\s*this\.stopped\s*\)\s*return', content):
-        log_skip("Game.js: Pause micromanagement (already applied)")
+
+    if (
+        'PAUSE MICROMANAGEMENT - No early return' in content and
+        'PAUSE MICROMANAGEMENT - Skip simulation entirely when stopped' in content and
+        'PAUSE MICROMANAGEMENT — pause freezes sim but allows Pokemon interaction' in content
+    ):
+        log_skip("Game.js: Pause micromanagement")
         return True
-    
-    log_fail("Game.js: Pause micromanagement", "patterns not found in animate()")
+
+    log_fail("Game.js: Pause micromanagement", "patterns not found in animate()/switchPause()")
     return False
 
 # ============================================================================
@@ -1362,7 +1330,7 @@ def apply_speed_mod():
     content = read_file(path)
     
     # Check if already applied
-    if 'speedFactor === 10' in content:
+    if "speedWave.innerText = '10x'" in content or 'speedFactor === 10' in content:
         log_skip("Game.js: Speed mod")
         return True
     
@@ -1916,16 +1884,22 @@ def apply_enemy_scaling():
     """Apply endless mode enemy HP/armor scaling."""
     path = JS_ROOT / "game" / "component" / "Enemy.js"
     content = read_file(path)
+
+    had_shiny_enemy_spawn = "this.isShiny = Math.random() < (1 / 1000);" in content
     
     # Check if already applied
     if 'ENDLESS MODE' in content and 'wave > 100' in content:
         log_skip("Enemy.js: Endless scaling")
         return True
     
-    # Use modded file directly
+    # Use modded file directly. This file is a vanilla 1.5.5 full-file base with
+    # only the endless scaling/draw-skip overrides reapplied; optional Enemy.js
+    # feature patches are applied separately to preserve feature toggles.
     modded_file = MODS_DIR / "patches" / "Enemy.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
+        if had_shiny_enemy_spawn:
+            apply_enemy_shiny_spawn()
         log_success("Enemy.js: Endless scaling (full file replacement)")
         return True
     
@@ -1964,6 +1938,63 @@ def apply_tower_deltatime():
     copy_modded_file(modded_file, path)
     log_success("Tower.js: Delta time fix (full file replacement)")
     return True
+
+
+def apply_orbital_tower_guard():
+    """Prevent orbital towers from firing normal projectiles.
+
+    PokePath 1.5.5 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
+    compatibility. This surgical guard is applied after any optional Tower.js
+    replacement so orbital Pokemon only update their orbit projectiles.
+    """
+    path = JS_ROOT / "game" / "component" / "Tower.js"
+    if not path.exists():
+        log_skip("Tower.js: Orbital projectile guard (file not yet installed)")
+        return True
+
+    content = read_file(path)
+    if 'MOD: Orbital projectile guard' in content:
+        log_skip("Tower.js: Orbital projectile guard")
+        return True
+
+    changes = 0
+
+    # Vanilla/1.5.5 path: single-shot projectile branch.
+    old_single = "if (this.target && this.attackCooldown <= 0 && this.pokemon.attackType  !== 'orbital') {"
+    if old_single in content:
+        content = content.replace(
+            old_single,
+            "const isOrbitalTower = this.attackType === 'orbital' || this.pokemon?.attackType === 'orbital' || (this.orbital ?? 0) > 0;\n"
+            "        // MOD: Orbital projectile guard - orbitals only use orbit projectiles.\n"
+            "        if (isOrbitalTower && !this.projectiles.some(p => p?.orbit)) this.spawnOrbitales();\n\n"
+            "        if (this.target && this.attackCooldown <= 0 && !isOrbitalTower) {",
+            1,
+        )
+        changes += 1
+    else:
+        # Delta-time Tower.modded.js path: multi-shot while loop.
+        old_loop = "while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && this.pokemon.attackType !== 'orbital') {"
+        if old_loop in content:
+            marker = "// --- TORRES CON PROYECTILES ---"
+            idx = content.find(marker)
+            if idx != -1:
+                insert_at = content.find("\n", idx) + 1
+                content = content[:insert_at] + "        const isOrbitalTower = this.attackType === 'orbital' || this.pokemon?.attackType === 'orbital' || (this.orbital ?? 0) > 0;\n        // MOD: Orbital projectile guard - orbitals only use orbit projectiles.\n        if (isOrbitalTower && !this.projectiles.some(p => p?.orbit)) this.refreshOrbitalProjectiles();\n\n" + content[insert_at:]
+                content = content.replace(old_loop, "while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && !isOrbitalTower) {", 1)
+                changes += 1
+
+    # Retarget cleanup must not delete orbit projectiles just because they have no enemy.
+    if "if (this.pokemon.attackType === 'orbital') {" in content:
+        content = content.replace("if (this.pokemon.attackType === 'orbital') {", "if (isOrbitalTower || p.orbit) {", 1)
+        changes += 1
+
+    if changes > 0:
+        write_file(path, content)
+        log_success(f"Tower.js: Orbital projectile guard ({changes} patches)")
+        return True
+
+    log_fail("Tower.js: Orbital projectile guard", "projectile branch patterns not found")
+    return False
 
 # ============================================================================
 # PROJECTILE.JS - Endless damage calculations
@@ -3296,10 +3327,13 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     else:
         print(f"  [OK] Game files match expected version ({GAME_VERSION})")
     
-    # Build list of functions to call
+    # Build list of functions to call in canonical feature order, not caller order.
+    # Some features patch the same file (Enemy.js); full-file bases must land before
+    # optional surgical add-ons so partial installs remain composable.
+    selected_set = set(selected_features)
     functions_to_call = []
-    for feature_key in selected_features:
-        if feature_key in MOD_FEATURES:
+    for feature_key in MOD_FEATURES:
+        if feature_key in selected_set:
             functions_to_call.extend(MOD_FEATURES[feature_key]['functions'])
     
     # Remove duplicates while preserving order
@@ -3976,7 +4010,9 @@ def main():
     apply_endless_waves()
     apply_endless_checkpoints()
     apply_enemy_scaling()
+    apply_enemy_shiny_spawn()
     apply_tower_deltatime()
+    apply_orbital_tower_guard()
     apply_projectile_scaling()
     apply_box_expansion()
     apply_profile_endless_stats()

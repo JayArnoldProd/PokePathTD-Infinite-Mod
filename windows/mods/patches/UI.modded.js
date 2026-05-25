@@ -898,7 +898,6 @@ export class UI {
 	    };
 
 	    const onPointerMoveDuringDrag = (e) => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!clone) return;
 	        clone.style.left = `${e.pageX - clone.offsetWidth / 2}px`;
 	        clone.style.top = `${e.pageY - clone.offsetHeight / 2}px`;
@@ -945,7 +944,6 @@ export class UI {
 	    };
 
 	    const onPointerUpDuringDrag = (e) => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 
 	        // quitar listeners de arrastre
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
@@ -1228,7 +1226,6 @@ export class UI {
 	    };
 
 	    const startDragActual = (e, index, originatingSlot) => {
-	    	if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!this.main.team.pokemon[index] || index >= this.main.player.teamSlots) {
 	            clearDragState();
 	            return;

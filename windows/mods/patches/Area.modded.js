@@ -41,6 +41,7 @@ export class Area {
 		this.shellBellWaveUsed = false;
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
+		this.healUsed = {};
 		this.heartScale = false;
 		this.inChallenge = false;
 		this.music;
@@ -167,6 +168,7 @@ export class Area {
 		this.shellBellWaveUsed = false;
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
+		this.healUsed = {};
 		this.heartScale = false;
 		this.main.UI.refreshDamageDealt(true);
 		this.music = this.map.music;

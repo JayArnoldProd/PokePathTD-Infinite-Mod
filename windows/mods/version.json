@@ -1,12 +1,13 @@
 {
-    "version": "1.5.4",
-    "game_version": "1.5.4",
-    "release_date": "2026-04-20",
+    "version": "1.5.5",
+    "game_version": "1.5.5",
+    "release_date": "2026-05-25",
     "changes": [
-        "Validated Windows compatibility against live PokePath TD 1.5.4 vanilla files",
-        "Updated installer vanilla compatibility fingerprints for 1.5.4 Game.js, Pokemon.js, PokemonScene.js, Area.js, Team.js, and Box.js",
-        "Revalidated selective-feature and all-features install paths on 1.5.4 with zero patch failures",
-        "Confirmed 1.5.4 balance/changelog data remains intact under current patch set",
-        "macOS compatibility for 1.5.x remains pending dedicated validation"
+        "Validated Windows compatibility against live PokePath TD 1.5.5 vanilla files",
+        "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.5",
+        "Rebased projectile collision handling onto vanilla 1.5.5 impact logic",
+        "Fixed orbital/projectile collision rendering regressions caused by canvas state and sub-step draw drift",
+        "Initialized per-wave heal tracking so collision damage no longer crashes when heal-cap state is missing",
+        "Added F12 / Ctrl+Shift+I developer tools access for Windows debugging"
     ]
 }

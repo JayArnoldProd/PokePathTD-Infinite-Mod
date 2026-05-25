@@ -2,7 +2,7 @@
 
 # PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.5.4 on Windows** ✅
+**Compatible with PokePath TD v1.5.5 on Windows** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
@@ -10,10 +10,12 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
-> **Windows v1.5.4 refresh (2026-04-21):**
-> - Save Editor upgrades for item slot editing/manipulation
-> - Save Editor route + wave set support
-> - Stability/UX polish over the previous v1.5.4 package
+> **Windows v1.5.5 refresh (2026-05-25):**
+> - Rebased Windows compatibility onto PokePath TD 1.5.5
+> - Restored vanilla 1.5.5 projectile impact handling
+> - Fixed orbital/projectile collision rendering regressions
+> - Fixed missing per-wave heal tracking that could crash enemy damage
+> - Added F12 / Ctrl+Shift+I developer tools access for Windows debugging
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -132,7 +134,8 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.5.4** (Latest) | Windows | PokePath TD 1.5.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.4) |
+| **v1.5.5** (Latest) | Windows | PokePath TD 1.5.5 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.5) |
+| v1.5.4 | Windows | PokePath TD 1.5.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.4) |
 | v1.5.3 | Windows | PokePath TD 1.5.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.3) |
 | v1.5.2 | Windows | PokePath TD 1.5.2 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.2) |
 | **v1.4.4** (older) | Windows | PokePath TD 1.4.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.4.4) |
@@ -155,7 +158,7 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.4) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.5) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```
@@ -211,9 +214,9 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > See `README.md` inside the Mac mod folder for detailed macOS instructions, save editor usage, and troubleshooting.
 
-## 📋 Release Notes (Windows v1.5.4)
+## 📋 Release Notes (Windows v1.5.5)
 
-This release notes section covers the meaningful additions in the Windows v1.5.4 refresh.
+This release notes section covers the meaningful additions in the Windows v1.5.5 refresh.
 
 ### New and Expanded Features
 - **Unlockables in Profile** expanded to show unlockable items/Pokémon art and unlock conditions
@@ -226,12 +229,15 @@ This release notes section covers the meaningful additions in the Windows v1.5.4
 - UX polish
 
 ### Compatibility + Installer
-- Windows compatibility rebases through game version 1.5.4
+- Windows compatibility rebases through game version 1.5.5
 - Updated installer compatibility fingerprints and diagnostics metadata
 - Continued support for feature mix-and-match install, selective uninstall, and vanilla restore flow
 
 ### Included Bug Fixes
-- Existing 1.5-line bug-fix coverage remains in place; this refresh focuses on feature/compatibility updates listed above.
+- Restored vanilla 1.5.5 projectile impact handling
+- Fixed orbital/projectile collision rendering regressions caused by stale impact logic and canvas state drift
+- Fixed missing per-wave heal tracking that could crash enemy damage
+- Added F12 / Ctrl+Shift+I developer tools access for Windows debugging
 
 ---
 

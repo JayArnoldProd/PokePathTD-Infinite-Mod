@@ -1,5 +1,6 @@
 import { Sprite } from '../../utils/Sprite.js';
 import { playSound } from '../../file/audio.js';
+import { enemyData } from '../data/enemyData.js';
 
 export class Enemy extends Sprite {
 	constructor(x, y, enemy, waypoints, main, ctx) {
@@ -22,12 +23,12 @@ export class Enemy extends Sprite {
 		this.hpMax = enemy.hp;
 		this.armor = enemy.armor || 0;
 		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0; 
-		this.regenTimer = 0; 
-		this.speed = enemy.speed; 
-		this.baseSpeed = this.speed; 
+		this.regeneration = enemy.regeneration || 0;
+		this.regenTimer = 0;
+		this.speed = enemy.speed;
+		this.baseSpeed = this.speed;
 		this.power = enemy.power;
-		this.gold = enemy.gold + this.main.player.extraGold;
+		this.gold = enemy.gold + this.main.player.extraGold
 		this.invisible = enemy.invisible;
 		this.cursed = false;
 		this.invulnerable = false;
@@ -47,7 +48,7 @@ export class Enemy extends Sprite {
 		this.timeTravelMin = 150;
 		this.timeTravelMax = 200;
 
-		// animaci├│n
+		// animación
 		this.reviveAnimTime = 0;
 		this.reviveScale = 1;
 
@@ -65,7 +66,7 @@ export class Enemy extends Sprite {
 			if (!cached && this.main && typeof this.main.getImage === 'function') {
 				cached = this.main.getImage(cursePath);
 			}
-			// tambi├⌐n comprobar imageCache directo por compatibilidad
+			// también comprobar imageCache directo por compatibilidad
 			if (!cached && this.main && this.main.imageCache && this.main.imageCache[cursePath]) {
 				cached = this.main.imageCache[cursePath];
 			}
@@ -74,8 +75,8 @@ export class Enemy extends Sprite {
 		this.curseIcon = cached || null;
 
 		if (!this.curseIcon) {
-		    this.curseIcon = new Image();
-		    this.curseIcon.src = './src/assets/images/icons/curse.png';
+            this.curseIcon = new Image();
+            this.curseIcon.src = './src/assets/images/icons/curse.png';
 		}
 		// Wave scaling for difficulty (waves 1-100 only)
 		// ENDLESS MODE (wave > 100): All scaling handled by Area.js spawnEndlessWave
@@ -86,13 +87,13 @@ export class Enemy extends Sprite {
 				let hpMult = 1 + 0.02 * bonusSteps;
 				let armorMult = 1 + 0.01 * bonusSteps;
 				let goldMult = 1 + 0.15 * bonusSteps;
-				
+
 				this.hp = Math.floor(this.hp * hpMult);
 				this.hpMax = Math.floor(this.hpMax * hpMult);
 				this.armor = Math.floor(this.armor * armorMult);
 				this.armorMax = Math.floor(this.armorMax * armorMult);
 				this.gold = Math.floor(this.gold * goldMult);
-				
+
 				// Boss wave 100 gets +100% stats
 				if (wave === 100) {
 					this.hp = Math.floor(this.hp * 2);
@@ -103,7 +104,6 @@ export class Enemy extends Sprite {
 			}
 		}
 		// Wave > 100: Enemy receives pre-scaled stats from Area.js, no additional scaling here
-
 		if (typeof this.main.area.inChallenge.toughEnemies == 'number') {
 			this.hp += Math.floor(this.hp * (this.main.area.inChallenge.toughEnemies / 100));
 			this.hpMax += Math.floor(this.hpMax * (this.main.area.inChallenge.toughEnemies / 100));
@@ -113,24 +113,30 @@ export class Enemy extends Sprite {
 
 		this.dying = false;
 		this.opacity = 1;
-		this.dyingSpeed = 0.03; 
+		this.dyingSpeed = 0.03;
 
 		this.hasEnteredCanvas = false;
 		this.distanceTraveled = 0;
 		this.stunned = false;
-		
+
 		this.canSlow = enemy.canSlow;
 		this.canStun = enemy.canStun;
 		this.canBurn = enemy.canBurn;
-		this.canPoison = enemy.canPoison;	
+		this.canPoison = enemy.canPoison;
 
 		this.burnedBy = null;
 		this.poisonedBy = null;
 		this.nightmaredBy = null;
 
+		this.weatherTimer = 0;
+
 		if (this.passive?.id == 'drought') {
 			this.main.area.imposedWeather = true;
 			this.main.area.weather = 'harshSunlight';
+			this.main.UI.displayWeather();
+		} else if (this.passive?.id == 'drizzle') {
+			this.main.area.imposedWeather = true;
+			this.main.area.weather = 'rain';
 			this.main.UI.displayWeather();
 		}
 	}
@@ -139,32 +145,33 @@ export class Enemy extends Sprite {
 		this.ctx.save();
 
 		if (this.passive?.id === 'flameBody') {
-		    const centerX = this.position.x + this.width / 2;
-		    const centerY = this.position.y + this.height / 2;
+            this.ctx.save();
+            const centerX = this.position.x + this.width / 2;
+            const centerY = this.position.y + this.height / 2;
 
-		    const numParticles = 500;
+            const numParticles = 500;
 
-		    for (let i = 0; i < numParticles; i++) {
-		        const angle = Math.random() * Math.PI * 2;
-		        const r = 70 + Math.random() * 50;
-		        const px = centerX + Math.cos(angle) * r;
-		        const py = centerY + Math.sin(angle) * r;
-		        const size = 2 + Math.random() * 3;
+            for (let i = 0; i < numParticles; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = 70 + Math.random() * 50;
+                const px = centerX + Math.cos(angle) * r;
+                const py = centerY + Math.sin(angle) * r;
+                const size = 2 + Math.random() * 3;
 
-		        const t = Math.random(); 
+                const t = Math.random();
 
-		        const rColor = Math.floor(255);
-		        const gColor = Math.floor(100 + 155 * t);
-		        const bColor = 0;
+                const rColor = Math.floor(255);
+                const gColor = Math.floor(100 + 155 * t);
+                const bColor = 0;
 
-		        this.ctx.globalAlpha = 0.7 + 0.2 * Math.sin(Date.now() / 300);
-		        this.ctx.fillStyle = `rgb(${rColor},${gColor},${bColor})`;
-		        this.ctx.beginPath();
-		        this.ctx.arc(px, py, size, 0, Math.PI * 2);
-		        this.ctx.fill();
-		    }
+                this.ctx.globalAlpha = 0.7 + 0.2 * Math.sin(Date.now() / 300);
+                this.ctx.fillStyle = `rgb(${rColor},${gColor},${bColor})`;
+                this.ctx.beginPath();
+                this.ctx.arc(px, py, size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
 
-		    this.ctx.restore();
+            this.ctx.restore();
 		}
 
 		if (this.passive?.id === "snowCloak") {
@@ -176,16 +183,16 @@ export class Enemy extends Sprite {
 
 			// aura circular (siempre visible)
 			const grad = this.ctx.createRadialGradient(cx, cy, radius * 0.2, cx, cy, radius);
-			grad.addColorStop(0, `rgba(180,220,255,${0.35 + pulse * 0.15})`);
-			grad.addColorStop(0.7, `rgba(180,220,255,${0.15 + pulse * 0.10})`);
-			grad.addColorStop(1, `rgba(180,220,255,0.08)`); 
+			grad.addColorStop(0, `rgba(180, 220, 255,${0.35 + pulse * 0.15})`);
+			grad.addColorStop(0.7, `rgba(180, 220, 255,${0.15 + pulse * 0.10})`);
+			grad.addColorStop(1, `rgba(180, 220, 255, 0.08)`);
 
 			this.ctx.fillStyle = grad;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 			this.ctx.fill();
 
-			this.ctx.strokeStyle = 'rgba(200,230,255,0.55)';
+			this.ctx.strokeStyle = 'rgba(200, 230, 255, 0.55)';
 			this.ctx.lineWidth = 2;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -198,7 +205,7 @@ export class Enemy extends Sprite {
 				const py = cy + Math.sin(angle) * r;
 				const size = 1 + Math.random() * 2;
 
-				this.ctx.fillStyle = 'rgba(210,240,255,0.8)';
+				this.ctx.fillStyle = 'rgba(210, 240, 255, 0.8)';
 				this.ctx.beginPath();
 				this.ctx.arc(px, py, size, 0, Math.PI * 2);
 				this.ctx.fill();
@@ -209,28 +216,25 @@ export class Enemy extends Sprite {
 			const cx = this.position.x + this.width / 2;
 			const cy = this.position.y + this.height / 2;
 
-			const radius = 115;  // RESTORED: Vanilla value (was 140)
+			const radius = 115;
 			const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
 
-			// aura el├⌐ctrica (m├ís intensa)
 			const grad = this.ctx.createRadialGradient(cx, cy, radius * 0.2, cx, cy, radius);
-			grad.addColorStop(0, `rgba(255,255,180,${0.55 + pulse * 0.25})`);
-			grad.addColorStop(0.6, `rgba(255,240,120,${0.25 + pulse * 0.15})`);
-			grad.addColorStop(1, `rgba(255,240,120,0.08)`); 
+			grad.addColorStop(0, `rgba(255, 255, 180,${0.55 + pulse * 0.25})`);
+			grad.addColorStop(0.6, `rgba(255, 240, 120,${0.25 + pulse * 0.15})`);
+			grad.addColorStop(1, `rgba(255, 240, 120, 0.08)`);
 
 			this.ctx.fillStyle = grad;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 			this.ctx.fill();
 
-			// borde el├⌐ctrico
-			this.ctx.strokeStyle = 'rgba(255,240,120,0.9)';
+			this.ctx.strokeStyle = 'rgba(255, 240, 120, 0.9)';
 			this.ctx.lineWidth = 2;
 			this.ctx.beginPath();
 			this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
 			this.ctx.stroke();
 
-			// chispas el├⌐ctricas (rayos zigzag)
 			for (let i = 0; i < 22; i++) {
 				const angle = Math.random() * Math.PI * 2;
 				const r = radius * (0.55 + Math.random() * 0.45);
@@ -243,7 +247,7 @@ export class Enemy extends Sprite {
 				let x = px;
 				let y = py;
 
-				this.ctx.strokeStyle = `rgba(255,255,200,${0.85 + 0.15 * Math.sin(Date.now() / 100)})`;
+				this.ctx.strokeStyle = `rgba(255, 255, 200, ${0.85 + 0.15 * Math.sin(Date.now() / 100)})`;
 				this.ctx.lineWidth = 1.2;
 
 				this.ctx.beginPath();
@@ -260,7 +264,7 @@ export class Enemy extends Sprite {
 				this.ctx.stroke();
 
 				// punto brillante al inicio
-				this.ctx.fillStyle = 'rgba(255,240,120,0.95)';
+				this.ctx.fillStyle = 'rgba(255, 240, 120, 0.95)';
 				this.ctx.beginPath();
 				this.ctx.arc(px, py, 1.5, 0, Math.PI * 2);
 				this.ctx.fill();
@@ -337,7 +341,7 @@ export class Enemy extends Sprite {
 			this.ctx.fillText(hpText, textX, textY);
 			this.ctx.restore();
 		}
-		
+
 		if (this.armorMax > 0) {
 			const armorPercent = Math.max(this.armor / this.armorMax, 0);
 			const armorY = barY - barHeight - 2;
@@ -378,375 +382,481 @@ export class Enemy extends Sprite {
 		}
 
 		// indicador de curse
-	    if (this.cursed && this.curseIcon) {
-		    const size = 12;
-		    const offsetX = barX - size - 2;
-		    const offsetY = barY - 2.5;
-		    // this.curseIcon puede ser Image, ImageBitmap o Canvas (seg├║n preload)
-		    this.ctx.drawImage(this.curseIcon, offsetX, offsetY, size, size);
+        if (this.cursed && this.curseIcon) {
+            const size = 12;
+            const offsetX = barX - size - 2;
+            const offsetY = barY - 2.5;
+            // this.curseIcon puede ser Image, ImageBitmap o Canvas (según preload)
+            this.ctx.drawImage(this.curseIcon, offsetX, offsetY, size, size);
 		}
 
 		// efectos visuales
 		this.drawStatusEffects();
 		this.ctx.restore();
-		this.ctx.restore(); 
 	}
 
-	update(deltaTime = 1000 / 60) {
+	update(deltaTime = 1000 / 60, shouldDraw = true) {
 		// deltaTime ya viene escalado por Game (ms)
 		const simDelta = deltaTime;
 		const frameFactor = simDelta / (1000 / 60);
 
 		if (this.dying) {
-	        this.opacity -= this.dyingSpeed * frameFactor;
-	        if (this.opacity <= 0) {
-	            const index = this.main.area.enemies.indexOf(this);
-	            if (index > -1) this.main.area.enemies.splice(index, 1);
-	            return;
-	        }
-	    }
+            this.opacity -= this.dyingSpeed * frameFactor;
+            if (this.opacity <= 0) {
+                const index = this.main.area.enemies.indexOf(this);
+                if (index > -1) this.main.area.enemies.splice(index, 1);
+                return;
+            }
+        }
 
 		// DELTA TIME FIX: Skip drawing during sub-step simulation
-		if (!this._skipDraw) {
-		    this.ctx.save();
-		    this.ctx.globalAlpha = this.opacity;
-		    this.draw();
-		    this.ctx.restore();
-		}
+		if (shouldDraw && !this._skipDraw) {
+            this.ctx.save();
+            this.ctx.globalAlpha = this.opacity;
+            this.draw();
+            this.ctx.restore();
+        }
 
-	    if (!this.dying) {
-	    	if (this.isRegeneratorReviving) {
-			    this.regeneratorReviveTimer -= simDelta;
-			    this.reviveAnimTime += simDelta;
-			    this.stunned = true;
+        if (!this.dying) {
+            if (this.isRegeneratorReviving) {
+                this.regeneratorReviveTimer -= simDelta;
+                this.reviveAnimTime += simDelta;
+                this.stunned = true;
 
-			    this.opacity = 1 + 0.5 * Math.sin(this.reviveAnimTime / 120);
-			    this.reviveScale = 1 + 0.05 * Math.sin(this.reviveAnimTime / 150);
+                this.opacity = 1 + 0.5 * Math.sin(this.reviveAnimTime / 120);
+                this.reviveScale = 1 + 0.05 * Math.sin(this.reviveAnimTime / 150);
 
-			    if (this.regeneratorReviveTimer <= 0) {
-			        this.isRegeneratorReviving = false;
-			        this.stunned = false;
+                if (this.regeneratorReviveTimer <= 0) {
+                    this.isRegeneratorReviving = false;
+                    this.stunned = false;
 
-			        this.hp = this.hpMax;
-			        this.armor = 0;
-			        this.armorMax = 0;
-			        this.statusEffects.length = 0;
+                    this.hp = this.hpMax;
+                    this.armor = 0;
+                    this.armorMax = 0;
+                    this.statusEffects.length = 0;
 					this.speed = this.baseSpeed;
 
-			        // reset visual
-			        this.opacity = 1;
-			        this.reviveScale = 1;
-			        this.reviveAnimTime = 0;
+                    // reset visual
+                    this.opacity = 1;
+                    this.reviveScale = 1;
+                    this.reviveAnimTime = 0;
 
-			        playSound('regenerator', 'effect');
-			    }
+                    playSound('regenerator', 'effect');
+                }
 			}
 
-	    	if (!this.stunned) {
-				const waypoint = this.waypoints[this.waypointIndex];
-				const yDistance = waypoint.y - this.center.y;
-				const xDistance = waypoint.x - this.center.x;
-				const angle = Math.atan2(yDistance, xDistance);
+            if (!this.stunned) {
+    const waypoint = this.waypoints[this.waypointIndex];
+    const yDistance = waypoint.y - this.center.y;
+    const xDistance = waypoint.x - this.center.x;
+    const angle = Math.atan2(yDistance, xDistance);
 
-				// movimiento speed * frameFactor (speed se interpreta como px por 60fps frame unit)
-				const dx = Math.cos(angle) * this.speed * frameFactor;
-				const dy = Math.sin(angle) * this.speed * frameFactor;
+    // FIX: mover en substeps para no saltarse waypoints a alta velocidad
+    let remainingMove = this.speed * frameFactor;
 
-				this.position.x += dx;
-				this.position.y += dy;
+    while (remainingMove > 0) {
+        const wp = this.waypoints[this.waypointIndex];
+        const wdx = wp.x - this.center.x;
+        const wdy = wp.y - this.center.y;
+        const distToWp = Math.hypot(wdx, wdy);
 
-				if (!this.hasEnteredCanvas) {
-				    if (
-				        this.position.x >= 0 &&
-				        this.position.x <= this.main.game.canvas.width &&
-				        this.position.y >= 0 &&
-				        this.position.y <= this.main.game.canvas.height
-				    ) this.hasEnteredCanvas = true;
-				}
+        if (distToWp <= remainingMove && this.waypointIndex < this.waypoints.length - 1) {
+            // llegar exactamente al waypoint y continuar
+            this.position.x = wp.x - this.width / 2;
+            this.position.y = wp.y - this.height / 2;
+            this.center.x = wp.x;
+            this.center.y = wp.y;
+            remainingMove -= distToWp;
+            this.waypointIndex++;
+        } else {
+            // mover lo que queda en dirección al waypoint actual
+            const wAngle = Math.atan2(wdy, wdx);
+            const stepX = Math.cos(wAngle) * remainingMove;
+            const stepY = Math.sin(wAngle) * remainingMove;
+            this.position.x += stepX;
+            this.position.y += stepY;
+            remainingMove = 0;
+        }
+    }
 
-				if (this.hasEnteredCanvas) this.distanceTraveled += Math.hypot(dx, dy);
+    if (!this.hasEnteredCanvas) {
+        if (
+            this.position.x >= 0 &&
+            this.position.x <= this.main.game.canvas.width &&
+            this.position.y >= 0 &&
+            this.position.y <= this.main.game.canvas.height
+        ) this.hasEnteredCanvas = true;
+    }
 
-				if (Math.round(Math.sin(angle)) === 0) {
-					if (Math.round(Math.cos(angle)) === 1) this.frames.direction = 2;
-					if (Math.round(Math.cos(angle)) === -1) this.frames.direction = 6;
-				} else {
-					if (Math.round(Math.sin(angle)) === 1) this.frames.direction = 0;
-					if (Math.round(Math.sin(angle)) === -1) this.frames.direction = 4;
-				}
+    const totalMove = this.speed * frameFactor;
+    if (this.hasEnteredCanvas) this.distanceTraveled += totalMove;
 
-				// PERF: Mutate center instead of creating new object
-				this.center.x = this.position.x + this.width / 2;
-				this.center.y = this.position.y + this.height / 2;
+    // dirección visual basada en el waypoint actual
+    const currentWp = this.waypoints[this.waypointIndex];
+    const vdx = currentWp.x - this.center.x;
+    const vdy = currentWp.y - this.center.y;
+    const vAngle = Math.atan2(vdy, vdx);
 
-				// PERF: Use squared distance comparison to avoid Math.hypot
-				const wpDx = waypoint.x - this.center.x;
-				const wpDy = waypoint.y - this.center.y;
-				const distance = Math.sqrt(wpDx * wpDx + wpDy * wpDy);
+    if (Math.round(Math.sin(vAngle)) === 0) {
+        if (Math.round(Math.cos(vAngle)) === 1) this.frames.direction = 2;
+        if (Math.round(Math.cos(vAngle)) === -1) this.frames.direction = 6;
+    } else {
+        if (Math.round(Math.sin(vAngle)) === 1) this.frames.direction = 0;
+        if (Math.round(Math.sin(vAngle)) === -1) this.frames.direction = 4;
+    }
 
-				if (distance < this.speed * frameFactor && this.waypointIndex < this.waypoints.length - 1) {
-					this.waypointIndex++;
-				}
-			}
+    this.center = {
+        x: this.position.x + this.width / 2,
+        y: this.position.y + this.height / 2
+    };
+}
 
 			if (this.regeneration > 0) {
-				this.regenTimer += simDelta;
-	            if (this.regenTimer >= 1000) { 
-	                this.hp = Math.min(this.hp + this.regeneration, this.hpMax);
-	                this.regenTimer -= 1000;
-	            }
+                this.regenTimer += simDelta;
+                while (this.regenTimer >= 1000) {
+                    this.hp = Math.min(this.hp + this.regeneration, this.hpMax);
+                    this.regenTimer -= 1000;
+                }
+			}
+
+			if (this.passive?.id == 'swiftSwim') {
+				if (this.main.area.weather === 'rain') {
+					this.speed = this.baseSpeed * 2;
+				} else {
+					this.speed = this.baseSpeed;
+				}
 			}
 
 			if (this.passive?.id == 'slowStart') {
-				this.passiveTimer += simDelta;
-				if (this.passiveTimer >= 1000) { 
-					this.passiveTimer = 0;
-					this.baseSpeed += 0.05;
-	              	this.speed += 0.05;
-	            }
+                this.passiveTimer += simDelta;
+                while (this.passiveTimer >= 1000) {
+                    this.passiveTimer -= 1000;
+                    this.baseSpeed += 0.05;
+                    this.speed += 0.05;
+                }
 			}
 
-			if (this.enemy.id == 'groudon' && this.passiveTimer > 0) {
+			if (['groudon', 'kyogre'].includes(this.enemy.id) && this.passiveTimer > 0) {
 				this.passiveTimer -= simDelta;
 				if (this.passiveTimer <= 0) {
 					this.passiveTimer = 0;
 					this.stunned = false;
-			   		this.invulnerable = false;
+                       this.invulnerable = false;
 				}
 			}
 
 			if (
-			    this.passive?.id === 'timeTravel' &&
-			    !this.dying &&
-			    this.waypointIndex > 0
+                this.passive?.id === 'timeTravel' &&
+                !this.dying &&
+                this.waypointIndex > 0
 			) {
-			    this.passiveTimer += simDelta;
+                this.passiveTimer += simDelta;
 
 				if (this.timeTravelSpeedTimer > 0) {
 					this.timeTravelSpeedTimer -= simDelta;
 					if (this.timeTravelSpeedTimer <= 0) {
 						this.speed -= 1;
-					    this.baseSpeed -= 1;
-					    this.timeTravelSpeedTimer = 0;
+                        this.baseSpeed -= 1;
+                        this.timeTravelSpeedTimer = 0;
 					}
 				}
 
-			    if (this.passiveTimer >= 8000) {
-			        this.passiveTimer = 0;
+                if (this.passiveTimer >= 8000) {
+                    this.passiveTimer = 0;
 
-			        const currentWP = this.waypoints[this.waypointIndex];
-			        const prevWP = this.waypoints[this.waypointIndex - 1];
+                    const currentWP = this.waypoints[this.waypointIndex];
+                    const prevWP = this.waypoints[this.waypointIndex - 1];
 
-			        // vector del segmento
-			        const vx = currentWP.x - prevWP.x;
-			        const vy = currentWP.y - prevWP.y;
-			        const length = Math.hypot(vx, vy) || 1;
+                    // vector del segmento
+                    const vx = currentWP.x - prevWP.x;
+                    const vy = currentWP.y - prevWP.y;
+                    const length = Math.hypot(vx, vy) || 1;
 
-			        // direcci├│n hacia atr├ís
-			        const nx = -vx / length;
-			        const ny = -vy / length;
+                    // dirección hacia atrás
+                    const nx = -vx / length;
+                    const ny = -vy / length;
 
-			        // distancia aleatoria
-			        const randomBack =
-			            this.timeTravelMin +
-			            Math.random() * (this.timeTravelMax - this.timeTravelMin);
+                    // distancia aleatoria
+                    const randomBack =
+                        this.timeTravelMin +
+                        Math.random() * (this.timeTravelMax - this.timeTravelMin);
 
-			       let back = randomBack;
+                   let back = randomBack;
 
 					while (back > 0 && this.waypointIndex > 0) {
-					    const currentWP = this.waypoints[this.waypointIndex];
-					    const prevWP = this.waypoints[this.waypointIndex - 1];
+                        const currentWP = this.waypoints[this.waypointIndex];
+                        const prevWP = this.waypoints[this.waypointIndex - 1];
 
-					    const vx = currentWP.x - prevWP.x;
-					    const vy = currentWP.y - prevWP.y;
-					    const length = Math.hypot(vx, vy) || 1;
+                        const vx = currentWP.x - prevWP.x;
+                        const vy = currentWP.y - prevWP.y;
+                        const length = Math.hypot(vx, vy) || 1;
 
-					    const nx = -vx / length;
-					    const ny = -vy / length;
+                        const nx = -vx / length;
+                        const ny = -vy / length;
 
-					    const distToPrev = Math.hypot(this.center.x - prevWP.x, this.center.y - prevWP.y);
+                        const distToPrev = Math.hypot(this.center.x - prevWP.x, this.center.y - prevWP.y);
 
-					    if (back <= distToPrev) {
-					        // cabe dentro del segmento actual
-					        this.position.x += nx * back;
-					        this.position.y += ny * back;
-					        back = 0;
-					    } else {
-					        // nos pasamos del waypoint anterior: ir al prevWP y seguir retrocediendo
-					        this.position.x = prevWP.x - this.width / 2;
-					        this.position.y = prevWP.y - this.height / 2;
-					        back -= distToPrev;
-					        this.waypointIndex--;
-					        this.center.x = this.position.x + this.width / 2;
-					        this.center.y = this.position.y + this.height / 2;
-					    }
+                        if (back <= distToPrev) {
+                            // cabe dentro del segmento actual
+                            this.position.x += nx * back;
+                            this.position.y += ny * back;
+                            back = 0;
+                        } else {
+                            // nos pasamos del waypoint anterior: ir al prevWP y seguir retrocediendo
+                            this.position.x = prevWP.x - this.width / 2;
+                            this.position.y = prevWP.y - this.height / 2;
+                            back -= distToPrev;
+                            this.waypointIndex--;
+                            this.center.x = this.position.x + this.width / 2;
+                            this.center.y = this.position.y + this.height / 2;
+                        }
 					}
 
-			        const startX = this.position.x;
-			        const startY = this.position.y;
-			        const endX = startX + nx * back;
-			        const endY = startY + ny * back;
+                    const startX = this.position.x;
+                    const startY = this.position.y;
+                    const endX = startX + nx * back;
+                    const endY = startY + ny * back;
 
-			        this.statusEffects = this.statusEffects.filter(e => !['burn', 'poison', 'nightmare'].includes(e.type));
-				    this.burnedBy = null;
-				    this.poisonedBy = null;
-				    this.nightmaredBy = null;
-				    this.hp += 7000;
-				    if (this.hp >=  this.hpMax) this.hp = this.hpMax;
+                    this.statusEffects = this.statusEffects.filter(e => !['burn', 'poison', 'nightmare'].includes(e.type));
+                    this.burnedBy = null;
+                    this.poisonedBy = null;
+                    this.nightmaredBy = null;
+                    this.hp += 7000;
+                    if (this.hp >=  this.hpMax) this.hp = this.hpMax;
 
-			        this.position.x = endX;
-			        this.position.y = endY;
+                    this.position.x = endX;
+                    this.position.y = endY;
 
-			        this.center.x = this.position.x + this.width / 2;
-			        this.center.y = this.position.y + this.height / 2;
+                    this.center.x = this.position.x + this.width / 2;
+                    this.center.y = this.position.y + this.height / 2;
 
-			        this.distanceTraveled = Math.max(0, this.distanceTraveled - back);
+                    this.distanceTraveled = Math.max(0, this.distanceTraveled - back);
 
-			        this.speed += 1;
-			        this.baseSpeed += 1;
-			        this.timeTravelSpeedTimer = 1000;
+                    this.speed += 1;
+                    this.baseSpeed += 1;
+                    this.timeTravelSpeedTimer = 1000;
 
-			        playSound('teleport', 'effect');
-			    }
+                    if (!this.main.mute[1]) playSound('teleport', 'effect');
+                }
 			}
 
-			if (this.passive?.id === 'iceBody' && this.passiveTimer > 0) {
+			if (this.passive?.id === 'shellSmash' && this.passiveTimer > 0) {
 				this.passiveTimer -= simDelta;
-				if (this.passiveTimer <= 0) { 
+				if (this.passiveTimer <= 0) {
 					this.passiveTimer = 0;
 					this.baseSpeed -= 0.5;
-	        		this.speed -= 0.5;
-	            }
+                    this.speed -= 0.5;
+                }
 			}
 
 			if (this.passive?.id == 'shadowShield' && !this.invisible) {
 				this.passiveTimer += simDelta;
-				if (this.passiveTimer >= 3000) { 
+				if (this.passiveTimer >= 4000) {
 					this.armor = this.armorMax;
 					this.passiveTimer = 0;
 					this.invisible = true;
 					playSound('invi', 'effect')
-	            }
+                }
 			}
 
 			if (this.passive?.id == "naturalCure") {
-			    this.passiveTimer += simDelta;
+                this.passiveTimer += simDelta;
 
-			    if (this.passiveTimer >= 5000) { 
-			        this.passiveTimer = 0;
+                if (this.passiveTimer >= 5000) {
+                    this.passiveTimer = 0;
+                    this.statusEffects = this.statusEffects.filter(e => e.type === 'nightmare');
+                    this.burnedBy = null;
+                    this.poisonedBy = null;
+                    this.stunned = false;
 
-			        this.statusEffects = this.statusEffects.filter(e => e.type === 'nightmare');
-					this.burnedBy = null;
-					this.poisonedBy = null;
+                    const slowEffects = this.statusEffects.filter(e => e.type === 'slow' && e.duration !== 0);
+                    if (slowEffects.length === 0) {
+                        this.speed = this.baseSpeed;
+                    }
 
-			        this.stunned = false;
-			        this.speed = this.baseSpeed;
-
-			        playSound('regenerator', 'effect');
-			    }
+                    playSound('regenerator', 'effect');
+				}
 			}
 
+			this.updateWeatherEffects(simDelta);
 			this.updateStatusEffects(simDelta);
-	    }
-
+        }
 		this.updateFloatingTexts(simDelta);
 	}
 
 	getDamaged(amount, source = 'physical', ability = null, isCritical = false, alreadyCursed = new Set(), pokemon, tower) {
-	    if (this.hp <= 0 || this.invulnerable) return;
-	    
-	    let cursedDamageSpread = amount;
+        if (this.hp <= 0 || this.invulnerable) return;
+           if (this.passive?.id == 'herbogenesis' && (
+               ['heal', 'bitterBlade', 'takeHeart'].includes(ability?.id) ||
+               ['leftovers', 'shellBell', 'clefairyDoll'].includes(pokemon?.item?.id)
+           )) {
+               this.regeneration = Math.min(0, this.regeneration - 500);
+           }
 
-	    // RESTORED: Vanilla Strange Idol - 50% bonus minus 1% per cursed enemy
-	    if (pokemon?.item?.id == 'strangeIdol') {
-	    	let strangeIdolBuff = 50;
-	    	this.main.area.enemies.forEach(e => {
-	            if (e !== this && e.cursed && e.hp > 0) {
-	            	strangeIdolBuff -= 1;
-	        	}
-		    });
-		    if (strangeIdolBuff > 0) amount += Math.ceil(amount * strangeIdolBuff/100);
+           if (this.passive?.id == 'electrogenesis' && !this.stunned && (this.hp > (this.hpMax * 0.5))) return;
+        if (this.passive?.id == 'nebulogenesis' && source == 'physical') {
+            this.passiveTimer += 1;
+            if (this.passiveTimer > 8) {
+                if (this.passiveTimer == 11) this.passiveTimer = 0;
+                this.floatingTexts.push({
+                    text: `MISS`,
+                    timer: 0,
+                    duration: 1000,
+                    y: this.position.y,
+                    vy: -60,
+                    alpha: 1,
+                    color: '#b9c9e0'
+                });
+                return;
+            }
+        }
+
+        if (this.passive?.id == 'prankster' && ['burn', 'poison',' nightmare'].includes(source)) amount = Math.floor(amount/2);
+        if (this.passive?.id == 'psychogenesis') amount = (pokemon.item != null) ? Math.floor(amount * 0.65) : Math.floor(amount * 1.15);
+        if (this.passive?.id == 'abyssalBound' && !(tower?.tile?.land == 3 || pokemon?.item?.id == 'squirtBottle')) return;
+
+           let cursedDamageSpread = amount;
+
+        if (pokemon?.item?.id == 'strangeIdol' && ['physical', 'link'].includes(source)) {
+            let strangeIdolBuff = 50;
+            this.main.area.enemies.forEach(e => {
+                if (e !== this && e.cursed && e.hp > 0) {
+                    strangeIdolBuff -= 1;
+                }
+            });
+            if (strangeIdolBuff > 0) amount += Math.ceil(amount * strangeIdolBuff/100);
 		}
 
-	    if (pokemon?.item?.id == 'spellTag' && this.statusEffects.length > 0) {
-	    	let spellTagBonus = 0
+		if (pokemon?.ability?.id == 'heatCrash' && ['physical', 'link'].includes(source)) amount = Math.ceil(amount * this.speed)
+
+        if (pokemon?.item?.id == 'spellTag' && this.statusEffects.length > 0) {
+            let spellTagBonus = 0
 			this.statusEffects.forEach((effect) => {
 				if (effect.type != 'nightmare') spellTagBonus += 0.15;
-				if (pokemon?.ability?.id == 'simple') spellTagBonus += 8;
+				if (pokemon?.ability?.id == 'simple') spellTagBonus += 0.075;
 			})
 			amount = Math.ceil(amount * Math.min(1.5, (1 + spellTagBonus)));
 		}
 
 		if (pokemon?.item?.id == 'stickyBarb' && this.statusEffects.length > 0) {
 			this.statusEffects.forEach((effect) => {
-				if (effect.type == 'stun' || effect.type == 'slow') amount = (pokemon?.ability?.id == 'simple') ? Math.ceil(amount * 1.38) : Math.ceil(amount * 1.25);		
+				if ((effect.type == 'stun' || effect.type == 'slow') && ['physical', 'link'].includes(source)) amount = (pokemon?.ability?.id == 'simple') ? Math.ceil(amount * 1.375) : Math.ceil(amount * 1.25);
 			})
 		}
 
 		if (pokemon?.item?.id == 'electirizer' && this.statusEffects.length > 0) {
 			this.statusEffects.forEach((effect) => {
-				if (effect.type == 'stun') amount = Math.ceil(amount * 1.3);		
+				if (effect.type == 'stun' && ['physical', 'link'].includes(source)) amount = Math.ceil(amount * 1.3);
 			})
 		}
 
 		if (pokemon?.item?.id == 'magmarizer' && this.statusEffects.length > 0) {
 			this.statusEffects.forEach((effect) => {
-				if (effect.type == 'burn') amount = Math.ceil(amount * 1.3);		
+				if (effect.type == 'burn' && ['physical', 'link'].includes(source)) amount = Math.ceil(amount * 1.3);
 			})
 		}
 
-		if (pokemon?.item?.id == 'badgeOfHonor') {
-			let badgeMult = Math.min(30, (this.main.player.stars / 30));
-			amount += Math.ceil(amount * (badgeMult / 100));	
-			if (pokemon?.ability?.id == 'simple') amount = Math.ceil(amount * 1.5);
+		if (pokemon?.ability?.id == 'flashFire' && this.statusEffects.length > 0) {
+			this.statusEffects.forEach((effect) => {
+				if (effect.type == 'burn' && ['physical', 'link'].includes(source)) amount = Math.ceil(amount * 2);
+			})
 		}
 
-	    if (amount >= 9999 && source == 'physical') this.main.player.unlockAchievement(18)
-	    if (amount > this.main.player.stats.highestHit && source == 'physical') this.main.player.stats.highestHit = amount;
+		if (pokemon?.item?.id == 'badgeOfHonor' && ['physical', 'link'].includes(source)) {
+			let badgeMult = Math.min(30, (this.main.player.stars / 30));
+			if (pokemon?.ability?.id == 'simple') badgeMult = Math.ceil(badgeMult * 1.5);
+			amount += Math.ceil(amount * (badgeMult / 100));
+		}
 
 		if ((
-			ability?.id === 'armorBreak' || 
-			ability?.id === 'armorBreakDoubleShot' || 
-			pokemon?.item?.id == 'shieldBreakerBullet') && 
-			this.enemy?.armor > 0
-	    ) amount *= 2;
+			ability?.id === 'armorBreak' ||
+			ability?.id === 'armorBreakSplash' ||
+			ability?.id === 'armorBreakDoubleShot' ||
+			pokemon?.item?.id == 'shieldBreakerBullet') &&
+			this.enemy?.armor > 0 && source == 'physical'
+        ) amount *= 2;
+
+		if (pokemon?.ability?.id === 'corrosion' && this.armor > 0 && source == 'physical') {
+            amount += Math.ceil(Math.min(this.armor, this.armorMax * 0.05))
+        }
+
+		if (ability?.id === 'hyperCutter' && (this.hp < (this.hpMax * 0.5)) && source == 'physical') amount += Math.ceil(amount * 0.5);
+
+		if (pokemon?.ability?.id == 'technician' && amount <= 1000 && source == 'physical') amount = Math.ceil(amount * 1.5);
 
 		if (this.passive?.id === 'lightMetal' && amount > 1000) amount = 1000;
-		if (this.passive?.id === 'iceBody' && isCritical) {
+		if (this.passive?.id === 'shellSmash' && isCritical) {
 			this.baseSpeed += 0.5;
-	        this.speed += 0.5;
+            this.speed += 0.5;
 			this.passiveTimer = 2000;
 		}
 
-		if (this.passive?.id === 'sturdy' && source == 'physical' && this.hp < this.hpMax * 0.3) amount = 0;
+		if (this.passive?.id === 'clangingScales') {
+			if (this.armor > 0) amount = Math.ceil(amount * 0.5);
+			else amount = Math.ceil(amount * 2);
+		}
+
+		if (pokemon?.ability?.id == 'flowerTrick' && isCritical) {
+			tower.attackCooldown = 0;
+		}
+		//if (this.passive?.id === 'sturdy' && source == 'physical' && this.hp < this.hpMax * 0.3) amount = 0;
+		if (this.passive?.id === 'disguise' && source == 'physical' && this.armor > 0) amount = 0;
+
+		if (this.passive?.id === 'sturdy') amount = Math.max(0, amount - 200);
+		if (this.passive?.id === 'iceBody' && isCritical) amount = 0;
+
+		if (this.passive?.id === 'remoaid' && source == 'physical' && Math.random() < 0.2) {
+			const waypointEnemy = this.main.area.waypoints[Math.floor(Math.random() * this.main.area.waypoints.length)];
+
+			this.main.area.enemies.push(
+				new Enemy(
+					waypointEnemy[0].x,
+					waypointEnemy[0].y,
+					enemyData.remoraid,
+					waypointEnemy,
+					this.main,
+					this.main.game.ctx,
+				)
+			)
+		}
+
+		if (this.passive?.id === 'slackOff' && source == 'physical') this.hp = Math.min(this.hp + 50, this.hpMax);
 
 		if (this.passive?.id === 'flameBody' && source == 'physical') {
 			const dx = this.center.x - tower.center.x;
 			const dy = this.center.y - tower.center.y;
 			const distance = Math.hypot(dx, dy);
-			if (distance < 120) amount = Math.floor(amount/2);
+			if (distance < 120) amount = Math.floor(amount / 2);
 		}
 
-	    let cursedDamage = amount;
-	    let armorDamage = amount;
+		if (amount >= 9999 && source == 'physical') this.main.player.unlockAchievement(18)
+        if (amount > this.main.player.stats.highestHit && source == 'physical') this.main.player.stats.highestHit = amount;
 
-	    this.main.area.totalDamageDealt += amount;
-	    this.main.area.totalTrueDamageDealt += Math.min((this.hp + this.armor), amount);
-	    pokemon.damageDealt += amount;
-	    pokemon.trueDamageDealt += Math.min((this.hp + this.armor), amount);
+        let cursedDamage = amount;
+        let armorDamage = amount;
 
-	    if (pokemon?.item?.id == 'litCoal' && this.canBurn && Math.random() < 0.1) {
-			this.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon); 
+        this.main.area.totalDamageDealt += amount;
+        pokemon.damageDealt += amount;
+
+        this.main.area.totalTrueDamageDealt += Math.min((this.hp + this.armor), amount);
+        pokemon.trueDamageDealt	+= Math.min((this.hp + this.armor), amount);
+
+        let litCoalChance = Math.random();
+        if (pokemon?.item?.id == 'litCoal' && this.canBurn && (litCoalChance < 0.1 || pokemon?.ability?.id == 'simple' && litCoalChance < 0.15)) {
+			this.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon);
 		}
 
-	    // RESTORED: Vanilla heal logic - items only heal when not at full health, per-wave limits
-	    if (this.main.player.health[this.main.area.map.id] < 14) {
-			if (pokemon?.item?.id == 'leftovers' && Math.random() < 0.0005 && !this.main.area.leftoversWaveUsed) {
+		// HEALS
+        this.main.area.healUsed = this.main.area.healUsed || {};
+        const currentRouteHealth = this.main.player.health?.[this.main.area.map.id] ?? 14;
+		if (currentRouteHealth < 14 || (this.main.area.heartScale ?? 0) < 5) {
+			if (pokemon?.item?.id == 'leftovers' && Math.random() < 0.01 && !this.main.area.leftoversWaveUsed) {
 				playSound('hit3', 'effect');
 				this.main.player.getHealed(1);
 				this.main.player.achievementProgress.heartRestore++;
 				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 				this.main.area.leftoversWaveUsed = true;
-				this.main.area.heartScale = true;
+				this.main.area.heartScale++;
 			}
 
 			if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000 && !this.main.area.shellBellWaveUsed) {
@@ -755,7 +865,7 @@ export class Enemy extends Sprite {
 				this.main.player.achievementProgress.heartRestore++;
 				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 				this.main.area.shellBellWaveUsed = true;
-				this.main.area.heartScale = true;
+				this.main.area.heartScale++;
 			}
 
 			if (pokemon?.item?.id == 'clefairyDoll' && pokemon.trueDamageDealt > 25000 && !this.main.area.clefairyDollUsed) {
@@ -764,405 +874,455 @@ export class Enemy extends Sprite {
 				this.main.player.achievementProgress.heartRestore++;
 				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 				this.main.area.clefairyDollUsed = true;
-				this.main.area.heartScale = true;
+				this.main.area.heartScale++;
 			}
-		}
-		
-	    // RESTORED: Heal ability with per-pokemon limit
-	    if (
-	    	ability?.id === 'heal' && 
-	    	pokemon?.item?.id != 'lifeOrb' && 
-	    	Math.random() < 0.025 && 
-	    	!pokemon.healUsed
-	    ) {
-	        playSound('hit3', 'effect');
-	        const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
-	        this.main.player.getHealed(healValue);
-	        this.main.player.achievementProgress.heartRestore += healValue;
-	    	if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
-	    	pokemon.healUsed = true;
-	    	this.main.area.heartScale = true;
-	    }
 
-	    if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000) this.main.area.shellBellWaveUsed = true;
+			let baseHealChance = 0.05;
+			if (ability?.id === 'bitterBlade') baseHealChance = 0.01;
+			else if (pokemon?.item?.id == 'auspiciousArmor') baseHealChance = 0.002;
 
-	    if (ability?.id === 'greed') {
-	    	let g = Math.ceil(this.gold * 0.1);
-	    	this.main.player.achievementProgress.stolenGold += g;
-	    	if (this.main.player.achievementProgress.stolenGold >= 100000) this.main.player.unlockAchievement(21);
-	    	this.main.area.goldWave += g;
-	    	this.main.player.changeGold(g);
-	    }
+			const uses = pokemon?.id != null ? (this.main.area.healUsed[pokemon.id] ?? 0) : 0;
+			const healChance = (ability?.id === 'takeHeart') ? baseHealChance : baseHealChance / Math.pow(2, uses);
 
-	    let armorHit = 0;
+            if (
+                (ability?.id === 'heal' || ability?.id === 'bitterBlade' || ability?.id === 'takeHeart' || pokemon?.item?.id === 'auspiciousArmor') &&
+                pokemon?.item?.id != 'lifeOrb' &&
+                uses < 3 &&
+                Math.random() < healChance
+			) {
+                playSound('hit3', 'effect');
 
-	    if (this.invisible && source == 'physical') this.invisible = false;
+                const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
+                this.main.player.getHealed(healValue);
+                this.main.player.achievementProgress.heartRestore += healValue;
 
-	    // da├▒o a armadura
-	    if (this.armor && this.armor > 0) {
-	        const remainingArmor = this.armor - armorDamage;
-	        if (remainingArmor >= 0) {
-	            this.armor = remainingArmor;
-	            armorHit = armorDamage;
-	            amount = 0;
-	        } else {
-	            armorHit = this.armor;
-	            amount = -remainingArmor;
-	            this.armor = 0;
-	        }
-	    }
+                if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 
-	    this.hp -= amount;
+                if (ability?.id === 'bitterBlade' || pokemon?.item?.id === 'auspiciousArmor') this.main.area.healUsed[pokemon.id] = 3
+                else if (ability?.id === 'takeHeart') this.main.area.healUsed[pokemon.id] = uses + 1.5;
+                else this.main.area.healUsed[pokemon.id] = uses + 1;
 
-	    if (this.hp < this.hpMax * 0.5 && this.enemy.id == 'groudon' && !this.passiveActivated) {
-	    	this.passiveActivated = true;
-	    	this.armorMax = 50000;
-	    	this.armor = 50000;
-	    	this.sprite.src = this.enemy.sprite.primal;
+                   this.main.area.heartScale += healValue;
+            }
+        }
 
-	    	this.passiveTimer = 3000;
+        if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000) this.main.area.shellBellWaveUsed = true;
+
+        if (ability?.id === 'greed') {
+            let g = Math.ceil(this.gold * 0.1);
+            this.main.player.achievementProgress.stolenGold += g;
+            if (this.main.player.achievementProgress.stolenGold >= 100000) this.main.player.unlockAchievement(21);
+            this.main.area.goldWave += g;
+            this.main.player.changeGold(g);
+        }
+
+        let armorHit = 0;
+
+        if (this.invisible && source == 'physical') this.invisible = false;
+
+        // daño a armadura
+        if (this.armor && this.armor > 0) {
+            const remainingArmor = this.armor - armorDamage;
+            if (remainingArmor >= 0) {
+                this.armor = remainingArmor;
+                armorHit = armorDamage;
+                amount = 0;
+            } else {
+                armorHit = this.armor;
+                amount = -remainingArmor;
+                this.armor = 0;
+            }
+        }
+
+        this.hp -= amount;
+
+        if (this.hp < this.hpMax * 0.5 && ['groudon', 'kyogre'].includes(this.enemy.id) && !this.passiveActivated) {
+            this.passiveActivated = true;
+            this.armorMax = 75000;
+            this.armor = 75000;
+            this.sprite.src = this.enemy.sprite.primal;
+
+            if (this.statusEffects['stun']) {
+                this.stunned = false;
+                this.statusEffects['stun'].duration = 0;
+            }
+
+            this.passiveTimer = 3000;
 			this.stunned = true;
 			this.invulnerable = true;
 
 			playSound('earthquake', 'effect');
-			this.main.game.startShake(28, 3000);
-	    	this.main.area.weather = 'extremelyHarshSunlight';
-			this.main.UI.displayWeather();
-	    }
 
-	    if (this.hp <= 0 && !this.dying) {
-	    	if (this.passive?.id === 'regenerator' && !this.regeneratorUsed) {
-			    this.regeneratorUsed = true;
-			    this.hp = 1;
-			    this.armorMax = 50000;
-	    		this.armor = 50000;
-			    // preparar resurrecci├│n
-			    this.isRegeneratorReviving = true;
-			    this.regeneratorReviveTimer = 5000; 
-			    this.burnedBy = null;
+			this.main.game.startShake(28, (3000/this.main.game.speedFactor));
+            this.main.area.weather = (this.enemy.id == 'groudon') ? 'extremelyHarshSunlight' : 'heavyRain';
+			this.main.UI.displayWeather();
+        }
+
+        if (this.hp <= 0 && !this.dying) {
+            if (this.passive?.id === 'regenerator' && !this.regeneratorUsed) {
+                this.regeneratorUsed = true;
+                this.hp = 1;
+                this.armorMax = 50000;
+                this.armor = 50000;
+                // preparar resurrección
+                this.isRegeneratorReviving = true;
+                this.regeneratorReviveTimer = 5000 / this.main.game.speedFactor;
+
+                this.statusEffects.length = 0;
+                this.burnedBy = null;
 				this.poisonedBy = null;
 				this.nightmaredBy = null;
 				this.cursed = false;
-			    this.stunned = true;
-			    //this.invulnerable = true;
+                this.stunned = true;
+                //this.invulnerable = true;
 
-			    playSound('hit3', 'effect');
-			    return;
+                playSound('hit3', 'effect');
+                return;
 			}
 
-	    	if (ability?.id === 'moxie') tower.moxieBuff++;
-	    	this.main.player.stats.defeatedEnemies++;
-	    	this.main.player.stats.defeatedSpecies.add(this.enemy.id);
-	    	if (this.enemy.id == 'delibird') {
-	    		this.main.player.achievementProgress.delibirdCount++;
+			if (this.passive?.id == 'schooling' && !this.passiveActivated) {
+                this.passiveActivated = true;
+                const waypointEnemy = this.waypoints.slice(this.waypointIndex);
+
+                for (let i = 0; i < 100; i++) {
+                    this.main.area.enemies.push(
+						new Enemy(
+							this.center.x + (Math.random()*30)-20,
+							this.center.y + (Math.random()*30)-20,
+							enemyData.wishiwashiSolo,
+							waypointEnemy,
+							this.main,
+							this.main.game.ctx,
+						)
+					)
+                }
+
+            }
+
+            if (ability?.id === 'moxie') tower.moxieBuff++;
+            this.main.player.stats.defeatedEnemies++;
+            this.main.player.stats.defeatedSpecies.add(this.enemy.id);
+            if (this.enemy.id == 'delibird') {
+                this.main.player.achievementProgress.delibirdCount++;
 				if (this.main.player.achievementProgress.delibirdCount >= 225) this.main.player.unlockAchievement(10);
-	    	}
-	    	if (this.main.player.stats.defeatedEnemies == 100000) this.main.player.unlockAchievement(8);
-	    	if (this.main.player.stats.defeatedSpecies.size === 100) this.main.player.unlockAchievement(9);
-	    	this.main.area.goldWave += this.gold;
-	        this.main.player.changeGold(this.gold);
-	        this.dying = true;
-	        this.hp = 0;
-	    }
+            }
+            if (this.main.player.stats.defeatedEnemies == 100000) this.main.player.unlockAchievement(8);
+            if (this.main.player.stats.defeatedSpecies.size === 100) this.main.player.unlockAchievement(9);
+            this.main.area.goldWave += this.gold;
+            this.main.player.changeGold(this.gold);
+            this.dying = true;
+            this.hp = 0;
+        }
 
-	    const minSpacing = 12; 
-	    const startYOffset = 12; 
+        const minSpacing = 12;
+        const startYOffset = 12;
 
-	    if (amount > 0) {
-	        const color = isCritical
-	            ? '#ffeb3b'
-	            : source === 'burn'
-	            ? '#c96937'
-	            : source === 'poison'
-	            ? '#70ac4c'
-	            : '#e06666';
+        if (amount > 0) {
+            const color = isCritical
+                ? '#ffeb3b'
+                : source === 'burn'
+                ? '#c96937'
+                : source === 'poison'
+                ? '#70ac4c'
+                : '#e06666';
 
-	        let startY = this.position.y - 10 + startYOffset;
+            let startY = this.position.y - 10 + startYOffset;
 
-	        for (const ft of this.floatingTexts) {
-	            if (Math.abs(startY - ft.y) < minSpacing) {
-	                startY = Math.min(startY, ft.y - minSpacing);
-	            }
-	        }
+            for (const ft of this.floatingTexts) {
+                if (Math.abs(startY - ft.y) < minSpacing) {
+                    startY = Math.min(startY, ft.y - minSpacing);
+                }
+            }
 
-	        this.floatingTexts.push({
-	            text: `-${amount}${isCritical ? '!' : ''}`,
-	            timer: 0,
-	            duration: 1000,
-	            y: startY,     
-	            vy: -60,       
-	            alpha: 1,
-	            color
-	        });
-	    }
+            this.floatingTexts.push({
+                text: `-${amount}${isCritical ? '!' : ''}`,
+                timer: 0,
+                duration: 1000,
+                y: startY,
+                vy: -60,
+                alpha: 1,
+                color
+            });
+        }
 
-	    if (armorHit > 0) {
-	        let startY = this.position.y - 10 + startYOffset;
-	        for (const ft of this.floatingTexts) {
-	            if (Math.abs(startY - ft.y) < minSpacing) {
-	                startY = Math.min(startY, ft.y - minSpacing);
-	            }
-	        }
+        if (armorHit > 0) {
+            let startY = this.position.y - 10 + startYOffset;
+            for (const ft of this.floatingTexts) {
+                if (Math.abs(startY - ft.y) < minSpacing) {
+                    startY = Math.min(startY, ft.y - minSpacing);
+                }
+            }
 
-	        this.floatingTexts.push({
-	            text: `-${armorHit}${isCritical ? '!' : ''}`,
-	            timer: 0,
-	            duration: 1000,
-	            y: startY,
-	            vy: -60,
-	            alpha: 1,
-	            color: isCritical ? '#ffeb3b' : '#66ccff'
-	        });
-	    }
+            this.floatingTexts.push({
+                text: `-${armorHit}${isCritical ? '!' : ''}`,
+                timer: 0,
+                duration: 1000,
+                y: startY,
+                vy: -60,
+                alpha: 1,
+                color: isCritical ? '#ffeb3b' : '#66ccff'
+            });
+        }
 
-	    if ((ability?.id === 'curse' || ability?.id === 'willOWisp' || ability?.id === 'curseDoubleShot') && this.cursed && cursedDamage > 0 && !alreadyCursed.has(this)) {
-	        alreadyCursed.add(this);
-	        this.main.area.enemies.forEach(e => {
-	            if (e !== this && e.cursed && e.hp > 0 && !alreadyCursed.has(e)) {
-	                e.getDamaged(cursedDamageSpread, source, ability, false, alreadyCursed, pokemon);
-	            }
-	            if (ability?.id === 'willOWisp' && e.canBurn && e.cursed) {
-	            	if (pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, pokemon);
+        if ((ability?.id === 'curse' || ability?.id === 'magicBounce' || ability?.id === 'willOWisp' || ability?.id === 'curseDoubleShot') && this.cursed && cursedDamage > 0 && !alreadyCursed.has(this)) {
+            alreadyCursed.add(this);
+            this.main.area.enemies.forEach(e => {
+                if (e !== this && e.cursed && e.hp > 0 && !alreadyCursed.has(e)) {
+                    e.getDamaged(cursedDamageSpread, source, ability, false, alreadyCursed, pokemon);
+                    if (pokemon?.item?.id === 'amuletCoin') {
+                        let cursedGold = Math.ceil(cursedDamageSpread * 0.001 * (Math.min(1200, this.main.player.stars)));
+                        this.main.area.goldWave += cursedGold;
+                        this.main.player.changeGold(cursedGold);
+                    }
+                }
+                if (ability?.id === 'willOWisp' && e.canBurn && e.cursed) {
+                    if (pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, pokemon);
                     else e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon);
-	            }
-	        });
-	    }
+                }
+            });
+        }
 	}
 
 	updateStatusEffects(deltaTime) {
-	    if (this.statusEffects.length === 0) return;
+        if (this.statusEffects.length === 0) return;
 
-	    this.statusEffects.forEach(effect => {
-	        effect.timer += deltaTime;
-	        const interval = 1000;
+        this.statusEffects.forEach(effect => {
+            effect.timer += deltaTime;
+            const interval = 1000;
 
-	        if (effect.type === 'burn') {
-	            while (effect.timer >= interval && effect.duration > 0) {
-	                this.getDamaged(Math.ceil(this.hpMax * effect.damagePercent), 'burn', null, false, new Set(), this.burnedBy);
-	                effect.timer -= interval;
-	                if (typeof effect.duration === 'number') effect.duration -= 1;
-	            }
-	        }
+            if (effect.type === 'burn') {
+                while (effect.timer >= interval && effect.duration > 0) {
+                    this.getDamaged(Math.ceil(this.hpMax * effect.damagePercent), 'burn', null, false, new Set(), this.burnedBy);
+                    effect.timer -= interval;
+                    if (typeof effect.duration === 'number') effect.duration -= 1;
+                }
+            }
 
-	        if (effect.type === 'poison') {
-	            while (effect.timer >= interval) {
-	                const stacks = effect.stacks || 1;
-	                const poisonDamage = Math.ceil(this.hpMax * effect.damagePercent * stacks);
-	                this.getDamaged(poisonDamage, 'poison', null, false, new Set(), this.poisonedBy);
-	                effect.timer -= interval;
-	            }
-	        }
+            if (effect.type === 'poison') {
+                while (effect.timer >= interval) {
+                    const stacks = effect.stacks || 1;
+                    const poisonDamage = Math.ceil(this.hpMax * effect.damagePercent * stacks);
+                    this.getDamaged(poisonDamage, 'poison', null, false, new Set(), this.poisonedBy);
+                    effect.timer -= interval;
+                }
+            }
 
-	        if (effect.type === 'nightmare') {
-	            while (effect.timer >= interval) {
-	                const stacks = effect.stacks || 1;
-	                const nightmareDamage = Math.ceil(this.nightmaredBy.power * 0.2 * stacks);
-	                this.getDamaged(nightmareDamage, 'nightmare', null, false, new Set(), this.nightmaredBy);
-	                effect.timer -= interval;
-	            }
-	        }
+            if (effect.type === 'nightmare') {
+                while (effect.timer >= interval) {
+                    const stacks = effect.stacks || 1;
+                    const nightmareDamage = Math.ceil(this.nightmaredBy.power * 0.2 * stacks);
+                    this.getDamaged(nightmareDamage, 'nightmare', null, false, new Set(), this.nightmaredBy);
+                    effect.timer -= interval;
+                }
+            }
 
-	        if (effect.type === 'slow') {
-	            if (!effect.applied) {
-	                effect.applied = true;
-	            }
-	            if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
-	                effect.duration = 0;
-	            }
-	        }
+            if (effect.type === 'slow') {
+                if (!effect.applied) {
+                    effect.applied = true;
+                }
+                if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
+                    effect.duration = 0;
+                }
+            }
 
-	        if (effect.type === 'stun') {
-	            this.stunned = true;
-	            if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
-	                this.stunned = false;
-	                effect.duration = 0;
-	            }
-	        }
-	    });
+            if (effect.type === 'stun') {
+                this.stunned = true;
+                if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
+                    this.stunned = false;
+                    effect.duration = 0;
+                }
+            }
+        });
 
-	    // PERF: Single-pass filter + slow recomputation (avoids two .filter() allocations)
-	    let slowFactor = 1;
-	    let hasSlows = false;
-	    let writeIdx = 0;
-	    for (let i = 0; i < this.statusEffects.length; i++) {
-	        const e = this.statusEffects[i];
-	        if (e.duration !== undefined && e.duration <= 0) continue; // remove expired
-	        this.statusEffects[writeIdx++] = e;
-	        if (e.type === 'slow' && e.duration !== 0) {
-	            slowFactor *= (e.slowPercent ?? 1);
-	            hasSlows = true;
-	        }
-	    }
-	    this.statusEffects.length = writeIdx;
-	    this.speed = hasSlows ? this.baseSpeed * slowFactor : this.baseSpeed;
+        // Filtrar efectos terminados
+        this.statusEffects = this.statusEffects.filter(e => e.duration === undefined || e.duration > 0);
+
+        // RECOMPUTAR velocidad según slows activos
+        const slowEffects = this.statusEffects.filter(e => e.type === 'slow' && e.duration !== 0);
+        if (slowEffects.length === 0) {
+            this.speed = this.baseSpeed;
+        } else {
+            // multiplicar factores de slow
+            let factor = 1;
+            slowEffects.forEach(e => factor *= (e.slowPercent ?? 1));
+            this.speed = this.baseSpeed * factor;
+        }
 	}
 
+	updateWeatherEffects(deltaTime) {
+		if (
+			this.position.x > this.main.game.canvas.width ||
+			this.position.x < -30 ||
+			this.position.y - 20 > this.main.game.canvas.height ||
+			this.position.y < -20
+		) return;
+
+		if (this.main.area.weather == 'sandstorm' && this.armor <= 0) {
+            this.weatherTimer += deltaTime;
+            const interval = 1000;
+
+            if (this.weatherTimer >= interval) {
+                this.weatherTimer = 0;
+                let damage = Math.ceil(this.hpMax * 0.005);
+                this.getDamaged(damage, 'sandstorm', null, false, new Set(), this.main.area.weatherBy);
+            }
+        }
+	}
 
 	drawFloatingTexts() {
-	    this.floatingTexts.forEach((ft) => {
-	        const x = this.position.x + this.width / 2;
-	        const y = ft.y;
+        this.floatingTexts.forEach((ft) => {
+            const x = this.position.x + this.width / 2;
+            const y = ft.y;
 
-	        this.ctx.save();
-	        this.ctx.globalAlpha = ft.alpha ?? 1;
+            this.ctx.save();
+            this.ctx.globalAlpha = ft.alpha ?? 1;
 
-	        this.ctx.font = '900 14px Arial';
-	        this.ctx.lineWidth = 1.5;
-	        this.ctx.textAlign = 'center';
-	        this.ctx.textBaseline = 'middle';
+            this.ctx.font = '900 14px Arial';
+            this.ctx.lineWidth = 1.5;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
 
-	        this.ctx.strokeStyle = 'black';
-	        this.ctx.strokeText(ft.text, x, y);
+            this.ctx.strokeStyle = 'black';
+            this.ctx.strokeText(ft.text, x, y);
 
-	        this.ctx.fillStyle = ft.color || '#c96937';
-	        this.ctx.fillText(ft.text, x, y);
+            this.ctx.fillStyle = ft.color || '#c96937';
+            this.ctx.fillText(ft.text, x, y);
 
-	        this.ctx.restore();
-	    });
+            this.ctx.restore();
+        });
 	}
 
 	updateFloatingTexts(deltaTime) {
-	    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
-	        const ft = this.floatingTexts[i];
-	        ft.timer += deltaTime;
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+            const ft = this.floatingTexts[i];
+            ft.timer += deltaTime;
 
-	        ft.y += ft.vy * (deltaTime / 1000);
+            ft.y += ft.vy * (deltaTime / 1000);
 
-	        const minAlpha = 0.5;
-	        ft.alpha = Math.max(minAlpha, 1 - 0.4 * (ft.timer / ft.duration));
+            const minAlpha = 0.5;
+            ft.alpha = Math.max(minAlpha, 1 - 0.4 * (ft.timer / ft.duration));
 
-	        if (ft.timer >= ft.duration) {
-	            this.floatingTexts.splice(i, 1);
-	        }
-	    }
+            if (ft.timer >= ft.duration) {
+                this.floatingTexts.splice(i, 1);
+            }
+        }
 	}
 
 	applyStatusEffect(effect, pokemon) {
-	    const existing = this.statusEffects.find(e => e.type === effect.type);
-	    if (existing) {
-	        if (effect.type === 'poison') {
-	        	this.poisonedBy = pokemon;
-	        	this.main.player.stats.appliedPoisons++;
-	        	if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
-	            existing.stacks = (existing.stacks || 1) + 1;
-	        } else if (effect.type === 'nightmare') {
-	        	this.nightmaredBy = pokemon;
-	            existing.stacks = (existing.stacks || 1) + 1;
-	        } 
-	        // else {
-	        //     existing.duration = Math.max(existing.duration || 0, effect.duration || 0);
-	        // }
-	    } else {
-	        this.statusEffects.push({
-	            ...effect,
-	            timer: 0,
-	            stacks: effect.type === 'poison' ? 1 : undefined
-	        });
-	        if (effect.type === 'stun') {
-	        	this.main.player.stats.appliedStuns++;
-	        	if (this.main.player.stats.appliedStuns >= 10000) this.main.player.unlockAchievement(13);
-	        }
-	        if (effect.type === 'slow') {
-	        	this.main.player.stats.appliedSlows++;
-	        	if (this.main.player.stats.appliedSlows >= 10000) this.main.player.unlockAchievement(14);
-	        }
-	        if (effect.type === 'poison') {
-	        	this.poisonedBy = pokemon;
-	        	this.main.player.stats.appliedPoisons++;
-	        	if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
-	        }
-	        if (effect.type === 'nightmare') {
-	        	this.nightmaredBy = pokemon;
-	        }
-	        if (effect.type === 'burn') {
-	        	this.burnedBy = pokemon;
-	        	this.main.player.stats.appliedBurns++;
-	        	if (this.main.player.stats.appliedBurns >= 10000) this.main.player.unlockAchievement(15);
-	        }
-	        if (effect.type === 'curse') {
-	        	this.main.player.stats.appliedCurses++;
-	        	if (this.main.player.stats.appliedCurses >= 10000) this.main.player.unlockAchievement(17);
-	            this.cursed = true;
-	        }
-	    }
+		if (this.passive?.id === 'waterVeil' && this.main.area.weather === 'rain') return;
+
+        const existing = this.statusEffects.find(e => e.type === effect.type);
+        if (existing) {
+            if (effect.type === 'poison') {
+                this.poisonedBy = pokemon;
+                this.main.player.stats.appliedPoisons++;
+                if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
+                existing.stacks = (existing.stacks || 1) + 1;
+            } else if (effect.type === 'nightmare') {
+                this.nightmaredBy = pokemon;
+                existing.stacks = (existing.stacks || 1) + 1;
+            }
+        } else {
+            if (effect.type === 'stun' && this.passive?.id == 'electrogenesis') effect.duration *= 2;
+            this.statusEffects.push({
+                ...effect,
+                timer: 0,
+                stacks: effect.type === 'poison' ? 1 : undefined
+            });
+            if (effect.type === 'stun') {
+                //this.lightningRodSearch();
+                this.main.player.stats.appliedStuns++;
+                if (this.main.player.stats.appliedStuns >= 10000) this.main.player.unlockAchievement(13);
+            }
+            if (effect.type === 'slow') {
+                this.main.player.stats.appliedSlows++;
+                if (this.main.player.stats.appliedSlows >= 10000) this.main.player.unlockAchievement(14);
+            }
+            if (effect.type === 'poison') {
+                this.poisonedBy = pokemon;
+                this.main.player.stats.appliedPoisons++;
+                if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
+            }
+            if (effect.type === 'nightmare') {
+                this.nightmaredBy = pokemon;
+            }
+            if (effect.type === 'burn') {
+                this.burnedBy = pokemon;
+                this.main.player.stats.appliedBurns++;
+                if (this.main.player.stats.appliedBurns >= 10000) this.main.player.unlockAchievement(15);
+            }
+            if (effect.type === 'curse') {
+                this.main.player.stats.appliedCurses++;
+                if (this.main.player.stats.appliedCurses >= 10000) this.main.player.unlockAchievement(17);
+                this.cursed = true;
+            }
+        }
+
+        if (this.passive?.id === 'justified' && !['curse', 'nightmare'].includes(effect.type)) {
+            this.armorMax += 5000;
+            this.armor += 5000;
+        }
 	}
 
 	drawStatusEffects() {
-		if (this.statusEffects.length === 0) return;
+        if (this.statusEffects.length === 0) return;
 
-		this.statusEffects.forEach(effect => {
-			if (effect.type === 'burn') {
-				const numParticles = 5;
-				const alphaBase = 0.8;
-				const alphaVariation = 0.2;
-				const alpha = alphaBase + alphaVariation * Math.sin(Date.now() / 500);
+        const now = Date.now();
+        const centerX = this.position.x + this.width / 2;
+        const centerY = this.position.y + this.height / 2;
 
-				const centerX = this.position.x + this.width / 2;
-				const centerY = this.position.y + this.height / 2;
+        this.statusEffects.forEach((effect, index) => {
+            let r, g, b;
+            const numParticles = 6;
 
-				for (let i = 0; i < numParticles; i++) {
-					const px = centerX + (Math.random() - 0.5) * this.width * 0.6;
-					const py = centerY + (Math.random() - 0.5) * this.height * 0.6;
-					const size = 1 + Math.random() * 2;
+            const effectOffset = (index - (this.statusEffects.length - 1) / 2) * (this.width * 0.15);
 
-					const r = 255;
-					const g = 100 + Math.random() * 100;
-					const b = 0;
+            if (effect.type === 'burn') [r, g, b] = [255, 80, 0];
+            else if (effect.type === 'poison') [r, g, b] = [180, 50, 255];
+            else if (effect.type === 'nightmare') [r, g, b] = [80, 20, 120];
+            else return;
 
-					this.ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-					this.ctx.beginPath();
-					this.ctx.arc(px, py, size, 0, Math.PI * 2);
-					this.ctx.fill();
-				}
-			}
-			if (effect.type === 'poison') {
-				const numParticles = 5;
-				const alphaBase = 0.8;
-				const alphaVariation = 0.2;
-				const alpha = alphaBase + alphaVariation * Math.sin(Date.now() / 500);
+            for (let i = 0; i < numParticles; i++) {
+                const seed = i * 400;
+                const progress = ((now + seed) % 1500) / 1500;
 
-				const centerX = this.position.x + this.width / 2;
-				const centerY = this.position.y + this.height / 2;
+                const py = (centerY + this.height * 0.2) - (progress * this.height * 1.6);
 
-				for (let i = 0; i < numParticles; i++) {
-					const px = centerX + (Math.random() - 0.5) * this.width * 0.6;
-					const py = centerY + (Math.random() - 0.5) * this.height * 0.6;
-					const size = 1 + Math.random() * 2;
+                const drift = Math.sin(now / 400 + i) * (this.width * 0.12);
+                const px = centerX + effectOffset + drift;
 
-					const r = 50;
-					const g = 255;
-					const b = 50;
+                const size = (1 - progress) * 3.5;
+                const alpha = (1 - progress) * 0.9;
 
-					this.ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-					this.ctx.beginPath();
-					this.ctx.arc(px, py, size, 0, Math.PI * 2);
-					this.ctx.fill();
-				}
-			}
-			if (effect.type === 'nightmare') {
-				const numParticles = 5;
-				const alphaBase = 0.8;
-				const alphaVariation = 0.2;
-				const alpha = alphaBase + alphaVariation * Math.sin(Date.now() / 500);
+                this.ctx.save();
+                this.ctx.beginPath();
+                this.ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
 
-				const centerX = this.position.x + this.width / 2;
-				const centerY = this.position.y + this.height / 2;
+                this.ctx.shadowBlur = 5;
+                this.ctx.shadowColor = `rgba(${r},${g},${b},${alpha})`;
 
-				for (let i = 0; i < numParticles; i++) {
-					const px = centerX + (Math.random() - 0.5) * this.width * 0.6;
-					const py = centerY + (Math.random() - 0.5) * this.height * 0.6;
-					const size = 1 + Math.random() * 2;
+                this.ctx.arc(px, py, size, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+            }
+        });
+	}
 
-					const r = 160;
-					const g = 40;
-					const b = 200;
+	lightningRodSearch() {
+        const towers = this.main.area.towers;
+        for (const tower of towers) {
+            if (tower?.ability?.id !== 'lightningRod') continue;
 
-					this.ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-					this.ctx.beginPath();
-					this.ctx.arc(px, py, size, 0, Math.PI * 2);
-					this.ctx.fill();
-				}
-			}
-		});
+            const radius = tower.range;
+            const dx = tower.center.x - this.center.x;
+            const dy = tower.center.y - this.center.y;
+            const distance = Math.hypot(dx, dy);
+
+            if (distance <= radius && tower.lightningRodChargeCD === 0 && tower.lightningRodCharge < 10) {
+                tower.lightningRodCharge++;
+				tower.lightningRodChargeCD = 1000;
+                break;
+            }
+        }
 	}
 }

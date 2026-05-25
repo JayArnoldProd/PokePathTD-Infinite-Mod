@@ -163,7 +163,11 @@ export class Tower extends Sprite {
             this.pokemon?.item?.id == 'lifeOrb' ||
             (this.main.area.heartScale && this.pokemon?.item?.id == 'heartScale')
         ) {
-            this.speed -= (this.ability?.id == 'simple') ? (this.speed * 0.75) : (this.speed * 0.5);
+            if (this.pokemon?.item?.id == 'heartScale' && this.ability?.id == 'simple') {
+                this.speed -= (this.speed * 0.75);
+            } else {
+                this.speed -= (this.speed * 0.5);
+            }
         }
     
         if (this.pokemon?.item?.id == 'quickPowder') this.speed -= (this.speed / 4);
@@ -286,7 +290,11 @@ export class Tower extends Sprite {
             this.pokemon?.item?.id == 'lifeOrb' ||
             (this.main.area.heartScale && this.pokemon?.item?.id == 'heartScale')
         ) {
-            this.speed -= (this.ability?.id == 'simple') ? (this.speed * 0.75) : (this.speed * 0.5);
+            if (this.pokemon?.item?.id == 'heartScale' && this.ability?.id == 'simple') {
+                this.speed -= (this.speed * 0.75);
+            } else {
+                this.speed -= (this.speed * 0.5);
+            }
         }
 
         if (this.pokemon?.item?.id == 'shieldBreakerBullet') this.speed += 2000;
@@ -655,10 +663,16 @@ export class Tower extends Sprite {
     }
 
     spawnOrbitales() {
+        // Orbital towers must never keep stray normal projectiles around.
+        this.projectiles = this.projectiles.filter(p => p?.orbit);
+
         let numMax = this.orbital;
         const angularSpeed = this.getOrbitalAngularSpeed();
 
         if (!numMax || numMax <= 0) return;
+
+        // Rebuild orbitals from current stats instead of stacking duplicates.
+        this.projectiles = this.projectiles.filter(p => !p?.orbit);
 
         if (this.pokemon?.item?.id == 'jadeOrb') numMax += 2;
 
@@ -1005,6 +1019,9 @@ export class Tower extends Sprite {
         }
 
         // --- TORRES CON PROYECTILES ---
+        const isOrbitalTower = this.attackType === 'orbital' || this.pokemon?.attackType === 'orbital' || (this.orbital ?? 0) > 0;
+        if (isOrbitalTower && !this.projectiles.some(p => p?.orbit)) this.refreshOrbitalProjectiles();
+
         // DELTA TIME FIX: Use while loop to allow multiple attacks per frame at high speeds
         let firedThisFrame = false;
         let shotsThisFrame = 0;
@@ -1012,7 +1029,7 @@ export class Tower extends Sprite {
         // Safety: clamp attack speed to minimum 0.01ms to prevent infinite loops while allowing extreme fire rates
         const attackSpeed = Math.max(0.01, this.speed * (this.snowCloakNear ? 1.5 : 1));
         
-        while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && this.pokemon.attackType !== 'orbital') {
+        while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && !isOrbitalTower) {
             let maxShots =
                 this.ability && this.ability.id === 'cradily' ? this.main.player.fossilInTeam :
                 this.ability && (this.ability.id === 'quadraShot' || this.ability.id === 'quadraShotSand') ? 4 :
@@ -1103,7 +1120,7 @@ export class Tower extends Sprite {
                 continue;
             }
 
-            if (this.pokemon.attackType === 'orbital') {
+            if (isOrbitalTower || p.orbit) {
 
             } else if (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible'))) {
                 // MOD: Retarget within tower's range from tower position
@@ -1117,7 +1134,28 @@ export class Tower extends Sprite {
                 }
             }
 
-            if (typeof p.update === 'function') p.update(deltaTime); // pasamos delta ya escalado por Game
+            if (typeof p.update === 'function') {
+                try {
+                    p.update(deltaTime, shouldDraw); // pasamos delta ya escalado por Game
+                } catch (err) {
+                    const payload = {
+                        message: err?.message || String(err),
+                        stack: err?.stack,
+                        orbit: !!p?.orbit,
+                        tower: this.pokemon?.specie?.name || this.pokemon?.name || this.pokemon?.id,
+                        projectileCount: this.projectiles.length
+                    };
+                    console.error('[PokePath TD Infinite] Projectile update failed', payload);
+                    if (typeof window !== 'undefined') {
+                        window.__pokepathLastProjectileError = payload;
+                        window.__pokepathProjectileErrors = window.__pokepathProjectileErrors || [];
+                        window.__pokepathProjectileErrors.push(payload);
+                        if (window.__pokepathProjectileErrors.length > 20) window.__pokepathProjectileErrors.shift();
+                    }
+                    if (p?.orbit) p._lastUpdateError = payload;
+                    else p.markedForDeletion = true;
+                }
+            }
             if (p.markedForDeletion) this.projectiles.splice(i, 1);
         }
     }

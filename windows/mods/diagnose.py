@@ -179,12 +179,12 @@ def main():
     
     if vanilla_asar and vanilla_asar.exists():
         vanilla_size = vanilla_asar.stat().st_size
-        # Known vanilla asar size for Windows v1.5.4
-        expected_vanilla_asar_size = 75099415
+        # Known vanilla asar size for Windows v1.5.5
+        expected_vanilla_asar_size = 75099579
         version_ok = vanilla_size == expected_vanilla_asar_size
         check(f"Vanilla backup size ({vanilla_size:,} bytes)", version_ok,
-              f"Expected {expected_vanilla_asar_size:,} bytes for Windows v1.5.4.\n"
-              "      Your game may be a different version. This mod currently targets PokePath TD v1.5.4 on Windows.\n"
+              f"Expected {expected_vanilla_asar_size:,} bytes for Windows v1.5.5.\n"
+              "      Your game may be a different version. This mod currently targets PokePath TD v1.5.5 on Windows.\n"
               "      Update your game or download the matching mod version.")
         if not version_ok:
             all_good = False
