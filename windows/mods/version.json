@@ -1,12 +1,11 @@
 {
-    "version": "1.5.5",
-    "game_version": "1.5.5",
-    "release_date": "2026-05-25",
+    "version": "1.5.6",
+    "game_version": "1.5.6",
+    "release_date": "2026-06-01",
     "changes": [
-        "Validated Windows compatibility against live PokePath TD 1.5.5 vanilla files",
-        "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.5",
-        "Rebased projectile collision handling onto vanilla 1.5.5 impact logic",
-        "Fixed orbital/projectile collision rendering regressions caused by canvas state and sub-step draw drift",
-        "Initialized per-wave heal tracking so collision damage no longer crashes when heal-cap state is missing"
+        "Rebased Windows compatibility onto live PokePath TD 1.5.6 vanilla files",
+        "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.6",
+        "Preserved the 1.5.6 XL map viewport, route, shop, item, UI, and balance changes while carrying mod features forward",
+        "Kept the 1.5.5 collision/render stability fixes for orbital and projectile impacts"
     ]
 }

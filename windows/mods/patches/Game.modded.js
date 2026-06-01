@@ -3,113 +3,205 @@ import { text } from '../file/text.js';
 import { playSound } from '../file/audio.js';
 
 export class Game {
-	constructor(main) {
-        this.main = main;
-        this.canvas = document.createElement('canvas');
-        this.canvas.width = 720;
-        this.canvas.height = 624;
-        this.ctx = this.canvas.getContext('2d');
-        this.canvasBackground = new Image();
-        this.canvasEffect = new Image();
-        this.effectEnabled = false;
-        this.effectTime = 0;
-        document.getElementById('screen').appendChild(this.canvas);
-        this.deployingUnit = undefined;
-        this.stopped = false;
-        this.activeTile = undefined;
-        this.mouse = { x: undefined, y: undefined };
-        this.FPS = 60;
-        this.frameDuration = 1000 / this.FPS;
-        this.lastTime = 0;
-        this.loopId = null;
-        this.animate = this.animate.bind(this);
-        this.ranges = false;
-        this.speedFactor = 0.8;
-        this.chrono;
+	static CANVAS_W    = 720;
+	static CANVAS_H    = 624;
+	static CANVAS_W_XL = 1440;
 
-        this.canvasShake  = {
-              active: false,
-              intensity: 0,
-              duration: 0,
-              elapsed: 0
+	constructor(main) {
+	    this.main = main;
+
+	    // ── Scroll / viewport state for XL maps ───────────────────────────
+	    this.isXL        = false;   // set by resizeCanvas() when map has xl:true
+	    this.scrollX     = 0;       // current horizontal scroll offset (canvas px)
+	    this.mouseViewX  = undefined; // cursor X relative to the 720-px viewport (for edge-pan)
+	    this._scrolling  = false;   // internal pan flag
+	    this._panStartX  = 0;
+	    this._panStartScrollX = 0;
+	    // ──────────────────────────────────────────────────────────────────
+
+	    this.canvas = document.createElement('canvas');
+	    this.canvas.width  = Game.CANVAS_W;
+	    this.canvas.height = Game.CANVAS_H;
+	    this.ctx = this.canvas.getContext('2d');
+	    this.canvasBackground = new Image();
+	    this.canvasEffect = new Image();
+	    this.effectEnabled = false;
+	    this.effectTime = 0;
+
+	    // Wrap the canvas in a viewport div so XL maps can scroll
+	    this.canvasWrapper = document.createElement('div');
+	    this.canvasWrapper.id = 'canvas-wrapper';
+	    this.canvasWrapper.appendChild(this.canvas);
+	    document.getElementById('screen').appendChild(this.canvasWrapper);
+
+	    this.deployingUnit = undefined;
+	    this.stopped = false;
+	    this.activeTile = undefined;
+	    this.mouse = { x: undefined, y: undefined };
+	    this.FPS = 60;
+	    this.frameDuration = 1000 / this.FPS;
+	    this.lastTime = 0;
+	    this.loopId = null;
+	    this.animate = this.animate.bind(this);
+	    this.ranges = false;
+	    this.speedFactor = 0.8;
+	    this.chrono;
+
+	    this.canvasShake  = {
+		  	active: false,
+		  	intensity: 0,  
+		  	duration: 0, 
+		  	elapsed: 0  
 		};
 	}
 
-      load() {
-        this.stopped = false;
-        this.lastTime = performance.now();
+	resizeCanvas(xl = false) {
+	    this.isXL = xl;
+	    this.scrollX = 0;
+	    this.mouseViewX = undefined;
+	    this.canvas.width  = xl ? Game.CANVAS_W_XL : Game.CANVAS_W;
+	    this.canvas.height = Game.CANVAS_H;
 
-        if (this.gameWorker) {
-            this.gameWorker.terminate();
-        }
+	    if (xl) {
+	        this.canvasWrapper.classList.add('xl-map');
+	        this._applyScroll();
+	    } else {
+	        this.canvasWrapper.classList.remove('xl-map');
+	        this.canvas.style.left      = '';
+	        this.canvas.style.transform = 'translate(-50%, -50%)';
+	    }
+	}
 
-        const workerCode = `
-            let timerId;
-            const interval = ${this.frameDuration}; // Pasamos tu frameDuration (aprox 16.6ms)
 
-            self.onmessage = function(e) {
-                if (e.data === 'start') {
-                    // Iniciamos el reloj en el hilo secundario
-                    timerId = setInterval(() => {
-                        self.postMessage('tick');
-                    }, interval);
-                } else if (e.data === 'stop') {
-                    clearInterval(timerId);
-                }
-            };
-        `;
+	_applyScroll() {
+	    if (!this.isXL) return;
+	    const maxScroll = Game.CANVAS_W_XL - Game.CANVAS_W;
+	    this.scrollX = Math.max(0, Math.min(this.scrollX, maxScroll));
+	    this.canvas.style.transform = `translate(calc(-50% + ${-this.scrollX + Game.CANVAS_W_XL / 2 - Game.CANVAS_W / 2}px), -50%)`;
+	    const pct = maxScroll > 0 ? this.scrollX / maxScroll : 0;
+	    this.canvasWrapper.style.setProperty('--scroll-pct', pct.toFixed(4));
+	}
 
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        this.gameWorker = new Worker(URL.createObjectURL(blob));
+	_clientToCanvasX(clientX) {
+	    const rect   = this.canvasWrapper.getBoundingClientRect();
+	    const scaleX = Game.CANVAS_W / rect.width;  
+	    return (clientX - rect.left) * scaleX + this.scrollX;
+	}
 
-        this.gameWorker.onmessage = () => {
-            this.animate(performance.now());
-        };
+	_clientToCanvasY(clientY) {
+	    const rect   = this.canvasWrapper.getBoundingClientRect();
+	    const scaleY = Game.CANVAS_H / rect.height;
+	    return (clientY - rect.top) * scaleY;
+	}
 
-        this.gameWorker.postMessage('start');
+	scrollBy(dx) {
+	    this.scrollX += dx;
+	    this._applyScroll();
+	}
 
-        this.setEvents();
-        this.chrono = this.main.utility.chrono(1, () => !this.stopped);
+	scrollTo(x) {
+	    this.scrollX = x;
+	    this._applyScroll();
+	}
+
+
+  	load() {
+	    this.stopped = false;
+	    this.lastTime = performance.now();
+
+	    if (this.gameWorker) {
+	        this.gameWorker.terminate();
+	    }
+
+	    const workerCode = `
+	        let timerId;
+	        const interval = ${this.frameDuration}; 
+
+	        self.onmessage = function(e) {
+	            if (e.data === 'start') {
+	                // Iniciamos el reloj en el hilo secundario
+	                timerId = setInterval(() => {
+	                    self.postMessage('tick');
+	                }, interval);
+	            } else if (e.data === 'stop') {
+	                clearInterval(timerId);
+	            }
+	        };
+	    `;
+
+	    const blob = new Blob([workerCode], { type: 'application/javascript' });
+	    this.gameWorker = new Worker(URL.createObjectURL(blob));
+
+	    this.gameWorker.onmessage = () => {
+	        this.animate(performance.now());
+	    };
+
+	    this.gameWorker.postMessage('start');
+
+	    this.setEvents();
+	    this.chrono = this.main.utility.chrono(1, () => !this.stopped);
 	}
 
 	animate(time) {
-        if (this.stopped) return;
-        if (!this.lastTime) this.lastTime = time;
+	    if (this.stopped) return;
+	    if (!this.lastTime) this.lastTime = time;
 
-        let delta = time - this.lastTime;
-        if (delta < this.frameDuration) return;
-        if (delta > 60) delta = 60;
+	    let delta = time - this.lastTime;
+	    if (delta < this.frameDuration) return;
+	    if (delta > 60) delta = 60;
 
-        this.lastTime = time - (delta % this.frameDuration);
+	    this.lastTime = time - (delta % this.frameDuration);
 
-        if (this.ctx) {
-            if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
-                this.ctx.drawImage(this.canvasBackground, 0, 0, this.canvas.width, this.canvas.height);
-            } else {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            }
-        }
+	    if (this.ctx) {
+	        if (this.canvasBackground.complete && this.canvasBackground.naturalWidth !== 0) {
+	            this.ctx.drawImage(this.canvasBackground, 0, 0, this.canvas.width, this.canvas.height);
+	        } else {
+	            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	        }
+	    }
+	    // this.drawSpawnEntryIndicators(time);
 
-        const scaledDelta = this.stopped ? 0 : delta * this.speedFactor;
-        const safeDelta = Math.min(scaledDelta, 150);
+	    const scaledDelta = this.stopped ? 0 : delta * this.speedFactor;
+	    const safeDelta = Math.min(scaledDelta, 150);
 
-        if (this.canvasShake.active) {
-            this.canvasShake.elapsed += safeDelta;
-            const progress = Math.min(1, this.canvasShake.elapsed / this.canvasShake.duration);
-            const ease = 1 - Math.pow(progress, 2);
-            const intensity = this.canvasShake.intensity * ease;
-            const dx = (Math.random() - 0.75) * 2 * intensity;
-            const dy = (Math.random() - 0.75) * 2 * intensity;
-            this.canvas.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            if (progress >= 1) {
-                this.canvasShake.active = false;
-                this.canvas.style.transform = `translate(-50%, -50%)`;
-            }
-        }
+	    if (this.canvasShake.active) {
+	        this.canvasShake.elapsed += safeDelta;
+	        const progress = Math.min(1, this.canvasShake.elapsed / this.canvasShake.duration);
+	        const ease = 1 - Math.pow(progress, 2);
+	        const intensity = this.canvasShake.intensity * ease;
+	        const sdx = (Math.random() - 0.75) * 2 * intensity;
+	        const sdy = (Math.random() - 0.75) * 2 * intensity;
+	        if (this.isXL) {
+	            const baseX = -this.scrollX + Game.CANVAS_W_XL / 2 - Game.CANVAS_W / 2;
+	            this.canvas.style.transform = `translate(calc(-50% + ${baseX + sdx}px), calc(-50% + ${sdy}px))`;
+	        } else {
+	            this.canvas.style.transform = `translate(calc(-50% + ${sdx}px), calc(-50% + ${sdy}px))`;
+	        }
+	        if (progress >= 1) {
+	            this.canvasShake.active = false;
+	            if (this.isXL) this._applyScroll();
+	            else this.canvas.style.transform = `translate(-50%, -50%)`;
+	        }
+	    }
 
-        // --- MOD: SUB-STEPPING LOOP for accurate high-speed simulation ---
-        // ── SUBSTEPS: dividir el frame en pasos de máx 16.6ms ──────────────
-        const MAX_STEP = 1000 / 60;
+
+	    // if (this.isXL && this.mouseViewX !== undefined) {
+	    //     const EDGE  = 80;    // px from the viewport edge that activates pan
+	    //     const SPEED = 12;     // max canvas-px scrolled per frame
+	    //     const vx = this.mouseViewX;
+	    //     if (vx < EDGE) {
+	    //         // Left zone: faster the closer to the edge
+	    //         const t = 1 - vx / EDGE;              // 0 → 1 as vx → 0
+	    //         this.scrollBy(-SPEED * t * t);         // quadratic easing
+	    //     } else if (vx > Game.CANVAS_W - EDGE) {
+	    //         const t = (vx - (Game.CANVAS_W - EDGE)) / EDGE;
+	    //         this.scrollBy(SPEED * t * t);
+	    //     }
+	    // }
+	    // ─────────────────────────────────────────────────────────────────────
+
+	    // ── SUBSTEPS: dividir el frame en pasos de máx 16.6ms ──────────────
+	    const MAX_STEP = 1000 / 60;
 		const numSteps = Math.max(1, Math.ceil(safeDelta / MAX_STEP));
 		const stepDelta = safeDelta / numSteps;
 
@@ -228,46 +320,99 @@ export class Game {
         }
 	}
 
-      tryDeployUnit(pos, ui) {
-          if (this.stopped || this.main.isSectionOpen()) return;
-        if (this.deployingUnit != undefined) return this.cancelDeployUnit();
-        if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-        this.deployingUnit = this.main.team.pokemon[pos];
-        if (this.main.team.pokemon[pos].isDeployed && ui) {
-              this.retireUnit();
-              return;
-        }
-        playSound('click1', 'ui');
-        this.main.UI.nextWave.style.filter = 'brightness(0.75)';
-        this.main.UI.nextWave.style.pointerEvents = 'none';
-      }
+	// drawSpawnEntryIndicators(time) {
+	// 	const waypoints = this.main?.area?.waypoints;
+	// 	if (!Array.isArray(waypoints) || waypoints.length === 0) return;
 
-      cancelDeployUnit() {
-        this.deployingUnit = undefined;
-        this.main.UI.updatePokemon();
-        if (!this.main.area.waveActive) {
-              this.main.UI.revertUI();
-              this.main.UI.nextWave.style.filter = 'revert-layer';
-              this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
-        }
-      }
+	// 	const pulse = 0.5 + 0.5 * Math.sin((time || 0) * 0.008);
+	// 	for (const path of waypoints) {
+	// 		if (!Array.isArray(path) || path.length < 2) continue;
+	// 		const start = path[0];
+	// 		const next = path[1];
+	// 		if (!start || !next) continue;
 
-      moveUnitToTile(newTile, mute = false) {
-        if (!this.deployingUnit || !newTile || this.main.isSectionOpen()) return;
+	// 		const dx = next.x - start.x;
+	// 		const dy = next.y - start.y;
+	// 		const len = Math.hypot(dx, dy) || 1;
+	// 		const ux = dx / len;
+	// 		const uy = dy / len;
 
-        const pokemon = this.deployingUnit;
+	// 		// Place marker slightly inside path direction so it is not exactly on the edge.
+	// 		const entryOffset = 14;
+	// 		const baseX = start.x + ux * entryOffset;
+	// 		const baseY = start.y + uy * entryOffset;
+	// 		const x = Math.min(this.canvas.width - 14, Math.max(14, baseX));
+	// 		const y = Math.min(this.canvas.height - 14, Math.max(14, baseY));
+
+	// 		const size = 14 + (pulse * 4);
+	// 		this.ctx.save();
+
+	// 		// Soft entry glow.
+	// 		this.ctx.globalAlpha = 0.35 + pulse * 0.25;
+	// 		this.ctx.fillStyle = '#6df18b';
+	// 		this.ctx.beginPath();
+	// 		this.ctx.arc(x, y, size, 0, Math.PI * 2);
+	// 		this.ctx.fill();
+
+	// 		// Direction arrow.
+	// 		const tipX = x + ux * 18;
+	// 		const tipY = y + uy * 18;
+	// 		const sideX = -uy;
+	// 		const sideY = ux;
+	// 		this.ctx.globalAlpha = 0.9;
+	// 		this.ctx.fillStyle = '#d7ffe3';
+	// 		this.ctx.beginPath();
+	// 		this.ctx.moveTo(tipX, tipY);
+	// 		this.ctx.lineTo(x + sideX * 8, y + sideY * 8);
+	// 		this.ctx.lineTo(x - sideX * 8, y - sideY * 8);
+	// 		this.ctx.closePath();
+	// 		this.ctx.fill();
+
+	// 		this.ctx.restore();
+	// 	}
+	// }
+
+  	tryDeployUnit(pos, ui) {
+  		if (this.stopped || this.main.isSectionOpen()) return;
+	    if (this.deployingUnit != undefined) return this.cancelDeployUnit();
+	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+	    this.deployingUnit = this.main.team.pokemon[pos];
+	    if (this.main.team.pokemon[pos].isDeployed && ui) {
+	      	this.retireUnit();
+	      	return;
+	    }
+	    playSound('click1', 'ui');
+	    this.main.UI.nextWave.style.filter = 'brightness(0.75)';
+	    this.main.UI.nextWave.style.pointerEvents = 'none';
+  	}
+
+  	cancelDeployUnit() {
+	    this.deployingUnit = undefined;
+	    this.main.UI.updatePokemon();
+	    if (!this.main.area.waveActive) {
+	      	this.main.UI.revertUI();
+	      	this.main.UI.nextWave.style.filter = 'revert-layer';
+	      	this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
+	    }
+  	}
+
+  	moveUnitToTile(newTile, mute = false) {
+	    if (!this.deployingUnit || !newTile || this.main.isSectionOpen()) return;
+
+	    const pokemon = this.deployingUnit;
 
 		if (typeof newTile.canPlacePokemonHere === 'function') {
             if (!newTile.canPlacePokemonHere(pokemon)) return;
 		} else {
-            if (
-                !pokemon.tiles.includes(newTile.land) &&
-                !(pokemon?.item?.id == 'airBalloon' && newTile.land == 4) &&
-                !(pokemon?.item?.id == 'heavyDutyBoots' && newTile.land == 2) &&
-                !(pokemon?.item?.id == 'assaultVest' && newTile.land == 2) &&
-                !(pokemon?.item?.id == 'dampMulch' && newTile.land == 1) &&
-                !(pokemon?.item?.id == 'subwoofer' && newTile.land == 3 && [76, 86, 120].includes(pokemon.id))
-            ) return;
+		    if (
+		        !pokemon.tiles.includes(newTile.land) &&
+		        !(pokemon?.item?.id == 'airBalloon' && newTile.land == 4) &&
+		        !(pokemon?.item?.id == 'heavyDutyBoots' && newTile.land == 2) &&
+		        !(pokemon?.item?.id == 'assaultVest' && newTile.land == 2) &&
+		        !(pokemon?.item?.id == 'dampMulch' && newTile.land == 1) &&
+		        !(pokemon?.item?.id == 'mitsuesCocktail' && newTile.land == 3) &&
+		        !(pokemon?.item?.id == 'subwoofer' && newTile.land == 3 && [76, 86, 120].includes(pokemon.id))
+		    ) return;
 		}
 
         if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
@@ -559,401 +704,495 @@ export class Game {
         }
 	}
 
-      setEvents() {
-        const canPlaceOn = (pokemon, tile) => {
-            if (!pokemon || !tile) return false;
-            // si la tile implementa el helper, usarlo (incluye grassyTerrain)
-            if (typeof tile.canPlacePokemonHere === 'function') return tile.canPlacePokemonHere(pokemon);
+  	setEvents() {
+	    const canPlaceOn = (pokemon, tile) => {
+		    if (!pokemon || !tile) return false;
+		    // si la tile implementa el helper, usarlo (incluye grassyTerrain)
+		    if (typeof tile.canPlacePokemonHere === 'function') return tile.canPlacePokemonHere(pokemon);
 
-            // fallback a comprobaciones clásicas
-            if (pokemon.tiles && pokemon.tiles.includes(tile.land)) return true;
-            if (pokemon?.item?.id == 'airBalloon' && tile.land == 4) return true;
-            if (pokemon?.item?.id == 'heavyDutyBoots' && tile.land == 2) return true;
-            if (pokemon?.item?.id == 'assaultVest' && tile.land == 2) return true;
-            if (pokemon?.item?.id == 'dampMulch' && tile.land == 1) return true;
-            if (pokemon?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(pokemon.id)) return true;
-            return false;
+		    // fallback a comprobaciones clásicas
+		    if (pokemon.tiles && pokemon.tiles.includes(tile.land)) return true;
+		    if (pokemon?.item?.id == 'airBalloon' && tile.land == 4) return true;
+		    if (pokemon?.item?.id == 'heavyDutyBoots' && tile.land == 2) return true;
+		    if (pokemon?.item?.id == 'assaultVest' && tile.land == 2) return true;
+		    if (pokemon?.item?.id == 'dampMulch' && tile.land == 1) return true;
+		    if (pokemon?.item?.id == 'mitsuesCocktail' && tile.land == 3) return true;
+		    if (pokemon?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(pokemon.id)) return true;
+		    return false;
 		};
 
-        this.canvas.addEventListener('mousemove', (event) => {
-            this.mouse.x = event.offsetX;
-            this.mouse.y = event.offsetY;
-            this.activeTile = null;
+	    this.canvas.addEventListener('mousemove', (event) => {
+	        // offsetX/Y are already in canvas coordinates (no scroll compensation needed)
+	        this.mouse.x = event.offsetX;
+	        this.mouse.y = event.offsetY;
+	        // Also track viewport-relative X for edge-pan (independent of canvas scroll)
+	        if (this.isXL) {
+	            const wrapperRect = this.canvasWrapper.getBoundingClientRect();
+	            const scaleX = Game.CANVAS_W / wrapperRect.width;
+	            this.mouseViewX = (event.clientX - wrapperRect.left) * scaleX;
+	        }
+	        this.activeTile = null;
 
-            for (let i = 0; i < this.main.area.placementTiles.length; i++) {
-                const tile = this.main.area.placementTiles[i];
-                if (
-                    this.mouse.x > tile.position.x &&
-                    this.mouse.x < tile.position.x + tile.size &&
-                    this.mouse.y > tile.position.y &&
-                    this.mouse.y < tile.position.y + tile.size
-                ) {
-                    this.activeTile = tile;
-                    break;
-                }
-            }
-        });
+	        for (let i = 0; i < this.main.area.placementTiles.length; i++) {
+	            const tile = this.main.area.placementTiles[i];
+	            if (
+	                this.mouse.x > tile.position.x &&
+	                this.mouse.x < tile.position.x + tile.size &&
+	                this.mouse.y > tile.position.y &&
+	                this.mouse.y < tile.position.y + tile.size
+	            ) {
+	                this.activeTile = tile;
+	                break;
+	            }
+	        }
+	    });
 
-        this.mapDragging = false;
+	    // Stop edge-pan when cursor leaves the canvas area
+	    this.canvas.addEventListener('mouseleave', () => {
+	        this.mouseViewX = undefined;
+	    });
 
-        // CLICK NORMAL
-        this.canvas.addEventListener('click', (event) => {
-            if (this.mapDragging) {
-                this.mapDragging = false;
-                return;
-            }
+	    this.mapDragging = false;
 
-            if (!this.activeTile) return;
+	    // CLICK NORMAL
+	    this.canvas.addEventListener('click', (event) => {
+		    if (this.mapDragging) {
+		        this.mapDragging = false;
+		        return;
+		    }
 
-            // Dos vistas de "capa superior":
-            // - baseFirst: prioriza la torre base (útil cuando estamos en modo deploy)
-            // - topmost: prioriza el passenger (útil para selección simple con click)
-            const clickedTopBaseFirst = this.activeTile.tower || this.activeTile.passenger || null;
-            const clickedTopTopmost = this.activeTile.passenger || this.activeTile.tower || null;
+		    if (!this.activeTile) return;
 
-            // Si hay una unidad en modo deploy, procesamos la colocación
-            if (this.deployingUnit) {
-                // Guardar referencia estable a la unidad que el jugador está intentando colocar
-                const newPokemon = this.deployingUnit;
+		    // Dos vistas de "capa superior":
+		    // - baseFirst: prioriza la torre base (útil cuando estamos en modo deploy)
+		    // - topmost: prioriza el passenger (útil para selección simple con click)
+		    const clickedTopBaseFirst = this.activeTile.tower || this.activeTile.passenger || null;
+		    const clickedTopTopmost = this.activeTile.passenger || this.activeTile.tower || null;
 
-                // cancelar si click en mismo pokemon (tanto base como passenger), usando base-first
-                if (clickedTopBaseFirst === newPokemon) {
-                    this.cancelDeployUnit();
-                    return;
-                }
+		    // Si hay una unidad en modo deploy, procesamos la colocación
+		    if (this.deployingUnit) {
+		        // Guardar referencia estable a la unidad que el jugador está intentando colocar
+		        const newPokemon = this.deployingUnit;
 
-                // validación de terreno con helper canPlaceOn (ya definido en setEvents)
-                const canPlaceDragged = canPlaceOn(newPokemon, this.activeTile);
-                if (!canPlaceDragged) return;
+		        // cancelar si click en mismo pokemon (tanto base como passenger), usando base-first
+		        if (clickedTopBaseFirst === newPokemon) {
+		            this.cancelDeployUnit();
+		            return;
+		        }
 
-                // 1) Tile vacía -> mover normalmente
-                if (!this.activeTile.tower) {
-                    this.moveUnitToTile(this.activeTile);
-                    this.cancelDeployUnit();
-                    return;
-                }
+		        // validación de terreno con helper canPlaceOn (ya definido en setEvents)
+		        const canPlaceDragged = canPlaceOn(newPokemon, this.activeTile);
+		        if (!canPlaceDragged) return;
 
-                // 2) Si la base acepta passengers (grassyTerrain)
-                if (this.activeTile.tower?.ability?.id === 'grassyTerrain' || this.activeTile.tower?.ability?.id === 'mount') {
-                    // 2.a) Si NO hay passenger -> place as passenger
-                    if (!this.activeTile.passenger) {
-                        this.deployingUnit = newPokemon;
-                        this.moveUnitToTile(this.activeTile);
-                        this.cancelDeployUnit();
-                        return;
-                    }
+		        // 1) Tile vacía -> mover normalmente
+		        if (!this.activeTile.tower) {
+		            this.moveUnitToTile(this.activeTile);
+		            this.cancelDeployUnit();
+		            return;
+		        }
 
-                    // 2.b) Existe passenger -> decidir reemplazo o retirar base+passenger
-                    const base = this.activeTile.tower;
-                    const oldPassenger = this.activeTile.passenger;
+		        // 2) Si la base acepta passengers (grassyTerrain)
+		        if (this.activeTile.tower?.ability?.id === 'grassyTerrain' || this.activeTile.tower?.ability?.id === 'mount') {
+		            // 2.a) Si NO hay passenger -> place as passenger
+		            if (!this.activeTile.passenger) {
+		                this.deployingUnit = newPokemon;
+		                this.moveUnitToTile(this.activeTile);
+		                this.cancelDeployUnit();
+		                return;
+		            }
 
-                    const canBePlacedHere = (typeof this.activeTile.canPlacePokemonHere === 'function')
-                        ? this.activeTile.canPlacePokemonHere(newPokemon)
-                        : (
-                            (newPokemon.tiles && newPokemon.tiles.includes(this.activeTile.land)) ||
-                            (newPokemon?.item?.id == 'airBalloon' && this.activeTile.land == 4) ||
-                            (newPokemon?.item?.id == 'heavyDutyBoots' && this.activeTile.land == 2) ||
-                            (newPokemon?.item?.id == 'assaultVest' && this.activeTile.land == 2) ||
-                            (newPokemon?.item?.id == 'dampMulch' && this.activeTile.land == 1) ||
-                            (newPokemon?.item?.id == 'subwoofer' && this.activeTile.land == 3 && [76, 86, 120].includes(newPokemon.id))
-                          );
+		            // 2.b) Existe passenger -> decidir reemplazo o retirar base+passenger
+		            const base = this.activeTile.tower;
+		            const oldPassenger = this.activeTile.passenger;
 
-                    if (canBePlacedHere) {
-                        // Intento de recolocación condicional del passenger antiguo a la tile origen del nuevo
-                        const newUnit = newPokemon;
-                        const originTile = this.main.area.placementTiles.find(
-                            t => t.tower === newUnit || t.passenger === newUnit
-                        );
+		            const canBePlacedHere = (typeof this.activeTile.canPlacePokemonHere === 'function')
+		                ? this.activeTile.canPlacePokemonHere(newPokemon)
+		                : (
+		                    (newPokemon.tiles && newPokemon.tiles.includes(this.activeTile.land)) ||
+		                    (newPokemon?.item?.id == 'airBalloon' && this.activeTile.land == 4) ||
+		                    (newPokemon?.item?.id == 'heavyDutyBoots' && this.activeTile.land == 2) ||
+		                    (newPokemon?.item?.id == 'assaultVest' && this.activeTile.land == 2) ||
+		                    (newPokemon?.item?.id == 'dampMulch' && this.activeTile.land == 1) ||
+		                    (newPokemon?.item?.id == 'mitsuesCocktail' && this.activeTile.land == 3) ||
+		                    (newPokemon?.item?.id == 'subwoofer' && this.activeTile.land == 3 && [76, 86, 120].includes(newPokemon.id))
+		                  );
 
-                        if (newUnit.isDeployed && originTile && canPlaceOn(oldPassenger, originTile)) {
-                            // 1) mover passenger antiguo a la tile origen
-                            this.deployingUnit = oldPassenger;
-                            this.moveUnitToTile(originTile);
+		            if (canBePlacedHere) {
+		                // Intento de recolocación condicional del passenger antiguo a la tile origen del nuevo
+		                const newUnit = newPokemon;
+		                const originTile = this.main.area.placementTiles.find(
+		                    t => t.tower === newUnit || t.passenger === newUnit
+		                );
 
-                            // 2) colocar el nuevo como passenger en la tile destino
-                            this.deployingUnit = newUnit;
-                            this.moveUnitToTile(this.activeTile);
+		                if (newUnit.isDeployed && originTile && canPlaceOn(oldPassenger, originTile)) {
+		                    // 1) mover passenger antiguo a la tile origen
+		                    this.deployingUnit = oldPassenger;
+		                    this.moveUnitToTile(originTile);
 
-                            this.cancelDeployUnit();
-                            return;
-                        }
+		                    // 2) colocar el nuevo como passenger en la tile destino
+		                    this.deployingUnit = newUnit;
+		                    this.moveUnitToTile(this.activeTile);
 
-                        // fallback: guardar passenger (comportamiento actual)
-                        this.deployingUnit = oldPassenger;
-                        this.retireUnit();
+		                    this.cancelDeployUnit();
+		                    return;
+		                }
 
-                        this.deployingUnit = newUnit;
-                        this.moveUnitToTile(this.activeTile);
-                        this.cancelDeployUnit();
-                        return;
-                    } else {
-                        // La nueva unidad NO puede ser passenger -> retirar base + passenger y colocar como base
-                        const savedNew = newPokemon;
+		                // fallback: guardar passenger (comportamiento actual)
+		                this.deployingUnit = oldPassenger;
+		                this.retireUnit();
 
-                        // retireUnit sobre la base eliminará también al passenger
-                        this.deployingUnit = base;
-                        this.retireUnit();
+		                this.deployingUnit = newUnit;
+		                this.moveUnitToTile(this.activeTile);
+		                this.cancelDeployUnit();
+		                return;
+		            } else {
+		                // La nueva unidad NO puede ser passenger -> retirar base + passenger y colocar como base
+		                const savedNew = newPokemon;
 
-                        // restaurar la unidad que queremos colocar y ponerla como base
-                        this.deployingUnit = savedNew;
-                        this.moveUnitToTile(this.activeTile);
-                        this.cancelDeployUnit();
-                        return;
-                    }
-                }
+		                // retireUnit sobre la base eliminará también al passenger
+		                this.deployingUnit = base;
+		                this.retireUnit();
 
-                // 3) Si la base NO permite passengers -> comportamiento clásico (swap o reemplazo)
-                if (newPokemon.isDeployed) {
-                    // swap entre tiles (si procede)
-                    const sourceTile = this.main.area.placementTiles.find(t => t.tower === newPokemon || t.passenger === newPokemon);
-                    if (sourceTile) {
-                        this.swapUnits(sourceTile, newPokemon, this.activeTile, this.activeTile.tower);
-                    } else {
-                        // fallback: retirar la torre objetivo y colocar nueva
-                        this.deployingUnit = newPokemon;
-                        this.retireUnit();
-                        this.moveUnitToTile(this.activeTile);
-                    }
+		                // restaurar la unidad que queremos colocar y ponerla como base
+		                this.deployingUnit = savedNew;
+		                this.moveUnitToTile(this.activeTile);
+		                this.cancelDeployUnit();
+		                return;
+		            }
+		        }
 
-                    this.cancelDeployUnit();
-                    playSound('equip', 'ui');
-                    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-                    if (!this.main.area.waveActive) {
-                        this.main.UI.revertUI();
-                        this.main.UI.nextWave.style.filter = 'revert-layer';
-                        this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
-                    }
-                    return;
-                } else {
-                    const savedNew = newPokemon;
-                    this.deployingUnit = this.activeTile.tower;
-                    this.retireUnit();
-                    this.deployingUnit = savedNew;
-                    this.moveUnitToTile(this.activeTile);
-                    this.cancelDeployUnit();
-                    return;
-                }
-            } else {
-                if (clickedTopTopmost) {
-                    const index = this.main.team.pokemon.findIndex(pokemon => pokemon === clickedTopTopmost);
-                    if (index !== -1) this.tryDeployUnit(index);
-                }
-            }
+		        // 3) Si la base NO permite passengers -> comportamiento clásico (swap o reemplazo)
+		        if (newPokemon.isDeployed) {
+		            // swap entre tiles (si procede)
+		            const sourceTile = this.main.area.placementTiles.find(t => t.tower === newPokemon || t.passenger === newPokemon);
+		            if (sourceTile) {
+		                this.swapUnits(sourceTile, newPokemon, this.activeTile, this.activeTile.tower);
+		            } else {
+		                // fallback: retirar la torre objetivo y colocar nueva
+		                this.deployingUnit = newPokemon;
+		                this.retireUnit();
+		                this.moveUnitToTile(this.activeTile);
+		            }
+
+		            this.cancelDeployUnit();
+		            playSound('equip', 'ui');
+		            if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+		            if (!this.main.area.waveActive) {
+		                this.main.UI.revertUI();
+		                this.main.UI.nextWave.style.filter = 'revert-layer';
+		                this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
+		            }
+		            return;
+		        } else {
+		            const savedNew = newPokemon;
+		            this.deployingUnit = this.activeTile.tower;
+		            this.retireUnit();
+		            this.deployingUnit = savedNew;
+		            this.moveUnitToTile(this.activeTile);
+		            this.cancelDeployUnit();
+		            return;
+		        }
+		    } else {
+		        if (clickedTopTopmost) {
+		            const index = this.main.team.pokemon.findIndex(pokemon => pokemon === clickedTopTopmost);
+		            if (index !== -1) this.tryDeployUnit(index);
+		        }
+		    }
 		});
 
-        this.canvas.addEventListener('contextmenu', (event) => {
-            if (this.activeTile?.tower || this.activeTile?.passenger) {
-                const poke = this.activeTile.passenger || this.activeTile.tower;
-                const index = this.main.team.pokemon.findIndex(pokemon => poke === pokemon);
-                this.main.pokemonScene.open(poke, index);
-            }
-        });
+	    this.canvas.addEventListener('contextmenu', (event) => {
+	        if (this.activeTile?.tower || this.activeTile?.passenger) {
+	            const poke = this.activeTile.passenger || this.activeTile.tower;
+	            const index = this.main.team.pokemon.findIndex(pokemon => poke === pokemon);
+	            this.main.pokemonScene.open(poke, index);
+	        }
+	    });
 
-        let mapDrag = {
-            active: false,
-            originTile: null,
-            pokemon: null,
-            clone: null,
-            rect: null,
-            scaleX: 1,
-            scaleY: 1,
-            startX: 0,
-            startY: 0
-        };
+	    let mapDrag = {
+	        active: false,
+	        originTile: null,
+	        pokemon: null,
+	        clone: null,
+	        rect: null,
+	        scaleX: 1,
+	        scaleY: 1,
+	        startX: 0,
+	        startY: 0
+	    };
 
-        this.canvas.addEventListener('pointerdown', (e) => {
-            if (!e.isPrimary) return;
+	    // ── XL map: middle-button or right-button pan ──────────────────────
+	    this.canvas.addEventListener('pointerdown', (e) => {
+	        if (!this.isXL) return;
+	        if (e.button !== 1 && e.button !== 2) return; // only middle or right btn for pan
+	        e.preventDefault();
+	        this._scrolling = true;
+	        this._panStartX = e.clientX;
+	        this._panStartScrollX = this.scrollX;
 
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            const scaleY = this.canvas.height / rect.height;
-            const canvasX = (e.clientX - rect.left) * scaleX;
-            const canvasY = (e.clientY - rect.top) * scaleY;
+	        const onPanMove = (ev) => {
+	            if (!this._scrolling) return;
+	            const rect   = this.canvasWrapper.getBoundingClientRect();
+	            const scaleX = Game.CANVAS_W / rect.width;
+	            const dx = (this._panStartX - ev.clientX) * scaleX;
+	            this.scrollTo(this._panStartScrollX + dx);
+	        };
+	        const onPanUp = () => {
+	            this._scrolling = false;
+	            window.removeEventListener('pointermove', onPanMove);
+	            window.removeEventListener('pointerup',   onPanUp);
+	        };
+	        window.addEventListener('pointermove', onPanMove);
+	        window.addEventListener('pointerup',   onPanUp);
+	    });
 
-            const tile = this.main.area.placementTiles.find(t =>
-                canvasX > t.position.x &&
-                canvasX < t.position.x + t.size &&
-                canvasY > t.position.y &&
-                canvasY < t.position.y + t.size
-            );
+	    // ── XL map: scroll wheel pans horizontally ─────────────────────────
+	    this.canvas.addEventListener('wheel', (e) => {
+	        if (!this.isXL) return;
+	        e.preventDefault();
+	        this.scrollBy(e.deltaY * 0.5 + e.deltaX * 0.5);
+	    }, { passive: false });
+	    // ───────────────────────────────────────────────────────────────────
 
-            if (!tile) return;
+	    this.canvas.addEventListener('pointerdown', (e) => {
+	        if (!e.isPrimary) return;
 
-            const topPokemon = tile.passenger || tile.tower;
-            if (!topPokemon) return;
+	        const rect = this.canvas.getBoundingClientRect();
+	        const scaleX = this.canvas.width / rect.width;
+	        const scaleY = this.canvas.height / rect.height;
+	        const canvasX = (e.clientX - rect.left) * scaleX;
+	        const canvasY = (e.clientY - rect.top) * scaleY;
 
-            mapDrag.rect = rect;
-            mapDrag.scaleX = scaleX;
-            mapDrag.scaleY = scaleY;
-            mapDrag.originTile = tile;
-            mapDrag.pokemon = topPokemon;
-            mapDrag.startX = e.clientX;
-            mapDrag.startY = e.clientY;
-            mapDrag.active = false;
+	        const tile = this.main.area.placementTiles.find(t =>
+	            canvasX > t.position.x &&
+	            canvasX < t.position.x + t.size &&
+	            canvasY > t.position.y &&
+	            canvasY < t.position.y + t.size
+	        );
 
-            const MOVETHRESHOLD = 5;
-            let shouldEndDeploy = false;
+	        const topPokemon = tile ? (tile.passenger || tile.tower) : null;
 
-            const onMoveCheck = (ev) => {
-                const dx = ev.clientX - mapDrag.startX;
-                const dy = ev.clientY - mapDrag.startY;
-                if (Math.hypot(dx, dy) > MOVETHRESHOLD) {
-                    window.removeEventListener('pointermove', onMoveCheck);
-                    window.removeEventListener('pointerup', onCancelStart);
-                    window.removeEventListener('pointercancel', onCancelStart);
+	        // ── XL map: left-click drag on empty canvas pans the view ─────────
+	        if (this.isXL && !topPokemon && !this.deployingUnit) {
+	            e.preventDefault();
 
-                    mapDrag.active = true;
-                    this.mapDragging = true;
+	            const panStartClientX  = e.clientX;
+	            const panStartScrollX  = this.scrollX;
+	            let   hasPanned        = false;
+	            const PAN_THRESHOLD    = 4; // px before pan commits
 
-                    this.deployingUnit = mapDrag.pokemon;
+	            // Show grab cursor while panning
+	            this.canvas.style.cursor = 'grab';
 
-                    const pokemon = mapDrag.pokemon;
-                    mapDrag.clone = document.createElement('div');
-                    mapDrag.clone.className = 'map-drag-clone';
-                    mapDrag.clone.style.position = 'absolute';
-                    mapDrag.clone.style.pointerEvents = 'none';
-                    mapDrag.clone.style.zIndex = 10000;
-                    mapDrag.clone.style.width = '60px';
-                    mapDrag.clone.style.height = '60px';
-                    mapDrag.clone.style.scale = '1.2';
-                    mapDrag.clone.style.backgroundImage = `url("${pokemon.sprite?.base || pokemon.sprite || ''}")`;
-                    mapDrag.clone.style.backgroundPosition = 'center';
-                    mapDrag.clone.style.backgroundRepeat = 'no-repeat';
-                    mapDrag.clone.style.transform = 'translate(-50%, -50%)';
-                    mapDrag.clone.style.filter = `drop-shadow(6px 6px 2px #222)`;
+	            const onPanMove = (ev) => {
+	                const dx = (panStartClientX - ev.clientX) * scaleX;
+	                if (!hasPanned && Math.abs(dx) > PAN_THRESHOLD) hasPanned = true;
+	                if (!hasPanned) return;
+	                this.canvas.style.cursor = 'grabbing';
+	                // Disable edge-pan while the user is manually dragging
+	                this.mouseViewX = undefined;
+	                this.scrollTo(panStartScrollX + dx);
+	            };
 
-                    document.body.appendChild(mapDrag.clone);
+	            const onPanUp = () => {
+	                this.canvas.style.cursor = '';
+	                this.mouseViewX = undefined; // will be refreshed on next mousemove
+	                window.removeEventListener('pointermove', onPanMove);
+	                window.removeEventListener('pointerup',   onPanUp);
+	                window.removeEventListener('pointercancel', onPanUp);
+	            };
 
-                    window.addEventListener('pointermove', onDraggingMove);
-                    window.addEventListener('pointerup', onDraggingUp);
-                    window.addEventListener('pointercancel', onDraggingUp);
-                }
-            };
+	            window.addEventListener('pointermove', onPanMove);
+	            window.addEventListener('pointerup',   onPanUp);
+	            window.addEventListener('pointercancel', onPanUp);
+	            return; // don't fall through to pokemon-drag logic
+	        }
+	        // ─────────────────────────────────────────────────────────────────
 
-            const onCancelStart = () => {
-                window.removeEventListener('pointermove', onMoveCheck);
-                window.removeEventListener('pointerup', onCancelStart);
-                window.removeEventListener('pointercancel', onCancelStart);
-                mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
-            };
+	        if (!tile) return;
 
-            window.addEventListener('pointermove', onMoveCheck);
-            window.addEventListener('pointerup', onCancelStart);
-            window.addEventListener('pointercancel', onCancelStart);
+	        if (!topPokemon) return;
 
-            const onDraggingMove = (ev) => {
-                if (!mapDrag.active) return;
-                if (mapDrag.clone) {
-                    mapDrag.clone.style.left = `${ev.pageX}px`;
-                    mapDrag.clone.style.top = `${ev.pageY}px`;
-                }
+	        mapDrag.rect = rect;
+	        mapDrag.scaleX = scaleX;
+	        mapDrag.scaleY = scaleY;
+	        mapDrag.originTile = tile;
+	        mapDrag.pokemon = topPokemon;
+	        mapDrag.startX = e.clientX;
+	        mapDrag.startY = e.clientY;
+	        mapDrag.active = false;
 
-                const canvasX = (ev.clientX - mapDrag.rect.left) * mapDrag.scaleX;
-                const canvasY = (ev.clientY - mapDrag.rect.top) * mapDrag.scaleY;
-                this.mouse.x = canvasX;
-                this.mouse.y = canvasY;
-            };
+	        const MOVETHRESHOLD = 5;
+	        let shouldEndDeploy = false;
 
-            const onDraggingUp = (ev) => {
-                if (mapDrag.clone) mapDrag.clone.remove();
-                window.removeEventListener('pointermove', onDraggingMove);
-                window.removeEventListener('pointerup', onDraggingUp);
-                window.removeEventListener('pointercancel', onDraggingUp);
+	        const onMoveCheck = (ev) => {
+	            const dx = ev.clientX - mapDrag.startX;
+	            const dy = ev.clientY - mapDrag.startY;
+	            if (Math.hypot(dx, dy) > MOVETHRESHOLD) {
+	                window.removeEventListener('pointermove', onMoveCheck);
+	                window.removeEventListener('pointerup', onCancelStart);
+	                window.removeEventListener('pointercancel', onCancelStart);
 
-                const canvasX = (ev.clientX - mapDrag.rect.left) * mapDrag.scaleX;
-                const canvasY = (ev.clientY - mapDrag.rect.top) * mapDrag.scaleY;
+	                mapDrag.active = true;
+	                this.mapDragging = true;
 
-                const targetTile = this.main.area.placementTiles.find(t =>
-                    canvasX > t.position.x &&
-                    canvasX < t.position.x + t.size &&
-                    canvasY > t.position.y &&
-                    canvasY < t.position.y + t.size
-                );
+	                this.deployingUnit = mapDrag.pokemon;
 
-                const pokemon = mapDrag.pokemon;
+	                const pokemon = mapDrag.pokemon;
+	                mapDrag.clone = document.createElement('div');
+	                mapDrag.clone.className = 'map-drag-clone';
+	                mapDrag.clone.style.position = 'absolute';
+	                mapDrag.clone.style.pointerEvents = 'none';
+	                mapDrag.clone.style.zIndex = 10000;
+	                mapDrag.clone.style.width = '60px';
+	                mapDrag.clone.style.height = '60px';
+	                mapDrag.clone.style.scale = '1.2';
+	                mapDrag.clone.style.backgroundImage = `url("${pokemon.sprite?.base || pokemon.sprite || ''}")`;
+	                mapDrag.clone.style.backgroundPosition = 'center';
+	                mapDrag.clone.style.backgroundRepeat = 'no-repeat';
+	                mapDrag.clone.style.transform = 'translate(-50%, -50%)';
+	                mapDrag.clone.style.filter = `drop-shadow(6px 6px 2px #222)`;
 
-                const domTarget = document.elementFromPoint(ev.clientX, ev.clientY);
-                const droppedOnUI = domTarget && domTarget.closest('.ui-player-panel, .ui-pokemon-container, .ui-pokemon');
+	                document.body.appendChild(mapDrag.clone);
 
-                if (droppedOnUI) {
-                    this.deployingUnit = pokemon;
-                    this.retireUnit();
-                    shouldEndDeploy = true;
-                } else if (!targetTile) {
-                    this.deployingUnit = pokemon;
-                    this.moveUnitToTile(mapDrag.originTile, true);
-                    shouldEndDeploy = true;
-                } else {
-                    const targetBase = targetTile.tower || null;
-                    const targetPassenger = targetTile.passenger || null;
+	                window.addEventListener('pointermove', onDraggingMove);
+	                window.addEventListener('pointerup', onDraggingUp);
+	                window.addEventListener('pointercancel', onDraggingUp);
+	            }
+	        };
 
-                    if (targetPassenger === pokemon || targetBase === pokemon) {
-                        shouldEndDeploy = true;
-                    } else {
-                        const canPlaceDraggedToTarget = canPlaceOn(pokemon, targetTile);
+	        const onCancelStart = () => {
+	            window.removeEventListener('pointermove', onMoveCheck);
+	            window.removeEventListener('pointerup', onCancelStart);
+	            window.removeEventListener('pointercancel', onCancelStart);
+	            mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
+	        };
 
-                        if (!canPlaceDraggedToTarget) {
-                            playSound('pop0', 'ui');
-                            this.deployingUnit = pokemon;
-                            this.moveUnitToTile(mapDrag.originTile);
-                            shouldEndDeploy = true;
-                        } else {
+	        window.addEventListener('pointermove', onMoveCheck);
+	        window.addEventListener('pointerup', onCancelStart);
+	        window.addEventListener('pointercancel', onCancelStart);
 
-                            if (!targetBase) {
-                                this.deployingUnit = pokemon;
-                                this.moveUnitToTile(targetTile);
-                                shouldEndDeploy = true;
-                            }
+	        const onDraggingMove = (ev) => {
+	            if (!mapDrag.active) return;
+	            if (mapDrag.clone) {
+	            	mapDrag.clone.style.left = `${ev.pageX}px`;
+	            	mapDrag.clone.style.top = `${ev.pageY}px`;
+	            	mapDrag.clone.style.opacity = '1';
+	            }
 
-                            else if (targetBase?.ability?.id === 'grassyTerrain' || targetBase?.ability?.id === 'mount') {
-                                this.deployingUnit = pokemon;
-                                this.moveUnitToTile(targetTile);
-                                shouldEndDeploy = true;
-                            }
+	            const canvasX = this._clientToCanvasX(ev.clientX);
+	            const canvasY = this._clientToCanvasY(ev.clientY);
+	            const directTile = this.main.area.placementTiles.find(t =>
+	                canvasX > t.position.x &&
+	                canvasX < t.position.x + t.size &&
+	                canvasY > t.position.y &&
+	                canvasY < t.position.y + t.size
+	            );
 
-                            else {
-                                if (targetTile.passenger || mapDrag.originTile.passenger) {
-                                    playSound('pop0', 'ui');
-                                    this.deployingUnit = pokemon;
-                                    this.moveUnitToTile(mapDrag.originTile);
-                                    shouldEndDeploy = true;
-                                } else {
-                                    const canPlaceTargetToSource = canPlaceOn(targetBase, mapDrag.originTile);
-                                    if (!canPlaceTargetToSource) {
-                                        playSound('pop0', 'ui');
-                                        this.deployingUnit = pokemon;
-                                        this.moveUnitToTile(mapDrag.originTile);
-                                        shouldEndDeploy = true;
-                                    } else {
-                                        playSound('equip', 'ui');
-                                        const sourceTile = mapDrag.originTile;
-                                        this.swapUnits(sourceTile, pokemon, targetTile, targetBase);
-                                        shouldEndDeploy = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+	            this.mouse.x = canvasX;
+	            this.mouse.y = canvasY;
+	            this.activeTile = directTile || null;
+	        };
 
-                mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
+	        const onDraggingUp = (ev) => {
+	            if (mapDrag.clone) mapDrag.clone.remove();
+	            window.removeEventListener('pointermove', onDraggingMove);
+	            window.removeEventListener('pointerup', onDraggingUp);
+	            window.removeEventListener('pointercancel', onDraggingUp);
 
-                if (shouldEndDeploy && this.deployingUnit) {
-                    this.cancelDeployUnit();
-                } else if (this.deployingUnit) {
-                    this.cancelDeployUnit();
-                }
+	            const canvasX = this._clientToCanvasX(ev.clientX);
+	            const canvasY = this._clientToCanvasY(ev.clientY);
 
-                this.activeTile = null;
-                this.mouse.x = undefined;
-                this.mouse.y = undefined;
-                this.mapDragging = false;
+	            const targetTile = this.main.area.placementTiles.find(t =>
+	                canvasX > t.position.x &&
+	                canvasX < t.position.x + t.size &&
+	                canvasY > t.position.y &&
+	                canvasY < t.position.y + t.size
+	            );
 
-                if (this.main && this.main.UI) this.main.UI.update();
-                this.lastTime = 0;
-                this.animate(performance.now());
-            };
-        });
+	            const pokemon = mapDrag.pokemon;
+
+	            const domTarget = document.elementFromPoint(ev.clientX, ev.clientY);
+	            const droppedOnUI = domTarget && domTarget.closest('.ui-player-panel, .ui-pokemon-container, .ui-pokemon');
+
+	            if (droppedOnUI) {
+	                this.deployingUnit = pokemon;
+	                this.retireUnit();
+	                shouldEndDeploy = true;
+	            } else if (!targetTile) {
+	                this.deployingUnit = pokemon;
+	                this.moveUnitToTile(mapDrag.originTile, true);
+	                shouldEndDeploy = true;
+	            } else {
+	                const targetBase = targetTile.tower || null;
+	                const targetPassenger = targetTile.passenger || null;
+
+	                if (targetPassenger === pokemon || targetBase === pokemon) {
+	                    shouldEndDeploy = true;
+	                } else {
+	                    const canPlaceDraggedToTarget = canPlaceOn(pokemon, targetTile);
+
+	                    if (!canPlaceDraggedToTarget) {
+	                        playSound('pop0', 'ui');
+	                        this.deployingUnit = pokemon;
+	                        this.moveUnitToTile(mapDrag.originTile);
+	                        shouldEndDeploy = true;
+	                    } else {
+
+	                        if (!targetBase) {
+	                            this.deployingUnit = pokemon;
+	                            this.moveUnitToTile(targetTile);
+	                            shouldEndDeploy = true;
+	                        }
+
+	                        else if (targetBase?.ability?.id === 'grassyTerrain' || targetBase?.ability?.id === 'mount') {
+	                            this.deployingUnit = pokemon;
+	                            this.moveUnitToTile(targetTile);
+	                            shouldEndDeploy = true;
+	                        }
+
+	                        else {
+	                            if (targetTile.passenger || mapDrag.originTile.passenger) {
+	                                playSound('pop0', 'ui');
+	                                this.deployingUnit = pokemon;
+	                                this.moveUnitToTile(mapDrag.originTile);
+	                                shouldEndDeploy = true;
+	                            } else {
+	                                const canPlaceTargetToSource = canPlaceOn(targetBase, mapDrag.originTile);
+	                                if (!canPlaceTargetToSource) {
+	                                    playSound('pop0', 'ui');
+	                                    this.deployingUnit = pokemon;
+	                                    this.moveUnitToTile(mapDrag.originTile);
+	                                    shouldEndDeploy = true;
+	                                } else {
+	                                    playSound('equip', 'ui');
+	                                    const sourceTile = mapDrag.originTile;
+	                                    this.swapUnits(sourceTile, pokemon, targetTile, targetBase);
+	                                    shouldEndDeploy = true;
+	                                }
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+
+	            mapDrag = { active: false, originTile: null, pokemon: null, clone: null, rect: null, scaleX: 1, scaleY: 1, startX: 0, startY: 0 };
+
+	            if (shouldEndDeploy && this.deployingUnit) {
+	                this.cancelDeployUnit();
+	            } else if (this.deployingUnit) {
+	                this.cancelDeployUnit();
+	            }
+
+	            this.activeTile = null;
+	            this.mouse.x = undefined;
+	            this.mouse.y = undefined;
+	            this.mapDragging = false;
+
+	            if (this.main && this.main.UI) this.main.UI.update();
+	            this.lastTime = 0;
+	            this.animate(performance.now());
+	        };
+	    });
 	}
 
 	toggleSpeed() {

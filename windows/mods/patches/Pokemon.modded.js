@@ -2,7 +2,7 @@ import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Pokemon {
-	constructor(specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false, hideShiny = false, isMega = false) {
+	constructor(specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false, hideShiny = false, isMega = false, isReset = false, skin = null) {
 		this.main = main;
 
 		this.specie = specie;
@@ -15,8 +15,10 @@ export class Pokemon {
 		this.favorite = favorite;
 		this.isShiny = isShiny;
 		this.isMega = isMega;
+		this.isReset = isReset;
 
-		this.sprite = JSON.parse(JSON.stringify(specie.sprite));  // MOD: Deep copy to prevent shared sprite mutation
+		this.skin = skin;
+		this.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin));  // MOD: Deep copy to prevent shared sprite mutation
 		this.name = specie.name;
 		this.alias = alias;
 		this.ability = specie.ability;
@@ -243,6 +245,8 @@ export class Pokemon {
 	            isShiny: this.isShiny,
 	            hideShiny: this.hideShiny,
 	            isMega: this.isMega,
+	            isReset: this.isReset,
+	            skin: this.skin,
 	            tilePosition: this.tilePosition  // MOD: Persist tower placement
 	        };
 	    } else {
@@ -257,6 +261,8 @@ export class Pokemon {
 	            isShiny: this.isShiny,
 	            hideShiny: this.hideShiny,
 	            isMega: this.isMega,
+	            isReset: this.isReset,
+	            skin: this.skin,
 	            tilePosition: this.tilePosition  // MOD: Persist tower placement
 	        };
 	    }
@@ -290,7 +296,9 @@ export class Pokemon {
 	        data.alias,
 	        data.isShiny,
 	        data.hideShiny,
-	        data.isMega
+	        data.isMega,
+	        data.isReset,
+	        data.skin
 	    );
 	    // MOD: Restore saved tower placement position
 	    pokemon.tilePosition = data.tilePosition ?? -1;
@@ -316,7 +324,7 @@ export class Pokemon {
         	}
         	this.main.player.achievementProgress.evolutionCount++;
         	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
-        	if (this.id === 124) {
+        	if (this.id === 124 && !this.isReset) {
         		this.main.UI.getSecret('shedinja');
         	}
         }
@@ -331,7 +339,7 @@ export class Pokemon {
         this.setCost();
 
 		if (this.lvl > this.main.player.stats.highestPokemonLevel) this.main.player.stats.highestPokemonLevel = this.lvl;
-		this.main.player.stats.totalPokemonLevel++;
+		if (!this.isReset) this.main.player.stats.totalPokemonLevel++;
 
 		this.form = (this.specie.form) ? this.specie.key : false;
 		if (this.id == 70 && this.adn != undefined) this.transformADN();
@@ -352,6 +360,8 @@ export class Pokemon {
         }  
 
         if (this.lvl == 100) this.main.player.unlockAchievement(2);
+
+        if (this.lvl > 50 && this.item?.id === 'eviolite') this.retireItem();
     }
 
 	// MOD: Endless mode cost scaling - costs continue scaling past level 100
@@ -380,20 +390,18 @@ export class Pokemon {
 		baseCost = Math.min(vanillaCap, baseCost);
 		
 		// MOD: For levels >= 100, apply endless scaling from the capped level 100 cost
-		// (cost shown at level 100 is the cost to reach 101, so scaling starts here)
 		if (this.lvl >= 100) {
 			const excessLevels = this.lvl - 99;
-			// Cost increases by (previous ├ù 1.02) + 8000 per level past 100
 			for (let i = 0; i < excessLevels; i++) {
 				baseCost = Math.floor(baseCost * 1.02) + 8000;
 			}
 		}
 		
-		// Final cap at 1 billion
-		this.cost = Math.min(1000000000, baseCost);
+		this.cost = this.isReset ? 0 : Math.min(1000000000, baseCost);
 	}
 
 	checkCost(num) {
+		if (this.isReset) return 0;
 		let totalCost = 0;
 		const vanillaCap = this.specie.costScale === 'veryHigh' ? 150000 : 100000;
 
@@ -532,7 +540,7 @@ export class Pokemon {
 			this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily'
 		) this.targetMode = 'available';
 		else if (this.attackType == 'aura') this.targetMode = 'aura';
-		else if (this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
+		else if (this.ability.id == 'illuminate' || this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
 		else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
 		else if (this.ability.id == 'spinda') this.targetMode = 'random';
 		else if (this.ability.id == 'curse') this.targetMode = 'curseable';
@@ -547,7 +555,14 @@ export class Pokemon {
 		if (item?.equipedBy != undefined && this.ability.id != 'magician') {
 			const pokes = [...this.main.team.pokemon, ...this.main.box.pokemon];
 			const pokeWhitItem = pokes.find(poke => poke.id == item.equipedBy);
-			if (pokeWhitItem.isDeployed && (item?.id == 'silphScope' || item?.id == 'airBalloon' || item?.id == 'heavyDutyBoots' || item?.id == 'dampMulch' || item?.id == 'assaultVest')) {
+			if (
+				pokeWhitItem.isDeployed && 
+				[
+					'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 
+					'subwoofer', 'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY',
+					'jadeOrb', 'lustrousOrb', 'mitsuesCocktail'
+				].includes(item?.id)
+			) {
 				playSound('pop0', 'ui')
 				return;
 			}
@@ -566,7 +581,7 @@ export class Pokemon {
 		if (
 			this.isDeployed && 
 			this.item.id == 'silphScope' && 
-			(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk')
+			(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate')
 		) {
 			const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 			this.main.area.towers[index].revealInvisible = true;
@@ -582,7 +597,26 @@ export class Pokemon {
 			this.rangeType = 'donut';
 		}
 
-		if (item?.megaStone) this.addMegaStone();
+		if (
+			this.isDeployed && 
+			['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY'].includes(this.item.id)
+		) {
+			this.main.area.checkWeather()
+		}
+
+		if (
+			this.isDeployed && 
+			this.specie?.orbital > 0
+		) {
+			this.main.area.towers.forEach(t => { 
+				if (t.pokemon == this) t.spawnOrbitales();
+			});
+		}
+
+		if (item?.megaStone) this.addMegaStone(item?.megaPos);
+
+		this.main.UI.update();
+		if (this.lvl > 50 && this.item?.id === 'eviolite') this.retireItem();
 	}
 
 	retireItem() {
@@ -592,7 +626,7 @@ export class Pokemon {
 			if (
 				this.isDeployed && 
 				this.item.id == 'silphScope' && 
-				(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk')
+				(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate')
 			) {
 				const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 				this.main.area.towers[index].revealInvisible = false;
@@ -615,15 +649,17 @@ export class Pokemon {
 		}
 	}
  
-	addMegaStone() {
+	addMegaStone(pos) {
 		if (this.main.player.megaInTeam) this.findMega();
 		this.baseSpecie = this.specie;
 		this.isMega = true;
 		this.main.player.megaInTeam = true;
-		this.updateSpecie(this.specie.mega);
 
+		this.updateSpecie(this.specie.mega[pos]);
+		
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
+            if (tower.pokemon.id == 16) tower.ricochet = 2;
             if (tower) {
             	tower.updateStatsFromPokemon();
                 if (typeof this.main.area.recalculateAuras === 'function') {
@@ -631,6 +667,8 @@ export class Pokemon {
                 }
             }
         } 
+
+        this.main.area.checkWeather();
 	}
 
 	removeMegaStone() {
@@ -641,6 +679,7 @@ export class Pokemon {
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
             if (tower) {
+            	if (tower.pokemon.id == 16) tower.ricochet = 0;
             	tower.updateStatsFromPokemon();
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
@@ -700,6 +739,58 @@ export class Pokemon {
 	        }
 	    }
 	}
+
+	resetPokemon() {
+		this.isReset = true;
+		this.retireItem();
+		this.lvl = 1;
+		let newSpecie = undefined
+		Object.entries(pokemonData).forEach((entries) => {
+			if (entries[1].id === this.id && newSpecie === undefined) newSpecie = entries[1].key;
+		})
+		this.updateSpecie(newSpecie);
+		if (this.id == 70) this.transformADN();
+	}
+
+	// setDebugOverrides(overrides = {}) {
+	// 	if (!this.debugOverrides) this.debugOverrides = {};
+	// 	if (overrides.power !== undefined) {
+	// 		this.debugOverrides.power = Number(overrides.power);
+	// 		this.power = Math.round(this.debugOverrides.power);
+	// 	}
+	// 	if (overrides.speed !== undefined) {
+	// 		this.debugOverrides.speed = Math.round(overrides.speed);
+	// 		this.speed = Math.round(this.debugOverrides.speed);
+	// 	}
+	// 	if (overrides.critical !== undefined) {
+	// 		this.debugOverrides.critical = Number(overrides.critical);
+	// 		this.critical = Math.round(this.debugOverrides.critical * 10) / 10;
+	// 	}
+	// 	if (overrides.range !== undefined) {
+	// 		this.debugOverrides.range = Number(overrides.range);
+	// 		this.range = this.debugOverrides.range;
+	// 	}
+
+	// 	if (this.isDeployed) {
+	// 		const tower = this.main.area.towers.find(t => t.pokemon === this);
+	// 		if (tower) {
+	// 			try { tower.updateStatsFromPokemon(); } catch (e) { }
+	// 			if (this.id == 61 && tower.tile) {
+	// 				try {
+	// 					if (tower.tile.land == 2) tower.updateTowerSprite(this.sprite.imageGrass, this.sprite.framesGrass, this.specie.projectileGrass);
+	// 					else if (tower.tile.land == 3) tower.updateTowerSprite(this.sprite.imageWater, this.sprite.framesWater, this.specie.projectileWater);
+	// 					else if (tower.tile.land == 4) tower.updateTowerSprite(this.sprite.imageMountain, this.sprite.framesMountain, this.specie.projectileMountain);
+	// 				} catch (e) { }
+	// 			}
+	// 		}
+	// 		if (typeof this.main.area.recalculateAuras === 'function') {
+	// 			try { this.main.area.recalculateAuras(); } catch (e) {}
+	// 		}
+	// 	}
+
+	// 	try { this.main.UI.update(); } catch (e) {}
+	// 	try { this.main.UI.updatePokemon(); } catch (e) {}
+	// }
 }
 
 function arraysEqual(a, b) {

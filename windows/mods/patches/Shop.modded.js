@@ -139,6 +139,12 @@ export class Shop {
 	    	this.main.UI.update();
 	    } else if (itemBought.id == "gimmighoul") {
 	    	this.main.UI.getSecret('gholdengo');
+	    } else if (itemBought.id == "mitsuesCocktail") {
+	    	this.main.player.hasCocktail = true;
+	    } else if (itemBought.id == "sokudosPortfolio") {
+	    	this.main.player.hasSkinator = true;
+	    } else if (itemBought.id == "revysBook") {
+	    	this.main.player.hasEditable = true;
 	    }
 	}
 

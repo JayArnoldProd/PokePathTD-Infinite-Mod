@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 PokePath TD Save Editor
-- Complete All Stages button (2000 stars)
+- Complete All Stages button (dynamic route count)
 - Editable Gold
 - Delete All Pokemon button
 - Global Mods section at top for visibility
@@ -1041,7 +1041,12 @@ class App(tk.Tk):
 
         ttk.Button(self.pokemon_mods_frame, text="Unlock All Pokemon", command=self.unlock_all).pack(fill='x', pady=1)
         ttk.Button(self.pokemon_mods_frame, text="Max All Levels (Evolve + Lv100)", command=self.max_all).pack(fill='x', pady=1)
-        ttk.Button(self.pokemon_mods_frame, text="Complete All Stages (2000 Stars)", command=self.complete_all_stages).pack(fill='x', pady=1)
+        self.complete_all_stages_btn = ttk.Button(
+            self.pokemon_mods_frame,
+            text=self.get_complete_all_stages_label(),
+            command=self.complete_all_stages,
+        )
+        self.complete_all_stages_btn.pack(fill='x', pady=1)
         ttk.Button(self.pokemon_mods_frame, text="Remove Duplicate Pokemon", command=self.remove_duplicate_pokemon).pack(fill='x', pady=1)
         ttk.Button(self.pokemon_mods_frame, text="Delete All Pokemon", command=self.delete_all).pack(fill='x', pady=1)
 
@@ -2517,7 +2522,7 @@ class App(tk.Tk):
             # === NEW POKEMON (previously missing from shop) ===
             'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
             'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
-            'tarountula', 'carbink',
+            'tarountula', 'carbink', 'buneary', 'dratini',
         ]
 
         # Get current shop data
@@ -2570,7 +2575,7 @@ class App(tk.Tk):
             # === NEW POKEMON (previously missing from shop) ===
             'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
             'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
-            'tarountula', 'carbink',
+            'tarountula', 'carbink', 'buneary', 'dratini',
         ]
         
         # Starting egg price
@@ -2587,44 +2592,63 @@ class App(tk.Tk):
         self.refresh_grid()
         messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} eggs\nEgg price reset to: ${starting_price}")
 
+    def get_star_route_options(self):
+        """Return routes that contribute normal route stars."""
+        star_routes = []
+        for route in self.route_options:
+            route_name = str(route.get('name', '')).strip().lower()
+            if route.get('id') == 20 or 'manaphy cave' in route_name:
+                continue
+            star_routes.append(route)
+        return star_routes
+
+    def get_complete_all_stages_star_count(self):
+        star_routes = self.get_star_route_options()
+        if star_routes:
+            return len(star_routes) * 100
+        return 2100
+
+    def get_complete_all_stages_label(self):
+        return f"Complete All Stages ({self.get_complete_all_stages_star_count()} Stars)"
+
     def complete_all_stages(self):
-        """Complete all normal star routes (2000 stars total, excludes Manaphy Cave)."""
+        """Complete all normal star routes, excluding Manaphy Cave."""
         if not self.save.data:
             return
-
-        EXPECTED_STAR_ROUTE_COUNT = 20
 
         save_obj = self.save.save_obj
         records = list(save_obj.get('player', {}).get('records', []))
 
         if self.route_options:
-            while len(records) < len(self.route_options):
+            max_route_id = max(int(route.get('id', 0)) for route in self.route_options)
+            while len(records) <= max_route_id:
                 records.append(0)
 
-            star_indices = []
-            manaphy_indices = []
-            for idx, route in enumerate(self.route_options):
+            star_routes = self.get_star_route_options()
+            star_route_ids = {int(route.get('id', 0)) for route in star_routes}
+            excluded_route_ids = []
+
+            for route in self.route_options:
+                route_id = int(route.get('id', 0))
                 route_name = str(route.get('name', '')).strip().lower()
-                if 'manaphy cave' in route_name:
-                    manaphy_indices.append(idx)
-                else:
-                    star_indices.append(idx)
+                if route_id == 20 or 'manaphy cave' in route_name:
+                    excluded_route_ids.append(route_id)
 
-            # Hard-cap to vanilla 20 star routes.
-            star_indices = star_indices[:EXPECTED_STAR_ROUTE_COUNT]
-            for idx in star_indices:
-                records[idx] = 100
+            for route_id in star_route_ids:
+                records[route_id] = 100
 
-            # Secret/non-star route should not contribute to the 2000-star unlock baseline.
-            for idx in manaphy_indices:
-                records[idx] = 0
+            # Secret/non-star routes should not contribute to the normal-star unlock baseline.
+            for route_id in excluded_route_ids:
+                records[route_id] = 0
+
+            total_stars = len(star_route_ids) * 100
         else:
-            while len(records) < EXPECTED_STAR_ROUTE_COUNT:
+            fallback_star_route_count = 21
+            while len(records) < fallback_star_route_count:
                 records.append(0)
-            for idx in range(EXPECTED_STAR_ROUTE_COUNT):
+            for idx in range(fallback_star_route_count):
                 records[idx] = 100
-
-        total_stars = EXPECTED_STAR_ROUTE_COUNT * 100
+            total_stars = fallback_star_route_count * 100
 
         # Update records
         if 'save' in self.save.data:
@@ -2635,7 +2659,9 @@ class App(tk.Tk):
             self.save.data['player']['stars'] = total_stars
 
         self.refresh_grid()
-        messagebox.showinfo("Done", "All normal stages completed (Manaphy Cave excluded).\n\nTotal stars set to 2000.")
+        if hasattr(self, 'complete_all_stages_btn'):
+            self.complete_all_stages_btn.config(text=self.get_complete_all_stages_label())
+        messagebox.showinfo("Done", f"All normal stages completed (Manaphy Cave excluded).\n\nTotal stars set to {total_stars}.")
 
 if __name__ == "__main__":
     App().mainloop()

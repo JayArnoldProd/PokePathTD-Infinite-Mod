@@ -17,7 +17,7 @@ const OPTION = {
 const CREDITS = {
 	developer: {
 		label: ['Developers', 'Desarrolladores', 'Développeurs', 'Desenvolvedores', 'Sviluppatori', 'Entwickler', '開発者', '개발자', '开发者', 'Programiści'],
-		content: '<a href="https://x.com/khydra98" target="_blank" class="link-red">KHYDRA</a> <br> <a href="https://x.com/gaudesp" target="_blank" class="link-red">Nox</a>'
+		content: '<a href="https://x.com/khydra98" target="_blank" class="link-red">KHYDRA</a> <br> <a href="https://x.com/gaudesp" target="_blank" class="link-red">Nox</a> <br> Raguto'
 	},
 	mapArtist: {
 		label: ['Map Artist', 'Artista de mapas', 'Artiste des cartes', 'Artista de mapas', 'Artista di mappe', 'Kartenkünstler', 'マップアーティスト', '지도 아티스트', '地图绘师', 'Twórca Map'],
@@ -58,7 +58,7 @@ const CREDITS = {
 	},
 	testers: {
 		label: ['Testers', 'Testers', 'Testeurs', 'Testadores', 'Tester', 'Tester', 'テスター', '테스터', '测试员', 'Testerzy'],
-		content: '<a href="https://www.youtube.com/@KhytrayerDofus/videos" target="_blank" class="link-red">KHYTRAYER</a><br> SINGA'
+		content: '<a href="https://www.youtube.com/@KhytrayerDofus/videos" target="_blank" class="link-red">KHYTRAYER</a><br> SINGA <br> Juiz <br> Schmu <br> Cipo'
 	},
 	traductions: {
 		title: ["translations", "traducciones", "traductions", "traduções", "traduzioni", "Übersetzungen", "翻訳", "번역", '翻译', 'tłumaczenia'],
@@ -78,18 +78,6 @@ const CREDITS = {
 	official: {
 		label: {
 			0: [
-				"Official Website",
-				"Web oficial",
-				"Site officiel",
-				"Site oficial",
-				"Sito ufficiale",
-				"Offizielle Webseite",
-				"公式ウェブサイト",
-				"공식 웹사이트",
-				"官方网站",
-				"Oficjalna internetowa"
-			],
-			1: [
 				"Community Discord",
 				"Discord",
 				"Discord",
@@ -101,12 +89,11 @@ const CREDITS = {
 				"社区Discord",
 				"Discord"
 			],
-			2: ['itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io']
+			1: ['itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io']
 		},
 		content: {
-			0: '<a href="https://pokepath.gg/en/play" target="_blank" class="link-red">PokePath.gg</a>',
-			1: '<a href="https://discord.com/invite/PjuyEjGp7r" target="_blank" class="link-red">PokéPath TD</a>',
-			2: '<a href="https://khydra98.itch.io/pokepath" target="_blank" class="link-red">khydra98</a>'
+			0: '<a href="https://discord.com/invite/PjuyEjGp7r" target="_blank" class="link-red">PokéPath TD</a>',
+			1: '<a href="https://khydra98.itch.io/pokepath" target="_blank" class="link-red">khydra98</a>'
 		}
 		
 	},
@@ -304,13 +291,11 @@ export class MenuScene extends SectionScene {
 		this.titleOfficial = title;
 		this.contentOfficial = content;
 
-		this.officialWeb = this.createLabelValueRow(content);
 		this.officialDiscord = this.createLabelValueRow(content);
 		this.officialItchio = this.createLabelValueRow(content);
 
-		this.officialWeb.content.innerHTML = CREDITS.official.content[0];
-		this.officialDiscord.content.innerHTML = CREDITS.official.content[1];
-		this.officialItchio.content.innerHTML = CREDITS.official.content[2];
+		this.officialDiscord.content.innerHTML = CREDITS.official.content[0];
+		this.officialItchio.content.innerHTML = CREDITS.official.content[1];
 	}
 
 	renderSettings() {
@@ -338,6 +323,21 @@ export class MenuScene extends SectionScene {
 
 		this.mapEffectsRow = this.createArrowRow(content);
 		this.bindArrowEvents(this.mapEffectsRow, () => this.updateMapEffects(-1), () => this.updateMapEffects(1));
+
+		this.indicatorShapeRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.indicatorShapeRow, () => this.updateIndicatorShape(), () => this.updateIndicatorShape());
+
+		this.indicatorFieldRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.indicatorFieldRow, () => this.updateIndicatorField(), () => this.updateIndicatorField());
+
+		this.fastTargetRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.fastTargetRow, () => this.updateFastTarget(), () => this.updateFastTarget());
+
+		this.durationCCRow = this.createArrowRow(content);
+		this.bindArrowEvents(this.durationCCRow, () => this.updateDurationCC(), () => this.updateDurationCC());
+
+		// this.slowRefreshFixRow = this.createArrowRow(content);
+		// this.bindArrowEvents(this.slowRefreshFixRow, () => this.updateSlowRefreshFix(), () => this.updateSlowRefreshFix());
 	}
 
 	renderAudio() {
@@ -396,7 +396,7 @@ export class MenuScene extends SectionScene {
 		this.importData = this.makeButton(content, 'menu-scene-import-data', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.5.5` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.5.6` }).element;
 	}
 
 	syncExportDataButtonState() {
@@ -473,9 +473,8 @@ export class MenuScene extends SectionScene {
 		this.titleShortcuts.innerHTML = text.menu.shortcuts.title[this.main.lang].toUpperCase();
 		this.titleData.innerHTML = text.menu.data.title[this.main.lang].toUpperCase();
 
-		this.officialWeb.label.innerHTML = CREDITS.official.label[0][this.main.lang].toUpperCase();
-		this.officialDiscord.label.innerHTML = CREDITS.official.label[1][this.main.lang].toUpperCase();
-		this.officialItchio.label.innerHTML = CREDITS.official.label[2][this.main.lang].toUpperCase();
+		this.officialDiscord.label.innerHTML = CREDITS.official.label[0][this.main.lang].toUpperCase();
+		this.officialItchio.label.innerHTML = CREDITS.official.label[1][this.main.lang].toUpperCase();
 
 		this.languageRow.label.innerText = text.menu.settings.language[this.main.lang].toUpperCase();
 		this.languageRow.value.innerText = OPTION.language[this.main.lang].toUpperCase();
@@ -514,6 +513,31 @@ export class MenuScene extends SectionScene {
 		if (data.config.mapEffects == 1) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[1][this.main.lang].toUpperCase();
 		else if (data.config.mapEffects == 2) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[2][this.main.lang].toUpperCase();
 		else this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[0][this.main.lang].toUpperCase();
+
+		// this.slowRefreshFixRow.label.innerText = text.menu.settings.slowRefreshFix[this.main.lang].toUpperCase();
+		// this.slowRefreshFixRow.value.innerText = (data.config.slowRefreshFix == 1)
+		// 	? text.menu.settings.slowRefreshFixOptions[1][this.main.lang].toUpperCase()
+		// 	: text.menu.settings.slowRefreshFixOptions[0][this.main.lang].toUpperCase();
+
+		this.indicatorFieldRow.label.innerText = text.menu.settings.indicatorField[this.main.lang].toUpperCase();
+		this.indicatorFieldRow.value.innerText = (data.config.indicatorField == 1)
+			? text.menu.settings.indicatorFieldOptions[1][this.main.lang].toUpperCase()
+			: text.menu.settings.indicatorFieldOptions[0][this.main.lang].toUpperCase();
+
+		this.indicatorShapeRow.label.innerText = text.menu.settings.indicatorShape[this.main.lang].toUpperCase();
+		this.indicatorShapeRow.value.innerText = (data.config.indicatorShape == 1)
+			? text.menu.settings.indicatorShapeOptions[1][this.main.lang].toUpperCase()
+			: text.menu.settings.indicatorShapeOptions[0][this.main.lang].toUpperCase();
+
+		this.fastTargetRow.label.innerText = text.menu.settings.fastTarget[this.main.lang].toUpperCase();
+		this.fastTargetRow.value.innerText = (data.config.fastTarget == 1)
+			? text.menu.settings.fastTargetOptions[1][this.main.lang].toUpperCase()
+			: text.menu.settings.fastTargetOptions[0][this.main.lang].toUpperCase();
+
+		this.durationCCRow.label.innerText = text.menu.settings.durationCC[this.main.lang].toUpperCase();
+		this.durationCCRow.value.innerText = (data.config.durationCC == 1)
+			? text.menu.settings.durationCCOptions[1][this.main.lang].toUpperCase()
+			: text.menu.settings.durationCCOptions[0][this.main.lang].toUpperCase();
 
 		for (let i = 0; i < this.shortcutRow.length; i++) {
 			this.shortcutRow[i].label.innerHTML = SHORTCUTS.key[i][this.main.lang].toUpperCase();
@@ -642,6 +666,64 @@ export class MenuScene extends SectionScene {
         this.update();
         playSound('option', 'ui');
     };
+
+    updateIndicatorShape = () => {
+    	this.main.indicatorShape = this.main.indicatorShape == 1 ? 0 : 1;
+
+  		const data = JSON.parse(window.localStorage.getItem("data"));
+        data.config.indicatorShape = this.main.indicatorShape;
+        window.localStorage.setItem("data", JSON.stringify(data));
+
+        this.update();
+        this.main.UI.updatePokemon();
+        playSound('option', 'ui');
+    };
+
+    updateIndicatorField = () => {
+    	this.main.indicatorField = this.main.indicatorField == 1 ? 0 : 1;
+
+  		const data = JSON.parse(window.localStorage.getItem("data"));
+        data.config.indicatorField = this.main.indicatorField;
+        window.localStorage.setItem("data", JSON.stringify(data));
+
+        this.update();
+        this.main.UI.updatePokemon();
+        playSound('option', 'ui');
+    };
+
+    updateFastTarget = () => {
+    	this.main.fastTarget = this.main.fastTarget == 1 ? 0 : 1;
+
+  		const data = JSON.parse(window.localStorage.getItem("data"));
+        data.config.fastTarget = this.main.fastTarget;
+        window.localStorage.setItem("data", JSON.stringify(data));
+
+        this.update();
+        this.main.UI.updatePokemon();
+        playSound('option', 'ui');
+    };
+
+    updateDurationCC = () => {
+    	this.main.durationCC = this.main.durationCC == 1 ? 0 : 1;
+
+  		const data = JSON.parse(window.localStorage.getItem("data"));
+        data.config.durationCC = this.main.durationCC;
+        window.localStorage.setItem("data", JSON.stringify(data));
+
+        this.update();
+        playSound('option', 'ui');
+    };
+
+    // updateSlowRefreshFix = () => {
+    // 	this.main.slowRefreshFix = this.main.slowRefreshFix == 1 ? 0 : 1;
+
+  	// 	const data = JSON.parse(window.localStorage.getItem("data"));
+    //     data.config.slowRefreshFix = this.main.slowRefreshFix;
+    //     window.localStorage.setItem("data", JSON.stringify(data));
+
+    //     this.update();
+    //     playSound('option', 'ui');
+    // };
 
     updateAutoStop = () => {
     	this.main.autoStop = !this.main.autoStop;

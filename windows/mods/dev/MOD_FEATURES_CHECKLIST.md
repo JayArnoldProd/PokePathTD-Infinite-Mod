@@ -213,6 +213,8 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] `recalculateAuras()` and `checkWeather()` called after redeploy
 
 ## Feature: Challenge Party Preserve (part of Quality of Life)
+Vanilla 1.5.6 now preserves route-aware saved challenge-team presets. Keep this mod feature scoped to active team, held item, and deployed tower-position restore around challenge start/surrender unless a future vanilla version covers that full behavior too.
+
 - [ ] Team lineup, items, and tile positions saved before challenge wipe (ChallengeScene.js)
 - [ ] Team restored after loadArea on challenge start (skip for draft mode)
 - [ ] Team restored after surrender/cancelChallenge
@@ -221,6 +223,8 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
 - [ ] tilesCountNum updated for redeployed towers
 
 ## Feature: Projectile Range Fix (part of Vanilla Bug Fixes)
+Vanilla 1.5.6 fixed Pokémon attacking enemies outside the map. Keep this mod claim scoped to projectile retarget range/off-screen cleanup, and remove or downgrade this patch if a future vanilla diff fully covers that behavior.
+
 - [ ] Retargeting searches from tower position within tower's range (Tower.modded.js, Projectile.modded.js)
 - [ ] Projectiles targeting off-screen enemies are deleted (Projectile.modded.js)
 - [ ] Retarget search skips off-screen enemies (Tower.modded.js findClosestEnemy)
@@ -284,7 +288,7 @@ Note: Ditto transform behavior is vanilla — our mod preserves it as-is (no mod
   - Shiny toggle for non-max-evo: only with `shiny` feature (not generic is_modded)
 
 ## Feature: Save Editor 1.5 Species + Sprite Coverage
-- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (304 keys for 1.5)
+- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (316 keys for 1.5.6)
 - [ ] Save editor species dropdown sources `allKeys` from regenerated metadata
 - [ ] Normal sprite lookup falls back from bundled `patches/normal_sprites` to extracted runtime `src/assets/images/pokemon/normal`
 - [ ] Runtime-only 1.5 species (example: Dewpider line) render correctly in save editor UI
@@ -316,3 +320,4 @@ When updating to a new vanilla version:
 - **Emoji rendering**: All emoji in game UI must use `<span class="msrre">` wrapper for proper rendering in PressStart2P pixel font. CSS class has `font-family: 'Segoe UI Emoji'` fallback.
 - **File encoding**: apply_mods.py MUST be valid UTF-8. Game strings contain Japanese/Korean/accented characters — never roundtrip through Windows-1252. If editing string literals with international chars, verify with `py_compile.compile(path, doraise=True)`.
 - **Internal scripts location**: Internal scripts live in `mods/lib/`. User-facing files stay in `mods/` root. See `UPDATE_GUIDE.md` for full file structure.
+- **Wide maps**: 1.5.6 introduced XL maps (`routeData.xl`) with 60-column placement grids. Preserve `Game.resizeCanvas`, scroll helpers, and `Area` tile-column logic when rebasing.

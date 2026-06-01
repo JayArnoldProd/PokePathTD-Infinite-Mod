@@ -13,7 +13,7 @@ import { achievementData } from '../data/achievementData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
-const SECRET_POKEMON_KEYS = ['greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot', 'shedinja', 'gholdengo', 'stakataka', 'missingNo'];
+const SECRET_POKEMON_KEYS = ['greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot', 'shedinja', 'gholdengo', 'stakataka', 'manaphy', 'phione', 'missingNo'];
 
 const PROFILE_STAT_FALLBACK_TEXT = {
 	19: [
@@ -71,6 +71,8 @@ const PROFILE_UNLOCKABLE_TEXT = {
 	buyGimmighoulFromShop: ['Buy Gimmighoul from the Shop', 'Compra a Gimmighoul en la tienda', 'Achetez Gimmighoul dans la boutique', 'Compre Gimmighoul na loja', 'Compra Gimmighoul dal negozio', 'Kaufe Gimmighoul im Shop', 'ショップでコレクレーを購入', '상점에서 꼬마동을 구매', '在商店购买索财灵', 'Kup Gimmighoula w sklepie'],
 	type5675OnRouteOutsideChallenge: ['On {route}, type 5675 outside Challenge', 'En {route}, escribe 5675 fuera de Desafío', 'Sur {route}, tapez 5675 hors Défi', 'Em {route}, digite 5675 fora do Desafio', 'Su {route}, digita 5675 fuori dalla Sfida', 'Auf {route}, tippe 5675 außerhalb der Herausforderung', '{route}でチャレンジ外に5675を入力', '{route}에서 챌린지 외부에 5675 입력', '在{route}挑战外输入5675', 'Na {route} wpisz 5675 poza wyzwaniem'],
 	findHiddenCaveOnRouteWhileNoWave: ['Find the hidden cave on {route} while no wave is active', 'Encuentra la cueva oculta en {route} cuando no haya oleada activa', 'Trouvez la grotte cachée sur {route} quand aucune vague n’est active', 'Encontre a caverna oculta em {route} quando nenhuma onda estiver ativa', 'Trova la grotta nascosta su {route} quando nessuna ondata è attiva', 'Finde die versteckte Höhle auf {route}, wenn keine Welle aktiv ist', 'ウェーブがない時に{route}の隠し洞窟を見つける', '웨이브가 없을 때 {route}의 숨겨진 동굴 찾기', '在无波次进行时于{route}找到隐藏洞穴', 'Znajdź ukrytą jaskinię na {route}, gdy żadna fala nie jest aktywna'],
+	defeatManaphyInSecretMap: ['Defeat Manaphy in {route}', 'Derrota a Manaphy en {route}', 'Battez Manaphy dans {route}', 'Derrote Manaphy em {route}', 'Sconfiggi Manaphy in {route}', 'Besiege Manaphy in {route}', '{route}でマナフィを倒す', '{route}에서 마나피를 쓰러뜨리기', '在{route}击败玛纳霏', 'Pokonaj Manaphy w {route}'],
+	deployTwoManaphyOrDittoInSecretMap: ['On {route}, deploy exactly two Manaphy or Ditto', 'En {route}, despliega exactamente dos Manaphy o Ditto', 'Dans {route}, déployez exactement deux Manaphy ou Ditto', 'Em {route}, posicione exatamente dois Manaphy ou Ditto', 'In {route}, schiera esattamente due Manaphy o Ditto', 'Platziere in {route} genau zwei Manaphy oder Ditto', '{route}でマナフィまたはメタモンをちょうど2体配置', '{route}에서 마나피 또는 메타몽을 정확히 2마리 배치', '在{route}部署正好两只玛纳霏或百变怪', 'Na {route} rozstaw dokładnie dwa Manaphy lub Ditto'],
 	redeemSecretCodeFromMenu: ['Redeem a secret code from the Menu', 'Canjea un código secreto desde el menú', 'Utilisez un code secret depuis le menu', 'Resgate um código secreto no menu', 'Riscatta un codice segreto dal menu', 'Löse einen geheimen Code im Menü ein', 'メニューでシークレットコードを入力', '메뉴에서 비밀 코드를 입력', '在菜单中兑换秘密代码', 'Wpisz tajny kod w menu'],
 };
 
@@ -573,6 +575,7 @@ export class ProfileScene extends SectionScene {
 		const secretRoute8 = this.getRouteName(8);
 		const secretRoute4 = this.getRouteName(4);
 		const secretRoute2 = this.getRouteName(2);
+		const manaphyCaveRoute = this.getRouteName(20);
 
 		entries.push(
 			{
@@ -676,6 +679,26 @@ export class ProfileScene extends SectionScene {
 				isUnlocked: () => !!this.main.player?.secretMaps?.manaphyCave,
 			},
 			{
+				id: 'secret-manaphy',
+				order: 10145,
+				name: localized(pokemonData.manaphy?.name, clampLang(this.main.lang)),
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('defeatManaphyInSecretMap', clampLang(this.main.lang), 'Defeat Manaphy in {route}'), { route: manaphyCaveRoute }),
+				icon: pokemonData.manaphy?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.manaphy || this.hasPokemonKey('manaphy'),
+			},
+			{
+				id: 'secret-phione',
+				order: 10147,
+				name: localized(pokemonData.phione?.name, clampLang(this.main.lang)),
+				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('deployTwoManaphyOrDittoInSecretMap', clampLang(this.main.lang), 'On {route}, deploy exactly two Manaphy or Ditto'), { route: manaphyCaveRoute }),
+				icon: pokemonData.phione?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.phione || this.hasPokemonKey('phione'),
+			},
+			{
 				id: 'secret-missingno',
 				order: 10150,
 				name: localized(pokemonData.missingNo?.name, clampLang(this.main.lang)),
@@ -768,11 +791,11 @@ export class ProfileScene extends SectionScene {
 		this.stats[4].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestPokemonLevel, this.main.lang)}`;
 		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}`;
 		this.stats[6].value.innerText = `$${this.main.utility.numberDot(this.main.player.stats.totalGold, this.main.lang)}`;
-		this.stats[7].value.innerText = `${this.main.player.itemAmount}/112`;
+		this.stats[7].value.innerText = `${this.main.player.itemAmount}/121`;
 		this.stats[8].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.wavesCompleted, this.main.lang)}`;
 		this.stats[9].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestHit, this.main.lang)}`;
 		this.stats[10].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.defeatedEnemies, this.main.lang)}`;
-		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/195`;
+		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/217`;
 		this.stats[12].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedStuns, this.main.lang)}`;
 		this.stats[13].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedSlows, this.main.lang)}`;
 		this.stats[14].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedBurns, this.main.lang)}`;

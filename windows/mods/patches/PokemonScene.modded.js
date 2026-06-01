@@ -289,6 +289,24 @@ export class PokemonScene extends GameScene {
 		this.evolutionSprite = new Element(this.container, { className: 'pokemon-scene-evolution-sprite' }).element;
 		this.evolutionLevel = new Element(this.evolutionSprite, { className: 'pokemon-scene-evolution-level' }).element;
 
+		this.resetLevelButton = new Element(this.container, { className: 'pokemon-scene-reset-sprite' }).element;
+		this.resetLevel = new Element(this.resetLevelButton, { className: 'pokemon-scene-evolution-level' }).element;
+		this.resetLevelButton.addEventListener('click', () => {
+			this.pokemon.resetPokemon();
+			this.main.UI.updatePokemon();
+			this.update();
+			playSound('obtain', 'ui');
+			if (this.main.boxScene.isOpen) this.main.boxScene.update();
+		})
+
+		this.skinContainer = new Element(this.container, { className: 'pokemon-scene-skin-container' }).element;
+		this.skinSlot = [];
+
+		for (let i = 0; i < 3; i++) {
+			this.skinSlot[i] = new Element(this.skinContainer, { className: 'pokemon-scene-skin-slot' }).element;
+			this.skinSlot[i].addEventListener('click', () => { this.changeSkin(i) })
+		}
+
 		this.background.addEventListener('click', (e) => { if (e.target == this.background)this.close() })
 	}
 
@@ -385,7 +403,7 @@ export class PokemonScene extends GameScene {
 			this.pokemon.changeTargetMode(TARGET_MODES[20]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
 		} else if (
-			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk' && this.pokemon.ability.id != 'vigilantFrisk'
+			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk' && this.pokemon.ability.id != 'vigilantFrisk' && this.pokemon.ability.id != 'illuminate'
 		) {
 			this.pokemon.changeTargetMode(TARGET_MODES[0]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
@@ -417,6 +435,12 @@ export class PokemonScene extends GameScene {
 			}
 			this.evolutionLevel.innerHTML = `Lv ${this.pokemon.specie.evolution.level}`;
 		} else this.evolutionSprite.style.display = 'none';
+
+		if (this.pokemon.lvl == 100 && this.main.player.hasCocktail) {
+			this.resetLevelButton.style.display = 'block';
+			this.resetLevelButton.style.backgroundImage = `url("./src/assets/images/items/mitsues_cocktail.png")`;
+			this.resetLevel.innerHTML = 'Reset';
+		} else this.resetLevelButton.style.display = 'none';
 
 		if (this.pokemon.id == 70 && !this.main.boxScene.isOpen) {
 			this.buttonDNA.style.display = 'block';
@@ -462,6 +486,7 @@ export class PokemonScene extends GameScene {
 		if (this.itemWindow.isOpen) this.itemWindow.close();
 		this.updateItem();
 		this.updateStatsChanges();
+		this.displaySkins();
 	}
 
 	updateItem() {
@@ -480,7 +505,7 @@ export class PokemonScene extends GameScene {
 			this.itemIcon.style.backgroundImage = `url("${this.pokemon.item.sprite}")`
 		}
 
-		if (this.pokemon.isDeployed && ['airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'ejectButton'].includes(this.pokemon?.item?.id)) {
+		if (this.pokemon.isDeployed && ['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb', 'mitsuesCocktail'].includes(this.pokemon?.item?.id)) {
 			this.itemIcon.style.pointerEvents = 'none';
 			this.itemIcon.style.outline = "0px";
 			this.itemIcon.innerHTML = '';
@@ -492,7 +517,7 @@ export class PokemonScene extends GameScene {
 
 	changeAttackType(dir) {
 		let index = TARGET_MODES.findIndex((targetMode) => targetMode == this.pokemon.targetMode);
-		let indexMax = (this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
+		let indexMax = (this.pokemon.ability.id == 'illuminate' || this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
 		let indexMin = 0;
 
 		index += dir;
@@ -801,7 +826,7 @@ export class PokemonScene extends GameScene {
 	        	break;
 
 	        case 'silphScope':
-	            if (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk') {
+	            if (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'illuminate' || this.pokemon.ability.id === 'vigilantFrisk') {
 	            	flatRange += 15;
 	            	flatPower += 175; 
 	            	mulSpeed *= 1 - 0.25;
@@ -821,9 +846,8 @@ export class PokemonScene extends GameScene {
 	        case 'inverter': 
 	        	if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'malamar') {
 	        		mulPower *= 1 + 0.5;
-	        		mulSpeed *= 1 - 0.5;
-	        		mulCritical *= 1 + 0.5;
-	        		mulRange *= 2;
+	        		mulSpeed *= 1 - 0.75;
+	        		flatCritical += 15;
 	        	}
 	        	break;
 
@@ -891,6 +915,12 @@ export class PokemonScene extends GameScene {
 	            mulCritical *= 2;
 	            break;
 
+	        case 'sokudosPortfolio':
+	        	let speedLimit = Math.min(this.main.player.shinyAmount * 0.05, 0.75); 
+	        	mulSpeed *= 1 - speedLimit; 
+	            mulPower *= (2 * this.main.player.shinyAmount / 100);
+	            break;
+
 	        case 'thickClub':
 	        case 'lightBall':
 	        case 'weaknessPolicy':
@@ -937,6 +967,19 @@ export class PokemonScene extends GameScene {
 	            else mulPower *= 1 - 0.5;
 				break;
 
+			case 'scovillainSiracha':
+	            if (this.pokemon.ability.id === 'contrary') mulPower *= 1 + 0.5;
+	            else if (this.pokemon.ability.id === 'defiant') flatPower += 500;
+	            else mulPower *= 1 - 0.5;
+				break;
+
+			case 'laggingTail':
+	            if (this.pokemon.ability.id === 'contrary') mulSpeed *= 1 - 0.5;
+	            else mulSpeed *= 1 + 0.5;
+	            mulPower *= 1 + 0.5;
+	            if (this.pokemon.ability.id === 'defiant') flatPower += 500;
+				break;
+
 			case 'revelationAroma':
 				flatRange += 25;
 				break;
@@ -964,6 +1007,10 @@ export class PokemonScene extends GameScene {
 				mulRange *= 1 + 0.25;
 				break;
 
+			case 'mitsuesCocktail': 
+				mulPower *= 1 + 1;
+				break;
+
 			case 'poisonBarb': 
 				mulSpeed *= 1 - 0.2;
 				break;
@@ -972,6 +1019,14 @@ export class PokemonScene extends GameScene {
 				mulRange *= 1 + 0.3;
 				mulPower *= 1 + 0.5;
 				mulSpeed *= 1 + 0.25;
+				break;
+
+			case 'eviolite':
+				if (this.pokemon.lvl <= 50) {
+					mulRange *= 1 + 0.2;
+					mulPower *= 1 + 0.2;
+					mulSpeed *= 1 - 0.2;
+				}
 				break;
 
 			case 'badgeOfHonor': 
@@ -1009,6 +1064,19 @@ export class PokemonScene extends GameScene {
             mulPower *= 1 + goldBonus;
         }
 
+        if (this.main.area.shellSmashActive && this.pokemon.ability.id === 'shellSmash') {
+            mulPower *= 1 + 0.5;
+            mulSpeed *= 1 - 0.25;
+        }
+
+        if (this.pokemon.ability.id === 'tailGlow' && this.main.area.heartScale > 0) {
+			mulPower *= 1 + 0.75;
+		}
+
+		if (this.pokemon.ability.id === 'rageFist') {
+	        flatPower += (this.main.area.hitsReceived * 50);
+	    }
+
 	    if (this.pokemon.isDeployed) {
 	        const tower = this.main.area.towers.find(t => t.pokemon === this.pokemon);
 	        if (tower) {
@@ -1020,6 +1088,10 @@ export class PokemonScene extends GameScene {
 	        		}
 	        	}
 
+	        	if (tower.pokemon?.item?.id == 'fullIncense') {
+	                flatPower += tower.incenseBuff
+	            }
+
 	            if (this.pokemon.ability.id === 'speedBoost') {
 	                flatSpeed -= (tower.speedBoost || 0) * 300;
 	            }
@@ -1028,8 +1100,8 @@ export class PokemonScene extends GameScene {
 	            const towerAbility = tower.pokemon?.ability?.id;
 
 	            if (
-	                tile &&
-	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser')) &&
+	                tile && tower.pokemon?.item?.id !== 'mitsuesCocktail' &&
+	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser') || tower?.carriedBy == 'grassyTerrain') &&
 	                (towerAbility === 'ambusher' || towerAbility === 'castform')
 	            ) {
 	                mulPower *= 2; 
@@ -1119,6 +1191,14 @@ export class PokemonScene extends GameScene {
 	            }
 
 	            if (tower.triageAura) {
+	                mulSpeed *= 1 - 0.15;
+	            }
+
+	            if (tower.illuminateAura) {
+	                flatRange += 15;
+	            }
+
+	            if (tower?.carriedBy == 'grassyTerrain') {
 	                mulSpeed *= 1 - 0.15;
 	            }
 

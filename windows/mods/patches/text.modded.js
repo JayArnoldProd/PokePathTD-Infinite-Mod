@@ -81,6 +81,69 @@ export const text = {
 			"超额伤害",
 			"Nadwyżka obrażeń"
 		],
+		fieldStatus: {
+			label: [
+				'Field Status',
+			  	'Estado',
+			  	'Statut',
+			  	'Status',
+			  	'Stato',
+			  	'Status',
+			  	'ステータス',
+			  	'상태',
+			  	'狀態',
+			  	'Status'
+			],
+			yes: [
+				'This Pokémon is currently on the field.',
+				'Este Pokémon está actualmente en el campo.',
+				'Ce Pokémon est actuellement sur el terrain.',
+				'Este Pokémon está atualmente no campo.',
+				'Questo Pokémon è attualmente in campo.',
+				'Dieses Pokémon befindet sich derzeit auf dem Feld.',
+				'このポケモンは現在フィールドに出ています。',
+				'이 포켓몬은 현재 필드에 있습니다.',
+				'這隻寶可夢目前在場上。',
+				'Ten Pokémon znajduje się obecnie na polu walki.'
+			],
+			no: [
+				'This Pokémon is not currently on the field.',
+				'Este Pokémon no está actualmente en el campo.',
+				'Ce Pokémon n’est pas actuellement sur le terrain.',
+				'Este Pokémon não está atualmente no campo.',
+				'Questo Pokémon non è attualmente in campo.',
+				'Dieses Pokémon befindet sich derzeit nicht auf dem Feld.',
+				'このポケモンは現在フィールドに出ていません。',
+				'이 포켓몬은 현재 필드에 없습니다.',
+				'這隻寶可夢目前不在場上。',
+				'Ten Pokémon nie znajduje się obecnie na polu walki.'
+			]
+		},
+		saveCurrentTeam: ["Save current team for ", "Guardar equipo actual para ", "Enregistrer l'équipe actuelle pour ", "Guardar equipa atual para ", "Salva squadra attuale per ", "Aktuelles Team speichern für ", "現在のチームを保存: ", "현재 팀 저장: ", "儲存目前隊伍於 ", "Zapisz aktualny zespół dla "],
+		savedTeamFor: [
+			"Saved team for ", 
+			"Equipo guardado para ", 
+			"Équipe enregistrée pour ",
+			"Equipa guardada para ", 
+			"Squadra salvata per ", 
+			"Gespeichertes Team für ", 
+			"保存されたチーム: ", 
+			"다음에 대한 저장된 팀: ", 
+			"已儲存隊伍於 ", 
+			"Zapisany zespół dla "
+		],
+		noSavedTeamFor: [
+			"No saved team for ", 
+			"No hay equipo guardado para ", 
+			"Aucune équipe enregistrée pour ", 
+			"Nenhuma equipa guardada para ", 
+			"Nessuna squadra salvata per ", 
+			"Kein gespeichertes Team für ", 
+			"保存されたチームはありません: ", 
+			"저장된 팀이 없습니다: ", 
+			"沒有已儲存的隊伍：", 
+			"Brak zapisanego zespołu dla "
+		],
 		billion: ["Billion", "Mil millones", "Milliard", "Bilhão", "Miliardo", "Milliarde", "十億", "십억", "十亿", "Miliard"],
 		trillion: ["Trillion", "Billón", "Billion", "Trilhão", "Bilione", "Billion", "兆", "조", "万亿", "Bilion"],
 		quadrillion: ["Quadrillion", "Mil billones", "Billiard", "Quadrilhão", "Biliardo", "Billiarde", "京", "경", "千万亿", "Biliard"],
@@ -91,11 +154,27 @@ export const text = {
 	notification: {
 		pause: [
 			'GAME PAUSED, PRESS SPACEBAR TO RESUME',
-			'JUEGO PAUSADO, PRESIONA SPACEBAR PARA CONTINUAR'
+			'JUEGO PAUSADO, PRESIONA SPACEBAR PARA CONTINUAR',
+			'JEU EN PAUSE, APPUYEZ SUR ESPACE POUR REPRENDRE',
+			'JOGO PAUSADO, PRESSIONE ESPAÇO PARA CONTINUAR',
+			'GIOCO IN PAUSA, PREMI SPAZIO PER RIPRENDERE',
+			'SPIEL PAUSIERT, LEERTASTE ZUM FORTSETZEN DRÜCKEN',
+			'ゲーム一時停止中、スペースキーで再開',
+			'게임 일시 정지, 스페이스바를 눌러 재개',
+			'游戏已暂停，按空格键继续',
+			'GRA WSTRZYMANA, NACIŚNIJ SPACJĘ, ABY WZNOWIĆ'
 		],
 		deploy: [
 			'DEPLOYING UNIT, PRESS ESC TO CANCEL',
-			'DESPEGANDO UNIDAD, PRESIONA ESC PARA CANCELAR'
+			'DESPLEGANDO UNIDAD, PRESIONA ESC PARA CANCELAR',
+			'DÉPLOIEMENT DE L’UNITÉ, APPUYEZ SUR ÉCHAP POUR ANNULER',
+			'IMPLANTANDO UNIDADE, PRESSIONE ESC PARA CANCELAR',
+			'SCHIERAMENTO UNITÀ, PREMI ESC PER ANNULLARE',
+			'EINHEIT WIRD PLATZIERT, ESC ZUM ABBRECHEN DRÜCKEN',
+			'ユニット配置中、ESCでキャンセル',
+			'유닛 배치 중, ESC를 눌러 취소',
+			'正在部署单位，按 ESC 取消',
+			'ROZMIESZCZANIE JEDNOSTKI, NACIŚNIJ ESC, ABY ANULOWAĆ'
 		]
 	},
 	pokemon: {
@@ -121,6 +200,7 @@ export const text = {
 		lvlUp: ['Level Up', '+ Nivel', 'Niveau +', '+ Nível', '+ Livello', 'Level Up', 'レベルアップ', '레벨업', '升级', 'Poziom +'],
 		current: ['Current', 'Actual', 'Actuel', 'Atual', 'Attuale', 'Aktuell', '現在の', '현재의', '当前', 'Aktualny'],
 		ricochets: ['Ricochets', 'Rebotes', 'Ricochets', 'Rebotes', 'Rimbalzi', 'Abpraller', '跳ね返り', '튀기', '反弹', 'Rykoszet'],
+		orbitals: ['Orbitals', 'Orbitales', 'Orbitales', 'Orbitales', 'Orbitali', 'Orbitale', '軌道', '궤도', '轨道', 'Orbitale'],
 		projectiles: ['projectiles', 'proyectiles', 'projectiles', 'projéteis', 'proiettili', 'Projektile', '弾丸', '투사체', '投射物', 'pociski'],
 		notStack: ['Does not stack', 'No se acumula', "Ne s'accumule pas", 'Não se acumula', 'Non si accumula', 'Stackt sich nicht', 'たまらない', '쌓이지 않음', '不叠加', 'Nie kumuluje się'],
 		noItem: ['no item', 'sin objeto', "pas d'objet", 'nenhum item', 'nessun oggetto', 'kein Gegenstand', 'アイテムなし', '아이템 없음', '無道具', 'brak przedmiotu'],
@@ -135,6 +215,30 @@ export const text = {
 		  	"현재 장착된 아이템이 없습니다.",
 		  	"当前未装备任何道具。",
 			"Obecnie nie masz wyposażonego żadnego przedmiotu.",
+		],
+		removeItem: [
+		  	'Remove Item',
+		  	'Quitar objeto',
+		  	'Retirer l\'objet',
+		  	'Remover item',
+		  	'Rimuovi strumento',
+		  	'Item entfernen',
+		  	'もちものを外す',
+		  	'지닌물건 떼기',
+		  	'取下物品',
+		  	'Usuń przedmiot'
+		],
+		removeItemDescription: [
+		  	'Unequip current item from this Pokémon.',
+		  	'Desequipar el objeto actual de este Pokémon.',
+		  	'Retirer l\'objet actuel de ce Pokémon.',
+		  	'Desequipar o item atual deste Pokémon.',
+		  	'Rimuovi lo strumento attuale da questo Pokémon.',
+		  	'Aktuelles Item von diesem Pokémon ablegen.',
+		  	'このポケモンから現在の持ち物を外します。',
+		  	'이 포켓몬의 현재 지닌물건을 해제합니다.',
+		  	'從這隻寶可夢身上取下目前的物品。',
+		  	'Zdejmij aktualny przedmiot z tego Pokémona.'
 		],
 	},
 	profile: {
@@ -180,7 +284,7 @@ export const text = {
 			15: ['Poisons applied', 'Venenos aplicados', 'Poisons appliqués', 'Venenos aplicados', 'Veleni applicati', 'Gifte angewendet', '毒付与', '중독 적용', '中毒次数', 'Nałożone zatrucia'],
 			16: ['Curses applied', 'Maldiciones aplicadas', 'Malédictions appliquées', 'Maldições aplicadas', 'Maledizioni applicate', 'Flüche angewendet', '呪い付与', '저주 적용', '诅咒次数', 'Nałożone klątwy'],
 			17: ['Resets', 'Reinicios', 'Réinitialisations', 'Reinicializações', 'Reset', 'Zurücksetzungen', 'リセット', '리셋', '重置次数', 'Resety'],
-			18: ["Stolen Gold by Persian", "Oro robado por Persian", "Or volé par Persian", "Ouro roubado por Persian", "Oro rubato da Persian", "Gold gestohlen mit Snobilikat", "ペルシアンに盗まれた金", "페르시안에게 도난당한 금", '被貓老大偷走的金幣', 'Złoto skradzione przez Persiana'],
+			18: ["Stolen Gold by Greed", "Oro robado por Codicia", "Or volé par Avidité", "Ouro roubado por Ganância", "Oro rubato da Avidità", "Gold gestohlen mit Gier", "盗まれた金", "훔친 금", '被盗的黄金', 'Złoto skradzione przez Chciwość'],
 			19: [
 				"Max Gold/Wave",
 				"Oro máx./Oleada",
@@ -235,6 +339,8 @@ export const text = {
 			buyGimmighoulFromShop: ['Buy Gimmighoul from the Shop', 'Compra a Gimmighoul en la tienda', 'Achetez Gimmighoul dans la boutique', 'Compre Gimmighoul na loja', 'Compra Gimmighoul dal negozio', 'Kaufe Gimmighoul im Shop', 'ショップでコレクレーを購入', '상점에서 꼬마동을 구매', '在商店购买索财灵', 'Kup Gimmighoula w sklepie'],
 			type5675OnRouteOutsideChallenge: ['On {route}, type 5675 outside Challenge', 'En {route}, escribe 5675 fuera de Desafío', 'Sur {route}, tapez 5675 hors Défi', 'Em {route}, digite 5675 fora do Desafio', 'Su {route}, digita 5675 fuori dalla Sfida', 'Auf {route}, tippe 5675 außerhalb der Herausforderung', '{route}でチャレンジ外に5675を入力', '{route}에서 챌린지 외부에 5675 입력', '在{route}挑战外输入5675', 'Na {route} wpisz 5675 poza wyzwaniem'],
 			findHiddenCaveOnRouteWhileNoWave: ['Find the hidden cave on {route} while no wave is active', 'Encuentra la cueva oculta en {route} cuando no haya oleada activa', 'Trouvez la grotte cachée sur {route} quand aucune vague n’est active', 'Encontre a caverna oculta em {route} quando nenhuma onda estiver ativa', 'Trova la grotta nascosta su {route} quando nessuna ondata è attiva', 'Finde die versteckte Höhle auf {route}, wenn keine Welle aktiv ist', 'ウェーブがない時に{route}の隠し洞窟を見つける', '웨이브가 없을 때 {route}의 숨겨진 동굴 찾기', '在无波次进行时于{route}找到隐藏洞穴', 'Znajdź ukrytą jaskinię na {route}, gdy żadna fala nie jest aktywna'],
+			defeatManaphyInSecretMap: ['Defeat Manaphy in {route}', 'Derrota a Manaphy en {route}', 'Battez Manaphy dans {route}', 'Derrote Manaphy em {route}', 'Sconfiggi Manaphy in {route}', 'Besiege Manaphy in {route}', '{route}でマナフィを倒す', '{route}에서 마나피를 쓰러뜨리기', '在{route}击败玛纳霏', 'Pokonaj Manaphy w {route}'],
+			deployTwoManaphyOrDittoInSecretMap: ['On {route}, deploy exactly two Manaphy or Ditto', 'En {route}, despliega exactamente dos Manaphy o Ditto', 'Dans {route}, déployez exactement deux Manaphy ou Ditto', 'Em {route}, posicione exatamente dois Manaphy ou Ditto', 'In {route}, schiera esattamente due Manaphy o Ditto', 'Platziere in {route} genau zwei Manaphy oder Ditto', '{route}でマナフィまたはメタモンをちょうど2体配置', '{route}에서 마나피 또는 메타몽을 정확히 2마리 배치', '在{route}部署正好两只玛纳霏或百变怪', 'Na {route} rozstaw dokładnie dwa Manaphy lub Ditto'],
 			redeemSecretCodeFromMenu: ['Redeem a secret code from the Menu', 'Canjea un código secreto desde el menú', 'Utilisez un code secret depuis le menu', 'Resgate um código secreto no menu', 'Riscatta un codice segreto dal menu', 'Löse einen geheimen Code im Menü ein', 'メニューでシークレットコードを入力', '메뉴에서 비밀 코드를 입력', '在菜单中兑换秘密代码', 'Wpisz tajny kod w menu']
 		},
 
@@ -264,6 +370,7 @@ export const text = {
 		water: ['First Water', 'Primero Agua', 'Première Eau', 'Primeira Água', 'Prima Acqua', 'Wasser zuerst', '最初の水', '첫 번째 물', '最初的水', 'Najpierw Woda'],
 		mountain: ['First Mountain', 'Primero Montaña', 'Prem. Montagne', 'Prim. Montanha', 'Prima Montagna', 'Berg zuerst', '最初の山', '첫 번째 산', '最初的山', 'Najpierw Góry'],
 		grassTab: ['grass', 'hierba', 'herbe', 'grama', 'erba', 'Gras', '草', '풀', '草', 'trawa'],
+		fieldTab: ['field', 'campo', 'champ', 'campo', 'campo', 'Feld', 'フィールド', '필드', '场地', 'pole'],
 		waterTab: ['water', 'agua', 'eau', 'água', 'acqua', 'Wasser', '水', '물', '水', 'woda'],
 		mountainTab: ['mountain', 'montaña', 'montagne', 'montanha', 'montagna', 'Berg', '山', '산', '山', 'góry'],
 		fossilTab: ['fossil', 'fósil', 'fossile', 'fóssil', 'fossile', 'Fossil', '化石', '화석', '化石', 'skamielina'],
@@ -271,8 +378,10 @@ export const text = {
 		power: ['Power', 'Poder', 'Puissance', 'Poder', 'Potenza', 'Kraft', 'パワー', '파워', '力量', 'Moc'],
 		speed: ['Recharge', 'Recarga', 'Récupération', 'Recarga', 'Ricarica', 'Nachladen', 'リチャージ', '재충전', '充能', 'Przeładowanie'],
 		range: ['Range', 'Alcance', 'Portée', 'Alcance', 'Portata', 'Reichweite', '射程', '사거리', '射程', 'Zasięg'],
+		critical: ['Critical', 'Crítico', 'Critique', 'Crítico', 'Critico', 'Kritische Chance', 'クリティカル', '치명타', '暴击', 'Krytyczne'],
 		shiny: ["Shiny","Variocolor","Chromatique","Shiny","Shiny","Schillernd","色違い","색이 다른 포켓몬","闪光", "Shiny"],
 		attackType: ['Attack Type', 'Tipo de ataque', 'Type d’attaque', 'Tipo de ataque', 'Tipo di attacco', 'Angriffstyp', '攻撃タイプ', '공격 유형', '攻击类型', 'Typ ataku'],
+		attackShape: ['Attack Shape', 'Forma de ataque', 'Forme d’attaque', 'Forma de ataque', 'Forma attacco', 'Angriffsform', '攻撃形状', '공격 형태', '攻击形状', 'Kształt ataku'],
 		single: ['Single', 'Único', 'Unique', 'Único', 'Singolo', 'Einzeln', '単体', '단일', '单体', 'Pojedynczy'],
 		aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '光环', 'Aura'],
 		area: ['AOE', 'Área', 'Zone', 'Área', 'Area', 'Fläche', '範囲', '범위', '范围', 'Obszar'],
@@ -325,7 +434,7 @@ export const text = {
 		title: ['Shop', 'Tienda', 'Boutique', 'Loja', 'Negozio', 'Shop', 'ショップ', '상점', '商店', 'Sklep'],
 		sold: ['Sold', 'Agotado', 'Vendu', 'Vendido', 'Esaurito', 'Ausverkauft', '売り切れ', '매진', '售罄', 'Wyprzedane'],
 		purchase: ['Purchase', 'Comprar', 'Acheter', 'Comprar', 'Acquista', 'Kaufen', '購入', '구매', '购买', 'Kup'],
-		prompt: ['Buy something good', 'Compra algo bueno', 'Acheter quelque chose de bien', 'Compre algo bom', 'Compra qualcosa di buono', 'Kauf etwas Gutes', '良いものを買う', '좋은 것을 사라', 'Kup coś dobrego'],
+		prompt: ['Buy something good', 'Compra algo bueno', 'Acheter quelque chose de bien', 'Compre algo bom', 'Compra qualcosa di buono', 'Kauf etwas Gutes', '良いものを買う', '좋은 것을 사라', '买点好东西', 'Kup coś dobrego'],
 		new: [
 			'New Pokémon obtained!',
 			'¡Nuevo Pokémon obtenido!',
@@ -826,6 +935,158 @@ export const text = {
 					"已停用",
 					"Wyłączone"
 				]
+			},
+			indicatorShape: [
+				'Shape Indicator',
+				'Indicador de forma',
+				'Indicateur de zone',
+				'Indicador de forma',
+				'Indicatore di forma',
+				'Formanzeige',
+				'範囲表示',
+				'범위 표시기',
+				'形状指示器',
+				'Wskaźnik kształtu'
+			],
+			indicatorShapeOptions: {
+				0: [
+					"Disabled",
+					"Desactivado",
+					"Désactivé",
+					"Desativado",
+					"Disattivato",
+					"Deaktiviert",
+					"無効",
+					"비활성화",
+					"已停用",
+					"Wyłączone"
+				],
+				1: [
+					"Enabled",
+					"Activado",
+					"Activé",
+					"Ativado",
+					"Attivato",
+					"Aktiviert",
+					"有効",
+					"활성화",
+					"已启用",
+					"Włączone"
+				]
+			},
+			indicatorField: [
+				'Field Indicator',
+				'Indicador de campo',
+				'Indicateur de terrain',
+				'Indicador de campo',
+				'Indicatore del campo',
+				'Feldanzeige',
+				'フィールド表示',
+				'필드 표시기',
+				'场地指示器',
+				'Wskaźnik pola'
+			],
+			indicatorFieldOptions: {
+				0: [
+					"Disabled",
+					"Desactivado",
+					"Désactivé",
+					"Desativado",
+					"Disattivato",
+					"Deaktiviert",
+					"無効",
+					"비활성화",
+					"已停用",
+					"Wyłączone"
+				],
+				1: [
+					"Enabled",
+					"Activado",
+					"Activé",
+					"Ativado",
+					"Attivato",
+					"Aktiviert",
+					"有効",
+					"활성화",
+					"已启用",
+					"Włączone"
+				]
+			},
+			durationCC: [
+			    'Crowd control bars',
+			    'Barras de CC',
+			    'Barres de contrôle',
+			    'Barras de CC',
+			    'Barre CC',
+			    'CC-Balken',
+			    'CCバー',
+			    'CC 바',
+			    '控制条',
+			    'Paski CC'
+			],
+			durationCCOptions: {
+				0: [
+					'Hide',
+					'No mostrar',
+					'Masquer',
+					'Ocultar',
+					'Nascondi',
+					'Ausblenden',
+					'非表示',
+					'숨기기',
+					'隐藏',
+					'Ukryj'
+				],
+				1: [
+					'Show',
+					'Mostrar',
+					'Afficher',
+					'Mostrar',
+					'Mostra',
+					'Anzeigen',
+					'表示',
+					'표시',
+					'显示',
+					'Pokaż'
+				]
+			},
+			fastTarget: [
+				'Fast Target Selector',
+				'Selector rápido de objetivo',
+				'Sélecteur rapide de cible',
+				'Seletor rápido de alvo',
+				'Target rapido',
+				'Schnellauswahl für Ziele',
+				'高速ターゲット選択',
+				'빠른 대상 선택기',
+				'快速目标选择器',
+				'Szybki wybór celu'
+			],
+			fastTargetOptions: {
+				0: [
+					"Disabled",
+					"Desactivado",
+					"Désactivé",
+					"Desativado",
+					"Disattivato",
+					"Deaktiviert",
+					"無効",
+					"비활성화",
+					"已停用",
+					"Wyłączone"
+				],
+				1: [
+					"Enabled",
+					"Activado",
+					"Activé",
+					"Ativado",
+					"Attivato",
+					"Aktiviert",
+					"有効",
+					"활성화",
+					"已启用",
+					"Włączone"
+				]
 			}
 		},
 		official: {
@@ -975,6 +1236,102 @@ export const text = {
 			  	'코드가 복사되었습니다',
 			  	'代码已复制',
 				'Skopiowano kod',
+			],
+			copyPlayerCode: [
+				"Player code",
+				"Código jugador",
+				"Code joueur",
+				"Código jogador",
+				"Codice giocatore",
+				"Spielercode",
+				"プレイヤーコード",
+				"플레이어 코드",
+				"玩家代码",
+				"Kod gracza"
+			],
+			redeemCodePlaceholder: [
+				"Paste redeem code",
+				"Pega el código de desbloqueo",
+				"Collez le code de déblocage",
+				"Cole o código de desbloqueio",
+				"Incolla il codice di sblocco",
+				"Freischaltcode einfügen",
+				"アンロックコードを貼り付け",
+				"해금 코드를 붙여넣기",
+				"粘贴解锁代码",
+				"Wklej kod odblokowania"
+			],
+			validateRedeem: [
+				"Redeem",
+				"Desbloquear",
+				"Débloquer",
+				"Desbloquear",
+				"Sblocca",
+				"Freischalten",
+				"解放",
+				"해금",
+				"解锁",
+				"Odblokuj"
+			],
+			redeemSuccess: [
+				"Redeemed successfully",
+				"Desbloqueado correctamente",
+				"Déblocage réussi",
+				"Desbloqueado com sucesso",
+				"Sblocco riuscito",
+				"Erfolgreich freigeschaltet",
+				"解放に成功しました",
+				"해금에 성공했습니다",
+				"解锁成功",
+				"Odblokowano pomyślnie"
+			],
+			redeemInvalidFormat: [
+				"Invalid code",
+				"Código inválido",
+				"Code invalide",
+				"Código inválido",
+				"Codice non valido",
+				"Ungültiger Code",
+				"無効なコード",
+				"잘못된 코드",
+				"无效代码",
+				"Nieprawidłowy kod"
+			],
+			redeemInvalidProfile: [
+				"This code does not match this player code",
+				"Este código no corresponde a este código de jugador",
+				"Ce code ne correspond pas à ce code joueur",
+				"Este código não corresponde a este código de jogador",
+				"Questo codice non corrisponde a questo codice giocatore",
+				"Dieser Code passt nicht zu diesem Spielercode",
+				"このコードはこのプレイヤーコードと一致しません",
+				"이 코드는 이 플레이어 코드와 일치하지 않습니다",
+				"此代码与该玩家代码不匹配",
+				"Ten kod nie pasuje do tego kodu gracza"
+			],
+			redeemAlreadyOwned: [
+				"Already redeemed",
+				"Ya desbloqueado",
+				"Déjà débloqué",
+				"Já desbloqueado",
+				"Già sbloccato",
+				"Bereits freigeschaltet",
+				"すでに解放済みです",
+				"이미 해금되었습니다",
+				"已解锁",
+				"Już odblokowane"
+			],
+			redeemUnavailable: [
+				"This redeem is not available in this version",
+				"Este desbloqueo no está disponible en esta versión",
+				"Ce déblocage n'est pas disponible dans cette version",
+				"Este desbloqueio não está disponível nesta versão",
+				"Questo sblocco non è disponibile in questa versione",
+				"Diese Freischaltung ist in dieser Version nicht verfügbar",
+				"このアンロックはこのバージョンでは利用できません",
+				"이 해금은 이 버전에서 사용할 수 없습니다",
+				"此版本不提供该解锁内容",
+				"To odblokowanie nie jest dostępne w tej wersji"
 			]
 		},
 	},
@@ -1026,6 +1383,106 @@ export const text = {
 		next: ['Next', 'Siguiente', 'Suivant', 'Próximo', 'Avanti', 'Weiter', '次へ', '다음', '下一步', 'Dalej'],
 		back: ['Back', 'Atrás', 'Retour', 'Voltar', 'Indietro', 'Zurück', '戻る', '뒤로', '返回', 'Wstecz'],
 		end: ['End', 'Terminar', 'Fin', 'Fim', 'Fine', 'Ende', '終了', '끝', '结束', 'Koniec'],
+	},
+	editable: {
+		title: [
+		    'Wave Creator',
+		    'Creador de oleadas',
+		    'Créateur de vagues',
+		    'Criador de ondas',
+		    'Creatore di ondate',
+		    'Wellen-Editor',
+		    'ウェーブ作成',
+		    '웨이브 생성기',
+		    '波次创建器',
+		    'Kreator fal'
+		],
+		hearts: [
+			'Hearts',
+		    'Corazones',
+		    'Cœurs',
+		    'Corações',
+		    'Cuori',
+		    'Herzen',
+		    'ハート',
+		    '하트',
+		    '爱心',
+		    'Serca'
+		],
+		copy: [
+			'Copy',
+			'Copiar',
+			'Copier',
+			'Copiar',
+			'Copia',
+			'Kopieren',
+			'コピー',
+			'복사',
+			'复制',
+			'Kopiuj'
+		],
+		load: [
+			'Load',
+			'Cargar',
+			'Charger',
+			'Carregar',
+			'Carica',
+			'Laden',
+			'ロード',
+			'불러오기',
+			'加载',
+			'Wczytaj'
+		],
+		test: [
+			'Test',
+			'Probar',
+			'Tester',
+			'Testar',
+			'Testa',
+			'Testen',
+			'テスト',
+			'테스트',
+			'测试',
+			'Testuj'
+		],
+		disclaimer: [
+		  	'Money/Shiny Pokémon cannot be obtained in this mode.',
+		  	'No se puede obtener dinero/Pokémon variocolor en este modo.',
+		  	'Il est impossible d’obtenir de l’argent ou des Pokémon chromatiques dans ce mode.',
+		  	'Não é possível obter dinheiro ou Pokémon brilhantes neste modo.',
+		  	'Non è possibile ottenere denaro o Pokémon cromatici in questa modalità.',
+		  	'In diesem Modus können weder Geld noch schillernde Pokémon erhalten werden.',
+		  	'このモードでは、お金や色違いのポケモンを入手できない。',
+		  	'이 모드에서는 돈이나 색이 다른 포켓몬을 얻을 수 없습니다.',
+		  	'在此模式中無法獲得金錢或異色寶可夢。',
+		  	'W tym trybie nie można zdobywać pieniędzy ani błyszczących Pokémonów.'
+		],
+		health: ['Health', 'Salud', 'Santé', 'Vida', 'Salute', 'Gesundheit', 'HP', '체력', '生命', 'Zdrowie'],
+		armor: ['Armor', 'Armadura', 'Armure', 'Armadura', 'Armatura', 'Rüstung', 'アーマー', '방어力', '护甲', 'Pancerz'],
+		lose: [
+		    'Keep trying!',
+		    '¡Sigue intentándolo!',
+		    'Continue d’essayer !',
+		    'Continue tentando!',
+		    'Continua a provare!',
+		    'Versuch es weiter!',
+		    '挑戦し続けよう！',
+		    '계속 도전하세요!',
+		    '继续努力！',
+		    'Próbuj dalej!'
+		],
+		win: [
+		    'You won! A wave created by yourself! Congratulations!',
+		    '¡Has ganado! ¡Una oleada creada por ti mismo! ¡Felicidades!',
+		    'Tu as gagné ! Une vague créée par toi-même ! Félicitations !',
+		    'Você venceu! Uma onda criada por você mesmo! Parabéns!',
+		    'Hai vinto! Un’ondata creata da te stesso! Congratulazioni!',
+		    'Du hast gewonnen! Deine eigene Welle! Glückwunsch!',
+		    '勝利した！自分で作ったウェーブだ！おめでとう！',
+		    '승리했습니다! 직접 만든 웨이브입니다! 축하합니다!',
+		    '你赢了！一个你自己创建的波次！恭喜！',
+		    'Wygrałeś! Falę stworzoną przez siebie! Gratulacje!'
+		]
 	},
 }
 

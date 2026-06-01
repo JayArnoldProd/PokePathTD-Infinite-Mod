@@ -18,6 +18,8 @@ export class Area {
 		this.map;
 		this.weather = false;
 		this.imposedWeather = false;
+		this.isCustom = false;
+		this.customData = {}
 
 		this.autoWave = false;
 		this.repeat = false;
@@ -36,13 +38,16 @@ export class Area {
 		this.placementTile2D = [];
 		this.towers = [];
 
+		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
 		this.shellBellWaveUsed = false;
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.healUsed = {};
-		this.heartScale = false;
+		this.heartScale = 0;
+		this.shellSmashActive = false;
+
 		this.inChallenge = false;
 		this.music;
 
@@ -71,19 +76,80 @@ export class Area {
 	checkWeather() {
 		if (this.imposedWeather) return;
 		this.weather = false;
-		this.towers.forEach(t => {
-			if (t.ability.id == 'drizzle') this.weather = 'rain';
+		this.weatherBy = null;
+		
+		this.towers.forEach(t => { 
+			if (t.ability.id == 'drizzle' || t.pokemon?.item?.id == 'dampRock') this.weather = 'rain';
+			if (t.ability.id == 'sandStream' || t.pokemon?.item?.id == 'smoothRock') {
+				this.weather = 'sandstorm';
+				this.weatherBy = t.pokemon;
+			}
+			if (t.ability.id == 'snowWarning' || t.pokemon?.item?.id == 'icyRock') this.weather = 'hail';
+			if (t.pokemon?.item?.id == 'heatRockWeather' || t.ability.id == 'drought') this.weather = 'harshSunlight';
 		});
 
 		this.main.UI.displayWeather();
 	}
 
-	loadArea(routeNumber, wave, keepTowers = false, challenge = false) {
+	ensureRouteProgress(routeNumber) {
+		const routeIds = Object.values(routeData)
+			.map(route => route?.id)
+			.filter(id => Number.isInteger(id));
+		const maxRouteId = Math.max(routeNumber, ...routeIds);
+
+		while (this.routeWaves.length <= maxRouteId) this.routeWaves.push(1);
+		while (this.main.player.health.length <= maxRouteId) this.main.player.health.push(14);
+		while (this.main.player.records.length <= maxRouteId) this.main.player.records.push(0);
+
+		const currentWave = Number(this.routeWaves[routeNumber]);
+		if (!Number.isFinite(currentWave) || currentWave < 1) this.routeWaves[routeNumber] = 1;
+
+		const currentHealth = Number(this.main.player.health[routeNumber]);
+		if (!Number.isFinite(currentHealth) || currentHealth < 0) this.main.player.health[routeNumber] = 14;
+
+		const currentRecord = Number(this.main.player.records[routeNumber]);
+		if (!Number.isFinite(currentRecord) || currentRecord < 0) this.main.player.records[routeNumber] = 0;
+	}
+
+	resetWaveRuntime(clearTowerEffects = true) {
+		this.waveActive = false;
+		this.enemies = [];
+		this._spawnQueue = [];
+		this._spawnElapsed = 0;
+		this._spawnBaseSpeed = 0;
+		this.waveStartTime = null;
+		this.waveElapsedTime = 0;
+		this.goldWave = 0;
+
+		this.hitsReceived = 0;
+		this.totalDamageDealt = 0;
+		this.totalTrueDamageDealt = 0;
+		this.shellBellWaveUsed = false;
+		this.clefairyDollUsed = false;
+		this.leftoversWaveUsed = false;
+		this.healUsed = {};
+		this.heartScale = 0;
+		this.shellSmashActive = false;
+		this.linkBeams = [];
+
+		if (!clearTowerEffects || !Array.isArray(this.towers)) return;
+		this.towers.forEach(tower => {
+			tower.projectiles = [];
+			tower.beams = [];
+			tower.target = null;
+			tower.cadence = 0;
+		});
+	}
+
+	loadArea(routeNumber, wave, keepTowers = false, challenge = false, custom = false, customData = {}) {
 		this.repeat = false;
+		this.isCustom = custom;
+		this.customData = customData;
 		this.main.UI.waveSelectorBlock.style.background = 'revert-layer';
 		this.imposedWeather = false;
 		this.autoWave = false;
 		this.main.UI.autoWave.style.background = 'revert-layer';
+		this.resetWaveRuntime();
 
 		if (challenge) {
 			this.inChallenge = challenge;
@@ -111,13 +177,13 @@ export class Area {
 				}
 			}
 		}
-
+			
 		if (wave != undefined) this.routeWaves[routeNumber] = wave;
 
 		this.routeNumber = routeNumber;
 		this.map = routeData[routeNumber];
+		this.ensureRouteProgress(routeNumber);
 		this.waveNumber = this.routeWaves[routeNumber];
-		this.waveActive = false;
 
 		// MOD: Set endless mode flag if wave > 100 OR player has reached past 100 on this route
 		// Never enable endless mode during Challenge runs — challenges must end at wave 100
@@ -130,8 +196,14 @@ export class Area {
 			this.waves = this.map.waves;
 			this.waypoints = this.map.waypoints;
 
-			for (let i = 0; i < this.map.placementTile.length; i += 30) {
-			    this.placementTile2D.push(this.map.placementTile.slice(i, i + 30))
+			// XL maps have a 60-column tile grid; normal maps use 30 columns
+			const tileColumns = this.map.xl ? 60 : 30;
+
+			// Resize the canvas (and reset scroll) whenever the map changes
+			this.main.game.resizeCanvas(!!this.map.xl);
+
+			for (let i = 0; i < this.map.placementTile.length; i += tileColumns) {
+			    this.placementTile2D.push(this.map.placementTile.slice(i, i + tileColumns))
 			}
 
 			let counter = 0;
@@ -157,6 +229,7 @@ export class Area {
 			this.main.game.effectEnabled = false;
 		}
 
+		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
 		this.shellBellWaveUsed = false;
@@ -203,8 +276,10 @@ export class Area {
 		this.goldWave = 0;
 		this._spawnQueue = [];  // MOD: Clear deferred spawn queue
 		this._spawnElapsed = 0;
+		this.main.UI.waveIncomeState.waveEarned = 0;
 		playSound('select', 'ui');
-
+		
+		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
 		this.shellBellWaveUsed = false;
@@ -223,13 +298,30 @@ export class Area {
 		this.towers.forEach(t => {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
+			t.incenseBuff = 0;
+			t.incenseTimer = 0;
 			t.lightningRodCharge = 0;
 			t.healUsed = false;
+			t.shiftGearSpeed = 0;
+
+			if (t.ability?.id == 'shellSmash' && this.main.player.health[this.routeNumber] > 1) {
+				playSound('hit2', 'effect');
+				this.shellSmashActive = true;
+				this.main.player.getDamaged(1);
+				this.hitsReceived++;
+			}
+
+			if (t.ability?.id == 'shiftGear') {
+				t.shiftGearSpeed = 0;
+				t.projectiles.forEach(proj => {
+	                proj.angularSpeed = 0;
+	            })
+			}
 		});
 
-		if (this.inChallenge) {
-			this.main.game.chrono.start();
-		}
+		if (this.inChallenge) this.main.game.chrono.start();
+		if (this.main.mapScene.isOpen) this.main.mapScene.update();
+		if (this.main.editorScene.isOpen) this.main.editorScene.close();
 	}
 
 	endWave() {
@@ -262,6 +354,8 @@ export class Area {
 		this.towers.forEach(t => {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
+			t.incenseBuff = 0;
+			t.incenseTimer = 0;
 			t.lightningRodCharge = 0;
 			t.healUsed = false;
 			if (t.ability.id == 'triage' && Math.random() < 0.05) {
@@ -289,8 +383,10 @@ export class Area {
 		this.waveActive = false;
 		if (this.main.player.health[this.routeNumber] === 1) this.main.player.unlockAchievement(12);
 
+		if (this.isCustom) return this.main.defeatScene.open(true);
+
 		// MOD: Handle endless mode - waves continue past 100
-		if (this.waveNumber < 100 || this.endlessMode) {
+		if ((this.waveNumber < 100 && !this.map.isSecret) || this.endlessMode) {
 			if (!this.repeat) this.waveNumber++;
 			if (!this.repeat) this.routeWaves[this.routeNumber]++;
 			this.main.UI.update();
@@ -438,6 +534,20 @@ export class Area {
 		};
 	}
 
+	normalizeWaveOffset(rawOffset) {
+		if (typeof rawOffset === 'number') {
+			return {
+				x: Number.isFinite(rawOffset) ? rawOffset : 50,
+				y: 0,
+			};
+		}
+
+		return {
+			x: Number.isFinite(rawOffset?.x) ? rawOffset.x : 50,
+			y: Number.isFinite(rawOffset?.y) ? rawOffset.y : 0,
+		};
+	}
+
 	spawnEnemies() {
 		// ENDLESS MODE: Use endless wave generator for waves > 100
 		if (this.endlessMode && this.waveNumber > 100) {
@@ -453,12 +563,13 @@ export class Area {
 		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;
 
 		const wave = this.waves[falseWaveNumber].wave;
-		const waveOffset = this.waves[falseWaveNumber].offSet || 50;
+		const waveOffset = this.normalizeWaveOffset(this.waves[falseWaveNumber].offSet);
 
 		wave.forEach((enemy, i) => {
-			const xOffset = (i + 1) * waveOffset;
-			const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
-			const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset);
+			const xOffset = (i + 1) * waveOffset.x;
+			const yOffset = (i + 1) * waveOffset.y;
+			const waypointEnemy = this.selectWaypoints();
+			const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset, yOffset);
 			if (enemy) {
 				this.enemies.push(
 					new Enemy(
@@ -484,6 +595,51 @@ export class Area {
 		return 900 + (wavesPast100 - 900) / 2;
 	}
 
+	selectWaypoints() {
+		if (this.waveNumber === 100 && this.map.id === 21) return this.waypoints[0];
+
+		return this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+	}
+
+	rebuildPlusMinusLinks(maxSearchRange = 2000) {
+	    this.linkBeams = this.linkBeams || [];
+	    this.linkBeams = this.linkBeams.filter(lb => lb && lb.type && lb.type !== 'plusminus');
+
+	    const plus = [];
+	    const minus = [];
+
+	    for (const t of this.towers) {
+	        if (!t || !t.ability) continue;
+	        if (t.ability.id === 'plus') plus.push(t);
+	        else if (t.ability.id === 'minus') minus.push(t);
+	    }
+
+	    for (const p of plus) {
+	        for (const m of minus) {
+	            if (p === m) continue;
+
+	            const dx = m.center.x - p.center.x;
+	            const dy = m.center.y - p.center.y;
+	            const d = Math.hypot(dx, dy);
+	            if (d > maxSearchRange) continue;
+
+	            const a = p.pokemon?.tilePosition ?? p.tile?.id ?? Math.random();
+	            const b = m.pokemon?.tilePosition ?? m.tile?.id ?? Math.random();
+	            const pairKey = (a < b) ? `${a}-${b}` : `${b}-${a}`;
+
+	            const exists = this.linkBeams.some(lb => lb && lb.pairKey === pairKey);
+	            if (exists) continue;
+
+	            const lb = new LinkBeam(p, m, { width: 10, hitCooldown: 300, maxRange: 2000, color: (p.pokemon?.specie?.color || '#ff6600') });
+
+	            lb.type = 'plusminus';
+	            lb.pairKey = pairKey;
+
+	            this.linkBeams.push(lb);
+	        }
+	    }
+	}
+
 	// ENDLESS MODE: POWER BUDGET SYSTEM - Generate waves 101+
 	// Targets: Wave 700 = ~75k HP avg, Wave 1600 = ~1M HP avg
 	spawnEndlessWave() {
@@ -498,11 +654,6 @@ export class Area {
 		const templateWaveNum = ((wave - 1) % 100) + 1;
 		const waveData = this.waves[templateWaveNum] || this.waves[1];
 		const wavePreview = waveData?.preview || [];
-
-		if (wavePreview.length === 0) {
-			console.warn('No preview enemies for wave', wave);
-			return;
-		}
 
 		// === HP SCALING (exponential early, polynomial tail) ===
 		// Balanced so level N Pokemon can roughly reach wave N
@@ -905,12 +1056,13 @@ export class Area {
 			const vanillaWave = this.waves[100];
 			if (vanillaWave && vanillaWave.wave) {
 				const wave = vanillaWave.wave;
-				const waveOffset = vanillaWave.offSet || 50;
+				const waveOffset = this.normalizeWaveOffset(vanillaWave.offSet);
 				wave.forEach((enemy, i) => {
 					if (!enemy) return;
-					const xOffset = (i + 1) * waveOffset;
+					const xOffset = (i + 1) * waveOffset.x;
+					const yOffset = (i + 1) * waveOffset.y;
 					const waypointEnemy = this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
-					const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset);
+					const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset, yOffset);
 					this.enemies.push(
 						new Enemy(
 							spawnPos.x,
@@ -983,6 +1135,16 @@ export class Area {
 	            }
 	        });
 	    });
+
+	    if (this.map.id == 20 && !this.main.player.secrets.phione && this.towers.length == 2) {
+	    	if (
+	    		[104, 70].includes(this.towers[0].pokemon.id) &&
+	    		[104, 70].includes(this.towers[1].pokemon.id)
+	    	) {
+	    		this.main.player.secrets.phione = true;
+	    		this.main.UI.getSecret('phione');
+	    	}
+	    }
 	}
 
 	getRouteTag(route, wave) {
@@ -1010,6 +1172,8 @@ export class Area {
 		this.towers.forEach(t => {
 			t.moxieBuff = 0;
 			t.speedBoost = 0;
+			t.incenseBuff = 0;
+			t.incenseTimer = 0;
 			t.lightningRodCharge = 0;
 			t.healUsed = false;
 		});
@@ -1025,6 +1189,7 @@ export class Area {
 		const previewEnemy = this.getWavePreview(this.waveNumber);
 		if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
 
+		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
 		this.shellBellWaveUsed = false;

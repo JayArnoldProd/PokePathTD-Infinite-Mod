@@ -3,12 +3,67 @@ import { text } from '../file/text.js';
 import { playSound, playMusic } from '../file/audio.js';
 import { GameScene } from '../utils/GameScene.js';
 import { pokemonData } from './data/pokemonData.js';
+import { itemData } from './data/itemData.js';
 import { Pokemon } from './component/Pokemon.js';
 import { weatherData } from './data/weatherData.js';
 import { saveData } from '../file/data.js';
 import { songData } from './data/songData.js';
 
 const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
+const SECTION_TOOLTIPS = {
+	profile: { name: ['Character'], description: ['Open your character profile.'] },
+	box: { name: ['Pokeboxes'], description: ['Open your Pokemon boxes.'] },
+	inventory: { name: ['Inventory'], description: ['Open your inventory.'] },
+	shop: { name: ['Shop'], description: ['Open the shop.'] },
+	map: { name: ['Map'], description: ['Open map and route selection.'] },
+	challenge: { name: ['Challenges'], description: ['Open challenge selection.'] },
+	damageDealt: { name: ['Damage Graph'], description: ['Show or hide damage graph overlay.'] },
+	menu: { name: ['Options'], description: ['Open game options menu.'] }
+};
+
+const TARGET_MODES = [
+	'first', 'last', 'highHP', 'lowHP', 'highArmor', 'noArmor', 'faster', 'slower', 'poisoned', 'notPoisoned', 
+	'burned', 'notBurned', 'stuned', 'notStuned', 'slowed', 'notSlowed', 'cursed', 'curseable', 'nightmared', 'random', 'invisible'
+]
+
+const TARGET_MODES_TRADUCTIONS = {
+	area: ['Area', 'Área', 'Zone', 'Área', 'Area', 'Fläche', 'エリア', '지역', '区域', 'Obszar'],
+	aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	allies: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	available: ['Available', 'Disponibles', 'Disponibles', 'Disponíveis', 'Disponibili', 'Verfügbar', '利用可能', '이용 가능', '可用', 'Dostępne'],
+
+	first: ['First', 'Primero', 'Premier', 'Primeiro', 'Primo', 'Erster', '最初', '첫 번째', '第一个', 'Pierwszy'],
+	last: ['Last', 'Último', 'Dernier', 'Último', 'Ultimo', 'Letzter', '最後', '마지막', '最后一个', 'Ostatni'],
+
+	faster: ['Faster', 'Más rápido', 'Plus rapide', 'Mais rápido', 'Più veloce', 'Schneller', 'より速い', '더 빠름', '更快', 'Szybszy'],
+	slower: ['Slower', 'Más lento', 'Plus lent', 'Mais lento', 'Più lento', 'Langsamer', 'より遅い', '더 느림', '更慢', 'Wolniejszy'],
+
+	highArmor: ['High Armor', 'Más armadura', 'Haute armure', 'Mais armadura', 'Alta armatura', 'Hohe Rüstung', '高防御', '높은 방어', '高护甲', 'Wysoki Pancerz'],
+	noArmor: ['No Armor', 'Sin armadura', 'Pas d’armure', 'Sem armadura', 'Senza armatura', 'Keine Rüstung', '無防御', '방어 없음', '无护甲', 'Bez Pancerza'],
+
+	highHP: ['High HP', 'Mas PS', 'Le plus de PV', 'HP alto', 'Alta salute', 'Hohe KP', '高HP', '높은 HP', '高生命值', 'Wysokie HP'],
+	lowHP: ['Low HP', 'Menos PS', 'Le moins de PV', 'HP baixo', 'Bassa salute', 'Niedrige KP', '低HP', '낮은 HP', '低生命值', "Niskie HP"],
+
+	poisoned: ['Poisoned', 'Envenenado', 'Empoisonné', 'Envenenado', 'Avvelenato', 'Vergiftet', '毒状態', '독 중독', '中毒', 'Zatruty'],
+	notPoisoned: ['Not Poisoned', 'No envenenado', 'Non empoisonné', 'Não envenenado', 'Non avvelenato', 'Nicht vergiftet', '未毒', '비중독', '未中毒', 'Nie Zatruty'],
+
+	burned: ['Burned', 'Quemado', 'Brulé', 'Queimado', 'Scottato', 'Verbrannt', '火傷', '화상', '灼伤', 'Oparzony'],
+	notBurned: ['Not Burned', 'No quemado', 'Non brulé', 'Não queimado', 'Non scottato', 'Nicht verbrannt', '未火傷', '비화상', '未灼伤', 'Nie Oparzony'],
+
+	stuned: ['Stunned', 'Aturdido', 'Étourdi', 'Atordoado', 'Stordito', 'Betäubt', '気絶', '기절', '眩晕', 'Ogłuszony'],
+	notStuned: ['Not Stunned', 'No aturdido', 'Non étourdí', 'Não atordoado', 'Non stordito', 'Nicht betäubt', '未気絶', '비기절', '未眩晕', 'Nie Ogłuszony'],
+
+	slowed: ['Slowed', 'Ralentizado', 'Ralenti', 'Lento', 'Rallentato', 'Verlangsamt', '減速', '감속', '减速', 'Spowolniony'],
+	notSlowed: ['Not Slowed', 'No ralentizado', 'Non ralenti', 'Não lento', 'Non rallentato', 'Nicht verlangsamt', '未減速', '비감속', '未减速', 'Nie Spowolniony'],
+
+	cursed: ["Cursed", "Maldito", "Maudit", "Amaldiçoado", "Maledetto", "Verflucht", "呪われた", "저주받은", "被诅咒的", "Przeklęty"],
+	curseable: ['Curseable', 'Maldecible', 'Maudissable', 'Amaldiçoável', 'Maledicibile', 'Verfluchbar', '呪われ得る', '저주 가능', '可被诅咒', 'Możliwy do Przeklęcia'],
+
+	nightmared: ["Nightmare'd", "Con pesadilla", "Cauchemarde", "Com pesadelo", "Con incubo", "Mit Albtraum", "悪夢を伴う", "악몽을 동반한", "带着噩梦的", "Ma Koszmar"],
+
+	random: ['Random', 'Aleatorio', 'Aléatoire', 'Aleatório', 'Casuale', 'Zufällig', 'ランダム', '무작위', '随机', 'Losowy'],
+	invisible: ['Invisible', 'Invisible', 'Invisible', 'Invisível', 'Invisibile', 'Unsichtbar', '透明', '투명', '隐形', 'Niewidzialny']
+}
 
 const UI_LOCALIZED_LABELS = {
 	save: ['Save team', 'Guardar equipo', 'Enregistrer l’équipe', 'Salvar equipe', 'Salvare la squadra', 'Team speichern', 'チームを保存する', '팀 저장', '保存队伍', 'Zapisz drużynę'],
@@ -179,11 +234,9 @@ export class UI {
 			this.saveTeamButton[i] = new Element(this.saveTeamButtonContainer, { className: 'ui-save-team-button', text: `#${i+1}` }).element;
 			this.saveTeamButton[i].addEventListener('mouseenter', () => {
 				playSound('open', 'ui');
-				if (this.main.tooltip) this.main.tooltip.showText(uiLabel('save', this.main.lang, 'Save'));
+				this.showTeamSlotTooltip(i, 'save');
 			})
-			this.saveTeamButton[i].addEventListener('mouseleave', () => {
-				if (this.main.tooltip) this.main.tooltip.hide();
-			})
+			this.saveTeamButton[i].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
 			this.saveTeamButton[i].addEventListener('click', () => { 
 				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.saveTeamButtonHandle(i);
@@ -197,11 +250,9 @@ export class UI {
 			this.importTeamButton[i] = new Element(this.importTeamButtonContainer, { className: 'ui-import-team-button', text: `#${i+1}` }).element;
 			this.importTeamButton[i].addEventListener('mouseenter', () => {
 				playSound('open', 'ui');
-				if (this.main.tooltip) this.main.tooltip.showText(uiLabel('load', this.main.lang, 'Load'));
+				this.showTeamSlotTooltip(i, 'load');
 			})
-			this.importTeamButton[i].addEventListener('mouseleave', () => {
-				if (this.main.tooltip) this.main.tooltip.hide();
-			})
+			this.importTeamButton[i].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
 			this.importTeamButton[i].addEventListener('click', () => { 
 				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.importTeamButtonHandle(i);
@@ -238,6 +289,20 @@ export class UI {
 		this.waveSelectorOneMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorTenMore.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
 		this.waveSelectorBlock.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+		this.waveIncome = new Element(this.bottomBar, { className: 'ui-wave-income' }).element;
+		this.waveIncomeState = {
+			routeKey: '',
+			waveKey: '',
+			routeStartTime: 0,
+			lastGold: 0,
+			routeEarned: 0,
+			waveEarned: 0,
+			lastTime: 0,
+			smoothPerSecond: 0
+		};
+		this.waveIncomeTimer = setInterval(() => {
+			this.updateWaveIncome(true);
+		}, 200);
 
 		this.waveInfoPanel = new Element(this.main.scene, { className: 'ui-wave-info-panel' }).element;
 		this.waveInfoPanel.style.cssText = `
@@ -299,7 +364,13 @@ export class UI {
 			this.pokemon[i].shiny = new Element(this.pokemon[i], { className: 'ui-pokemon-shiny' }).element;
 			this.pokemon[i].level = new Element(this.pokemon[i], { className: 'ui-pokemon-level' }).element;
 			this.pokemon[i].stars = new Element(this.pokemon[i], { className: 'ui-pokemon-stars' }).element;
+			this.pokemon[i].attackStyle = new Element(this.pokemon[i], { className: 'ui-pokemon-attack-style' }).element;
+			this.pokemon[i].fieldStatus = new Element(this.pokemon[i], { className: 'ui-pokemon-field-status' }).element;
 			this.pokemon[i].dittoBg = new Element(this.pokemon[i], { className: 'ui-pokemon-ditto-bg' }).element;
+			this.pokemon[i].targetMode = new Element(this.pokemon[i], { className: 'ui-pokemon-target-mode' }).element;
+			this.pokemon[i].targetLeft = new Element(this.pokemon[i].targetMode, { className: 'ui-pokemon-target-arrow', text: '<' }).element;
+			this.pokemon[i].targetText = new Element(this.pokemon[i].targetMode, { className: 'ui-pokemon-target-text' }).element;
+			this.pokemon[i].targetRight = new Element(this.pokemon[i].targetMode, { className: 'ui-pokemon-target-arrow', text: '>' }).element;
 
 			this.pokemon[i].buttonContainer = new Element(this.pokemon[i], { className: 'ui-pokemon-button-container' }).element;
 			this.pokemon[i].deploy = new Element(this.pokemon[i].buttonContainer, { className: 'ui-pokemon-button' }).element;
@@ -309,11 +380,15 @@ export class UI {
 			this.pokemon[i].noPokemon = new Element(this.pokemon[i].buttonContainer, { className: 'ui-pokemon-button', text: '+' }).element;
 
 			this.pokemon[i].deploy.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
+			// this.pokemon[i].deploy.addEventListener('mouseenter', () => { this.showSlotButtonTooltip(i, 'deploy') });
+			// this.pokemon[i].deploy.addEventListener('mouseleave', () => { this.main.tooltip.hide() });
 			this.pokemon[i].deploy.addEventListener('click', () => {
 				this.main.game.tryDeployUnit(i, true)
 			});
 
 			this.pokemon[i].info.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
+			// this.pokemon[i].info.addEventListener('mouseenter', () => { this.showSlotButtonTooltip(i, 'info') });
+			// this.pokemon[i].info.addEventListener('mouseleave', () => { this.main.tooltip.hide() });
 			this.pokemon[i].info.addEventListener('click', () => {
 				if (!this.main.boxScene.isOpen && !this.main.inventoryScene.isOpen) this.main.pokemonScene.open(this.main.team.pokemon[i], i);
 				else this.main.pokemonScene.open(this.main.team.pokemon[i], i, this.main.team.pokemon);
@@ -332,10 +407,47 @@ export class UI {
 			});
 
 			this.pokemon[i].item.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
-			this.pokemon[i].item.addEventListener('click', () => { this.fastScene.open('item', i) });
+			// this.pokemon[i].item.addEventListener('mouseenter', () => { this.showSlotButtonTooltip(i, 'item') });
+			// this.pokemon[i].item.addEventListener('mouseleave', () => { this.main.tooltip.hide() });
+			this.pokemon[i].item.addEventListener('click', () => {
+				//this.main.tooltip.hide();
+				this.fastScene.open('item', i);
+			});
 
 			this.pokemon[i].noPokemon.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
 			this.pokemon[i].noPokemon.addEventListener('click', () => { this.fastScene.open('pokemon', i) });
+
+			this.pokemon[i].fieldStatus.addEventListener('mouseenter', () => {
+				const pokemon = this.main.team.pokemon[i];
+				if (!pokemon) return;
+				this.main.tooltip.showItem(
+					pokemon.isDeployed
+						? { name: text.ui.fieldStatus.label, description: text.ui.fieldStatus.yes }
+						: { name: text.ui.fieldStatus.label, description: text.ui.fieldStatus.no }
+				);
+			});
+			this.pokemon[i].fieldStatus.addEventListener('mouseleave', () => { this.main.tooltip.hide() });
+
+			this.pokemon[i].attackStyle.addEventListener('mouseenter', () => {
+				const pokemon = this.main.team.pokemon[i];
+				if (!pokemon) return;
+				this.main.tooltip.showItem({
+					name: ['Attack Shape'],
+					description: [this.getAttackStyleTooltip(pokemon)]
+				});
+			});
+			this.pokemon[i].attackStyle.addEventListener('mouseleave', () => { this.main.tooltip.hide() });
+
+			this.pokemon[i].targetLeft.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+			this.pokemon[i].targetRight.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+			this.pokemon[i].targetLeft.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.changeSlotTargetMode(i, -1);
+			});
+			this.pokemon[i].targetRight.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.changeSlotTargetMode(i, 1);
+			});
 
 			this.pokemon[i].sprite.addEventListener('dblclick', () => {
 				if (this.main.game.stopped) return playSound('pop0', 'ui');
@@ -387,7 +499,12 @@ export class UI {
 		SECTIONS.forEach(section =>  {
 			this.section[section] = new Element(this.sectionContainer, { className: 'ui-section' }).element;
 			this.section[section].img = new Element(this.section[section], { className: 'ui-section-img', image: `./src/assets/images/icons/${section}.png` }).element;
-			this.section[section].addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
+			this.section[section].addEventListener('mouseenter', () => {
+				playSound('hover1', 'ui');
+				// const tooltip = SECTION_TOOLTIPS[section];
+				// if (tooltip) this.main.tooltip.showItem(tooltip);
+			});
+			// this.section[section].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
 		}) 
 
 		this.section['profile'].addEventListener('click', () => { this.main.profileScene.open() });
@@ -542,6 +659,15 @@ export class UI {
 			this.section['challenge'].style.pointerEvents = 'none';
 		}
 
+		if (!this.main.area.isCustom) {
+			this.main.teamManager.teams.forEach((team, i) => {
+				this.importTeamButton[i].style.pointerEvents = 'revert-layer';
+				this.importTeamButton[i].style.filter = 'revert-layer';
+				this.saveTeamButton[i].style.pointerEvents = 'revert-layer';
+				this.saveTeamButton[i].style.filter = 'revert-layer';
+			})
+		} 
+
 		if (this.main.area.inChallenge) {
 			this.challenge.style.display = 'revert-layer';
 			this.section['map'].style.opacity = 0.4;
@@ -566,10 +692,10 @@ export class UI {
 			this.section['inventory'].style.pointerEvents = 'revert-layer';
 		}
 
-		if (!this.main.area.inChallenge) {
+		if (!this.main.area.inChallenge && !this.main.area.isCustom) {
 			this.main.teamManager.teams.forEach((team, i) => {
 				if (team[this.main.area.routeNumber].length == 0) {
-					this.importTeamButton[i].style.pointerEvents = 'none';
+					this.importTeamButton[i].style.pointerEvents = 'revert-layer';
 					this.importTeamButton[i].style.filter = 'brightness(0.7)';
 				} else {
 					this.importTeamButton[i].style.pointerEvents = 'revert-layer';
@@ -577,16 +703,26 @@ export class UI {
 				}
 			})
 		} else {
-			this.main.teamManager.teamChallenge.forEach((team, i) => {
+			for (let i = 0; i < this.importTeamButton.length; i++) {
+				const team = this.main.teamManager.getChallengeTeam(i);
 				if (team.length == 0) {
-					this.importTeamButton[i].style.pointerEvents = 'none';
+					this.importTeamButton[i].style.pointerEvents = 'revert-layer';
 					this.importTeamButton[i].style.filter = 'brightness(0.7)';
 				} else {
 					this.importTeamButton[i].style.pointerEvents = 'revert-layer';
 					this.importTeamButton[i].style.filter = 'revert-layer';
 				}
-			})
+			}
 		}
+
+		if (this.main.area.isCustom) {
+			this.main.teamManager.teams.forEach((team, i) => {
+				this.importTeamButton[i].style.pointerEvents = 'none';
+				this.importTeamButton[i].style.filter = 'brightness(0.7)';
+				this.saveTeamButton[i].style.pointerEvents = 'none';
+				this.saveTeamButton[i].style.filter = 'brightness(0.7)';
+			})
+		} 
 
 		if (
 			this.main.area.routeNumber == 4 && 
@@ -690,7 +826,8 @@ export class UI {
 	updatePlayer() {
 		this.playerPortrait.style.backgroundImage = `url("./src/assets/images/portraits/${this.main.player.portrait}.png")`;
 		this.playerName.innerText = this.main.player.name.toUpperCase();
-		const gold = this.main.player.gold;
+		const goldValue = Number(this.main.player.gold);
+		const gold = Number.isFinite(goldValue) ? Math.max(0, goldValue) : 0;
 		const billion = uiLabel('billion', this.main.lang, 'BILLION').toUpperCase();
 		const trillion = uiLabel('trillion', this.main.lang, 'TRILLION').toUpperCase();
 		const quadrillion = uiLabel('quadrillion', this.main.lang, 'QUADRILLION').toUpperCase();
@@ -700,11 +837,9 @@ export class UI {
 				? `$${(gold / 1e12).toFixed(2)} ${trillion}`
 				: gold >= 1e9
 					? `$${(gold / 1e9).toFixed(2)} ${billion}`
-					: `$${this.main.utility.numberDot(gold, this.main.lang)}`;
+					: `$${this.main.utility.numberDot(gold)}`;
 		this.playerGold.innerText = goldText;
-		this.playerGold.style.whiteSpace = 'nowrap';
-		this.playerGold.style.lineHeight = '10px';
-		this.playerGold.style.fontSize = gold >= 1e9 ? '9px' : '10px';
+		this.updateWaveIncome();
 		this.playerStars.innerHTML = `<span class="msrre">⭐</span>${this.main.player.stars}`;
 		this.playerRibbonsText.innerHTML = `${this.main.player.ribbons}`;
 
@@ -716,6 +851,275 @@ export class UI {
 		}
 	}
 
+	updateWaveIncome(isLiveTick = false) {
+		if (!this.waveIncome) return;
+		if (!this.main || !this.main.area || !this.main.player || !this.main.area.map) return;
+
+		const area = this.main.area;
+		const player = this.main.player;
+		const state = this.waveIncomeState;
+
+		if (area.inChallenge || area.isCustom) {
+			this.waveIncome.style.display = 'none';
+			return;
+		}
+
+		this.waveIncome.style.display = 'revert-layer';
+
+		const now = performance.now();
+		const routeKey = `${area.map.id}:${area.inChallenge ? 1 : 0}`;
+		const waveKey = `${routeKey}:${area.waveNumber}:${area.waveActive ? 1 : 0}`;
+
+		if (state.lastTime === 0) {
+			state.routeKey = routeKey;
+			state.waveKey = waveKey;
+			state.routeStartTime = now;
+			state.lastGold = player.gold || 0;
+			state.routeEarned = 0;
+			state.waveEarned = 0;
+			state.lastTime = now;
+			state.smoothPerSecond = 0;
+			this.waveIncome.innerText = `WAVE: $0 | $/min: 0`;
+			return;
+		}
+
+		if (state.routeKey !== routeKey) {
+			state.routeKey = routeKey;
+			state.waveKey = waveKey;
+			state.routeStartTime = now;
+			state.lastGold = player.gold || 0;
+			state.routeEarned = 0;
+			state.waveEarned = 0;
+			state.lastTime = now;
+			state.smoothPerSecond = 0;
+		}
+
+		if (state.waveKey !== waveKey) {
+			state.waveKey = waveKey;
+			// state.waveEarned = 0;
+		}
+
+		const currentGold = player.gold || 0;
+		const deltaGold = currentGold - state.lastGold;
+		if (deltaGold > 0) state.routeEarned += deltaGold;
+		if (area.waveActive && deltaGold > 0) state.waveEarned += deltaGold;
+		state.lastGold = currentGold;
+
+		const elapsedSec = Math.max(0.001, (now - state.lastTime) / 1000);
+		if (area.waveActive) {
+			const instant = Math.max(0, deltaGold) / elapsedSec;
+			state.smoothPerSecond = (state.smoothPerSecond * 0.75) + (instant * 0.25);
+		} else if (isLiveTick) {
+			state.smoothPerSecond *= 0.85;
+			if (state.smoothPerSecond < 0.05) state.smoothPerSecond = 0;
+		}
+		state.lastTime = now;
+
+		const waveEarned = area.waveActive ? state.waveEarned : Math.max(0, area.goldWave || state.waveEarned || 0);
+		const routeMinutes = Math.max(1 / 60, (now - state.routeStartTime) / 60000);
+		const perMinute = state.routeEarned / routeMinutes;
+		this.waveIncome.innerText = `WAVE: $${this.main.utility.numberDot(Math.floor(waveEarned))} | $${this.main.utility.numberDot(Math.floor(perMinute))}/min`;
+	}
+
+	getLocalizedValue(values, fallback = '') {
+		if (!Array.isArray(values)) return fallback;
+		return values[this.main.lang] ?? values[0] ?? fallback;
+	}
+
+	getShortTooltipText(textValue, maxLen = 90) {
+		if (!textValue) return '';
+		const clean = `${textValue}`.replace(/\s+/g, ' ').trim();
+		if (clean.length <= maxLen) return clean;
+		return `${clean.slice(0, maxLen - 3)}...`;
+	}
+
+	showCompactItemTooltip(item) {
+		if (!item) return;
+		const itemName = this.getLocalizedValue(item.name, 'Item');
+		const itemDesc = this.getShortTooltipText(this.getLocalizedValue(item.description, ''), 70) || 'No description.';
+		this.main.tooltip.showItem({ name: [itemName], description: [itemDesc] });
+	}
+
+	getAttackStyleSymbol(pokemon) {
+		if (pokemon?.attackType === 'area') return 'A';
+		if (pokemon?.attackType === 'aura') return '~';
+		switch (pokemon?.rangeType) {
+			case 'cross': return '+';
+			case 'xShape': return 'X';
+			case 'horizontalLine': return '-';
+			case 'donut':
+			case 'circle':
+			default: return 'O';
+		}
+	}
+
+	getAttackStyleTooltip(pokemon) {
+		const shapeNames = {
+			circle: ['Circle range', 'En círculo', 'En cercle', 'Em círculo', 'A cerchio', 'Kreisbereich', '円形', '원형', '圓形', 'Kołowy'],
+			donut: ['Ring range', 'En anillo', 'En anneau', 'Em anel', 'A anello', 'Ringbereich', 'ドーナツ型', '도넛형', '環状', 'Pierścieniowy'],
+			cross: ['Cross range', 'En cruz', 'En croix', 'Em cruz', 'A croce', 'Kreuzbereich', '十字', '십자', '十字', 'Krzyżowy'],
+			xShape: ['X-shaped', 'En X', 'En X', 'Em X', 'A forma di X', 'X-Form', 'X字', 'X자형', 'X字', 'W kształcie X'],
+			horizontalLine: ['Line range', 'En horizontal', 'En ligne', 'Em linha', 'In linea', 'Linienbereich', '直線', '직선', '直線', 'Liniowy']
+		};
+		const targetNames = {
+			single: ['single target', 'monobjetivo', 'cible unique', 'alvo único', 'bersaglio singolo', 'einzelziel', '単体', '단일 대상', '單體', 'pojedynczy cel'],
+			area: ['area target', 'en area', 'en zone', 'em área', 'ad area', 'flächenschaden', '範囲', '광역', '範疇', 'obszarowy'],
+			aura: ['aura', 'aura', 'aura', 'aura', 'aura', 'aura', 'オーラ', '오라', '氣場', 'aura'],
+			orbital: ['orbital', 'orbital', 'orbitale', 'orbital', 'orbitale', 'orbital', '軌道', '궤도', '軌道', 'orbital']
+		};
+		const shape = shapeNames[pokemon?.rangeType][this.main.lang] || 'Circle range';
+		const target = targetNames[pokemon?.attackType][this.main.lang] || pokemon?.attackType || 'target';
+		return `${shape}, ${target}.`;
+	}
+
+	getCompactTargetLabel(pokemon) {
+		return TARGET_MODES_TRADUCTIONS[pokemon?.targetMode][this.main.lang] || pokemon?.targetMode[this.main.lang] || '';
+	}
+
+	canChangeSlotTargetMode(pokemon) {
+		if (!pokemon) return false;
+		if (pokemon?.item?.id == 'quickClaw') return false;
+		if ((pokemon?.id == 53 && pokemon?.item?.id !== 'ringTarget') || pokemon?.adn?.id == 53) return false;
+		return !['area', 'aura', 'allies'].includes(pokemon.targetMode);
+	}
+
+	changeSlotTargetMode(index, dir) {
+		const pokemon = this.main.team.pokemon[index];
+		if (!pokemon || !this.canChangeSlotTargetMode(pokemon)) return playSound('pop0', 'ui');
+
+		let modeIndex = TARGET_MODES.findIndex(mode => mode === pokemon.targetMode);
+		if (modeIndex === -1) modeIndex = 0;
+		const maxIndex = (pokemon.ability.id == 'frisk' || pokemon.ability.id == 'illuminate' || pokemon.ability.id == 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? 20 : 19;
+
+		modeIndex += dir;
+		if (modeIndex > maxIndex) modeIndex = 0;
+		else if (modeIndex < 0) modeIndex = maxIndex;
+
+		pokemon.changeTargetMode(TARGET_MODES[modeIndex]);
+		this.updatePokemon();
+		playSound('option', 'ui');
+	}
+
+	getSavedTeamSlot(slot) {
+		if (this.main.area.inChallenge) {
+			const team = this.main.teamManager.getChallengeTeam(slot);
+			const slotLimit = this.main.area.inChallenge.slotLimit;
+			return typeof slotLimit === 'number' ? team.slice(0, slotLimit) : team;
+		}
+		const routeNumber = this.main.area.routeNumber;
+		return this.main.teamManager.teams?.[slot]?.[routeNumber] || [];
+	}
+
+	getMatchingPokemonForTeamEntry(entry, index) {
+		if (!entry) return null;
+		const itemId = typeof entry.item === 'string' ? entry.item : entry.item?.id;
+		const isMatch = pokemon => {
+			if (!pokemon || pokemon.id !== entry.id) return false;
+			if (!itemId) return true;
+			return (pokemon.item?.id || null) === itemId;
+		};
+
+		const indexedPokemon = this.main.team.pokemon?.[index];
+		if (isMatch(indexedPokemon)) return indexedPokemon;
+
+		const allPokemon = [
+			...(this.main.team.pokemon || []),
+			...(this.main.box.pokemon || [])
+		];
+		return allPokemon.find(isMatch) || allPokemon.find(pokemon => pokemon?.id === entry.id) || null;
+	}
+
+	getTeamEntryPokemonName(entry, index) {
+		if (!entry) return 'Unknown Pokemon';
+		const specieByKey = pokemonData[entry.specieKey] || pokemonData[entry.form];
+		const matchedPokemon = this.getMatchingPokemonForTeamEntry(entry, index);
+		const data = Object.values(pokemonData).find(pokemon => pokemon?.id === entry.id);
+		return this.getLocalizedValue(entry.savedName, '')
+			|| this.getLocalizedValue(entry.name, '')
+			|| this.getLocalizedValue(specieByKey?.name, '')
+			|| this.getLocalizedValue(matchedPokemon?.name, '')
+			|| this.getLocalizedValue(matchedPokemon?.specie?.name, '')
+			|| this.getLocalizedValue(data?.name, `Pokemon #${entry.id ?? '?'}`);
+	}
+
+	getTeamEntryItemName(entry) {
+		const item = entry?.item;
+		if (!item) return 'No Item';
+		const itemRecord = typeof item === 'string' ? itemData[item] : itemData[item.id];
+		return this.getLocalizedValue(item.name, '')
+			|| this.getLocalizedValue(itemRecord?.name, item.id || item || 'Item');
+	}
+
+	formatTeamSlotLines(entries) {
+		if (!Array.isArray(entries) || entries.length === 0) return ['Empty'];
+		return entries.slice(0, 10).map((entry, index) => {
+			const pokemonName = this.getTeamEntryPokemonName(entry, index);
+			const itemName = this.getTeamEntryItemName(entry);
+			const passengerText = entry.isPassenger ? ' (Passenger)' : '';
+			return `${index + 1}. ${pokemonName} - ${itemName}${passengerText}`;
+		});
+	}
+
+	showTeamSlotTooltip(slot, mode) {
+		const isChallenge = !!this.main.area.inChallenge;
+		const routeText = this.mapRoute?.innerText?.replace(/\s+/g, ' ').trim();
+		const routeLabel = isChallenge
+			? (this.main.area.inChallenge.draft ? 'Draft Pick Challenge' : 'Challenge')
+			: (routeText || `Route ${this.main.area.routeNumber}`);
+		const slotLabel = `#${slot + 1}`;
+		const entries = mode === 'save'
+			? (this.main.team.pokemon || []).filter(Boolean)
+			: this.getSavedTeamSlot(slot);
+		const lines = this.formatTeamSlotLines(entries);
+		const title = mode === 'save' ? `Save Team ${slotLabel}` : `Load Team ${slotLabel}`;
+		const slotLimit = this.main.area.inChallenge?.slotLimit;
+		const noItemsText = mode === 'load' && this.main.area.inChallenge?.noItems && entries.length > 0
+			? '<br>Held items will be ignored for No Items.'
+			: '';
+		const storedChallengeTeam = this.main.area.inChallenge
+			? this.main.teamManager.getChallengeTeam(slot)
+			: [];
+		const slotLimitText = mode === 'load' && typeof slotLimit === 'number' && storedChallengeTeam.length > slotLimit
+			? `<br>Only the first ${slotLimit} Pokemon will load for this slot limit.`
+			: '';
+		const actionText = mode === 'save'
+			? `${text.ui.saveCurrentTeam[this.main.lang]} ${routeLabel}.`
+			: (entries.length === 0 ? `${text.ui.noSavedTeamFor[this.main.lang]} ${routeLabel}.` : `${text.ui.savedTeamFor[this.main.lang]} ${routeLabel}:${slotLimitText}${noItemsText}`);
+		const description = entries.length === 0 && mode === 'load'
+			? actionText
+			: `${actionText}<br><br>${lines.join('<br>')}`;
+
+		this.main.tooltip.showItem({ name: [title], description: [description] });
+	}
+
+	showSlotButtonTooltip(index, type) {
+		const pokemon = this.main.team.pokemon[index];
+		if (!pokemon) return;
+
+		if (type === 'deploy') {
+			const tooltipData = pokemon.isDeployed
+				? { name: ['Remove'], description: ['Remove this Pokemon from the field.'] }
+				: { name: ['Add'], description: ['Add this Pokemon to the field and show valid tiles.'] };
+			this.main.tooltip.showItem(tooltipData);
+			return;
+		}
+
+		if (type === 'info') {
+			this.main.tooltip.showItem({ name: ['Info'], description: ['Open this Pokemon details panel.'] });
+			return;
+		}
+
+		if (type === 'item') {
+			if (!pokemon.item) {
+				this.main.tooltip.showItem({ name: ['Item'], description: ['Open item selection for this Pokemon.'] });
+				return;
+			}
+			const itemName = this.getLocalizedValue(pokemon.item.name, 'Item');
+			const itemDesc = this.getShortTooltipText(this.getLocalizedValue(pokemon.item.description, ''), 120) || 'No description.';
+			this.main.tooltip.showItem({ name: [itemName], description: [itemDesc] });
+		}
+	}
+
 	updatePokemon() {
 		for (let i = 0; i < 10; i++) {
 			this.pokemon[i].name.innerText = text.ui.empty[this.main.lang].toUpperCase();
@@ -724,6 +1128,7 @@ export class UI {
 			this.pokemon[i].name.style.color = '#888';
 			this.pokemon[i].level.innerText = '';
 			this.pokemon[i].shiny.style.display = 'none';
+			this.pokemon[i].shiny.classList.remove('is-inline');
 			this.pokemon[i].sprite.style.backgroundImage = '';
 			this.pokemon[i].sprite.style.cursor = "";
 			this.pokemon[i].style.transform = `revert-layer`
@@ -734,6 +1139,7 @@ export class UI {
 			this.pokemon[i].item.style.display = 'none';
 			this.pokemon[i].item.style.filter = 'revert-layer'
 			this.pokemon[i].item.innerText = '+';
+			this.pokemon[i].item.title = '';
 
 			this.pokemon[i].deploy.style.background = 'revert-layer';
 			this.pokemon[i].deploy.style.pointerEvents = 'none';
@@ -741,9 +1147,11 @@ export class UI {
 			this.pokemon[i].deploy.style.paddingTop = 'revert-layer';
 			this.pokemon[i].deploy.style.filter = 'revert-layer';
 			this.pokemon[i].deploy.style.boxShadow = 'revert-layer';
+			this.pokemon[i].deploy.title = '';
 
 			this.pokemon[i].info.style.pointerEvents = 'none';
 			this.pokemon[i].info.style.display = 'none';
+			this.pokemon[i].info.title = '';
 
 			this.pokemon[i].levelUp.style.pointerEvents = 'none';
 			this.pokemon[i].levelUp.style.display = 'none';
@@ -752,6 +1160,15 @@ export class UI {
 			this.pokemon[i].noPokemon.style.display = 'revert-layer';
 
 			this.pokemon[i].stars.style.display = 'none';
+			this.pokemon[i].attackStyle.style.display = 'none';
+			this.pokemon[i].attackStyle.classList.remove('is-circle', 'is-donut', 'is-cross', 'is-x-shape', 'is-line');
+			this.pokemon[i].attackStyle.innerText = '';
+			this.pokemon[i].fieldStatus.style.display = 'none';
+			this.pokemon[i].fieldStatus.classList.remove('is-deployed', 'is-undeployed');
+			this.pokemon[i].fieldStatus.innerText = '';
+			this.pokemon[i].targetMode.style.display = 'none';
+			this.pokemon[i].targetMode.classList.remove('is-locked');
+			this.pokemon[i].targetText.innerText = '';
 			this.pokemon[i].dittoBg.style.display = 'none';
 
 			this.damageDealtUnit[i].sprite.style.display = 'none';
@@ -783,7 +1200,10 @@ export class UI {
 					else this.pokemon[i].sprite.style.transform = `translate(-50%, 0) scale(1, -1)`;
 				}
 			}
-			if (pokemon.isShiny) this.pokemon[i].shiny.style = 'revert-layer';
+			if (pokemon.isShiny) {
+				this.pokemon[i].shiny.style.display = 'revert-layer';
+				this.pokemon[i].shiny.classList.add('is-inline');
+			}
 			
 			this.pokemon[i].sprite.style.cursor = "grab";
 			this.damageDealtUnit[i].sprite.style.display = 'revert-layer';
@@ -797,17 +1217,52 @@ export class UI {
 
 			this.pokemon[i].name.style.color = pokemon.specie.color;
 			this.pokemon[i].style.backgroundColor = `${pokemon.specie.color}33`
+			this.pokemon[i].attackStyle.style.display = (this.main.indicatorShape) ? 'revert-layer' : 'none';
+			this.pokemon[i].attackStyle.innerText = this.getAttackStyleSymbol(pokemon);
+			if (pokemon.rangeType === 'circle') {
+				switch(pokemon.attackType) {
+				case 'area':
+					this.pokemon[i].attackStyle.classList.toggle('is-area', true);
+					break;
+				case 'aura':
+					this.pokemon[i].attackStyle.classList.toggle('is-aura', true);
+					break;
+				default:
+					this.pokemon[i].attackStyle.classList.toggle('is-circle', true);
+					break
+				}
+			}
+			this.pokemon[i].attackStyle.classList.toggle('is-donut', pokemon.rangeType === 'donut');
+			this.pokemon[i].attackStyle.classList.toggle('is-cross', pokemon.rangeType === 'cross');
+			this.pokemon[i].attackStyle.classList.toggle('is-x-shape', pokemon.rangeType === 'xShape');
+			this.pokemon[i].attackStyle.classList.toggle('is-line', pokemon.rangeType === 'horizontalLine');
+			this.pokemon[i].fieldStatus.style.display = (this.main.indicatorField) ? 'revert-layer' : 'none';
+			this.pokemon[i].fieldStatus.innerText = pokemon.isDeployed ? '✓' : '✕';
+			this.pokemon[i].fieldStatus.classList.toggle('is-deployed', pokemon.isDeployed);
+			this.pokemon[i].fieldStatus.classList.toggle('is-undeployed', !pokemon.isDeployed);
+			this.pokemon[i].targetMode.style.display = (this.main.fastTarget) ? 'revert-layer' : 'none';
+			this.pokemon[i].targetMode.classList.toggle('is-locked', !this.canChangeSlotTargetMode(pokemon));
+			this.pokemon[i].targetText.innerText = this.getCompactTargetLabel(pokemon);
 
 			this.pokemon[i].deploy.style.pointerEvents = 'all';
 			this.pokemon[i].deploy.style.filter = 'revert-layer';
 			this.pokemon[i].deploy.style.display = 'revert-layer';
+			this.pokemon[i].deploy.title = '';
 
 			this.pokemon[i].info.style.pointerEvents = 'all';
 			this.pokemon[i].info.style.filter = 'revert-layer';
 			this.pokemon[i].info.style.display = 'revert-layer';
+			this.pokemon[i].info.title = '';
 
 			this.pokemon[i].item.style.display = 'revert-layer';
 			this.pokemon[i].item.style.pointerEvents = 'all';
+			if (pokemon.item) {
+				const itemName = this.getLocalizedValue(pokemon.item.name, 'Item');
+				const itemDesc = this.getShortTooltipText(this.getLocalizedValue(pokemon.item.description, ''), 100);
+				this.pokemon[i].item.title = '';
+			} else {
+				this.pokemon[i].item.title = '';
+			}
 
 			if (typeof this.main.area.inChallenge.lvlCap !== 'number') {
 				if (pokemon.lvl < 100) this.pokemon[i].levelUp.style.display = 'revert-layer';
@@ -820,8 +1275,8 @@ export class UI {
 			if (pokemon.isDeployed) {
 				if (
 					['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 
-					'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
-					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(pokemon?.item?.id)) {
+					'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb', 'mitsuesCocktail',
+					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY'].includes(pokemon?.item?.id)) {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
@@ -850,6 +1305,7 @@ export class UI {
 
 	    this.setupPokemonDragAndDrop();
 	}
+
 
  	setupPokemonDragAndDrop() {
 	    if (this.main.area.inChallenge?.draft) return;
@@ -1007,6 +1463,7 @@ export class UI {
 				        (this.main.game.deployingUnit?.item?.id == 'heavyDutyBoots' && tile.land == 2) ||
 				        (this.main.game.deployingUnit?.item?.id == 'assaultVest' && tile.land == 2) ||
 				        (this.main.game.deployingUnit?.item?.id == 'dampMulch' && tile.land == 1) ||
+				        (this.main.game.deployingUnit?.item?.id == 'mitsuesCocktail' && tile.land == 3) ||
 				        (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(this.main.game.deployingUnit.id))
 				    );
 
@@ -1051,6 +1508,7 @@ export class UI {
 						                (this.main.game.deployingUnit?.item?.id == 'heavyDutyBoots' && tile.land == 2) ||
 						                (this.main.game.deployingUnit?.item?.id == 'assaultVest' && tile.land == 2) ||
 						                (this.main.game.deployingUnit?.item?.id == 'dampMulch' && tile.land == 1) ||
+						                (this.main.game.deployingUnit?.item?.id == 'mitsuesCocktail' && tile.land == 3) ||
 						                (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(this.main.game.deployingUnit.id))
 						            );
 
@@ -1153,7 +1611,7 @@ export class UI {
 			    if (this.main.boxScene && this.main.boxScene.isOpen) this.main.boxScene.update();
 			    if (this.main.UI) this.main.UI.update();
 
-			    try { saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager); } catch (err) {}
+				try { if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager); } catch (err) {}
 
 			    playSound('click1', 'ui');
 			    clearDragState();
@@ -1340,6 +1798,12 @@ export class UI {
 
 		const scaledEnemy = this.scalePreviewEnemy(enemy, this.main.area.waveNumber);
 
+		if (this.main.area.isCustom) {
+			gold = 0;
+			hp += Math.floor(hp * (this.main.area.customData.health / 100));
+			armor += Math.floor(armor * (this.main.area.customData.armor / 100));
+		}
+
 		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
 		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.hp}</span>`;
 		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.armor || 0}</span>`;
@@ -1417,7 +1881,7 @@ export class UI {
 
 		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
 
-		if (this.main.area.map.isSecret) {
+		if (this.main.area.map.isSecret || this.main.area.isCustom) {
 			this.mapRecord.innerHTML = `<span class="msrre">⭐</span>???`;
 			this.mapRoute.innerHTML = this.main.area.map.name[this.main.lang].toUpperCase()
 		}
@@ -1466,6 +1930,23 @@ export class UI {
 		});
 
 		return wavePreview.map(pokemon => countsById[pokemon.id] || 0);
+	}
+
+	countPokemon(grupo) {
+	    const res = {};
+	    const arrayCount = (arr) => {
+	        arr.forEach(pokemon => {
+	            if (pokemon !== null) {
+	                const id = pokemon.id;
+	                res[id] = (res[id] || 0) + 1;
+	            }
+	        });
+	    };
+
+	    arrayCount(grupo.preview);
+	    arrayCount(grupo.wave);
+
+	    return grupo.preview.map(pokemon => res[pokemon.id]);
 	}
 
 	updateDamageDealt() {
@@ -1571,14 +2052,14 @@ export class UI {
 		
 		if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
 
-		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 		this.main.UI.update();	
 	}
 
 	getSecretMap(mapId) {
 		this.main.area.loadArea(mapId);
 		this.main.UI.update();
-		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 		const previewEnemy = this.main.area.getWavePreview(this.main.area.waveNumber);
 		if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
 		this.main.area.checkWeather();
@@ -1588,7 +2069,7 @@ export class UI {
 	importTeamButtonHandle(i) {
 		if (this.main.isSectionOpen()) return playSound('pop0', 'ui');
 		if (!this.main.area.inChallenge && this.main.teamManager.teams[i][this.main.area.routeNumber].length == 0) return
-		if (this.main.area.inChallenge && this.main.teamManager.teamChallenge[i].length == 0) return
+		if (this.main.area.inChallenge && this.main.teamManager.getChallengeTeam(i).length == 0) return
 			
 		const msg = new Element(this.main.scene, {
 			className: 'team-saved-message',
@@ -1730,10 +2211,12 @@ class FastScene {
 	}
 
 	close() {
-		this.isOpen = false;
-		playSound('close', 'ui');
-		if (this.main.tooltip) this.main.tooltip.hide();
-		this.UI.pokemon[this.position].removeChild(this.container);
+		if (this.isOpen) {
+			this.isOpen = false;
+			playSound('close', 'ui');
+			if (this.main.tooltip) this.main.tooltip.hide();
+			this.UI.pokemon[this.position].removeChild(this.container);
+		}
 	}
 
 	openPokemonScene() {
@@ -1779,10 +2262,55 @@ class FastScene {
 
 	    	slot.addEventListener('click', () => {
 		      	playSound('equip', 'ui');
+		      	//this.main.tooltip.hide();
 		      	this.main.itemController.equip(item, pokemon);
 		      	this.UI.update();
 		      	this.close();
+		      	if (item.id === 'quickClaw' && pokemon.attackType !== 'area') {
+		      		pokemon.changeTargetMode(TARGET_MODES[6]);
+		      		this.UI.updatePokemon();
+		      	}
 	    	});
 	  	});
+
+	  	// Remove-item shortcut at end of list.
+	  	const removeSlot = new Element(this.container, {
+	  		className: 'fast-scene-pokemon-item'
+	  	}).element;
+	  	removeSlot.textContent = '✕';
+	  	removeSlot.style.display = 'flex';
+	  	removeSlot.style.alignItems = 'center';
+	  	removeSlot.style.justifyContent = 'center';
+	  	removeSlot.style.fontWeight = 'bold';
+	  	removeSlot.style.fontSize = '14px';
+	  	removeSlot.style.color = '#f4f4f4';
+	  	removeSlot.style.textShadow = '1px 1px black'
+
+	  	const deployedLockedItems = [
+	  		'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
+	  		'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
+	  		'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'mitsuesCocktail', 'charizarditeY'
+	  	];
+
+	  	const cannotRemoveNow = !pokemon?.item || (pokemon.isDeployed && deployedLockedItems.includes(pokemon?.item?.id));
+	  	if (cannotRemoveNow) {
+	  		removeSlot.style.filter = 'brightness(0.6)';
+	  		removeSlot.style.pointerEvents = 'none';
+	  		removeSlot.style.cursor = 'not-allowed';
+	  	} else {
+	  		removeSlot.style.cursor = 'pointer';
+	  		removeSlot.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
+	  		removeSlot.addEventListener('mouseenter', () => {
+	  			this.main.tooltip.showItem({ name: text.pokemon.removeItem, description: text.pokemon.removeItemDescription });
+	  		});
+	  		removeSlot.addEventListener('mouseleave', () => { this.main.tooltip.hide(); });
+	  		removeSlot.addEventListener('click', () => {
+	  			playSound('unequip', 'ui');
+	  			this.main.tooltip.hide();
+	  			pokemon.retireItem();
+	  			this.UI.update();
+	  			this.close();
+	  		});
+	  	}
 	}
 }

@@ -27,10 +27,26 @@ export class MapScene extends SectionScene {
 	    this.routes = [];
 	    this.secretRoutes = [];
 
+	    // Build a pos→route map. XL routes declare pos as an array [startPos, endPos].
+	    // We register them by their first (anchor) position; occupied secondary cells
+	    // are tracked in a Set so the loop can skip them.
 	    const routesByPos = {};
-	    this.sortedRoutes.forEach(r => { routesByPos[r.pos] = r; });
+	    const occupiedCells = new Set();
+
+	    this.sortedRoutes.forEach(r => {
+	        if (Array.isArray(r.pos)) {
+	            routesByPos[r.pos[0]] = r;
+	            // Mark every position after the first as occupied (no empty tile there)
+	            for (let p = 1; p < r.pos.length; p++) occupiedCells.add(r.pos[p]);
+	        } else {
+	            routesByPos[r.pos] = r;
+	        }
+	    });
 
 	    for (let i = 0; i < 54; i++) {
+	        // This cell is covered by the span of an XL route — skip it entirely
+	        if (occupiedCells.has(i)) continue;
+
 	        const route = routesByPos[i];
 
 	        if (!route) {
@@ -41,13 +57,20 @@ export class MapScene extends SectionScene {
 	            continue;
 	        }
 
+	        // Determine grid placement.
+	        // XL routes with pos:[c, c+1] span 2 columns in the same row.
+	        const isXL = Array.isArray(route.pos) && route.pos.length >= 2;
+	        const anchorPos = isXL ? route.pos[0] : route.pos;
+	        const col = (anchorPos % 9) + 1;
+	        const row = Math.floor(anchorPos / 9) + 1;
+
 	        const routeElement = new Element(this.routeContainer, {
-	            className: 'maps-scene-route',
+	            className: isXL ? 'maps-scene-route maps-scene-route-xl' : 'maps-scene-route',
 	            image: route.background
 	        }).element;
 
-	        routeElement.style.gridColumn = (i % 9) + 1;
-	        routeElement.style.gridRow = Math.floor(i / 9) + 1;
+	        routeElement.style.gridColumn = isXL ? `${col} / span 2` : `${col}`;
+	        routeElement.style.gridRow = `${row}`;
 
 	        routeElement.dataset.routeId = route.id;      
 
@@ -80,9 +103,25 @@ export class MapScene extends SectionScene {
 	        routeElement.addEventListener('click', () => this.changeMap(route.id));
 	        routeElement.addEventListener('mouseenter', () => playSound('hover2', 'ui'));
 	    }
+
+	    this.editorButton = new Element(this.container, { className: 'maps-scene-editor-button' }).element; 
+	    this.editorButton.addEventListener('mouseenter', () => playSound('hover3', 'ui'));
+	    this.editorButton.addEventListener('click', () => { this.main.editorScene.open(); })
 	}
 
 	update() {
+		if (this.main.player.hasEditable) {
+			this.editorButton.style.display = 'block';
+			this.editorButton.innerHTML = text.editable.title[this.main.lang].toUpperCase();
+			if (!this.main.area.waveActive) {
+				this.editorButton.style.filter = 'revert-layer';
+                this.editorButton.style.pointerEvents = 'all';
+			} else {
+				this.editorButton.style.filter = 'brightness(0.8)';
+                this.editorButton.style.pointerEvents = 'none';
+			}
+		} else this.editorButton.style.display = 'none'
+		
         this.routes.forEach(({ element, record, requires, name, data: route }) => {      	
             const current = this.main.area.routeNumber;
             const stars = this.main.player.stars;
@@ -131,7 +170,7 @@ export class MapScene extends SectionScene {
 		if (pos === this.main.area.routeNumber) return this.close();
 		this.main.area.loadArea(pos);
 		this.main.UI.update();
-		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 		const previewEnemy = this.main.area.getWavePreview(this.main.area.waveNumber);
 		if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
 		this.main.area.checkWeather();

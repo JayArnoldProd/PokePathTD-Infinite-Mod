@@ -47,6 +47,7 @@ export class DefeatScene extends GameScene {
 		this.prompt.innerHTML = `${text.defeat.prompt[this.main.lang].toUpperCase()} ${this.main.area.waveNumber - 1} ${text.map.waves[this.main.lang].toUpperCase()}`;
 		this.restartButton.innerText = text.defeat.restart[this.main.lang].toUpperCase();
 		this.retryButton.innerText = text.defeat.retry[this.main.lang].toUpperCase();
+		this.image.className = 'defeat-scene-image';
 
 		if (this.main.area.waveNumber > 25) {
 			this.getRetryWave();
@@ -57,6 +58,15 @@ export class DefeatScene extends GameScene {
 			this.retryButton.style.filter = 'brightness(0.8)';
 			this.retryButton.style.pointerEvents = 'none';
 			this.info.innerHTML = text.defeat.cantRetry[this.main.lang].toUpperCase();
+		}
+
+		if (this.main.area.isCustom) {
+			if (this.main.player.health[this.main.area.map.id] <= 0) this.info.innerHTML = text.editable.lose[this.main.lang].toUpperCase();
+			else {
+				this.prompt.innerHTML = `${text.defeat.prompt[this.main.lang].toUpperCase()} ${this.main.area.waveNumber} ${text.map.waves[this.main.lang].toUpperCase()}`;
+				this.image.className = 'defeat-scene-image-happy';
+				this.info.innerHTML = text.editable.win[this.main.lang].toUpperCase();
+			}
 		}
 
 		if (this.main.area.inChallenge.permadeath) {
@@ -177,10 +187,13 @@ export class DefeatScene extends GameScene {
 
 	restart(autoReset = {}) {
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
-		this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true);
-		this.main.player.getHealed(14);
-		this.close();
+		if (!this.main.area.isCustom) this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge);
+		else this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true, this.main.area.customData);
+		
+		if (!this.main.area.isCustom) this.main.player.getHealed(14);
+		else this.main.player.getHealed(this.main.area.customData.hearts);
 
+		this.close();
 		if (autoReset.autoWave) this.main.area.switchAutoWave();
 	}
 
@@ -195,7 +208,8 @@ export class DefeatScene extends GameScene {
 			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
 		}
 		
-		this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true);
+		if (!this.main.area.isCustom) this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge);
+		else this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true, this.main.area.customData);
 		this.main.player.getHealed(lives);
 		this.close();
 
@@ -219,7 +233,7 @@ export class DefeatScene extends GameScene {
 		if (this.main.player.stats.resets == 100) this.main.player.unlockAchievement(11);
 		
 		playSound('button2', 'ui');
-		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
 
 	// MOD: Extended checkpoints for endless mode - every 50 waves after 100

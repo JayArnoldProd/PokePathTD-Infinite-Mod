@@ -7,8 +7,14 @@ export class Projectile extends Sprite {
         super(x, y, ctx, projectile.sprite.image, projectile.sprite.frames);
 
         const rawSpeed = projectile.speed ?? 5;
-        this.speed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed;
+        let baseSpeed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed;
 
+        if (tower?.speed && tower.speed < 500) {
+            const t = (500 - tower.speed) / 450;
+            baseSpeed *= (1 + t);
+        }
+
+        this.speed = baseSpeed;
         this.velocity = { x: 0, y: 0 };
         this.enemy = enemy;
         this.ctx = ctx;
@@ -39,6 +45,19 @@ export class Projectile extends Sprite {
         this.orbit = projectile.orbit ?? null;
         this.simulatedTime = 0;
 
+        // Spiral movement for revysBook
+        this.spiral = null;
+        if (tower?.pokemon?.item?.id === 'revysBook' && enemy) {
+            this.spiral = {
+                originX: x + (this.width ? this.width / 2 : 0),
+                originY: y + (this.height ? this.height / 2 : 0),
+                angle: Math.random() * Math.PI * 2, // random start angle for variety
+                angularSpeed: (Math.random() < 0.5 ? 1 : -1) * (Math.PI * 6), // ~3 full spins
+                radius: 10 + Math.random() * 5,    // spiral amplitude (px)
+                progress: 0
+            };
+        }
+
         if (this.orbit) {
             this.angle = this.orbit.startAngle ?? 0;
             this.orbitRadius = this.orbit.radius ?? 28;
@@ -50,6 +69,9 @@ export class Projectile extends Sprite {
             this.lifeTime = Infinity;
             this.enemy = null;
         }
+
+        this.forcedSplash = (this.tower?.pokemon?.item?.id === 'revysBook' && Math.random() < 0.15) ? true : false;
+        if (this.tower?.pokemon?.item?.id === 'revysBook' && Math.random() < 0.15) this.ricochetsLeft += 2;
     }
 
     update(deltaTime = 1000 / 60, shouldDraw = true) {
@@ -115,20 +137,20 @@ export class Projectile extends Sprite {
             return;
         }
 
-        if ((!this.enemy || this.enemy.hp <= 0) && this.tower) {
-            const fallbackSource = { center: this.position || { x: this.position?.x ?? 0, y: this.position?.y ?? 0 } };
-            const newTarget = this.tower.findClosestEnemy(fallbackSource, 200);
-            if (newTarget) {
-                this.enemy = newTarget;
-            } else {
-                this.markedForDeletion = true;
-                return;
-            }
-        }
-
         if (!this.enemy || this.enemy.hp <= 0) {
             this.markedForDeletion = true;
             return;
+        }
+
+        // MOD: Delete projectile if target enemy is off-screen
+        if (this.enemy && !this.enemy.dying && this.tower?.main?.game?.canvas) {
+            const c = this.tower.main.game.canvas;
+            const ex = this.enemy.center?.x ?? this.enemy.position?.x ?? 0;
+            const ey = this.enemy.center?.y ?? this.enemy.position?.y ?? 0;
+            if (ex < -50 || ex > c.width + 50 || ey < -50 || ey > c.height + 50) {
+                this.markedForDeletion = true;
+                return;
+            }
         }
 
         this.age += simDelta;
@@ -173,6 +195,88 @@ export class Projectile extends Sprite {
             }
             return; // no mover ni comprobar colisiones mientras animamos la pulse
         }
+
+        // --- TORNADO MOVEMENT (revysBook) ---
+        if (this.spiral) {
+            const targetX = this.enemy.center.x;
+            const targetY = this.enemy.center.y;
+
+            const dx = targetX - this.spiral.originX;
+            const dy = targetY - this.spiral.originY;
+            const totalDist = Math.hypot(dx, dy) || 1;
+
+            // Advance progress along the axis and rotate around it
+            this.spiral.progress = Math.min(1, this.spiral.progress + (this.speed / totalDist) * secs);
+            this.spiral.angle += this.spiral.angularSpeed * secs;
+
+            // Current position along the straight axis (origin → target)
+            const normX = dx / totalDist;
+            const normY = dy / totalDist;
+
+            const axisX = this.spiral.originX + normX * totalDist * this.spiral.progress;
+            const axisY = this.spiral.originY + normY * totalDist * this.spiral.progress;
+
+            // Two truly independent perpendicular vectors to the axis.
+            // perp1: rotate axis 90° in XY plane
+            const perp1X = -normY;
+            const perp1Y =  normX;
+            // perp2: cross product of axis with world-Z (0,0,1), projected to screen.
+            // In 2D we simulate this as the component of (0,1) orthogonal to the axis.
+            const dot = normY; // dot of normXY with (0,1)
+            let perp2X = 0 - normX * dot;
+            let perp2Y = 1 - normY * dot;
+            const perp2Len = Math.hypot(perp2X, perp2Y) || 1;
+            perp2X /= perp2Len;
+            perp2Y /= perp2Len;
+
+            // Radius shrinks as it approaches the target (tornado funnel shape)
+            const radius = this.spiral.radius * (1 - this.spiral.progress);
+
+            const cosA = Math.cos(this.spiral.angle);
+            const sinA = Math.sin(this.spiral.angle);
+
+            // True orbit: combine both perpendiculars with cos/sin
+            const offX = (perp1X * cosA + perp2X * sinA) * radius;
+            const offY = (perp1Y * cosA + perp2Y * sinA) * radius;
+
+            const newX = axisX + offX;
+            const newY = axisY + offY;
+
+            this.position.x = newX - (this.width ? this.width / 2 : 0);
+            this.position.y = newY - (this.height ? this.height / 2 : 0);
+            this.center = { x: newX, y: newY };
+
+            // Velocity for draw() rotation (visual direction)
+            this.velocity.x = newX - (this._lastSpiralX ?? newX);
+            this.velocity.y = newY - (this._lastSpiralY ?? newY);
+            this._lastSpiralX = newX;
+            this._lastSpiralY = newY;
+
+            // Hit detection
+            const hitRadius = Math.max(
+                (this.enemy.radius ?? 6) + 2,
+                (this.enemy.width ?? 16) / 2,
+                8
+            );
+            const distToEnemy = Math.hypot(targetX - newX, targetY - newY);
+            if (distToEnemy < hitRadius || this.spiral.progress >= 1) {
+                this.processImpact();
+            } else if (shouldDraw) {
+                this.draw();
+            }
+
+            // Out of bounds check
+            if (this.ctx && this.ctx.canvas) {
+                if (
+                    this.position.x < -50 || this.position.x > this.ctx.canvas.width + 50 ||
+                    this.position.y < -50 || this.position.y > this.ctx.canvas.height + 50
+                ) {
+                    this.markedForDeletion = true;
+                }
+            }
+            return;
+        }
+        // --- END TORNADO ---
 
         const angle = Math.atan2(
             this.enemy.center.y - (this.center?.y ?? (this.position.y + (this.height ? this.height/2 : 0))),
@@ -294,7 +398,7 @@ export class Projectile extends Sprite {
         let isCritical = false;
         let critical = this.critical;
 
-        if (this.tower?.pokemon?.item?.id == 'silphScope' && (this.tower?.ability?.id == 'frisk' || this.tower?.ability?.id == 'vigilantFrisk')) finalDamage += 175;
+        if (this.tower?.pokemon?.item?.id == 'silphScope' && (this.tower?.ability?.id == 'frisk' || this.tower?.ability?.id == 'illuminate' || this.tower?.ability?.id == 'vigilantFrisk')) finalDamage += 175;
 
         if (this.tower?.ability?.id === 'star') {
             finalDamage += Math.min(1200, this.tower.main.player.stars);
@@ -313,7 +417,7 @@ export class Projectile extends Sprite {
                 const pokes = [...this.tower.main.team.pokemon, ...this.tower.main.box.pokemon];
                 const noShinyPokes = pokes.filter(pokemon => !pokemon.isShiny && pokemon.specie.evolution === undefined);
 
-                if (noShinyPokes.length > 0) {
+                if (noShinyPokes.length > 0 && !this.tower.main.area.isCustom) {
                     const randomPokemon = noShinyPokes[Math.floor(Math.random() * noShinyPokes.length)];
                     randomPokemon.isShiny = true;
                     randomPokemon.setShiny();
@@ -378,11 +482,18 @@ export class Projectile extends Sprite {
             this.tower?.pokemon?.item?.id ==  'nanabBerry'
         ) finalDamage += Math.ceil(this.power / 2);
 
-        if (this.tower?.pokemon?.item?.id == "crunchies") finalDamage -= Math.ceil(this.power * 0.4);
+        if (this.tower?.pokemon?.item?.id == 'eviolite' && this.tower?.pokemon?.lvl <= 50) finalDamage += Math.ceil(this.power / 5);
 
-        if (this.tower?.pokemon?.item?.id == 'zoomLens' ||
-            this.tower?.pokemon?.item?.id == 'quickPowder' ||
-            this.tower?.pokemon?.item?.id == 'quickClaw'
+        if ( this.tower?.pokemon?.item?.id == 'sokudosPortfolio') {
+            finalDamage = Math.ceil(finalDamage *(2 * this.tower.main.player.shinyAmount / 100));
+        }
+
+        if (this.tower?.pokemon?.item?.id == "crunchies") finalDamage -= Math.ceil(this.power * 0.4);  
+
+        if (this.tower?.pokemon?.item?.id == 'zoomLens' || 
+            this.tower?.pokemon?.item?.id == 'quickPowder' || 
+            this.tower?.pokemon?.item?.id == 'quickClaw' ||
+            this.tower?.pokemon?.item?.id == 'scovillainSiracha'
         ) {
             if (this.tower?.ability?.id != 'contrary' && this.tower?.ability?.id != 'defiant') {
                 finalDamage -= (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.75) : Math.ceil(this.power * 0.5);
@@ -392,14 +503,19 @@ export class Projectile extends Sprite {
             else finalDamage += Math.ceil(this.power / 2);
         }
 
+        if (this.tower?.pokemon?.item?.id == 'laggingTail') {
+            if (this.tower?.ability?.id === 'defiant') finalDamage += 750;
+            finalDamage += (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.75) : Math.ceil(this.power * 0.5);
+        }
+
         if (this.tower?.pokemon?.ability?.id === 'tailGlow' && this.tower.main.area.heartScale > 0) {
             finalDamage += Math.ceil(this.power * 0.75);
         }
 
-        if (this.tower?.pokemon?.item?.id == "weaknessPolicy") finalDamage += finalDamage * 0.5;
+        if (this.tower?.pokemon?.item?.id == "weaknessPolicy") finalDamage += finalDamage;
 
         if (this.tower?.pokemon?.item?.id == 'inverter' && this.tower?.pokemon?.lvl == 100 && this.tower?.pokemon?.specie?.key == 'malamar') {
-            critical += 51;
+            critical += 15;
             finalDamage += Math.ceil(finalDamage * 0.5);
         }
 
@@ -510,6 +626,12 @@ export class Projectile extends Sprite {
 
         this.enemy.getDamaged(finalDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower);
 
+        // revysBook: trigger 360 spin on hit
+        if (this.tower?.pokemon?.item?.id === 'revysBook' && this.enemy) {
+            this.enemy.spinRemaining = 400;
+            this.enemy.spinAngle = 0;
+        }
+
         if (this.tower?.pokemon?.item?.id === 'amuletCoin') {
             let g = Math.ceil(finalDamage * 0.001 * (Math.min(1200, this.tower.main.player.stars)));
             this.tower.main.area.goldWave += g;
@@ -549,7 +671,7 @@ export class Projectile extends Sprite {
             statusPool[randomIndex]();
         }
 
-        if (this.enemy.canBurn && (this.tower?.ability?.id === 'burn' || this.tower?.ability?.id === 'burnSplash' || this.tower?.ability?.id === 'burnDoubleShot')) {
+        if (this.enemy.canBurn && (this.tower?.ability?.id === 'burn' || this.tower?.ability?.id === 'burnSplash' || this.tower?.ability?.id === 'burnDoubleShot' || this.tower?.pokemon?.item?.id == 'scovillainSiracha')) {
             if (this.tower?.pokemon?.item?.id == 'magmaStone') this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.tower.pokemon);
             else if (this.tower?.pokemon?.item?.id == 'falmeOrb') this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.tower.pokemon);
             else this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.tower.pokemon);
@@ -562,9 +684,9 @@ export class Projectile extends Sprite {
         if (
             (this.enemy.canSlow || this.tower?.pokemon?.item?.id === 'bindingBand') &&
             (
-                this.tower?.ability?.id === 'slow' ||
-                this.tower?.ability?.id === 'slowRicochet' ||
-                this.tower?.ability?.id === 'slowSplash' ||
+                this.tower?.ability?.id === 'slow' || 
+                this.tower?.ability?.id === 'slowRicochet' || 
+                this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' || 
                 this.tower?.ability?.id === 'cradily'
             )
         ) {
@@ -597,33 +719,35 @@ export class Projectile extends Sprite {
         if ((
                 this.tower?.pokemon?.item?.id == "maliciousArmor" ||
                 (isCritical && this.tower?.pokemon?.item?.id == "crunchies") ||
-                this.tower?.ability?.id === 'splash' ||
-                this.tower?.ability?.id === 'slowSplash' ||
+                this.tower?.ability?.id === 'splash' ||  this.tower?.ability?.id === 'auraSphere' ||
+                this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' || 
                 this.tower?.ability?.id === 'burnSplash' ||
                 this.tower?.ability?.id === 'armorBreakSplash' ||
                 this.tower?.ability?.id === 'synchronySplash' ||
                 this.tower?.ability?.id === 'armorCannon' ||
                 this.tower?.pokemon?.item?.id == 'sprayduck' ||
-                this.tower?.lightningRodCharge === 10
+                this.tower?.lightningRodCharge === 10 || 
+                this.forcedSplash
             ) && this.tower?.pokemon?.item?.id != "weaknessPolicy"
         ) {
             let splashRadius = 65;
 
             if (this.tower?.pokemon?.item?.id == "dragonFang") splashRadius = 130;
             if (this.tower?.lightningRodCharge == 10) splashRadius = 150;
+            if (this.tower?.ability?.id === 'auraSphere') splashRadius += 6.5 * (Math.abs(this.tower.main.player.health[this.tower.main.area.routeNumber] - 14));
 
             this.tower.main.area.enemies.forEach(e => {
                 if (e !== this.enemy && e.hp > 0) {
                     const dist = Math.hypot(e.center.x - this.enemy.center.x, e.center.y - this.enemy.center.y);
                     if (dist <= splashRadius) {
-                        let splashDamage = (this.tower?.pokemon?.item?.id == 'muscleBand') ? finalDamage : Math.ceil(finalDamage * 0.5);
+                        let splashDamage = (this.tower?.pokemon?.item?.id == 'muscleBand' || this.tower?.ability?.id === 'auraSphere') ? finalDamage : Math.ceil(finalDamage * 0.5);
                         e.getDamaged(splashDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower);
                         if (e.canBurn && this.tower?.ability?.id === 'burnSplash') {
                             if (this.tower?.pokemon?.item?.id == 'magmaStone') e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.tower.pokemon);
                             else if (this.tower?.pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.tower.pokemon);
                             else e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.tower.pokemon);
                         }
-                        if (e.canSlow && this.tower?.ability?.id === 'slowSplash') {
+                        if (e.canSlow && (this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill')) {
                             (this.tower?.pokemon?.item?.id == 'lightClay') ? e.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2.2 }) : e.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
                         }
                         if (this.tower?.ability?.id === 'synchronySplash') {
@@ -641,8 +765,23 @@ export class Projectile extends Sprite {
         }
 
         // CREAR SPIKES
-        if (this.tower?.ability?.id === 'spikyShield' && Math.random() < 0.25) {
+        if (this.tower?.ability?.id === 'spikyShield') {
+            if (Math.random() < this.tower?.spikyShieldChance) {
+                this.tower.spikyShieldChance = 0;
+                const tr = (this.tower?.pokemon?.item?.id == 'rockyHelmetSpikes') ? 250 : 500;
+                const pos = { x: this.position.x+16, y: this.position.y+16 };
 
+                this.tower.main.area.createSpikeZone(pos, this.tower, {
+                    radius: 60,
+                    duration: 2600,
+                    tickRate: tr,
+                    dedupDistance: 32,
+                    dedupTime: 250
+                });
+            } else this.tower.spikyShieldChance += 0.25;
+        }
+
+        if (this.tower?.pokemon?.item?.id == 'revysBook' && Math.random() < 0.01) {
             const tr = (this.tower?.pokemon?.item?.id == 'rockyHelmetSpikes') ? 250 : 500;
             const pos = { x: this.position.x+16, y: this.position.y+16 };
 
@@ -657,7 +796,7 @@ export class Projectile extends Sprite {
 
         // rebote
         if (this.ricochetsLeft > 0 && this.tower && this.tower?.pokemon?.item?.id != 'loadedDice') {
-            const next = this.findClosestEnemy(this.enemy, 200);
+            const next = this.findClosestEnemy(this.tower, this.tower.range || 100, this.enemy);
             if (next) {
                 const reducedPower = (this.tower?.pokemon?.item?.id === 'metronome') ? Math.ceil(this.power * 0.85) : Math.ceil(this.power * 0.7);
                 const sx = this.enemy.center.x + (Math.random() - 0.5) * 6;
@@ -685,18 +824,20 @@ export class Projectile extends Sprite {
         if ((
             this.tower?.pokemon?.item?.id == "maliciousArmor" ||
             (isCritical && this.tower?.pokemon?.item?.id == "crunchies") ||
-            this.tower?.ability?.id === 'splash' ||
-            this.tower?.ability?.id === 'slowSplash' ||
+            this.tower?.ability?.id === 'splash' || this.tower?.ability?.id === 'auraSphere' || 
+            this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||  
             this.tower?.ability?.id === 'burnSplash' ||
             this.tower?.ability?.id === 'armorBreakSplash' ||
             this.tower?.ability?.id === 'synchronySplash' ||
             this.tower?.ability?.id === 'armorCannon' ||
             this.tower?.pokemon?.item?.id == 'sprayduck' ||
-            this.tower?.lightningRodCharge === 10
+            this.tower?.lightningRodCharge === 10 ||
+            this.forcedSplash
             ) && this.tower?.pokemon?.item?.id != "weaknessPolicy"
         ) {
             let pulseRadius = 65;
 
+            if (this.tower?.ability?.id === 'auraSphere') pulseRadius += 6.5 * (Math.abs(this.tower.main.player.health[this.tower.main.area.routeNumber] - 14));
             if (this.tower?.pokemon?.item?.id == "dragonFang") pulseRadius = 130;
             if (this.tower?.lightningRodCharge == 10) {
                 pulseRadius = 150;
@@ -726,11 +867,11 @@ export class Projectile extends Sprite {
         return;
     }
 
-    findClosestEnemy(fromEnemy, maxDist = 200) {
+    findClosestEnemy(fromEnemy, maxDist = 200, excludeEnemy = null) {
         let closest = null;
         let minDist = maxDist;
         for (const e of this.tower.main.area.enemies) {
-            if (!e || e === fromEnemy || e.hp <= 0 || e.invisible) continue;
+            if (!e || e === fromEnemy || e === excludeEnemy || e.hp <= 0 || e.invisible) continue;
             const dx = e.center.x - fromEnemy.center.x;
             const dy = e.center.y - fromEnemy.center.y;
             const d = Math.hypot(dx, dy);
@@ -741,5 +882,4 @@ export class Projectile extends Sprite {
         }
         return closest;
     }
-
 }

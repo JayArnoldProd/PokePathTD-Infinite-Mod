@@ -12,6 +12,9 @@ const BOSS = [
 	enemyData['moltres'], enemyData['regirock'], enemyData['groudon'], 
 	enemyData['registeel'], enemyData['regice'], enemyData['regigigas'], 
 	enemyData['zapdos'], enemyData['hooh'], enemyData['articuno'], 
+	enemyData['kyogre'], enemyData['thundurus'], enemyData['tapuFini'], enemyData['nihilego'], 
+	enemyData['tapuKoko'], enemyData['tapuBulu'], enemyData['tapuLele'], enemyData['keldeo'], 
+	enemyData['manaphy'], enemyData['heatran'], 
 ]
 
 export class FinalScene extends GameScene {
@@ -140,6 +143,7 @@ export class FinalScene extends GameScene {
 			this.main.mapScene,
 			this.main.pokemonScene,
 			this.main.shopScene,
+			this.main.editorScene,
 			this.main.shopScene.displayPokemon,
 			this.main.profileScene,
 			this.main.challengeScene,
@@ -217,7 +221,12 @@ export class FinalScene extends GameScene {
 		this.main.game.resume();
 
 		playSound('obtain', 'ui');
-		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
+		if (this.boss == enemyData['manaphy'] && !this.main.player.secrets['manaphy']) {
+			this.main.player.secrets.manaphy = true;
+			this.main.UI.getSecret('manaphy')
+		}
+
+		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
 
 	getText(lang) {

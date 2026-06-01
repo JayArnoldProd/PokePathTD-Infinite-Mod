@@ -80,15 +80,15 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  42952,
-    "src/js/game/component/Pokemon.js":     24443,
-    "src/js/game/scenes/PokemonScene.js":   58824,
-    "src/js/game/core/Area.js":             18938,
+    "src/js/game/Game.js":                  53778,
+    "src/js/game/component/Pokemon.js":     25687,
+    "src/js/game/scenes/PokemonScene.js":   62228,
+    "src/js/game/core/Area.js":             19881,
     "src/js/game/core/Team.js":             1854,
     "src/js/game/core/Box.js":              703,
-    "src/js/game/component/Tower.js":        107380,
-    "src/js/game/component/Enemy.js":        46328,
-    "src/js/game/scenes/MenuScene.js":       49486,
+    "src/js/game/component/Tower.js":        115730,
+    "src/js/game/component/Enemy.js":        52727,
+    "src/js/game/scenes/MenuScene.js":       53532,
 }
 
 def check_game_version_compatibility():
@@ -412,7 +412,7 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Hover tooltips for held items, save/load team buttons, tower position saving, challenge party preserve, attack type sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), profile unlockables tab, live profile stats, and map hover star counts',
+        'description': 'Save/load button labels, tower position saving, attack type and attack shape sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), profile unlockables tab, live profile stats, and map hover star counts',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_endless_stats', 'apply_profile_live_update', 'apply_map_hover_stars'],
         'default': True,
     },
@@ -1079,6 +1079,16 @@ def apply_enemy_shiny_spawn():
     if old_defeat in content:
         content = content.replace(old_defeat, new_defeat, 1)
         changed = True
+    elif "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" not in content:
+        content2, replacements = re.subn(
+            r"(\bthis\.main\.player\.stats\.defeatedEnemies\+\+;\s*)",
+            r"\1if (this.isShiny) this.main.player.stats.shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;\n            ",
+            content,
+            count=1,
+        )
+        if replacements > 0:
+            content = content2
+            changed = True
 
     constructor_ok = "this.isShiny = Math.random() < (1 / 1000);" in content
     defeat_ok = "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content
@@ -1172,7 +1182,7 @@ def apply_pause_micromanagement():
     """
     Surgically patch Game.js to enable pause micromanagement.
 
-    The current Game.modded.js is based on vanilla 1.5.5, which already has a
+    The current Game.modded.js is based on vanilla 1.5.6, which already has a
     Worker-driven render loop, passenger/mount placement handling, spike zones,
     and link-beam rendering. Pause micro keeps the render loop alive, skips
     simulation/tower attacks while stopped, and leaves canvas input enabled so
@@ -1393,6 +1403,17 @@ def apply_speed_mod():
     if old_toggle in content:
         content = content.replace(old_toggle, new_toggle)
         changes += 1
+    elif 'toggleSpeed()' in content:
+        content2, replacements = re.subn(
+            r"\t[ \t]*toggleSpeed\(\) \{.*?\n\t[ \t]*\}\n\n\t[ \t]*switchPause\(",
+            new_toggle + "\n\n\tswitchPause(",
+            content,
+            count=1,
+            flags=re.DOTALL,
+        )
+        if replacements > 0:
+            content = content2
+            changes += 1
     
     # 2. Fix restoreSpeed to use 1 instead of 0.8
     old_restore = "this.speedFactor = 0.8;\n    \tthis.main.UI.speedWave.style.background"
@@ -1400,6 +1421,16 @@ def apply_speed_mod():
     if old_restore in content:
         content = content.replace(old_restore, new_restore)
         changes += 1
+    elif 'restoreSpeed()' in content and "this.main.UI.speedWave.innerText = '1x';" not in content:
+        content2, replacements = re.subn(
+            r"(restoreSpeed\(\) \{\s*)this\.speedFactor = 0\.8;",
+            r"\1this.speedFactor = 1;\n        this.main.UI.speedWave.innerText = '1x';",
+            content,
+            count=1,
+        )
+        if replacements > 0:
+            content = content2
+            changes += 1
     
     # 3. Change initial speedFactor from 0.8 to 1 (do this LAST to avoid breaking other patterns)
     content = content.replace('this.speedFactor = 0.8;', 'this.speedFactor = 1;')
@@ -1892,7 +1923,7 @@ def apply_enemy_scaling():
         log_skip("Enemy.js: Endless scaling")
         return True
     
-    # Use modded file directly. This file is a vanilla 1.5.5 full-file base with
+    # Use modded file directly. This file is a vanilla 1.5.6 full-file base with
     # only the endless scaling/draw-skip overrides reapplied; optional Enemy.js
     # feature patches are applied separately to preserve feature toggles.
     modded_file = MODS_DIR / "patches" / "Enemy.modded.js"
@@ -1943,7 +1974,7 @@ def apply_tower_deltatime():
 def apply_orbital_tower_guard():
     """Prevent orbital towers from firing normal projectiles.
 
-    PokePath 1.5.5 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
+    PokePath 1.5.6 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
     compatibility. This surgical guard is applied after any optional Tower.js
     replacement so orbital Pokemon only update their orbit projectiles.
     """
@@ -1953,13 +1984,13 @@ def apply_orbital_tower_guard():
         return True
 
     content = read_file(path)
-    if 'MOD: Orbital projectile guard' in content:
+    if 'MOD: Orbital projectile guard' in content or 'const isOrbitalTower =' in content:
         log_skip("Tower.js: Orbital projectile guard")
         return True
 
     changes = 0
 
-    # Vanilla/1.5.5 path: single-shot projectile branch.
+    # Older vanilla path: single-shot projectile branch.
     old_single = "if (this.target && this.attackCooldown <= 0 && this.pokemon.attackType  !== 'orbital') {"
     if old_single in content:
         content = content.replace(
@@ -2026,7 +2057,7 @@ def apply_projectile_speed_scaling():
     path = JS_ROOT / "game" / "component" / "Projectile.js"
     content = read_file(path)
 
-    if "projectile speed with attack rate" in content:
+    if "projectile speed with attack rate" in content or "baseSpeed *= (1 + t);" in content:
         log_skip("Projectile.js: Projectile speed scaling")
         return True
 
@@ -2046,11 +2077,19 @@ def apply_projectile_speed_scaling():
         this.speed = baseSpeed;
 """
 
-    if old not in content:
-        log_fail("Projectile.js: Projectile speed scaling", "pattern not found")
-        return False
-
-    content = content.replace(old, new)
+    if old in content:
+        content = content.replace(old, new)
+    else:
+        content2, replacements = re.subn(
+            r"\s*const rawSpeed = projectile\.speed \?\? 5;\s*this\.speed = rawSpeed <= 30 \? rawSpeed \* 60 : rawSpeed;\s*",
+            "\n" + new,
+            content,
+            count=1,
+        )
+        if replacements <= 0:
+            log_fail("Projectile.js: Projectile speed scaling", "pattern not found")
+            return False
+        content = content2
     write_file(path, content)
     log_success("Projectile.js: Projectile speed scaling (attack rate)")
     return True
@@ -2216,28 +2255,80 @@ def apply_expanded_egg_list():
     return False
 
 # ============================================================================
-# PLAYER.JS - Gold cap increase to 999 trillion
+# PLAYER.JS - Gold cap increase + NaN/null guard
 # ============================================================================
 def apply_gold_cap_increase():
-    """Raise gold cap to 9 quadrillion (safe JS integer limit)."""
+    """Raise gold cap to 9 quadrillion and prevent NaN/null gold saves."""
     path = JS_ROOT / "game" / "core" / "Player.js"
     content = read_file(path)
+    changed = False
 
-    if '9007199254740991' in content:
-        log_skip("Player.js: Gold cap increase")
-        return True
-
-    # Match either vanilla or previously patched cap
     for old_cap in ['999999999999999', '99999999999']:
         old = f'if (this.gold >= {old_cap}) this.gold = {old_cap};'
         if old in content:
-            new = 'if (this.gold >= 9007199254740991) this.gold = 9007199254740991;'
-            content = content.replace(old, new)
-            write_file(path, content)
-            log_success("Player.js: Gold cap raised to 9 quadrillion (MAX_SAFE_INTEGER)")
-            return True
+            content = content.replace(old, 'if (this.gold >= 9007199254740991) this.gold = 9007199254740991;', 1)
+            changed = True
+            break
 
-    log_fail("Player.js: Gold cap increase", "gold cap pattern not found")
+    constructor_old = "\t\tthis.gold = playerData.gold;"
+    constructor_new = "\t\tconst loadedGold = Number(playerData.gold);\n\t\tthis.gold = Number.isFinite(loadedGold) ? Math.max(0, loadedGold) : 0;"
+    if constructor_old in content:
+        content = content.replace(constructor_old, constructor_new, 1)
+        changed = True
+
+    stats_old = "\t\tif (this.stats.maxGoldPerWave == undefined) this.stats.maxGoldPerWave = [0, null];\n\t\tif (this.stats.maxGoldPerTime == undefined) this.stats.maxGoldPerTime = [0, null];"
+    stats_new = "\t\tif (this.stats.maxGoldPerWave == undefined) this.stats.maxGoldPerWave = [0, null];\n\t\tif (this.stats.maxGoldPerTime == undefined) this.stats.maxGoldPerTime = [0, null];\n\t\tthis.stats.totalGold = Number.isFinite(Number(this.stats.totalGold)) ? Math.max(0, Number(this.stats.totalGold)) : 0;"
+    if stats_old in content and "this.stats.totalGold = Number.isFinite(Number(this.stats.totalGold))" not in content:
+        content = content.replace(stats_old, stats_new, 1)
+        changed = True
+
+    change_pattern = re.compile(
+        r"\tchangeGold\(amount\) \{\n"
+        r"\t\tif \(this\.main\.area\.isCustom && amount > 0\) return;\n"
+        r"\t\tthis\.gold \+= amount;\n"
+        r"\t\tif \(amount > 0\) this\.stats\.totalGold \+= amount;\n"
+        r"\t\t\n"
+        r"\t\tif \(this\.gold >= 1000000\) this\.unlockAchievement\(3\);\n"
+        r"\t\tif \(this\.gold >= [0-9]+\) this\.gold = [0-9]+;\n"
+        r"\t\t// if \(this\.main\.pokemonScene\.isOpen\) this\.main\.pokemonScene\.update\(\);\n"
+        r"\t\t// if \(this\.main\.shopScene\.isOpen\) this\.main\.shopScene\.update\(\);\n\n"
+        r"\t\t.*playerGold\.innerText.*\n"
+        r"\t\}",
+        re.MULTILINE
+    )
+    change_new = """\tchangeGold(amount) {
+\t\tconst safeAmount = Number(amount);
+\t\tif (!Number.isFinite(safeAmount)) return;
+\t\tif (this.main.area.isCustom && safeAmount > 0) return;
+
+\t\tconst currentGold = Number(this.gold);
+\t\tthis.gold = Number.isFinite(currentGold) ? Math.max(0, currentGold) : 0;
+\t\tthis.gold += safeAmount;
+\t\tif (this.gold < 0) this.gold = 0;
+\t\tif (safeAmount > 0) this.stats.totalGold += safeAmount;
+\t\t
+\t\tif (this.gold >= 1000000) this.unlockAchievement(3);
+\t\tif (this.gold >= 9007199254740991) this.gold = 9007199254740991;
+\t\t// if (this.main.pokemonScene.isOpen) this.main.pokemonScene.update();
+\t\t// if (this.main.shopScene.isOpen) this.main.shopScene.update();
+
+\t\tthis.main.UI.updatePlayer();
+\t}"""
+    content2, replacements = change_pattern.subn(change_new, content, count=1)
+    if replacements > 0:
+        content = content2
+        changed = True
+
+    if changed:
+        write_file(path, content)
+        log_success("Player.js: Gold cap raised and NaN/null gold guarded")
+        return True
+
+    if '9007199254740991' in content and 'const safeAmount = Number(amount);' in content:
+        log_skip("Player.js: Gold cap/safety")
+        return True
+
+    log_fail("Player.js: Gold cap/safety", "gold cap or changeGold pattern not found")
     return False
 
 # ============================================================================
@@ -2248,7 +2339,7 @@ def apply_gold_display_format_player():
     path = JS_ROOT / "game" / "core" / "Player.js"
     content = read_file(path)
 
-    if 'TRILLION' in content or 'QUADRILLION' in content:
+    if 'this.main.UI.updatePlayer();' in content and 'const safeAmount = Number(amount);' in content:
         log_skip("Player.js: Gold display format")
         return True
 
@@ -2267,7 +2358,7 @@ def apply_gold_display_format_player():
            "? `$${(g/1e15).toFixed(2)} QUADRILLION` "
            ": g >= 1e12 "
            "? `$${(g/1e12).toFixed(2)} TRILLION` "
-           ": g >= 1e11 "
+           ": g >= 1e9 "
            "? `$${(g/1e9).toFixed(2)} BILLION` "
            ": `$${this.main.utility.numberDot(g)}`;")
 
@@ -2289,7 +2380,7 @@ def apply_gold_display_format_ui():
     path = JS_ROOT / "game" / "UI.js"
     content = read_file(path)
 
-    if 'TRILLION' in content and 'playerGold' in content:
+    if 'const goldValue = Number(this.main.player.gold);' in content:
         log_skip("UI.js: Gold display format")
         return True
 
@@ -2301,14 +2392,15 @@ def apply_gold_display_format_ui():
             if marker in line and 'Trillion' in line:
                 old_options.insert(0, line.strip())
 
-    new = ("const _g = this.main.player.gold; "
-           "this.playerGold.innerText = _g >= 1e15 "
-           "? `$${(_g/1e15).toFixed(2)} QUADRILLION` "
-           ": _g >= 1e12 "
-           "? `$${(_g/1e12).toFixed(2)} TRILLION` "
-           ": _g >= 1e11 "
-           "? `$${(_g/1e9).toFixed(2)} BILLION` "
-           ": `$${this.main.utility.numberDot(_g)}`;")
+    new = ("const goldValue = Number(this.main.player.gold); "
+           "const gold = Number.isFinite(goldValue) ? Math.max(0, goldValue) : 0; "
+           "this.playerGold.innerText = gold >= 1e15 "
+           "? `$${(gold/1e15).toFixed(2)} QUADRILLION` "
+           ": gold >= 1e12 "
+           "? `$${(gold/1e12).toFixed(2)} TRILLION` "
+           ": gold >= 1e9 "
+           "? `$${(gold/1e9).toFixed(2)} BILLION` "
+           ": `$${this.main.utility.numberDot(gold)}`;")
 
     for old in old_options:
         if old in content:
@@ -2408,8 +2500,16 @@ def apply_pokemon_sprite_isolation_fix():
     content = read_file(path)
 
     new_line = "\t\tthis.sprite = JSON.parse(JSON.stringify(specie.sprite));"
-    if new_line in content:
+    new_skin_line = "\t\tthis.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin));"
+    if new_line in content or new_skin_line in content:
         log_skip("Pokemon.js: Sprite isolation fix")
+        return True
+
+    old_skin_line = "\t\tthis.sprite = (this.skin == null) ? specie.sprite : this.skin;"
+    if old_skin_line in content:
+        content = content.replace(old_skin_line, new_skin_line, 1)
+        write_file(path, content)
+        log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
         return True
 
     old_line = "\t\tthis.sprite = specie.sprite;"
@@ -2420,8 +2520,11 @@ def apply_pokemon_sprite_isolation_fix():
         return True
 
     # Flexible fallback for whitespace variants
-    pattern = r"\bthis\.sprite\s*=\s*specie\.sprite\s*;"
-    content2, replacements = re.subn(pattern, "this.sprite = JSON.parse(JSON.stringify(specie.sprite));", content, count=1)
+    pattern = r"\bthis\.sprite\s*=\s*\(this\.skin\s*==\s*null\)\s*\?\s*specie\.sprite\s*:\s*this\.skin\s*;"
+    content2, replacements = re.subn(pattern, "this.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin));", content, count=1)
+    if replacements <= 0:
+        pattern = r"\bthis\.sprite\s*=\s*specie\.sprite\s*;"
+        content2, replacements = re.subn(pattern, "this.sprite = JSON.parse(JSON.stringify(specie.sprite));", content, count=1)
     if replacements > 0:
         write_file(path, content2)
         log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
@@ -2568,10 +2671,11 @@ def apply_challenge_levelcap_fix():
 
 
 def apply_attacktype_sort():
-    """Add attack type sorting option + localized type labels to box section in text.js.
+    """Add attack type/shape sorting options + localized labels to box section in text.js.
 
     Ensures text.box has:
     - attackType (sort label)
+    - attackShape (sort label)
     - single / aura / area / orbital (per-Pokemon top labels)
     """
     path = JS_ROOT / "file" / "text.js"
@@ -2582,19 +2686,21 @@ def apply_attacktype_sort():
     # Scope strictly to box:{} so we don't accidentally patch pokemon:{} keys.
     box_match = re.search(r'(box:\s*\{)([\s\S]*?)(\n\t\},\n\tchangeName:\s*\{)', content)
     if not box_match:
-        log_fail("text.js: Attack type labels", "box section not found")
+        log_fail("text.js: Attack type/shape labels", "box section not found")
         return False
 
     box_start, box_body, box_end = box_match.group(1), box_match.group(2), box_match.group(3)
 
     shiny_match = re.search(r'(shiny:\s*\[.*?\])', box_body)
     if not shiny_match:
-        log_fail("text.js: Attack type labels", "box.shiny label pattern not found")
+        log_fail("text.js: Attack type/shape labels", "box.shiny label pattern not found")
         return False
 
     additions = []
     if re.search(r'\n\s*attackType:\s*\[', box_body) is None:
         additions.append('\n\t\tattackType: ["Attack Type","Tipo de ataque","Type d’attaque","Tipo de ataque","Tipo di attacco","Angriffstyp","攻撃タイプ","공격 유형","攻击类型","Typ ataku"]')
+    if re.search(r'\n\s*attackShape:\s*\[', box_body) is None:
+        additions.append('\n\t\tattackShape: ["Attack Shape","Forma de ataque","Forme d’attaque","Forma de ataque","Forma attacco","Angriffsform","攻撃形状","공격 형태","攻击形状","Kształt ataku"]')
     if re.search(r'\n\s*single:\s*\[', box_body) is None:
         additions.append('\n\t\tsingle: ["Single","Único","Unique","Único","Singolo","Einzeln","単体","단일","单体","Pojedynczy"]')
     if re.search(r'\n\s*aura:\s*\[', box_body) is None:
@@ -2605,7 +2711,7 @@ def apply_attacktype_sort():
         additions.append('\n\t\torbital: ["Orbital","Orbital","Orbital","Orbital","Orbitale","Orbital","軌道","궤도","轨道","Orbitalny"]')
 
     if not additions:
-        log_skip("text.js: Attack type labels")
+        log_skip("text.js: Attack type/shape labels")
         return True
 
     shiny_line = shiny_match.group(1)
@@ -2615,7 +2721,7 @@ def apply_attacktype_sort():
 
     content = content[:box_match.start()] + new_box_block + content[box_match.end():]
     write_file(path, content)
-    log_success("text.js: Attack type labels added")
+    log_success("text.js: Attack type/shape labels added")
     return True
 
 
@@ -2657,6 +2763,9 @@ def apply_challenge_party_preserve():
     old_post = """this.main.player.getHealed(14);
 		this.main.teamManager.teamChallenge = [[], [], [], [], []];
 		if (this.challenges.draft) this.main.draftScene.open();"""
+    old_post_156 = """this.main.player.getHealed(14);
+		if (this.challenges.draft) this.main.teamManager.clearDraftTeams();
+		if (this.challenges.draft) this.main.draftScene.open();"""
     
     new_post = """this.main.player.getHealed(14);
 		this.main.teamManager.teamChallenge = [[], [], [], [], []];
@@ -2692,11 +2801,17 @@ def apply_challenge_party_preserve():
 
 		if (this.challenges.draft) this.main.draftScene.open();"""
     
-    if old_post not in content:
+    if old_post in content:
+        content = content.replace(old_post, new_post)
+    elif old_post_156 in content:
+        new_post_156 = new_post.replace(
+            "this.main.teamManager.teamChallenge = [[], [], [], [], []];",
+            "if (this.challenges.draft) this.main.teamManager.clearDraftTeams();",
+        )
+        content = content.replace(old_post_156, new_post_156)
+    else:
         log_fail("ChallengeScene.js: Challenge party preserve", "post-loadArea pattern not found")
         return False
-    
-    content = content.replace(old_post, new_post)
     
     # Patch cancelChallenge (surrender) to also restore team
     old_cancel = """this.main.boxScene.removeAllItems();
@@ -2770,16 +2885,37 @@ def apply_projectile_retarget_fix():
     content = read_file(path)
     
     # Check if already fixed (modded file or already patched)
-    if 'this.tower.range' in content and 'findClosestEnemy(this.tower' in content:
+    if (
+        ('this.tower.range' in content and 'findClosestEnemy(this.tower' in content)
+        or 'this.findClosestEnemy(this.tower, this.tower.range || 100, this.enemy)' in content
+    ):
         log_skip("Projectile.js: Retarget fix")
         return True
-    
+
+    changed = False
+
     # Vanilla pattern: retargets from projectile position with 200px range
     old = "const fallbackSource = { center: this.position || { x: this.position?.x ?? 0, y: this.position?.y ?? 0 } };\n            const newTarget = this.tower.findClosestEnemy(fallbackSource, 200);"
     new = "// MOD: Retarget from tower position within tower's actual range\n            const towerRange = this.tower.range || 100;\n            const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);"
     
     if old in content:
         content = content.replace(old, new)
+        changed = True
+
+    # Full Projectile.modded.js has its own ricochet helper; keep it range-bound too.
+    ricochet_old = "const next = this.findClosestEnemy(this.enemy, 200);"
+    ricochet_new = "const next = this.findClosestEnemy(this.tower, this.tower.range || 100, this.enemy);"
+    if ricochet_old in content:
+        content = content.replace(ricochet_old, ricochet_new)
+        changed = True
+
+    helper_old = "findClosestEnemy(fromEnemy, maxDist = 200) {\n        let closest = null;\n        let minDist = maxDist;\n        for (const e of this.tower.main.area.enemies) {\n            if (!e || e === fromEnemy || e.hp <= 0 || e.invisible) continue;"
+    helper_new = "findClosestEnemy(fromEnemy, maxDist = 200, excludeEnemy = null) {\n        let closest = null;\n        let minDist = maxDist;\n        for (const e of this.tower.main.area.enemies) {\n            if (!e || e === fromEnemy || e === excludeEnemy || e.hp <= 0 || e.invisible) continue;"
+    if helper_old in content:
+        content = content.replace(helper_old, helper_new)
+        changed = True
+
+    if changed:
         write_file(path, content)
         log_success("Projectile.js: Retarget fix (tower position + tower range)")
         return True
@@ -2970,7 +3106,7 @@ def apply_star_display_cap():
         return True
     
     # Find and replace the star display line.
-    # Vanilla caps changed over time (1200 in older builds, 2000 in 1.5),
+    # Vanilla caps changed over time (1200 in older builds, 2000 in 1.5, 2100 in 1.5.6),
     # so match any Math.min(<number>, this.main.player.stars) form.
     old_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{Math\.min\(\d+,\s*this\.main\.player\.stars\)\}`;'
     match = re.search(old_pattern, content)
@@ -3787,8 +3923,44 @@ def apply_force_no_dupes():
 \t\t\tthis.main.player.achievementProgress.evolutionCount++;
 \t\t}
 """
+        shop_old_vanilla = """\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
+\t\t\tthis.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
+\t\t} else {
+\t\t\tthis.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
+\t\t\tthis.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
+\t\t}
+
+\t\tthis.main.player.stats.pokemonOwned++;
+
+\t\tthis.main.player.stats.totalPokemonLevel++;
+\t\tthis.main.player.achievementProgress.evolutionCount++;
+"""
+        shop_new_vanilla = """\t\tlet added = false;
+\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
+\t\t\tconst newPokemon = new Pokemon(pokemon, 1, null, this.main);
+\t\t\tconst addedToTeam = this.main.team.addPokemon(newPokemon);
+\t\t\tadded = (addedToTeam !== false);
+\t\t\tthis.main.shopScene.displayPokemon.open(newPokemon)
+\t\t} else {
+\t\t\tconst newPokemon = new Pokemon(pokemon, 1, null, this.main);
+\t\t\tconst addedToBox = this.main.box.addPokemon(newPokemon);
+\t\t\tadded = (addedToBox !== false);
+\t\t\tthis.main.shopScene.displayPokemon.open(newPokemon)
+\t\t}
+
+\t\tif (added) {
+\t\t\tthis.main.player.stats.pokemonOwned++;
+\t\t\tthis.main.player.stats.totalPokemonLevel++;
+\t\t\tthis.main.player.achievementProgress.evolutionCount++;
+\t\t}
+"""
         if shop_old in shop_content:
             shop_content = shop_content.replace(shop_old, shop_new)
+            write_file(shop_path, shop_content)
+            log_success("Shop.js: Egg duplicate pulls now vanish if no-dupes blocks add")
+        elif shop_old_vanilla in shop_content:
+            shop_content = shop_content.replace(shop_old_vanilla, shop_new_vanilla)
             write_file(shop_path, shop_content)
             log_success("Shop.js: Egg duplicate pulls now vanish if no-dupes blocks add")
         else:

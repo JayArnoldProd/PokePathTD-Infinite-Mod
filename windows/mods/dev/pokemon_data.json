@@ -9,6 +9,7 @@
     "alakazam",
     "amaura",
     "ampharos",
+    "annihilape",
     "anorith",
     "araquanid",
     "arbok",
@@ -32,6 +33,7 @@
     "breloom",
     "budew",
     "bulbasaur",
+    "buneary",
     "cacnea",
     "cacturne",
     "capsakid",
@@ -51,6 +53,7 @@
     "chespin",
     "chikorita",
     "chimchar",
+    "chinchou",
     "clauncher",
     "clawitzer",
     "clefable",
@@ -77,18 +80,23 @@
     "dondozo",
     "doublade",
     "dragalge",
+    "dragonair",
+    "dragonite",
+    "dratini",
     "drifblim",
     "drifloon",
     "drilbur",
     "drizzile",
     "drudiggon",
     "ducklett",
+    "dudunsparce",
     "dunsparce",
     "ekans",
     "electrode",
     "emboar",
     "excadrill",
     "farfetchd",
+    "farigiraf",
     "fennekin",
     "feraligatr",
     "ferroseed",
@@ -144,11 +152,13 @@
     "krokorok",
     "krookodile",
     "lairon",
+    "lanturn",
     "lapras",
     "larvesta",
     "leavanny",
     "lileep",
     "lilligant",
+    "lopunny",
     "lucario",
     "luvdisc",
     "lycanrocDay",
@@ -174,11 +184,13 @@
     "megaAmpharos",
     "megaBarbacle",
     "megaCharizardX",
+    "megaCharizardY",
     "megaFlygon",
+    "megaLucario",
+    "meganium",
     "megaPidgeot",
     "megaSableye",
     "megaSceptile",
-    "meganium",
     "meowscarada",
     "meowth",
     "minun",
@@ -354,6 +366,10 @@
       "evolves_to": "ivysaur",
       "level": 16
     },
+    "buneary": {
+      "evolves_to": "lopunny",
+      "level": 30
+    },
     "cacnea": {
       "evolves_to": "cacturne",
       "level": 32
@@ -393,6 +409,10 @@
     "chimchar": {
       "evolves_to": "monferno",
       "level": 16
+    },
+    "chinchou": {
+      "evolves_to": "lanturn",
+      "level": 27
     },
     "clauncher": {
       "evolves_to": "clawitzer",
@@ -446,6 +466,14 @@
       "evolves_to": "aegislash",
       "level": 60
     },
+    "dragonair": {
+      "evolves_to": "dragonite",
+      "level": 55
+    },
+    "dratini": {
+      "evolves_to": "dragonair",
+      "level": 30
+    },
     "drifloon": {
       "evolves_to": "drifblim",
       "level": 28
@@ -461,6 +489,10 @@
     "ducklett": {
       "evolves_to": "swanna",
       "level": 35
+    },
+    "dunsparce": {
+      "evolves_to": "dudunsparce",
+      "level": 60
     },
     "ekans": {
       "evolves_to": "arbok",
@@ -497,6 +529,10 @@
     "gastly": {
       "evolves_to": "haunter",
       "level": 25
+    },
+    "girafarig": {
+      "evolves_to": "farigiraf",
+      "level": 60
     },
     "greavard": {
       "evolves_to": "houndstone",
@@ -697,6 +733,10 @@
     "pineco": {
       "evolves_to": "forretress",
       "level": 31
+    },
+    "primeape": {
+      "evolves_to": "annihilape",
+      "level": 70
     },
     "psyduck": {
       "evolves_to": "golduck",
@@ -916,6 +956,7 @@
     "binacle",
     "budew",
     "bulbasaur",
+    "buneary",
     "cacnea",
     "capsakid",
     "carbink",
@@ -929,6 +970,7 @@
     "chespin",
     "chikorita",
     "chimchar",
+    "chinchou",
     "clauncher",
     "clefairy",
     "comfey",
@@ -942,6 +984,7 @@
     "dewpider",
     "ditto",
     "dondozo",
+    "dratini",
     "drifloon",
     "drilbur",
     "drudiggon",
@@ -987,7 +1030,9 @@
     "megaAmpharos",
     "megaBarbacle",
     "megaCharizardX",
+    "megaCharizardY",
     "megaFlygon",
+    "megaLucario",
     "megaPidgeot",
     "megaSableye",
     "megaSceptile",
@@ -1068,6 +1113,7 @@
     "aggron",
     "alakazam",
     "ampharos",
+    "annihilape",
     "araquanid",
     "arbok",
     "archeops",
@@ -1103,13 +1149,15 @@
     "ditto",
     "dondozo",
     "dragalge",
+    "dragonite",
     "drifblim",
     "drudiggon",
-    "dunsparce",
+    "dudunsparce",
     "electrode",
     "emboar",
     "excadrill",
     "farfetchd",
+    "farigiraf",
     "feraligatr",
     "ferrothorn",
     "flygon",
@@ -1117,7 +1165,6 @@
     "gardevoir",
     "gengar",
     "gholdengo",
-    "girafarig",
     "golduck",
     "golisopod",
     "greninja",
@@ -1136,9 +1183,11 @@
     "kingdra",
     "klinklang",
     "krookodile",
+    "lanturn",
     "lapras",
     "leavanny",
     "lilligant",
+    "lopunny",
     "lucario",
     "luvdisc",
     "lycanrocDay",
@@ -1156,11 +1205,13 @@
     "megaAmpharos",
     "megaBarbacle",
     "megaCharizardX",
+    "megaCharizardY",
     "megaFlygon",
+    "megaLucario",
+    "meganium",
     "megaPidgeot",
     "megaSableye",
     "megaSceptile",
-    "meganium",
     "meowscarada",
     "minun",
     "missingNo",
@@ -1177,7 +1228,6 @@
     "phione",
     "pidgeot",
     "plusle",
-    "primeape",
     "raichu",
     "rampardos",
     "roserade",
@@ -1268,6 +1318,10 @@
       "ivysaur",
       "venusaur"
     ],
+    "buneary": [
+      "buneary",
+      "lopunny"
+    ],
     "cacnea": [
       "cacnea",
       "cacturne"
@@ -1320,6 +1374,10 @@
       "monferno",
       "infernape"
     ],
+    "chinchou": [
+      "chinchou",
+      "lanturn"
+    ],
     "clauncher": [
       "clauncher",
       "clawitzer"
@@ -1369,6 +1427,11 @@
     "dondozo": [
       "dondozo"
     ],
+    "dratini": [
+      "dratini",
+      "dragonair",
+      "dragonite"
+    ],
     "drifloon": [
       "drifloon",
       "drifblim"
@@ -1385,7 +1448,8 @@
       "swanna"
     ],
     "dunsparce": [
-      "dunsparce"
+      "dunsparce",
+      "dudunsparce"
     ],
     "ekans": [
       "ekans",
@@ -1422,7 +1486,8 @@
       "gholdengo"
     ],
     "girafarig": [
-      "girafarig"
+      "girafarig",
+      "farigiraf"
     ],
     "greavard": [
       "greavard",
@@ -1515,7 +1580,8 @@
     ],
     "mankey": [
       "mankey",
-      "primeape"
+      "primeape",
+      "annihilape"
     ],
     "maractus": [
       "maractus"
@@ -1543,8 +1609,14 @@
     "megaCharizardX": [
       "megaCharizardX"
     ],
+    "megaCharizardY": [
+      "megaCharizardY"
+    ],
     "megaFlygon": [
       "megaFlygon"
+    ],
+    "megaLucario": [
+      "megaLucario"
     ],
     "megaPidgeot": [
       "megaPidgeot"
@@ -1843,6 +1915,7 @@
     "alakazam": "alakazam.png",
     "amaura": "amaura.png",
     "ampharos": "ampharos.png",
+    "annihilape": "annihilape.png",
     "anorith": "anorith.png",
     "araquanid": "araquanid.png",
     "arbok": "arbok.png",
@@ -1866,6 +1939,7 @@
     "breloom": "breloom.png",
     "budew": "budew.png",
     "bulbasaur": "bulbasaur.png",
+    "buneary": "buneary.png",
     "cacnea": "cacnea.png",
     "cacturne": "cacturne.png",
     "capsakid": "capsakid.png",
@@ -1885,6 +1959,7 @@
     "chespin": "chespin.png",
     "chikorita": "chikorita.png",
     "chimchar": "chimchar.png",
+    "chinchou": "chinchou.png",
     "clauncher": "clauncher.png",
     "clawitzer": "clawitzer.png",
     "clefable": "clefable.png",
@@ -1911,18 +1986,23 @@
     "dondozo": "dondozo.png",
     "doublade": "doublade.png",
     "dragalge": "dragalge.png",
+    "dragonair": "dragonair.png",
+    "dragonite": "dragonite.png",
+    "dratini": "dratini.png",
     "drifblim": "drifblim.png",
     "drifloon": "drifloon.png",
     "drilbur": "drilbur.png",
     "drizzile": "drizzile.png",
     "drudiggon": "drudiggon.png",
     "ducklett": "ducklett.png",
+    "dudunsparce": "dudunsparce.png",
     "dunsparce": "dunsparce.png",
     "ekans": "ekans.png",
     "electrode": "electrode.png",
     "emboar": "emboar.png",
     "excadrill": "excadrill.png",
     "farfetchd": "farfetchd.png",
+    "farigiraf": "farigiraf.png",
     "fennekin": "fennekin.png",
     "feraligatr": "feraligatr.png",
     "ferroseed": "ferroseed.png",
@@ -1978,11 +2058,13 @@
     "krokorok": "krokorok.png",
     "krookodile": "krookodile.png",
     "lairon": "lairon.png",
+    "lanturn": "lanturn.png",
     "lapras": "lapras.png",
     "larvesta": "larvesta.png",
     "leavanny": "leavanny.png",
     "lileep": "lileep.png",
     "lilligant": "lilligant.png",
+    "lopunny": "lopunny.png",
     "lucario": "lucario.png",
     "luvdisc": "luvdisc.png",
     "lycanrocDay": "lycanroc1.png",
@@ -2008,11 +2090,13 @@
     "megaAmpharos": "megaAmpharos.png",
     "megaBarbacle": "megaBarbaracle.png",
     "megaCharizardX": "megaCharizardX.png",
+    "megaCharizardY": "megaCharizardY.png",
     "megaFlygon": "megaFlygon.png",
+    "megaLucario": "megaLucario.png",
+    "meganium": "meganium.png",
     "megaPidgeot": "megaPidgeot.png",
     "megaSableye": "megaSableye.png",
     "megaSceptile": "megaSceptile.png",
-    "meganium": "meganium.png",
     "meowscarada": "meowscarada.png",
     "meowth": "meowth.png",
     "minun": "minun.png",

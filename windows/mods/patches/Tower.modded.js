@@ -1,6 +1,9 @@
 import { Projectile } from './Projectile.js';
 import { Sprite } from '../../utils/Sprite.js';
 import { playSound } from '../../file/audio.js';
+import { projectileData } from '../data/projectileData.js';
+
+const _REVYS_SPRITES = Object.values(projectileData);
 
 export class Tower extends Sprite {
     constructor(main, x, y, ctx, pokemon, tile, teleportBuff = false) {
@@ -33,13 +36,20 @@ export class Tower extends Sprite {
         // HABILIDADES
         this.ricochet = pokemon.ricochet;
         this.orbital = pokemon.orbital;
-        this.revealInvisible = (this.ability.id === 'frisk' || this.ability.id === 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? true : false;
+        this.revealInvisible = (this.ability.id === 'illuminate' || this.ability.id === 'frisk' || this.ability.id === 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? true : false;
         this.damageBoost = 0;
         this.speedBoost = 0;
         this.teleport = 0;
         this.teleportBuff = teleportBuff;
         this.moxieBuff = 0;
+        this.incenseBuff = 0;
+        this.incenseTimer = 0;
+        this.lightningRodCharge = 0;
+        this.lightningRodChargeCD = 0;
         this.shiftGearSpeed = 0;
+        this.hitCount = 0;
+        this.spikyShieldChance = 0;
+
         this.cherrimForm = false;
         this.lastTarget = null;
 
@@ -158,16 +168,28 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'bindingBand') this.speed += 1500;
         if (this.pokemon?.item?.id == 'bicycle' && this.pokemon.id == 89 && this.pokemon?.lvl == 100) this.speed -= 4000;
 
+        if (this.ability?.id == 'rageFist') {
+            this.power += (this.main.area.hitsReceived * 50);
+        }
+
+        if (this.pokemon?.item?.id === 'fullIncense') {
+            this.power += this.incenseBuff;
+        }
+
         if (
             this.pokemon?.item?.id == 'quickClaw' || 
             this.pokemon?.item?.id == 'lifeOrb' ||
             (this.main.area.heartScale && this.pokemon?.item?.id == 'heartScale')
         ) {
-            if (this.pokemon?.item?.id == 'heartScale' && this.ability?.id == 'simple') {
-                this.speed -= (this.speed * 0.75);
-            } else {
-                this.speed -= (this.speed * 0.5);
-            }
+			if (this.pokemon?.item?.id == 'heartScale' && this.ability?.id == 'simple') {
+				this.speed -= (this.speed * 0.75);
+			} else {
+				this.speed -= (this.speed * 0.5);
+			}
+		}
+		if (this.pokemon?.item?.id == 'laggingTail') {
+			if (this.ability.id === 'contrary') this.speed -= (this.speed * 0.5);
+			else this.speed += (this.speed * 0.5);
         }
     
         if (this.pokemon?.item?.id == 'quickPowder') this.speed -= (this.speed / 4);
@@ -195,7 +217,11 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'wrestlingMask') this.speed -= (this.speed * 0.5);
         if (this.pokemon?.item?.id == 'muscleBand') this.speed += (this.speed * 0.25);
 
-        if (this.tile && (this.tile.land === 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser')) && (this.pokemon.ability.id === 'ambusher' || this.pokemon.ability.id === 'castform')) {
+        if (
+            this.tile && this.pokemon?.item?.id === 'mitsuesCocktail' ||
+            (this.tile.land === 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser') || this.carriedBy == 'grassyTerrain') 
+            && (this.pokemon.ability.id === 'ambusher' || this.pokemon.ability.id === 'castform')
+        ) {
             this.power = this.basePower * 2;
             this.projectile.power = this.power;
         }
@@ -223,6 +249,11 @@ export class Tower extends Sprite {
             this.projectile.power = this.power;
         }
 
+        if (this.pokemon?.item?.id === 'sokudosPortfolio') {
+            let reductor = Math.min(this.main.player.shinyAmount * 0.05, 0.75);
+            this.speed -= (this.speed * reductor)
+        }
+
         if (
             this.tile && 
             (this.tile.land === 4 || this.tile.land == 1 && this.pokemon?.item?.id == 'hikingKit') && 
@@ -244,6 +275,11 @@ export class Tower extends Sprite {
             this.speed += (this.speed / 4);
         }
 
+        if (this.pokemon?.item?.id == 'eviolite' && this.pokemon?.lvl <= 50) {
+            this.range = this.range * 1.2;
+            this.speed -= (this.speed / 5);
+        }
+
         if (
             this.main.area.weather == 'harshSunlight' &&
             (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser'))
@@ -260,7 +296,10 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'helixFossil') this.range += this.main.player.fossilInTeam * 10;
         if (this.pokemon?.item?.id == 'oldRod') this.range += 75;
-        if (this.pokemon?.item?.id == 'silphScope' && (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk')) this.range += 15;
+        if (this.pokemon?.item?.id == 'silphScope' && (this.pokemon.ability.id === 'illuminate' || this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk')) {
+            this.range += 15;
+            this.speed -= (this.speed / 4);
+        }
         if (this.pokemon?.item?.id == 'revelationAroma') this.range += 25;
         if (this.pokemon?.item?.id == 'sunflowerPetal') this.range -= 50;
         if (this.pokemon?.item?.id == 'wrestlingMask') this.range -= 75;
@@ -278,6 +317,7 @@ export class Tower extends Sprite {
         this.criticalAura = false;
         this.criticalDamageAura = false;
         this.triageAura = false;
+        this.illuminateAura = false;
         this.power = this.basePower;
         this.speed = this.pokemon.speed;
         this.range = this.pokemon.range;
@@ -290,11 +330,23 @@ export class Tower extends Sprite {
             this.pokemon?.item?.id == 'lifeOrb' ||
             (this.main.area.heartScale && this.pokemon?.item?.id == 'heartScale')
         ) {
-            if (this.pokemon?.item?.id == 'heartScale' && this.ability?.id == 'simple') {
-                this.speed -= (this.speed * 0.75);
-            } else {
-                this.speed -= (this.speed * 0.5);
-            }
+			if (this.pokemon?.item?.id == 'heartScale' && this.ability?.id == 'simple') {
+				this.speed -= (this.speed * 0.75);
+			} else {
+				this.speed -= (this.speed * 0.5);
+			}
+		}
+		if (this.pokemon?.item?.id == 'laggingTail') {
+			if (this.ability.id === 'contrary') this.speed -= (this.speed * 0.5);
+			else this.speed += (this.speed * 0.5);
+        }
+
+        if (this.ability?.id == 'rageFist') {
+            this.power += (this.main.area.hitsReceived * 50);
+        }
+
+         if (this.pokemon?.item?.id === 'fullIncense') {
+            this.power += this.incenseBuff;
         }
 
         if (this.pokemon?.item?.id == 'shieldBreakerBullet') this.speed += 2000;
@@ -331,8 +383,14 @@ export class Tower extends Sprite {
             this.projectile.power = this.power;
         }
 
+        if (this.pokemon?.item?.id === 'sokudosPortfolio') {
+            let reductor = Math.min(this.main.player.shinyAmount * 0.05, 0.75);
+            this.speed -= (this.speed * reductor)
+        }
+
         // terreno
-        if (this.tile && (this.tile.land === 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser')) && (this.pokemon.ability.id === 'ambusher' || this.pokemon.ability.id === 'castform'))
+        if (this.tile && this.pokemon?.item?.id === 'mitsuesCocktail' || 
+            (this.tile.land === 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser') || this.carriedBy == 'grassyTerrain') && (this.pokemon.ability.id === 'ambusher' || this.pokemon.ability.id === 'castform'))
             this.power = Math.ceil(this.power * 2);
         if (this.tile && (this.tile.land === 4 || this.tile.land == 1 && this.pokemon?.item?.id == 'hikingKit') && (this.pokemon.ability.id === 'vigilant' || this.pokemon.ability.id === 'vigilantFrisk' || this.pokemon.ability.id === 'castform'))
             this.range = this.pokemon.range * 2;
@@ -365,6 +423,11 @@ export class Tower extends Sprite {
             this.speed += (this.speed / 4);
         }
 
+        if (this.pokemon?.item?.id == 'eviolite' && this.pokemon?.lvl <= 50) {
+            this.range = this.range * 1.2;
+            this.speed -= (this.speed / 5);
+        }
+
         if (
             this.main.area.weather == 'harshSunlight' &&
             (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser'))
@@ -381,7 +444,10 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'helixFossil') this.range += this.main.player.fossilInTeam * 10;
         if (this.pokemon?.item?.id == 'oldRod') this.range += 75;
-        if (this.pokemon?.item?.id == 'silphScope' && (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk')) this.range += 15;
+        if (this.pokemon?.item?.id == 'silphScope' && (this.pokemon.ability.id === 'illuminate' || this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'vigilantFrisk')) {
+            this.range += 15;
+            this.speed -= (this.speed / 4);
+        }
         if (this.pokemon?.item?.id == 'wrestlingMask') this.range -= 75;
         if (this.pokemon?.item?.id == 'condensedBlizzard') this.range /= 2;
         if (this.pokemon?.item?.id == 'spindaCocktail') {
@@ -423,16 +489,21 @@ export class Tower extends Sprite {
             this.powerAura = (foundPowerAura.pokemon?.item?.id == 'sunflowerPetal') ? 1.3 : 1.2;
             this.power = Math.ceil(this.power * this.powerAura);
 
-            if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && !this.cherrimForm) {
+            if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && !this.cherrimForm && this.main.area.weather !== 'harshSunlight') {
                 this.cherrimForm = true;
                 this.updateTowerSprite(this.pokemon.sprite.transform);
             }
         } else {
             this.powerAura = false;
-            if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && this.cherrimForm) {
+            if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && this.cherrimForm && this.main.area.weather !== 'harshSunlight') {
                 this.cherrimForm = false;
                 this.updateTowerSprite(this.pokemon.sprite.image);
             }
+        }
+
+        if (this.main.area.weather === 'harshSunlight' && this.pokemon.id == 75 && this.pokemon.lvl > 24 && !this.cherrimForm) {
+            this.cherrimForm = true;
+            this.updateTowerSprite(this.pokemon.sprite.transform);
         }
 
         if (foundTriageAura) {
@@ -445,26 +516,109 @@ export class Tower extends Sprite {
         this.criticalAura = foundCriticalAura;
         this.criticalDamageAura = foundCriticalDamageAura;
 
+        // illuminate: +15 range and reveal invisible for nearby allies
+        const nearbyIlluminate = this.main.area.towers.filter(t =>
+            t.ability?.id === 'illuminate' &&
+            t !== this &&
+            Math.hypot(t.center.x - this.center.x, t.center.y - this.center.y) <= t.range
+        );
+        if (nearbyIlluminate.length > 0) {
+            this.illuminateAura = true;
+            this.range += 15;
+            this.revealInvisible = true;
+        } else {
+            this.illuminateAura = false;
+            // Restore revealInvisible to its intrinsic value (own ability/item only)
+            this.revealInvisible = (
+                this.ability.id === 'illuminate' ||
+                this.ability.id === 'frisk' ||
+                this.ability.id === 'vigilantFrisk' ||
+                this.pokemon?.item?.id === 'silphScope'
+            ) ? true : false;
+        }
+
         this.projectile.power = this.power;
     }
 
     draw() {
         if (!this.loaded) return;
-            const crop = {
-                position: {
-                    x: this.width * this.frames.current,
-                    y: this.height * this.frames.direction
-                },
-                width: this.width,
-                height: this.height
-            };    const tileSize = 24;
-        const offsetX = (tileSize - crop.width) / 2;
-        const offsetY = (tileSize - crop.height) / 2;
+
+        const crop = {
+            position: {
+                x: this.width * this.frames.current,
+                y: this.height * this.frames.direction
+            },
+            width: this.width,
+            height: this.height
+        };
+
+        const tileSize = 24;
+        const fieldSpriteScale = 1;
+        const drawWidth = crop.width * fieldSpriteScale;
+        const drawHeight = crop.height * fieldSpriteScale;
+        const offsetX = (tileSize - drawWidth) / 2;
+        const offsetY = (tileSize - drawHeight) / 2;
+        const passengerOffset = this.isPassenger ? this.passengerYOffset : 0;
+        this.drawYOffset = passengerOffset;
 
         this.center = {
             x: this.position.x + tileSize / 2,
-            y: this.position.y + tileSize / 2
+            y: this.position.y + tileSize / 2 + passengerOffset
         };
+
+        // --- lightning rod / pulse radiantes usan this.center que ya tiene passengerOffset ---
+        if (this.lightningRodCharge > 0) {
+            const now = Date.now();
+            const pulse = 1 + 0.06 * Math.sin(now / 200);
+
+            const cx = this.center.x;
+            const cy = this.center.y + (tileSize * 0.15);
+
+            const baseRadius = 10;
+            const radiusStep = 6;
+
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'lighter';
+
+            for (let i = 1; i <= this.lightningRodCharge; i++) {
+                const inner = (baseRadius + radiusStep * (i - 1)) * pulse;
+                const outer = (baseRadius + radiusStep * i) * pulse;
+                const alpha = Math.max(0.25 - i * 0.04, 0.06);
+
+                const grad = this.ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+                grad.addColorStop(0, `rgba(80,255,120,${alpha})`);
+                grad.addColorStop(0.7, `rgba(40,220,80,${alpha * 0.6})`);
+                grad.addColorStop(1, `rgba(20,180,60,${alpha * 0.3})`);
+
+                this.ctx.beginPath();
+                this.ctx.fillStyle = grad;
+                this.ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            this.ctx.restore();
+        }
+
+        // illuminate aura glow on buffed allies (yellow-white shimmer)
+        if (this.illuminateAura) {
+            const now = Date.now();
+            const pulse = 1 + 0.10 * Math.sin(now / 220);
+            const cx = this.center.x;
+            const cy = this.center.y;
+            const inner = 5 * pulse;
+            const outer = 14 * pulse;
+            const grad = this.ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+            grad.addColorStop(0, 'rgba(255,255,180,0.38)');
+            grad.addColorStop(0.55, 'rgba(255,240,100,0.18)');
+            grad.addColorStop(1, 'rgba(255,220,60,0.06)');
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'lighter';
+            this.ctx.beginPath();
+            this.ctx.fillStyle = grad;
+            this.ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        }
 
         if (this.powerAura || this.criticalAura || this.criticalDamageAura || this.triageAura) {
             const now = Date.now();
@@ -587,9 +741,9 @@ export class Tower extends Sprite {
                 crop.width,
                 crop.height,
                 this.position.x + offsetX,
-                this.position.y,
-                crop.width,
-                crop.height
+                this.position.y + offsetY + passengerOffset,
+                drawWidth,
+                drawHeight
             );
 
             this.ctx.restore();
@@ -601,9 +755,8 @@ export class Tower extends Sprite {
                 crop.width,
                 crop.height,
                 this.position.x + offsetX,
-                this.position.y + offsetY,
-                crop.width,
-                crop.height
+                this.position.y + offsetY + passengerOffset,
+                drawWidth, drawHeight
             );
         }
 
@@ -645,7 +798,9 @@ export class Tower extends Sprite {
             this.ctx.drawImage(
                 temp,
                 this.position.x + offsetX,
-                this.position.y + offsetY
+                this.position.y + offsetY + passengerOffset,
+                drawWidth,
+                drawHeight
             );
         }
     }
@@ -704,32 +859,35 @@ export class Tower extends Sprite {
         }
     }
 
-    update(enemiesInRange, deltaTime = 1000 / 60) {
+    update(enemiesInRange, deltaTime = 1000 / 60, shouldDraw = undefined) {
+        if (shouldDraw === undefined) shouldDraw = !this._skipDraw;
 
         const simDelta = deltaTime;
         const frameFactor = simDelta / (1000 / 60);
 
-        // PERF: Only recalculate power on first sub-step (inputs don't change between steps)
-        if (this._isFirstStep) this.recalculatePower();
+		// PERF: Only recalculate power on first sub-step (inputs don't change between steps)
+		if (this._isFirstStep) this.recalculatePower();
+		if (this.lightningRodChargeCD > 0) {
+			this.lightningRodChargeCD = Math.max(0, this.lightningRodChargeCD - simDelta);
+		}
+		if (this.pokemon?.item?.id === 'fullIncense' && this.main.area.waveActive) {
+			this.incenseTimer += simDelta;
+		}
 
-        // PERF: Use pre-computed snowCloak enemy list from Game loop (avoids iterating ALL enemies per tower)
-        {
-            let foundSnowCloak = false;
-            const scList = this._snowCloakEnemies;
-            if (scList && scList.length > 0) {
-                const scThreshSq = 25600; // 160 * 160
-                for (let i = 0; i < scList.length; i++) {
-                    const e = scList[i];
-                    const dx = e.center.x - this.center.x;
-                    const dy = e.center.y - this.center.y;
-                    if (dx * dx + dy * dy <= scThreshSq) {
-                        foundSnowCloak = true;
-                        break;
-                    }
-                }
-            }
-            this.snowCloakNear = foundSnowCloak;
-        }
+		// PERF: use the per-frame snowCloak enemy list from Game.js and squared distance.
+		const snowCloakEnemies = this._snowCloakEnemies || this.main.area.enemies;
+		let foundSnowCloak = false;
+		const scThreshSq = 160 * 160;
+		for (const e of snowCloakEnemies) {
+			if (!e || e.hp <= 0 || e.invulnerable || e.passive?.id !== 'snowCloak') continue;
+			const dx = e.center.x - this.center.x;
+			const dy = e.center.y - this.center.y;
+			if (dx * dx + dy * dy <= scThreshSq) {
+				foundSnowCloak = true;
+				break;
+			}
+		}
+		this.snowCloakNear = foundSnowCloak;
 
         if (this.frames.elapsed === undefined) this.frames.elapsed = 0;
         this.frames.elapsed += frameFactor;
@@ -748,7 +906,21 @@ export class Tower extends Sprite {
 
         if (this.pokemon.id == 70 && this.pokemon.adn.id == 70) return;
 
-        // PERF: Use squared distance for aura range checks
+        if (this.ability && this.ability.id === 'illuminate') {
+            const auraRange = this.range;
+            this.main.area.towers.forEach(tower => {
+                if (tower === this) return;
+                const dx = tower.center.x - this.center.x;
+                const dy = tower.center.y - this.center.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance <= auraRange) {
+                    tower.auraBuffActive = true;
+                    tower.isIlluminated = true;
+                }
+            });
+            return;
+        }
+
         if (this.ability && this.ability.id === 'powerAura') {
             let auraRange = this.range;
             if (this.pokemon?.item?.id == 'revelationAroma') auraRange += 25;
@@ -915,9 +1087,10 @@ export class Tower extends Sprite {
                         let bonus = Math.min(1.5, Math.sqrt(this.range / dist, 2));
                         finalDamage = Math.floor(finalDamage * bonus);
                     }
-                    if (this.pokemon?.item?.id == 'quickPowder' || this.pokemon?.item?.id == 'quickClaw') finalDamage -= Math.ceil(this.power / 2);
+                    if (this.pokemon?.item?.id == 'quickPowder' || this.pokemon?.item?.id == 'quickClaw' || this.pokemon?.item?.id == 'scovillainSiracha') finalDamage -= Math.ceil(this.power / 2);
                     if (this.pokemon?.item?.id == 'metalPowder' || this.pokemon?.item?.id == 'lifeOrb') finalDamage += Math.ceil(this.power / 2);
                     if (this.pokemon?.item?.id == 'hardStone') finalDamage += Math.floor(finalDamage * 0.25);
+                    if (this.pokemon?.item?.id == 'laggingTail') finalDamage += Math.ceil(this.power / 2);
 
                     if (this.ability?.id === 'fieryDance' && enemy.burnedBy != null) {
                         finalDamage = Math.ceil(finalDamage * 1.3);
@@ -934,7 +1107,7 @@ export class Tower extends Sprite {
                         finalDamage = Math.ceil(finalDamage * 2);
                     }
 
-                    if (this.tower?.pokemon?.item?.id === 'ancientShield') {
+                    if (this.tower?.pokemon?.item?.id === 'ancientShield' || (this.tower?.pokemon?.item?.id == 'eviolite' && this.tower?.pokemon?.lvl <= 50)) {
                         finalDamage = Math.ceil(finalDamage * 1.2);
                     }
 
@@ -964,8 +1137,11 @@ export class Tower extends Sprite {
 
                     if (isCritical && this.pokemon?.item?.id == 'razorClaw' && enemy.canSlow) enemy.applyStatusEffect({ type: 'slow', duration: 0.2, slowPercent: 0.5 })
 
-                    // RESTORED: Vanilla logic - Heat Rock = 100% burn chance
-                    if (enemy.canBurn && this.ability && this.ability.id === 'burnNerf' && (Math.random() < 0.5 || this.pokemon?.item?.id == 'heatRock')) {
+                    if (
+                        enemy.canBurn && 
+                        (this.ability.id === 'burnNerf' && (Math.random() < 0.5 || this.pokemon?.item?.id == 'heatRock')) ||
+                        this.pokemon?.item?.id == 'scovillainSiracha'
+                    ) {
                         if (this.pokemon?.item?.id == 'magmaStone') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
                         else if (this.pokemon?.item?.id == 'falmeOrb') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.pokemon);
                         else enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);
@@ -1081,15 +1257,124 @@ export class Tower extends Sprite {
             } else {
                targets.forEach(tgt => {
                     if (!tgt) return;
-                    const proj = new Projectile(
-                        this.position.x + 12,
-                        this.position.y + 12,
-                        tgt,
-                        this.ctx,
-                        { ...this.projectile, ricochetsLeft: ricochets },
-                        this
-                    );
-                    this.projectiles.push(proj);
+                    if (this.ability.id === 'solarBeam') {
+                        const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
+                        const from = { x: this.center.x, y: this.center.y };
+                        const to = { x: tgt.center.x, y: tgt.center.y + spawnOffsetY };
+
+                        const beamWidth = (this.pokemon?.item?.id == 'terrainExtender') ? 48 : 24;     
+                        const beamDuration = 260;  
+                        const beam = new Beam(from, to, this, { width: beamWidth, duration: beamDuration, hitCooldown: 140 });
+                        this.beams.push(beam);
+                    } if (this.ability.id === 'hyperBeam' && this.hitCount === 4) {
+                        if (!this.main.mute[0]) playSound('beam1', 'effect');
+                        const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
+                        const from = { x: this.center.x, y: this.center.y };
+                        const to = { x: tgt.center.x, y: tgt.center.y + spawnOffsetY };
+
+                        const beamWidth = (this.pokemon?.item?.id == 'terrainExtender') ? 100 : 50;     
+                        const beamDuration = 260;  
+                        const beam = new Beam(from, to, this, { width: beamWidth, duration: beamDuration, hitCooldown: 140 });
+                        this.beams.push(beam);
+                        this.hitCount = 0;
+                    } else if (this.ability.id === 'zapCannon') {
+                        const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
+                        const from = { x: this.center.x, y: this.center.y };
+                        const to = { x: tgt.center.x, y: tgt.center.y + spawnOffsetY };
+
+                        const beamWidth = (this.pokemon?.item?.id == 'terrainExtender') ? 16 : 8;     
+                        const beamDuration = 260;  
+                        const beam = new Beam(from, to, this, { width: beamWidth, duration: beamDuration, hitCooldown: 140 });
+                        this.beams.push(beam);
+                    } else if (this.ability.id === 'hydroCannon') {
+                        const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
+                        const from = { x: this.center.x, y: this.center.y };
+
+                        const to = { x: tgt.center.x, y: tgt.center.y + spawnOffsetY };
+
+                        const beamWidth = (this.pokemon?.item?.id == 'terrainExtender') ? 36 : 18;        
+                        const beamDuration = 4000;   
+                        const hitCooldown = 390;       
+                        const beamOpts = {
+                            width: beamWidth,
+                            duration: 4000,       
+                            hitCooldown: 390,
+                            extend: Math.max(this.range, 100),
+                            attachedEnemy: tgt,
+                            persistOnDeath: true   
+                        };
+
+                        const hydro = new Beam(from, to, this, beamOpts);
+                        this.beams.push(hydro);
+                    } else {
+                        const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
+
+                        if (this.pokemon?.ability?.id == 'bubbleBeam' || this.pokemon?.ability?.id == 'hyperDrill') {
+                            const amount = (this.pokemon?.ability?.id == 'bubbleBeam') ? 8 : 3;
+                            for (let i = 0; i < amount; i++) {
+                                setTimeout(() => {
+                                    let proj = new Projectile(
+                                        this.position.x - 6,
+                                        this.position.y + spawnOffsetY - 6,
+                                        tgt,
+                                        this.ctx,
+                                        { ...this.projectile, ricochetsLeft: ricochets },
+                                        this
+                                    );
+                                    this.projectiles.push(proj);
+                                    if (!this.main.mute[0]) {
+                                        if (this.pokemon?.item?.id == 'subwoofer') {
+                                            let bark = Math.floor(Math.random() * 4) + 1;
+                                            playSound(`dog${bark}`, 'effect');
+                                        } else playSound(this.projectile.effect, 'effect');
+                                    }
+                                }, i * 100)
+                            }
+                        } else if (this.pokemon?.ability?.id == 'featherDance') {
+                            for (let i = 0; i < this.feathers + 1; i++) {
+                                setTimeout(() => {
+                                    let proj = new Projectile(
+                                        this.position.x - 6,
+                                        this.position.y + spawnOffsetY - 6,
+                                        tgt,
+                                        this.ctx,
+                                        { ...this.projectile, ricochetsLeft: ricochets },
+                                        this
+                                    );
+                                    this.projectiles.push(proj);
+                                    if (!this.main.mute[0]) {
+                                        if (this.pokemon?.item?.id == 'subwoofer') {
+                                            let bark = Math.floor(Math.random() * 4) + 1;
+                                            playSound(`dog${bark}`, 'effect');
+                                        } else playSound(this.projectile.effect, 'effect');
+                                    }
+                                }, i * 100)
+                            }
+                            this.feathers = 0;
+                        } else if (this.pokemon?.item?.id === 'revysBook' && Math.random() < 0.02) {
+                            if (!this.main.mute[0]) playSound('beam1', 'effect');
+                            const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
+                            const from = { x: this.center.x, y: this.center.y };
+                            const to = { x: tgt.center.x, y: tgt.center.y + spawnOffsetY };
+
+                            const beamWidth = 25;     
+                            const beamDuration = 260;  
+                            const beam = new Beam(from, to, this, { width: beamWidth, duration: beamDuration, hitCooldown: 140 });
+                            this.beams.push(beam);
+
+                        } else {
+                            if (this.pokemon?.ability?.id == 'hyperBeam') this.hitCount++;
+                            const proj = new Projectile(
+                                this.position.x - 6,
+                                this.position.y + spawnOffsetY - 6,
+                                tgt,
+                                this.ctx,
+                                { ...this.projectile, ricochetsLeft: ricochets, ...(this.pokemon?.item?.id === 'revysBook' ? { sprite: _randomRevysSprite() } : {}) },
+                                this
+                            );
+                            this.projectiles.push(proj);
+                        }
+                    }  
                 });
 
                 // Only play sound once per frame to avoid audio spam
@@ -1120,18 +1405,9 @@ export class Tower extends Sprite {
                 continue;
             }
 
-            if (isOrbitalTower || p.orbit) {
-
-            } else if (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible'))) {
-                // MOD: Retarget within tower's range from tower position
-                const towerRange = p.tower ? (p.tower.range || 100) : 200;
-                const newTarget = p.tower ? p.tower.findClosestEnemy(p.tower, towerRange) : null;
-                if (newTarget) {
-                    p.enemy = newTarget;
-                } else {
-                    this.projectiles.splice(i, 1);
-                    continue;
-                }
+            if (!(isOrbitalTower || p.orbit) && (!p.enemy || p.enemy.hp <= 0 || (p.enemy.invisible && !(p.tower?.revealInvisible || p.tower?.targetMode === 'invisible')))) {
+                this.projectiles.splice(i, 1);
+                continue;
             }
 
             if (typeof p.update === 'function') p.update(deltaTime, shouldDraw); // pasamos delta ya escalado por Game
@@ -1163,6 +1439,96 @@ export class Tower extends Sprite {
             }
         }
         return closest;
+    }
+
+    dealDirectDamage(enemy, source = 'physical') { 
+        if (!enemy || enemy.hp <= 0) return;
+
+        let finalDamage = this.projectile.power;
+
+        if (this.ability?.id == 'shiftGear') {
+            (this.pokemon?.item?.id == 'lustrousOrb') ? this.shiftGearSpeed += 0.06 : this.shiftGearSpeed += 0.03;
+            this.projectiles.forEach(proj => {
+                proj.angularSpeed = Math.min(5, this.shiftGearSpeed);
+            })
+        }
+
+        if (['quickPowder', 'quickClaw', 'zoomLens', 'scovillainSiracha'].includes(this.pokemon?.item?.id)) finalDamage -= Math.ceil(this.power / 2);
+        if (['laggingTail'].includes(this.pokemon?.item?.id)) finalDamage += Math.ceil(this.power / 2);
+
+        if (['metalPowder', 'lifeOrb'].includes(this.pokemon?.item?.id)) finalDamage += Math.ceil(this.power / 2);
+        if (this.pokemon?.item?.id == 'hardStone') finalDamage += Math.floor(finalDamage * 0.25);
+        if (this.pokemon?.item?.id == 'eviolite' && this.pokemon?.lvl <= 50) finalDamage += Math.floor(finalDamage * 0.2);
+        // Critical
+        let isCritical = false;
+        let critical = this.critical ?? 0;
+        if (this.criticalAura) critical += 10;
+        if (this.pokemon?.item?.id == 'direHit') critical += 10;
+
+        if ((Math.random() * 100) < critical && this.tower?.pokemon?.item?.id != 'blueBandana') {
+            isCritical = true;
+            let multiplier = (this.ability?.id === 'superCritical') ? 2.0 : 1.5;
+            if (this.criticalDamageAura) multiplier *= 1.5;
+            if (this.pokemon?.item?.id == 'clover') multiplier *= 1.3;
+            if (this.main?.area?.weather == 'hail') multiplier *= 1.1;
+            finalDamage = Math.ceil(finalDamage * multiplier);
+        }
+
+        if (this.pokemon?.item?.id === 'blueBandana') {
+            finalDamage = Math.ceil(finalDamage * (1 + this.critical * 0.01));
+        }
+
+        if (this.pokemon?.item?.id === 'ovalCharm') {
+            let ovalCharmMultiplier = (10 - this.main.team.pokemon.length) * 12.5;
+            finalDamage += Math.ceil((finalDamage * ovalCharmMultiplier) / 100);
+        }
+
+        // WEATHER / TERRAIN
+        if (
+            this.main.area.weather == 'rain' &&
+            (this.tile?.land == 3 || (this.tile?.land == 1 && this.pokemon?.item?.id == 'squirtBottle'))
+        ) {
+            finalDamage = Math.ceil(finalDamage * 1.2);
+        }
+
+        if (
+            this.main.area.weather == 'heavyRain' && this.pokemon?.item?.id != 'safetyGoggles' &&
+            (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle'))
+        ) {
+            finalDamage = Math.ceil(finalDamage * 0.5);
+        }
+
+        // ESTADOS
+        if (enemy.canBurn && this.pokemon.ability?.id === 'flameWheel' && Math.random() < 0.5) {
+            if (this.pokemon?.item?.id == 'magmaStone') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
+            else if (this.pokemon?.item?.id == 'falmeOrb') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.pokemon);
+            else enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);     
+        }
+
+        if (enemy.canSlow && this.pokemon.ability?.id === 'waterBubble') {
+            if (this.pokemon?.item?.id == 'lightClay') enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2.2 }) 
+            else enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
+        }
+
+        if (enemy.canStun && this.pokemon.ability?.id  === 'zapCannon' && Math.random() < 0.2) {
+            if (this.pokemon?.item?.id == 'lightClay') enemy.applyStatusEffect({ type: 'stun', duration: 1.65 });
+            else enemy.applyStatusEffect({ type: 'stun', duration: 1.5 });
+        }
+
+        // OTROS EFECTOS
+        if (isCritical && this.pokemon?.item?.id === 'razorClaw' && enemy.canSlow) {
+            enemy.applyStatusEffect({ type: 'slow', duration: 0.2, slowPercent: 0.5 });
+        }
+        if (this.pokemon?.item?.id === 'magnet' && enemy.canSlow && enemy.armor > 0) {
+            enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 1 });
+        }
+        if (this.pokemon?.item?.id === 'scovillainSiracha' && enemy.canBurn) {
+            enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);    
+        }
+
+        if (this.pokemon?.ability?.id === 'hyperBeam') finalDamage *= 3;
+        // aplicar daño con el método del enemigo
+        enemy.getDamaged(finalDamage, source, this.pokemon.ability, isCritical, new Set(), this.pokemon, this);
     }
 
     getOrderedEnemies(validEnemies) {
@@ -1355,4 +1721,517 @@ export class Tower extends Sprite {
             this.main.area.recalculateAuras();
         }
     }
+}
+
+class Beam {
+    constructor(from, to, tower, options = {}) {
+        this.tower = tower;
+        this.ctx = tower.ctx;
+
+        this.from = { x: from.x, y: from.y };
+
+        this.attachedEnemy = options.attachedEnemy ?? null;
+        this.persistOnDeath = options.persistOnDeath ?? false;
+
+        if (this.attachedEnemy && this.attachedEnemy.center) {
+            this.to = { x: this.attachedEnemy.center.x, y: this.attachedEnemy.center.y };
+        } else {
+            this.to = { x: to.x, y: to.y };
+        }
+
+        this.width = options.width ?? 10;
+        this.duration = options.duration ?? 260;
+        this.elapsed = 0;
+        this.alpha = 1;
+        this.hitCooldown = options.hitCooldown ?? 300;
+        this.maxExtend = options.extend ?? 2000;
+        this.active = true;
+        this.simulatedTime = 0;
+
+        this.perEnemyLastHit = new WeakMap();
+        this.pairKey = options.pairKey ?? null;
+        this._lockedToLastPos = false;
+
+        this._recomputeDirection();
+        this.applyHits();
+    }
+
+    _recomputeDirection() {
+        const fx = this.from.x;
+        const fy = this.from.y;
+
+        if (this._lockedToLastPos) {
+            const dx0 = this.to.x - fx;
+            const dy0 = this.to.y - fy;
+            const norm0 = Math.hypot(dx0, dy0) || 1;
+            this.dir = { x: dx0 / norm0, y: dy0 / norm0 };
+            this.extendedTo = { x: fx + this.dir.x * this.maxExtend, y: fy + this.dir.y * this.maxExtend };
+            return;
+        }
+
+        if (this.attachedEnemy) {
+            if (this.attachedEnemy.hp > 0) {
+                this.to.x = this.attachedEnemy.center.x;
+                this.to.y = this.attachedEnemy.center.y;
+            } else {
+                if (this.persistOnDeath) {
+                    this._lockedToLastPos = true;
+                    if (this.attachedEnemy.center) {
+                        this.to.x = this.attachedEnemy.center.x;
+                        this.to.y = this.attachedEnemy.center.y;
+                    }
+                    this.attachedEnemy = null;
+                } else {
+                    this.active = false;
+                    return;
+                }
+            }
+        }
+
+        const tx = this.to.x;
+        const ty = this.to.y;
+
+        const dx = tx - fx;
+        const dy = ty - fy;
+        const norm = Math.hypot(dx, dy) || 1;
+        this.dir = { x: dx / norm, y: dy / norm };
+
+        this.extendedTo = {
+            x: fx + this.dir.x * this.maxExtend,
+            y: fy + this.dir.y * this.maxExtend
+        };
+    }
+
+    pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+        const vx = x2 - x1; const vy = y2 - y1;
+        const wx = px - x1; const wy = py - y1;
+        const c1 = vx * wx + vy * wy;
+        if (c1 <= 0) return Math.hypot(px - x1, py - y1);
+        const c2 = vx * vx + vy * vy;
+        if (c2 <= c1) return Math.hypot(px - x2, py - y2);
+        const b = c1 / c2;
+        const bx = x1 + b * vx; const by = y1 + b * vy;
+        return Math.hypot(px - bx, py - by);
+    }
+
+    applyHits() {
+        if (!this.tower || !this.tower.main) return;
+        const enemies = this.tower.main.area.enemies;
+        const now = this.simulatedTime;
+
+        this._recomputeDirection();
+        if (!this.active) return;
+
+        const x1 = this.from.x;
+        const y1 = this.from.y;
+        const x2 = this.extendedTo.x;
+        const y2 = this.extendedTo.y;
+
+        for (const e of enemies) {
+            if (!e || e.hp <= 0 || e.invulnerable) continue;
+            if (e.invisible && !(this.tower.revealInvisible || this.tower.targetMode === 'invisible')) continue;
+
+            const dist = this.pointToSegmentDistance(e.center.x, e.center.y, x1, y1, x2, y2);
+            const enemySize = Math.max(e.width ?? 12, e.height ?? 12);
+            const tolerance = (this.width / 2) + (enemySize / 4);
+
+            if (dist <= tolerance) {
+                const last = this.perEnemyLastHit.get(e) || 0;
+                if (now - last >= this.hitCooldown) {
+                    try {
+                        if (typeof this.tower.dealDirectDamage === 'function') {
+                            this.tower.dealDirectDamage(e);
+                        } else {
+                            let dmg = this.tower.projectile?.power ?? this.tower.basePower ?? this.tower.power ?? 1;
+                            e.getDamaged(dmg, 'special', this.tower.pokemon.ability, false, new Set(), this.tower.pokemon, this.tower);
+                        }
+                    } catch (err) {
+                        let dmg = this.tower.projectile?.power ?? this.tower.basePower ?? this.tower.power ?? 1;
+                        e.getDamaged(dmg, 'special', this.tower.pokemon.ability, false, new Set(), this.tower.pokemon, this.tower);
+                    }
+
+                    this.perEnemyLastHit.set(e, now);
+                }
+            }
+        }
+    }
+
+    update(delta) {
+        if (!this.active) return;
+
+        this.elapsed += delta;
+        this.simulatedTime += delta;
+        if (this.elapsed >= this.duration) {
+            this.active = false;
+            return;
+        }
+
+        if (this.attachedEnemy && this.attachedEnemy.hp <= 0) {
+
+        }
+
+        this._recomputeDirection();
+        if (!this.active) return;
+
+        this.applyHits();
+
+        this.alpha = Math.max(0, 1 - (this.elapsed / this.duration));
+    }
+
+    draw() {
+        if (!this.ctx || !this.from || !this.extendedTo) return;
+        const ctx = this.ctx;
+
+        // Extraer color base del Pokémon
+        const hex = (this.tower.pokemon.specie.color || '#ffcc00').replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16) || 255;
+        const g = parseInt(hex.substring(2, 4), 16) || 204;
+        const b = parseInt(hex.substring(4, 6), 16) || 0;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineCap = 'round';
+
+        if (['solarBeam', 'zapCannon', 'hyperBeam'].includes(this.tower.ability.id) || this.tower?.pokemon?.item?.id === 'revysBook') {
+            const currentWidth = this.width * (0.5 + this.alpha * 0.5);
+
+            // 1. Brillo exterior (Glow)
+            ctx.shadowBlur = 15 * this.alpha;
+            ctx.shadowColor = `rgba(${r},${g},${b}, ${0.9 * this.alpha})`;
+            ctx.strokeStyle = `rgba(${r},${g},${b}, ${0.35 * this.alpha})`;
+            ctx.lineWidth = currentWidth * 2.5;
+            this.drawPath(ctx);
+
+            // 2. Cuerpo del rayo
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = `rgba(${r},${g},${b}, ${0.95 * this.alpha})`;
+            ctx.lineWidth = currentWidth;
+            this.drawPath(ctx);
+
+            // 3. Núcleo blanco incandescente
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * this.alpha})`;
+            ctx.lineWidth = currentWidth * 0.4;
+            this.drawPath(ctx);
+
+        } else if (this.tower.ability.id === 'hydroCannon') {
+            const t = (Date.now() / 150) % 1000; 
+            const dist = Math.hypot(this.extendedTo.x - this.from.x, this.extendedTo.y - this.from.y);
+            const angle = Math.atan2(this.extendedTo.y - this.from.y, this.extendedTo.x - this.from.x);
+            
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(30, 120, 255, ${0.5 * this.alpha})`;
+            ctx.lineWidth = this.width * 1.5 * this.alpha;
+            this.drawPath(ctx); 
+
+            const drawSpiral = (offset, color, size, speed) => {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = size * this.alpha;
+                
+                for (let i = 0; i <= dist; i += 8) {
+                  
+                    const rotation = i * 0.05 - t * speed;
+                    const wave = Math.sin(rotation + offset) * (12 + i * 0.02); 
+                    
+                    const px = this.from.x + Math.cos(angle) * i - Math.sin(angle) * wave;
+                    const py = this.from.y + Math.sin(angle) * i + Math.cos(angle) * wave;
+                    
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            };
+
+            drawSpiral(0, `rgba(100, 200, 255, ${0.7 * (this.alpha + 0.3)})`, 6, 1.5);
+            
+            ctx.globalCompositeOperation = 'lighter';
+            drawSpiral(Math.PI, `rgba(255, 255, 255, ${0.6 * (this.alpha + 0.3)})`, 3, 1.5);
+
+            ctx.beginPath();
+            ctx.setLineDash([10, 40]);
+            ctx.lineDashOffset = -t * 30;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * (this.alpha + 0.3)})`;
+            ctx.lineWidth = 2;
+            this.drawPath(ctx);
+            
+            ctx.setLineDash([]);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        ctx.restore();
+    }
+
+    drawPath(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.from.x, this.from.y);
+        ctx.lineTo(this.extendedTo.x, this.extendedTo.y);
+        ctx.stroke();
+    }
+}
+
+export class LinkBeam {
+    constructor(fromTower, toTower, options = {}) {
+        this.fromTower = fromTower;
+        this.toTower = toTower;
+        this.ctx = fromTower.ctx;
+        this.width = options.width ?? 8;
+        this.hitCooldown = options.hitCooldown ?? 300; 
+        this.maxRange = options.maxRange ?? 1000;
+        this.color = options.color ?? (fromTower.pokemon?.specie?.color || '#ff6600');
+
+        this.perEnemyLastHit = new WeakMap();
+
+        const getKeyId = t => t?.uid ?? (`tile-${t?.tile?.id ?? Math.random()}`);
+        const a = getKeyId(fromTower);
+        const b = getKeyId(toTower);
+        this.pairKey = (a < b) ? `${a}-${b}` : `${b}-${a}`;
+
+        this.active = true;
+    }
+
+    pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+        const vx = x2 - x1; const vy = y2 - y1;
+        const wx = px - x1; const wy = py - y1;
+        const c1 = vx * wx + vy * wy;
+        if (c1 <= 0) return Math.hypot(px - x1, py - y1);
+        const c2 = vx * vx + vy * vy;
+        if (c2 <= c1) return Math.hypot(px - x2, py - y2);
+        const b = c1 / c2;
+        const bx = x1 + b * vx; const by = y1 + b * vy;
+        return Math.hypot(px - bx, py - by);
+    }
+
+    applyHits() {
+        if (!this.fromTower || !this.toTower) return;
+        const enemies = this.fromTower.main.area.enemies;
+        const now = Date.now();
+
+        const from = this.fromTower.center;
+        const to = this.toTower.center;
+
+        for (const e of enemies) {
+            if (!e || e.hp <= 0 || e.invulnerable) continue;
+            if (e.invisible && !(this.fromTower.revealInvisible || this.fromTower.targetMode === 'invisible')) continue;
+
+            const dist = this.pointToSegmentDistance(e.center.x, e.center.y, from.x, from.y, to.x, to.y);
+            const enemySize = Math.max(e.width ?? 12, e.height ?? 12);
+            const tolerance = (this.width / 2) + (enemySize / 4);
+
+            if (dist <= tolerance) {
+                const last = this.perEnemyLastHit.get(e) || 0;
+                if (now - last >= this.hitCooldown) {
+                    this.toTower.dealDirectDamage(e, 'link');
+                    this.fromTower.dealDirectDamage(e, 'link');
+                    this.perEnemyLastHit.set(e, now);
+                }
+            }
+        }
+    }
+
+    update(delta) {
+        const areaTowers = this.fromTower?.main?.area?.towers || [];
+
+        if (!this.fromTower || !this.toTower) {
+            this.active = false;
+            return;
+        }
+
+        if (!areaTowers.includes(this.fromTower) || !areaTowers.includes(this.toTower)) {
+            this.active = false;
+            return;
+        }
+
+        const fp = this.fromTower.pokemon?.tilePosition;
+        const tp = this.toTower.pokemon?.tilePosition;
+        if (fp === undefined || tp === undefined || fp === -1 || tp === -1) {
+            this.active = false;
+            return;
+        }
+
+        this.from = this.fromTower.center;
+        this.to = this.toTower.center;
+
+        this.applyHits();
+    }
+
+    draw() {
+        if (!this.ctx || !this.from || !this.to) return;
+        const ctx = this.ctx;
+        const now = Date.now();
+
+        const colorPlusle = { r: 255, g: 107, b: 77 }; 
+        const colorMinun = { r: 77, g: 178, b: 255 }; 
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const grad = ctx.createLinearGradient(this.from.x, this.from.y, this.to.x, this.to.y);
+        
+        const shift = (Math.sin(now * 0.003) + 1) / 2;
+        
+        grad.addColorStop(Math.max(0, shift - 0.4), `rgba(${colorPlusle.r},${colorPlusle.g},${colorPlusle.b}, 0.6)`);
+        grad.addColorStop(Math.min(1, shift + 0.4), `rgba(${colorMinun.r},${colorMinun.g},${colorMinun.b}, 0.6)`);
+
+        ctx.shadowBlur = 6; 
+        ctx.shadowColor = shift > 0.5 ? `rgba(${colorMinun.r},${colorMinun.g},${colorMinun.b}, 0.4)` : `rgba(${colorPlusle.r},${colorPlusle.g},${colorPlusle.b}, 0.4)`;
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = this.width * 1.5;
+        ctx.globalAlpha = 0.3;
+        this.drawZappedLine(ctx, this.from, this.to, 3, now);
+
+        ctx.shadowBlur = 0; 
+        ctx.globalAlpha = 0.8;
+        ctx.lineWidth = this.width * 0.8;
+        this.drawZappedLine(ctx, this.from, this.to, 2, now + 50);
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.lineWidth = Math.max(1, this.width * 0.25);
+        this.drawZappedLine(ctx, this.from, this.to, 1, now + 100);
+
+        ctx.restore();
+    }
+
+    drawZappedLine(ctx, from, to, deviation, seed) {
+        const segments = 8;
+        const angle = Math.atan2(to.y - from.y, to.x - from.x) + Math.PI / 2;
+        
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+
+        for (let i = 1; i < segments; i++) {
+            const t = i / segments;
+            let px = from.x + (to.x - from.x) * t;
+            let py = from.y + (to.y - from.y) * t;
+
+            // Vibración reducida
+            const offset = Math.sin(seed * 0.008 + i) * deviation;
+            
+            px += Math.cos(angle) * offset;
+            py += Math.sin(angle) * offset;
+
+            ctx.lineTo(px, py);
+        }
+
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+    }
+}
+export class SpikeZone {
+    constructor(position, tower, options = {}) {
+        this.x = position.x;
+        this.y = position.y;
+        this.tower = tower;
+        this.ctx = tower.ctx || (tower.main && tower.main.game && tower.main.game.ctx);
+
+        this.radius = options.radius ?? 40;
+
+        this.totalDuration = options.duration ?? 5000; // ms total
+        this.remaining = this.totalDuration;
+
+        this.tickRate = options.tickRate ?? 400; // ms entre ticks de daño
+        this.tickAccum = 0;
+
+        this.active = true;
+    }
+
+    _inRange(enemy) {
+        const dx = enemy.center.x - this.x;
+        const dy = enemy.center.y - this.y;
+        return Math.hypot(dx, dy) <= this.radius;
+    }
+
+    update(delta = 0) {
+        if (!this.active) return;
+
+        const dt = Number.isFinite(delta) ? delta : 0;
+
+        this.remaining -= dt;
+        if (this.remaining <= 0) {
+            this.active = false;
+            return;
+        }
+
+        this.tickAccum += dt;
+        if (this.tickAccum < this.tickRate) return;
+
+        // consume solo un tick por frame; si prefieres recuperar ticks perdidos, cambia a while(...)
+        this.tickAccum %= this.tickRate;
+
+        const enemies = this.tower.main.area.enemies;
+        for (const e of enemies) {
+            if (!e || e.hp <= 0 || e.invulnerable) continue;
+            if (e.invisible && !(this.tower.revealInvisible || this.tower.targetMode === 'invisible')) continue;
+            if (!this._inRange(e)) continue;
+
+            this.tower.dealDirectDamage(e);
+        }
+    }
+
+    draw() {
+        if (!this.active || !this.ctx) return;
+
+        const lifeRatio = Math.max(0, this.remaining / this.totalDuration);
+        const alpha = lifeRatio > 0.1 ? 1.0 : lifeRatio / 0.1;
+
+        const now = Date.now();
+
+        this.ctx.save();
+        this.ctx.translate(this.x, this.y);
+
+        const bounceScale = 1 + Math.sin(now / 800) * 0.01;
+        this.ctx.scale(bounceScale, bounceScale);
+
+        this.ctx.rotate((now / 6000) % (Math.PI * 2));
+
+        const numTriangles = 24;
+        const spikeHeight = 6;
+
+        this.ctx.beginPath();
+        for (let i = 0; i < numTriangles; i++) {
+            const angle = (i * Math.PI * 2) / numTriangles;
+            const nextAngle = ((i + 1) * Math.PI * 2) / numTriangles;
+            const midAngle = (angle + nextAngle) / 2;
+            const tx = Math.cos(midAngle) * (this.radius + spikeHeight);
+            const ty = Math.sin(midAngle) * (this.radius + spikeHeight);
+            const bx = Math.cos(nextAngle) * this.radius;
+            const by = Math.sin(nextAngle) * this.radius;
+
+            if (i === 0) this.ctx.moveTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
+            this.ctx.lineTo(tx, ty);
+            this.ctx.lineTo(bx, by);
+        }
+        this.ctx.closePath();
+
+        const bgGrad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius + spikeHeight);
+        bgGrad.addColorStop(0, `rgba(60, 45, 30, 0)`);
+        bgGrad.addColorStop(0.8, `rgba(80, 55, 40, ${alpha * 0.25})`);
+        bgGrad.addColorStop(1, `rgba(45, 35, 25, ${alpha * 0.4})`);
+        this.ctx.fillStyle = bgGrad;
+        this.ctx.fill();
+
+        this.ctx.strokeStyle = `rgba(120, 95, 70, ${alpha})`;
+        this.ctx.lineWidth = 2.5;
+        this.ctx.stroke();
+
+        const numSpikes = 12;
+        for (let i = 0; i < numSpikes; i++) {
+            const angle = (i * Math.PI * 2) / numSpikes;
+            const sAlpha = 0.4 + (0.6 * Math.sin(angle + (now / 300)));
+            this.ctx.strokeStyle = `rgba(180, 150, 120, ${alpha * sAlpha})`;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(Math.cos(angle) * (this.radius - 2), Math.sin(angle) * (this.radius - 2));
+            this.ctx.lineTo(Math.cos(angle) * (this.radius * 0.4), Math.sin(angle) * (this.radius * 0.4));
+            this.ctx.stroke();
+        }
+
+        this.ctx.restore();
+    }
+}
+
+function _randomRevysSprite() {
+    return _REVYS_SPRITES[Math.floor(Math.random() * _REVYS_SPRITES.length)].sprite;
 }
