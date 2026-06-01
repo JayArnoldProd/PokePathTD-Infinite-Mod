@@ -3737,7 +3737,9 @@ def apply_ditto_party_refresh():
 
 \t\t\tconst firstSlot = this.pokemon[0];
 \t\t\tconst nextADN = (firstSlot && firstSlot !== pokemon) ? firstSlot.specie : pokemonData['ditto'];
-\t\t\tif (!nextADN || pokemon.adn?.id === nextADN.id) return;
+\t\t\tconst currentKey = pokemon.adn?.key || pokemon.adn?.name?.[0] || pokemon.adn?.id;
+\t\t\tconst nextKey = nextADN?.key || nextADN?.name?.[0] || nextADN?.id;
+\t\t\tif (!nextADN || currentKey === nextKey) return;
 
 \t\t\tif (this.main?.player && fossilIds.includes(pokemon.adn?.id)) this.main.player.fossilInTeam--;
 \t\t\tpokemon.adn = nextADN;
@@ -3758,6 +3760,31 @@ def apply_ditto_party_refresh():
             log_fail("Team.js: Ditto party refresh - addPokemon marker not found")
             return False
         content = content.replace(marker, helper + marker, 1)
+
+    constructor_attach_old = """\t\tthis.main = main;
+\t\tthis.pokemon = teamData.map(data => Pokemon.fromOriginalData(data, this.main));"""
+    constructor_attach_new = """\t\tthis.main = main;
+\t\tthis.pokemon = teamData.map(data => Pokemon.fromOriginalData(data, this.main));
+\t\tthis.main.team = this;"""
+    if constructor_attach_new not in content:
+        if constructor_attach_old not in content:
+            log_fail("Team.js: Ditto party refresh - constructor team attach block not found")
+            return False
+        content = content.replace(constructor_attach_old, constructor_attach_new, 1)
+
+    constructor_transform_old = """\t    this.pokemon.forEach(pokemon => {
+\t        pokemon.inGroup = true;
+\t        if (pokemon.adn != undefined) pokemon.transformADN();
+\t    });"""
+    constructor_transform_new = """\t    this.pokemon.forEach(pokemon => {
+\t        pokemon.inGroup = true;
+\t    });
+\t    this.refreshDittoADN();"""
+    if constructor_transform_new not in content:
+        if constructor_transform_old not in content:
+            log_fail("Team.js: Ditto party refresh - constructor transform block not found")
+            return False
+        content = content.replace(constructor_transform_old, constructor_transform_new, 1)
 
     add_old = """\t\tthis.pokemon.push(pokemon);
 \t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();"""
