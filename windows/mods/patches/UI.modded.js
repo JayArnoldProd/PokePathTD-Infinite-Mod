@@ -224,6 +224,22 @@ export class UI {
 		};
 	}
 
+	formatPreviewStat(value, significantDigits = 2) {
+		const numericValue = Number(value);
+		if (!Number.isFinite(numericValue) || numericValue === 0) return '0';
+
+		const absValue = Math.abs(numericValue);
+		const factor = Math.pow(10, significantDigits - Math.ceil(Math.log10(absValue)));
+		const roundedValue = Math.round(numericValue * factor) / factor;
+		if (!Number.isFinite(roundedValue) || roundedValue === 0) return '0';
+
+		if (Math.abs(roundedValue) >= 1000 && this.main?.utility?.numberDot) {
+			return this.main.utility.numberDot(Math.round(roundedValue));
+		}
+
+		return roundedValue.toString();
+	}
+
 	render() {
 		this.topBar = new Element(this.main.scene, { className: 'ui-top-bar' }).element;
 
@@ -1641,18 +1657,10 @@ export class UI {
 	                this.updatePokemon();
 	                playSound('click1', 'ui');
 
-	                if (this.main.team.pokemon[0] !== firstBefore) {
-	                    const ditto = this.main.team.pokemon.find(p => p.id === 70);
-	                    if (ditto != undefined && !ditto.isDeployed) {
-	                        playSound('teleport', 'effect')
-
-	                        if ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
-	                        ditto.adn = this.main.team.pokemon[0].specie;
-	                        if ([58, 59, 63, 64, 65, 66, 94, 140, 136].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
-	                        ditto.transformADN();
-	                        this.main.UI.updatePokemon();
-	                        this.update();
-	                    }
+	                if (this.main.team.pokemon[0] !== firstBefore && this.main.team.refreshDittoADN?.()) {
+	                    playSound('teleport', 'effect');
+	                    this.main.UI.updatePokemon();
+	                    this.update();
 	                }
 	            }
 	        }
@@ -1805,17 +1813,17 @@ export class UI {
 		}
 
 		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
-		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.hp}</span>`;
-		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.armor || 0}</span>`;
-		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.speed}</span>`;
-		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.power}</span>`;
-		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${scaledEnemy.regeneration}/s</span>`;
+		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.hp)}</span>`;
+		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.armor || 0)}</span>`;
+		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.speed)}</span>`;
+		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.power)}</span>`;
+		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.regeneration)}/s</span>`;
 		this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;
 		this.infoSlow.innerHTML = `${text.ui.slow[this.main.lang].toUpperCase()}`;
 		this.infoBurn.innerHTML = `${text.ui.burn[this.main.lang].toUpperCase()}`;
 		this.infoPoison.innerHTML = `${text.ui.poison[this.main.lang].toUpperCase()}`;
 		this.infoInvisible.innerHTML = `${text.ui.invisible[this.main.lang].toUpperCase()} <span class="pos-right">${(scaledEnemy.invisible) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase()}</span>`;
-		this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${scaledEnemy.gold}</span>`;
+		this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${this.formatPreviewStat(scaledEnemy.gold)}</span>`;
 
 		if ([6,7,8].includes(this.main.lang)) {
 			this.infoStatContainer.style.lineHeight = '10px'

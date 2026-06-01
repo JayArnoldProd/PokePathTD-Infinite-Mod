@@ -1504,6 +1504,10 @@ def apply_recharge_precision():
     if 'speedDecimals' in content:
         log_skip("PokemonScene.js: Recharge precision (already applied)")
         return True
+
+    if 'formatPanelStat(' in content:
+        log_skip("PokemonScene.js: Recharge precision (covered by panel stat formatter)")
+        return True
     
     patched = 0
     
@@ -3517,6 +3521,13 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         except Exception as e:
             failed_mods.append(f"force no dupes: {str(e)}")
 
+    # Step 4bb: Keep Ditto synced with the current first party slot for all install combinations.
+    if selected_features:
+        try:
+            apply_ditto_party_refresh()
+        except Exception as e:
+            failed_mods.append(f"ditto party refresh: {str(e)}")
+
     # Step 4c: Apply wave clamp + star display cap if Endless Mode is NOT selected
     # Prevents crashes when a save has wave > 100 but Endless isn't installed
     # Also caps star display so endless records don't inflate the total
@@ -3709,6 +3720,69 @@ def apply_allow_dupes():
     box_content = box_content.replace(old_box_dedup, new_box_dedup)
     write_file(box_path, box_content)
     log_success("Box.js: Allow duplicate Pokemon IDs in box")
+    return True
+
+
+def apply_ditto_party_refresh():
+    """Refresh Ditto's copied species whenever party membership/order changes."""
+    path = JS_ROOT / "game" / "core" / "Team.js"
+    content = read_file(path)
+
+    helper = """\trefreshDittoADN() {
+\t\tconst fossilIds = [58, 59, 63, 64, 65, 66, 94, 140, 136];
+\t\tlet changed = false;
+
+\t\tthis.pokemon.forEach(pokemon => {
+\t\t\tif (!pokemon || pokemon.id !== 70 || pokemon.isDeployed) return;
+
+\t\t\tconst firstSlot = this.pokemon[0];
+\t\t\tconst nextADN = (firstSlot && firstSlot !== pokemon) ? firstSlot.specie : pokemonData['ditto'];
+\t\t\tif (!nextADN || pokemon.adn?.id === nextADN.id) return;
+
+\t\t\tif (this.main?.player && fossilIds.includes(pokemon.adn?.id)) this.main.player.fossilInTeam--;
+\t\t\tpokemon.adn = nextADN;
+\t\t\tpokemon.adnPosition = 0;
+\t\t\tpokemon.transformADN();
+\t\t\tif (this.main?.player && fossilIds.includes(pokemon.adn?.id)) this.main.player.fossilInTeam++;
+\t\t\tchanged = true;
+\t\t});
+
+\t\treturn changed;
+\t}
+
+"""
+
+    if "refreshDittoADN()" not in content:
+        marker = "\taddPokemon(pokemon) {"
+        if marker not in content:
+            log_fail("Team.js: Ditto party refresh - addPokemon marker not found")
+            return False
+        content = content.replace(marker, helper + marker, 1)
+
+    add_old = """\t\tthis.pokemon.push(pokemon);
+\t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();"""
+    add_new = """\t\tthis.pokemon.push(pokemon);
+\t\tthis.refreshDittoADN();
+\t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();"""
+    if add_new not in content:
+        if add_old not in content:
+            log_fail("Team.js: Ditto party refresh - addPokemon push block not found")
+            return False
+        content = content.replace(add_old, add_new, 1)
+
+    remove_old = """\t\tthis.pokemon.splice(index, 1);
+\t}"""
+    remove_new = """\t\tthis.pokemon.splice(index, 1);
+\t\tthis.refreshDittoADN();
+\t}"""
+    if remove_new not in content:
+        if remove_old not in content:
+            log_fail("Team.js: Ditto party refresh - removePokemon splice block not found")
+            return False
+        content = content.replace(remove_old, remove_new, 1)
+
+    write_file(path, content)
+    log_success("Team.js: Ditto refreshes after party changes")
     return True
 
 
@@ -4084,6 +4158,7 @@ def main():
     
     # Allow duplicate Pokemon IDs on team (Cherubi/Cherrim etc.)
     apply_allow_dupes()
+    apply_ditto_party_refresh()
     
     # Apply userData redirect (modded saves isolation)
     apply_modded_userdata_redirect()

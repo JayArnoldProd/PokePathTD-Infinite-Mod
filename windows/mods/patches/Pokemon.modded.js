@@ -494,13 +494,13 @@ export class Pokemon {
 	}
 
 	transformADN() {
-		// Always look up current slot 1 to prevent stale adn from save data
+		// Always look up current slot 1 to prevent stale adn from save data.
 		if (this.main?.team?.pokemon) {
 			const firstSlot = this.main.team.pokemon[0];
 			if (firstSlot && firstSlot !== this) {
 				this.adn = firstSlot.specie;
 			} else if (!firstSlot || firstSlot === this) {
-				return; // Ditto is slot 1 or team empty — stay as base Ditto
+				this.adn = pokemonData['ditto'];
 			}
 		}
 		if (this.adn?.base) this.adn = pokemonData[this.adn.base]

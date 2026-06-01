@@ -870,6 +870,7 @@ export class BoxScene extends SectionScene {
 	                this.main.team.pokemon = teamArr;
 	            }
 
+	            this.main.team.refreshDittoADN?.();
 	            this.update();
 	            if (this.main.UI) this.main.UI.updatePokemon();
 	            playSound('equip', 'ui');
