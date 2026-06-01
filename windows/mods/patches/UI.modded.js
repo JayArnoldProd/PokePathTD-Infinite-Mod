@@ -1657,7 +1657,7 @@ export class UI {
 	                this.updatePokemon();
 	                playSound('click1', 'ui');
 
-	                if (this.main.team.pokemon[0] !== firstBefore && this.main.team.refreshDittoADN?.()) {
+	                if (this.main.team.pokemon[0] !== firstBefore && this.main.team.refreshDittoADN?.('ui-party-reorder')) {
 	                    playSound('teleport', 'effect');
 	                    this.main.UI.updatePokemon();
 	                    this.update();
@@ -1815,7 +1815,7 @@ export class UI {
 		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
 		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.hp)}</span>`;
 		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.armor || 0)}</span>`;
-		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.speed)}</span>`;
+		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.speed, 3)}</span>`;
 		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.power)}</span>`;
 		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.regeneration)}/s</span>`;
 		this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;

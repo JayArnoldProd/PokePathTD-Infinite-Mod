@@ -229,7 +229,7 @@ export class PokemonScene extends GameScene {
 				this.main.team.pokemon.splice(0, 1);
 				this.main.team.pokemon.push(pokemon);
 
-				this.main.team.refreshDittoADN?.();
+				this.main.team.refreshDittoADN?.('pokemon-scene-dna-button');
 				this.main.UI.updatePokemon();
 				this.update();
 			}
@@ -663,7 +663,7 @@ export class PokemonScene extends GameScene {
 		if (speedDiff > 0) {
 			this.data['speed'].value.innerHTML = isOrbital
 				? `${this.formatSpeedValue(this.pokemon)} <span style="color:var(--green)">(+${this.formatOrbitalSpeedDiff(speedDiff)})</span>`
-				: `${this.formatSpeedValue(this.pokemon)} <span style="color:var(--green)">(-${this.formatPanelStat(speedDiff)}s)</span>`;
+				: `${this.formatSpeedValue(this.pokemon)} <span style="color:var(--green)">(-${this.formatPanelStat(speedDiff, 3)}s)</span>`;
 		} 
 		if (criticalDiff > 0) {
 			this.data['critical'].value.innerHTML = `${this.pokemon.critical.toFixed(1)}% <span style="color:var(--green)">(+${criticalDiff}%)</span>`;
@@ -692,13 +692,13 @@ export class PokemonScene extends GameScene {
 	formatSpeedValue(pokemon) {
 		if (pokemon.attackType === 'orbital') {
 			const angularSpeed = pokemon.orbitalSpeed ?? 0;
-			return `${this.formatPanelStat((angularSpeed * 180) / Math.PI)}°/s`;
+			return `${this.formatPanelStat((angularSpeed * 180) / Math.PI, 3)}°/s`;
 		}
-		return `${this.formatPanelStat(pokemon.speed / 1000)}s`;
+		return `${this.formatPanelStat(pokemon.speed / 1000, 3)}s`;
 	}
 
 	formatOrbitalSpeedDiff(angularSpeedDiff) {
-		return `${this.formatPanelStat((angularSpeedDiff * 180) / Math.PI)}°/s`;
+		return `${this.formatPanelStat((angularSpeedDiff * 180) / Math.PI, 3)}°/s`;
 	}
 
 	calculatePreviewOrbitalSpeed(level) {
@@ -1248,7 +1248,7 @@ export class PokemonScene extends GameScene {
 			` <span style="color: var(--red)"> (${this.formatPanelStat(totalPowerGains)})</span>`;
 		}
 		if (speedGains !== 0) {
-	        const speedSec = this.formatPanelStat(Math.abs(speedGains) / 1000);
+	        const speedSec = this.formatPanelStat(Math.abs(speedGains) / 1000, 3);
 	        this.data['speed'].value.innerHTML += (speedGains < 0) ?
 	            ` <span style="color: var(--green)">(-${speedSec}s)</span>` :
 	            ` <span style="color: var(--red)">(+${speedSec}s)</span>`;

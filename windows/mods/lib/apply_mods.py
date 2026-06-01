@@ -443,6 +443,12 @@ MOD_FEATURES = {
         'functions': ['apply_allow_dupes'],
         'default': True,
     },
+    'dev_tools': {
+        'name': 'Developer Tools',
+        'description': 'Enable F12 and Ctrl+Shift+I to toggle Chromium DevTools for troubleshooting',
+        'functions': ['apply_devtools_shortcut'],
+        'default': True,
+    },
 }
 
 def log_success(name):
@@ -3416,6 +3422,40 @@ app.setPath('userData', moddedPath);
     return True
 
 
+def apply_devtools_shortcut():
+    """Enable a keyboard shortcut for Chromium DevTools in Electron."""
+    path = APP_EXTRACTED / "main.js"
+    content = read_file(path)
+
+    if 'MOD: DevTools shortcut' in content:
+        log_skip("main.js: DevTools shortcut (already applied)")
+        return True
+
+    marker = """    win.setMenu(null);
+    win.setContentSize(baseWidth, baseHeight);"""
+    patch = """    win.setMenu(null);
+    win.setContentSize(baseWidth, baseHeight);
+
+    // MOD: DevTools shortcut for troubleshooting.
+    win.webContents.on('before-input-event', (event, input) => {
+        const key = String(input.key || '').toUpperCase();
+        const devToolsCombo = key === 'F12' || (input.control && input.shift && key === 'I');
+        if (!devToolsCombo) return;
+        event.preventDefault();
+        if (win.webContents.isDevToolsOpened()) win.webContents.closeDevTools();
+        else win.webContents.openDevTools({ mode: 'detach' });
+    });"""
+
+    if marker not in content:
+        log_fail("main.js: DevTools shortcut - insertion marker not found")
+        return False
+
+    content = content.replace(marker, patch, 1)
+    write_file(path, content)
+    log_success("main.js: DevTools shortcut (F12 / Ctrl+Shift+I)")
+    return True
+
+
 def apply_selected_mods(selected_features: list, progress_callback=None):
     """
     Apply only selected mod features.
@@ -3728,12 +3768,12 @@ def apply_ditto_party_refresh():
     path = JS_ROOT / "game" / "core" / "Team.js"
     content = read_file(path)
 
-    helper = """\trefreshDittoADN() {
+    helper = """\trefreshDittoADN(reason = 'manual') {
 \t\tconst fossilIds = [58, 59, 63, 64, 65, 66, 94, 140, 136];
 \t\tlet changed = false;
 
 \t\tthis.pokemon.forEach(pokemon => {
-\t\t\tif (!pokemon || pokemon.id !== 70 || pokemon.isDeployed) return;
+\t\t\tif (!pokemon || pokemon.id !== 70) return;
 
 \t\t\tconst firstSlot = this.pokemon[0];
 \t\t\tconst nextADN = (firstSlot && firstSlot !== pokemon) ? firstSlot.specie : pokemonData['ditto'];
@@ -3745,6 +3785,25 @@ def apply_ditto_party_refresh():
 \t\t\tpokemon.adn = nextADN;
 \t\t\tpokemon.adnPosition = 0;
 \t\t\tpokemon.transformADN();
+\t\t\tconst tower = this.main?.area?.towers?.find(t => t.pokemon === pokemon);
+\t\t\tif (tower) {
+\t\t\t\ttower.ability = pokemon.ability;
+\t\t\t\ttower.rangeType = pokemon.rangeType;
+\t\t\t\ttower.attackType = pokemon.attackType;
+\t\t\t\ttower.basePower = pokemon.power;
+\t\t\t\ttower.speed = pokemon.speed;
+\t\t\t\ttower.attackSpeed = pokemon.speed;
+\t\t\t\ttower.orbitalSpeed = pokemon.orbitalSpeed ?? 0;
+\t\t\t\ttower.projectile = {
+\t\t\t\t\tsprite: pokemon.projectile?.sprite,
+\t\t\t\t\teffect: pokemon.specie?.projectileSound,
+\t\t\t\t\tpower: tower.power,
+\t\t\t\t\tcritical: tower.critical,
+\t\t\t\t\tspeed: pokemon.specie?.projectileSpeed
+\t\t\t\t};
+\t\t\t\tif (typeof tower.updateStatsFromPokemon === 'function') tower.updateStatsFromPokemon();
+\t\t\t\tif (typeof tower.updateTowerSprite === 'function') tower.updateTowerSprite();
+\t\t\t}
 \t\t\tif (this.main?.player && fossilIds.includes(pokemon.adn?.id)) this.main.player.fossilInTeam++;
 \t\t\tchanged = true;
 \t\t});
@@ -3779,7 +3838,7 @@ def apply_ditto_party_refresh():
     constructor_transform_new = """\t    this.pokemon.forEach(pokemon => {
 \t        pokemon.inGroup = true;
 \t    });
-\t    this.refreshDittoADN();"""
+\t    this.refreshDittoADN('team-constructor');"""
     if constructor_transform_new not in content:
         if constructor_transform_old not in content:
             log_fail("Team.js: Ditto party refresh - constructor transform block not found")
@@ -3789,7 +3848,7 @@ def apply_ditto_party_refresh():
     add_old = """\t\tthis.pokemon.push(pokemon);
 \t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();"""
     add_new = """\t\tthis.pokemon.push(pokemon);
-\t\tthis.refreshDittoADN();
+\t\tthis.refreshDittoADN('team-add');
 \t\tif (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();"""
     if add_new not in content:
         if add_old not in content:
@@ -3800,7 +3859,7 @@ def apply_ditto_party_refresh():
     remove_old = """\t\tthis.pokemon.splice(index, 1);
 \t}"""
     remove_new = """\t\tthis.pokemon.splice(index, 1);
-\t\tthis.refreshDittoADN();
+\t\tthis.refreshDittoADN('team-remove');
 \t}"""
     if remove_new not in content:
         if remove_old not in content:
@@ -4189,6 +4248,7 @@ def main():
     
     # Apply userData redirect (modded saves isolation)
     apply_modded_userdata_redirect()
+    apply_devtools_shortcut()
     
     print()
     print("=" * 50)
