@@ -946,11 +946,24 @@ export class Game {
 	    });
 
 	    // ── XL map: scroll wheel pans horizontally ─────────────────────────
-	    this.canvas.addEventListener('wheel', (e) => {
-	        if (!this.isXL) return;
-	        e.preventDefault();
-	        this.scrollBy(e.deltaY * 0.5 + e.deltaX * 0.5);
-	    }, { passive: false });
+	    window.addEventListener('wheel', (e) => {
+		    if (!this.isXL) return;
+
+		    const panel = this.main.UI.playerPanel.getBoundingClientRect()
+
+		    const overPanel =
+			    e.clientX >= panel.left &&
+			    e.clientX <= panel.right &&
+			    e.clientY >= panel.top &&
+			    e.clientY <= panel.bottom;
+
+			if (overPanel) return;
+
+		    this.scrollBy(
+		        e.deltaY * 0.5 +
+		        e.deltaX * 0.5
+		    );
+		}, { passive: false });
 	    // ───────────────────────────────────────────────────────────────────
 
 	    this.canvas.addEventListener('pointerdown', (e) => {

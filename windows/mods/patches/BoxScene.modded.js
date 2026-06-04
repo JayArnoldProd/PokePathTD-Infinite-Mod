@@ -180,10 +180,11 @@ export class BoxScene extends SectionScene {
 		const sortLabel = text.box[sort[this.sorted]]?.[this.main.lang] || sort[this.sorted];
 		this.sortValue.innerHTML = sortLabel.toUpperCase();
 
-		this.tabs.forEach((tab, i) => {
+	    this.tabs.forEach((tab, i) => {
 	        tab.innerHTML = text.box[TAB_CONTENT[i]][this.main.lang].toUpperCase();  
 	        (this.tabSelected === i) ? tab.classList.add('is-active') : tab.classList.remove('is-active');
 	    });
+	    this.applyTabEffect(this.tabSelected);
 	}
 
 	searchByName() {

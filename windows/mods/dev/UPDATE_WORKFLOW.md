@@ -2,11 +2,20 @@
 
 Use this for every PokePath TD vanilla update before touching mod files.
 
+## Standing Rules
+
+- The first step is always a clean vanilla backup before installing or replacing the game.
+- If the installed `resources\app.asar` is modded, back up `resources\app.asar.vanilla` as the clean source of truth.
+- If multiple vanilla versions were skipped, review the changelog/devlog for every skipped version even when only installing the latest version.
+- Record every backup, comparison baseline, overlap finding, mistake, and fix in that version's update notes.
+
 ## Process
 
 1. Back up the previous vanilla `app.asar` before installing the new game.
    - Store it under `C:\Users\jayar\clawd\backups\pokepath\vanilla_<old>_before_<new>_<timestamp>`.
    - Include `app.asar.vanilla.<version>`, extracted `app_extracted`, and metadata with size/hash.
+   - Verify whether `resources\app.asar` is modded. If `.modded` exists or `app.asar` differs from the known vanilla hash, copy `resources\app.asar.vanilla` instead.
+   - Confirm the copied ASAR hash matches the last known vanilla baseline when one exists.
 2. Install the new vanilla game and verify the local install is clean.
    - `resources\app.asar` should exist.
    - `resources\mods` should not exist unless intentionally copied after the update.
@@ -17,7 +26,7 @@ Use this for every PokePath TD vanilla update before touching mod files.
    - Focus on `src/js/game`, `src/js/file`, `src/css`, and game data files.
    - Avoid full-tree diffs through `node_modules`; they bury the relevant changes.
 5. Audit vanilla feature overlap before rebasing claims.
-   - Compare the vanilla changelog and code diff against `README.md`, `windows/mods/README.md`, installer feature descriptions, and `MOD_FEATURES_CHECKLIST.md`.
+   - Compare every skipped-version changelog plus the code diff against `README.md`, `windows/mods/README.md`, installer feature descriptions, and `MOD_FEATURES_CHECKLIST.md`.
    - If vanilla now provides a feature the mod previously claimed, decide one of three outcomes: remove the mod patch, keep it only as a compatibility guard, or scope the public claim to the remaining mod-only behavior.
    - Record overlap findings in the update notes before publishing GitHub release notes or Reddit copy.
    - Be especially skeptical of QoL and bug-fix claims; these are the most likely to be absorbed into vanilla.
@@ -50,6 +59,7 @@ Use this for every PokePath TD vanilla update before touching mod files.
 ## Common Mistakes
 
 - Reusing old full-file patches can erase new vanilla UI, item, map, and combat fixes.
+- Treating the currently installed `app.asar` as vanilla can preserve a modded build by mistake; prefer `app.asar.vanilla` when present and hash-verified.
 - Public mod claims can become stale when vanilla absorbs a mod feature; update README/release/Reddit wording before publishing.
 - `Game.js` and `Area.js` often contain map/placement changes; recheck these for new wide or special maps.
 - `Tower.js`, `Enemy.js`, and `Projectile.js` are collision-sensitive. Preserve vanilla damage paths and only reapply mod behavior deliberately.

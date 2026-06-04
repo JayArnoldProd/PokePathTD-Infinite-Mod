@@ -11,11 +11,11 @@ const DATA = [
 ]
 
 const TERRAINS = {
-	1: ['Field', 'Campo', 'Champ', 'Campo', 'Campo', 'Feld', 'ΘçÄσÄƒ', 'δôñφîÉ', 'ΘçÄσÄƒ', 'Pole'],
-	2: ['Grass', 'Hierba', 'Herbe', 'Grama', 'Erba', 'Gras', 'Φìë', 'φÆÇ', 'Φìë', 'Trawa'],
-	3: ['Water', 'Agua', 'Eau', '├ügua', 'Acqua', 'Wasser', 'µ░┤', 'δ¼╝', 'µ░┤', 'Woda'],
-	4: ['Mountain', 'Monta├▒a', 'Montagne', 'Montanha', 'Montagna', 'Berg', 'σ▒▒', '∞é░', 'σ▒▒', 'G├│ry'],
-	5: ['All', 'Todo', 'Tout', 'Tudo', 'Tutto', 'Alle', 'πüÖπü╣πüª', 'δ¬¿δæÉ', 'σà¿Θâ¿', 'Wszystkie']
+	1: ['Field', 'Campo', 'Champ', 'Campo', 'Campo', 'Feld', '野原', '들판', '野原', 'Pole'],
+	2: ['Grass', 'Hierba', 'Herbe', 'Grama', 'Erba', 'Gras', '草', '풀', '草', 'Trawa'],
+	3: ['Water', 'Agua', 'Eau', 'Água', 'Acqua', 'Wasser', '水', '물', '水', 'Woda'],
+	4: ['Mountain', 'Montaña', 'Montagne', 'Montanha', 'Montagna', 'Berg', '山', '산', '山', 'Góry'],
+	5: ['All', 'Todo', 'Tout', 'Tudo', 'Tutto', 'Alle', 'すべて', '모두', '全部', 'Wszystkie']
 }
 
 const TARGET_MODES = [
@@ -24,49 +24,44 @@ const TARGET_MODES = [
 ]
 
 const TARGET_MODES_TRADUCTIONS = {
-	area: ['Area', '├ürea', 'Zone', '├ürea', 'Area', 'Fl├ñche', 'πé¿πâ¬πéó', '∞ºÇ∞ù¡', 'σî║σƒƒ', 'Obszar'],
-	aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'πé¬πâ╝πâ⌐', '∞ÿñδ¥╝', 'µ░öσ£║', 'Aura'],
-	allies: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'πé¬πâ╝πâ⌐', '∞ÿñδ¥╝', 'µ░öσ£║', 'Aura'],
-	available: ['Available', 'Disponibles', 'Disponibles', 'Dispon├¡veis', 'Disponibili', 'Verf├╝gbar', 'σê⌐τö¿σÅ»Φâ╜', '∞¥┤∞Ü⌐ Ω░ÇδèÑ', 'σÅ»τö¿', 'Dost─Öpne'],
+	area: ['Area', 'Área', 'Zone', 'Área', 'Area', 'Fläche', 'エリア', '지역', '区域', 'Obszar'],
+	aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	allies: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	orbital: ['Orbital', 'Orbital', 'Orbitale', 'Orbital', 'Orbitale', 'Orbital', '軌道', '궤도', '軌道', 'Orbital'],
+	available: ['Available', 'Disponibles', 'Disponibles', 'Disponíveis', 'Disponibili', 'Verfügbar', '利用可能', '이용 가능', '可用', 'Dostępne'],
 
-	first: ['First', 'Primero', 'Premier', 'Primeiro', 'Primo', 'Erster', 'µ£Çσê¥', '∞▓½ δ▓ê∞º╕', 'τ¼¼Σ╕ÇΣ╕¬', 'Pierwszy'],
-	last: ['Last', '├Ültimo', 'Dernier', '├Ültimo', 'Ultimo', 'Letzter', 'µ£Çσ╛î', 'δºê∞ºÇδºë', 'µ£ÇσÉÄΣ╕ÇΣ╕¬', 'Ostatni'],
+	first: ['First', 'Primero', 'Premier', 'Primeiro', 'Primo', 'Erster', '最初', '첫 번째', '第一个', 'Pierwszy'],
+	last: ['Last', 'Último', 'Dernier', 'Último', 'Ultimo', 'Letzter', '最後', '마지막', '最后一个', 'Ostatni'],
 
-	faster: ['Faster', 'M├ís r├ípido', 'Plus rapide', 'Mais r├ípido', 'Pi├╣ veloce', 'Schneller', 'πéêπéèΘÇƒπüä', 'δìö δ╣áδªä', 'µ¢┤σ┐½', 'Szybszy'],
-	slower: ['Slower', 'M├ís lento', 'Plus lent', 'Mais lento', 'Pi├╣ lento', 'Langsamer', 'πéêπéèΘüàπüä', 'δìö δèÉδª╝', 'µ¢┤µàó', 'Wolniejszy'],
+	faster: ['Faster', 'Más rápido', 'Plus rapide', 'Mais rápido', 'Più veloce', 'Schneller', 'より速い', '더 빠름', '更快', 'Szybszy'],
+	slower: ['Slower', 'Más lento', 'Plus lent', 'Mais lento', 'Più lento', 'Langsamer', 'より遅い', '더 느림', '更慢', 'Wolniejszy'],
 
-	highArmor: ['High Armor', 'M├ís armadura', 'Haute armure', 'Mais armadura', 'Alta armatura', 'Hohe R├╝stung', 'Θ½ÿΘÿ▓σ╛í', 'δåÆ∞¥Ç δ░⌐∞û┤', 'Θ½ÿµèñτö▓', 'Wysoki Pancerz'],
-	noArmor: ['No Armor', 'Sin armadura', 'Pas dΓÇÖarmure', 'Sem armadura', 'Senza armatura', 'Keine R├╝stung', 'τäíΘÿ▓σ╛í', 'δ░⌐∞û┤ ∞ùå∞¥î', 'µùáµèñτö▓', 'Bez Pancerza'],
+	highArmor: ['High Armor', 'Más armadura', 'Haute armure', 'Mais armadura', 'Alta armatura', 'Hohe Rüstung', '高防御', '높은 방어', '高护甲', 'Wysoki Pancerz'],
+	noArmor: ['No Armor', 'Sin armadura', 'Pas d’armure', 'Sem armadura', 'Senza armatura', 'Keine Rüstung', '無防御', '방어 없음', '无护甲', 'Bez Pancerza'],
 
-	highHP: ['High HP', 'Mas PS', 'Le plus de PV', 'HP alto', 'Alta salute', 'Hohe KP', 'Θ½ÿHP', 'δåÆ∞¥Ç HP', 'Θ½ÿτöƒσæ╜σÇ╝', 'Wysokie HP'],
-	lowHP: ['Low HP', 'Menos PS', 'Le moins de PV', 'HP baixo', 'Bassa salute', 'Niedrige KP', 'Σ╜ÄHP', 'δé«∞¥Ç HP', 'Σ╜Äτöƒσæ╜σÇ╝', "Niskie HP"],
+	highHP: ['High HP', 'Mas PS', 'Le plus de PV', 'HP alto', 'Alta salute', 'Hohe KP', '高HP', '높은 HP', '高生命值', 'Wysokie HP'],
+	lowHP: ['Low HP', 'Menos PS', 'Le moins de PV', 'HP baixo', 'Bassa salute', 'Niedrige KP', '低HP', '낮은 HP', '低生命值', "Niskie HP"],
 
-	poisoned: ['Poisoned', 'Envenenado', 'Empoisonn├⌐', 'Envenenado', 'Avvelenato', 'Vergiftet', 'µ»Æτè╢µàï', 'δÅà ∞ñæδÅà', 'Σ╕¡µ»Æ', 'Zatruty'],
-	notPoisoned: ['Not Poisoned', 'No envenenado', 'Non empoisonn├⌐', 'N├úo envenenado', 'Non avvelenato', 'Nicht vergiftet', 'µ£¬µ»Æ', 'δ╣ä∞ñæδÅà', 'µ£¬Σ╕¡µ»Æ', 'Nie Zatruty'],
+	poisoned: ['Poisoned', 'Envenenado', 'Empoisonné', 'Envenenado', 'Avvelenato', 'Vergiftet', '毒状態', '독 중독', '中毒', 'Zatruty'],
+	notPoisoned: ['Not Poisoned', 'No envenenado', 'Non empoisonné', 'Não envenenado', 'Non avvelenato', 'Nicht vergiftet', '未毒', '비중독', '未中毒', 'Nie Zatruty'],
 
-	burned: ['Burned', 'Quemado', 'Brul├⌐', 'Queimado', 'Scottato', 'Verbrannt', 'τü½σé╖', 'φÖö∞âü', 'τü╝Σ╝ñ', 'Oparzony'],
-	notBurned: ['Not Burned', 'No quemado', 'Non brul├⌐', 'N├úo queimado', 'Non scottato', 'Nicht verbrannt', 'µ£¬τü½σé╖', 'δ╣äφÖö∞âü', 'µ£¬τü╝Σ╝ñ', 'Nie Oparzony'],
+	burned: ['Burned', 'Quemado', 'Brulé', 'Queimado', 'Scottato', 'Verbrannt', '火傷', '화상', '灼伤', 'Oparzony'],
+	notBurned: ['Not Burned', 'No quemado', 'Non brulé', 'Não queimado', 'Non scottato', 'Nicht verbrannt', '未火傷', '비화상', '未灼伤', 'Nie Oparzony'],
 
-	stuned: ['Stunned', 'Aturdido', '├ëtourdi', 'Atordoado', 'Stordito', 'Bet├ñubt', 'µ░ùτ╡╢', 'Ω╕░∞áê', 'τ£⌐µÖò', 'Og┼éuszony'],
-	notStuned: ['Not Stunned', 'No aturdido', 'Non ├⌐tourd├¡', 'N├úo atordoado', 'Non stordito', 'Nicht bet├ñubt', 'µ£¬µ░ùτ╡╢', 'δ╣äΩ╕░∞áê', 'µ£¬τ£⌐µÖò', 'Nie Og┼éuszony'],
+	stuned: ['Stunned', 'Aturdido', 'Étourdi', 'Atordoado', 'Stordito', 'Betäubt', '気絶', '기절', '眩晕', 'Ogłuszony'],
+	notStuned: ['Not Stunned', 'No aturdido', 'Non étourdí', 'Não atordoado', 'Non stordito', 'Nicht betäubt', '未気絶', '비기절', '未眩晕', 'Nie Ogłuszony'],
 
-	slowed: ['Slowed', 'Ralentizado', 'Ralenti', 'Lento', 'Rallentato', 'Verlangsamt', 'µ╕¢ΘÇƒ', 'Ω░É∞åì', 'σçÅΘÇƒ', 'Spowolniony'],
-	notSlowed: ['Not Slowed', 'No ralentizado', 'Non ralenti', 'N├úo lento', 'Non rallentato', 'Nicht verlangsamt', 'µ£¬µ╕¢ΘÇƒ', 'δ╣äΩ░É∞åì', 'µ£¬σçÅΘÇƒ', 'Nie Spowolniony'],
+	slowed: ['Slowed', 'Ralentizado', 'Ralenti', 'Lento', 'Rallentato', 'Verlangsamt', '減速', '감속', '减速', 'Spowolniony'],
+	notSlowed: ['Not Slowed', 'No ralentizado', 'Non ralenti', 'Não lento', 'Non rallentato', 'Nicht verlangsamt', '未減速', '비감속', '未减速', 'Nie Spowolniony'],
 
-	cursed: ["Cursed", "Maldito", "Maudit", "Amaldi├ºoado", "Maledetto", "Verflucht", "σæ¬πéÅπéîπüƒ", "∞áÇ∞ú╝δ░¢∞¥Ç", "Φó½Φ»àσÆÆτÜä", "Przekl─Öty"],
-	curseable: ['Curseable', 'Maldecible', 'Maudissable', 'Amaldi├ºo├ível', 'Maledicibile', 'Verfluchbar', 'σæ¬πéÅπéîσ╛ùπéï', '∞áÇ∞ú╝ Ω░ÇδèÑ', 'σÅ»Φó½Φ»àσÆÆ', 'Mo┼╝liwy do Przekl─Öcia'],
+	cursed: ["Cursed", "Maldito", "Maudit", "Amaldiçoado", "Maledetto", "Verflucht", "呪われた", "저주받은", "被诅咒的", "Przeklęty"],
+	curseable: ['Curseable', 'Maldecible', 'Maudissable', 'Amaldiçoável', 'Maledicibile', 'Verfluchbar', '呪われ得る', '저주 가능', '可被诅咒', 'Możliwy do Przeklęcia'],
 
-	nightmared: ["Nightmare'd", "Con pesadilla", "Cauchemarde", "Com pesadelo", "Con incubo", "Mit Albtraum", "µé¬σñóπéÆΣ╝┤πüå", "∞òàδ¬╜∞¥ä δÅÖδ░ÿφò£", "σ╕ªτ¥ÇσÖ⌐µóªτÜä", "Ma Koszmar"],
+	nightmared: ["Nightmare'd", "Con pesadilla", "Cauchemarde", "Com pesadelo", "Con incubo", "Mit Albtraum", "悪夢を伴う", "악몽을 동반한", "带着噩梦的", "Ma Koszmar"],
 
-	random: ['Random', 'Aleatorio', 'Al├⌐atoire', 'Aleat├│rio', 'Casuale', 'Zuf├ñllig', 'πâ⌐πâ│πâÇπâá', 'δ¼┤∞₧æ∞£ä', 'ΘÜÅµ£║', 'Losowy'],
-	invisible: ['Invisible', 'Invisible', 'Invisible', 'Invis├¡vel', 'Invisibile', 'Unsichtbar', 'ΘÇÅµÿÄ', 'φê¼δ¬à', 'ΘÜÉσ╜ó', 'Niewidzialny'],
+	random: ['Random', 'Aleatorio', 'Aléatoire', 'Aleatório', 'Casuale', 'Zufällig', 'ランダム', '무작위', '随机', 'Losowy'],
+	invisible: ['Invisible', 'Invisible', 'Invisible', 'Invisível', 'Invisibile', 'Unsichtbar', '透明', '투명', '隐形', 'Niewidzialny']
 }
-
-const LARGE_NUMBER_UNITS = {
-	billion: ['Billion', 'Mil millones', 'Milliard', 'Bilhão', 'Miliardo', 'Milliarde', '十億', '십억', '十亿', 'Miliard'],
-	trillion: ['Trillion', 'Billón', 'Billion', 'Trilhão', 'Bilione', 'Billion', '兆', '조', '万亿', 'Bilion'],
-	quadrillion: ['Quadrillion', 'Mil billones', 'Billiard', 'Quadrilhão', 'Biliardo', 'Billiarde', '京', '경', '千万亿', 'Biliard'],
-};
 
 export class PokemonScene extends GameScene {
 	constructor(main) {
@@ -1092,6 +1087,7 @@ export class PokemonScene extends GameScene {
 
 	    if (this.pokemon.isDeployed) {
 	        const tower = this.main.area.towers.find(t => t.pokemon === this.pokemon);
+	        let cherryFormBonus = false;
 	        if (tower) {
 
 	        	if (this.pokemon.ability.id === 'teleport') {
@@ -1131,7 +1127,12 @@ export class PokemonScene extends GameScene {
 		            this.main.area.weather == 'harshSunlight' &&
 		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser'))
 		        ) {
-		            mulSpeed *= 1 - 0.5;
+		            if (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassyTerrain') mulSpeed *= 1 - 0.2;
+		            if (towerAbility === 'chlorophyll') mulSpeed *= 1 - 0.5;
+		            if (this.pokemon.id == 75 && this.pokemon.lvl > 24) {
+		                cherryFormBonus = true;
+		                mulSpeed *= 1 - 0.25;
+		            }
 		        }
 
 		        if (
@@ -1200,14 +1201,14 @@ export class PokemonScene extends GameScene {
 
 	            if (tower.powerAura) {
 	                mulPower *= tower.powerAura;
-	                if (this.pokemon.id == 75 && this.pokemon.lvl > 24) mulSpeed *= 1 - 0.25;
+	                if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && !cherryFormBonus) mulSpeed *= 1 - 0.25;
 	            }
 
 	            if (tower.triageAura) {
 	                mulSpeed *= 1 - 0.15;
 	            }
 
-	            if (tower.illuminateAura) {
+	            if (tower.illuminateAura && this.pokemon.orbital <= 0) {
 	                flatRange += 15;
 	            }
 

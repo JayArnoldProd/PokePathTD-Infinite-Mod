@@ -80,15 +80,15 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  53778,
-    "src/js/game/component/Pokemon.js":     25687,
-    "src/js/game/scenes/PokemonScene.js":   62228,
-    "src/js/game/core/Area.js":             19881,
+    "src/js/game/Game.js":                  54035,
+    "src/js/game/component/Pokemon.js":     26042,
+    "src/js/game/scenes/PokemonScene.js":   62739,
+    "src/js/game/core/Area.js":             19938,
     "src/js/game/core/Team.js":             1854,
     "src/js/game/core/Box.js":              703,
-    "src/js/game/component/Tower.js":        115730,
+    "src/js/game/component/Tower.js":        115623,
     "src/js/game/component/Enemy.js":        52727,
-    "src/js/game/scenes/MenuScene.js":       53532,
+    "src/js/game/scenes/MenuScene.js":       54116,
 }
 
 def check_game_version_compatibility():
@@ -1188,7 +1188,7 @@ def apply_pause_micromanagement():
     """
     Surgically patch Game.js to enable pause micromanagement.
 
-    The current Game.modded.js is based on vanilla 1.5.6, which already has a
+    The current Game.modded.js is based on vanilla 1.5.9, which already has a
     Worker-driven render loop, passenger/mount placement handling, spike zones,
     and link-beam rendering. Pause micro keeps the render loop alive, skips
     simulation/tower attacks while stopped, and leaves canvas input enabled so
@@ -1933,7 +1933,7 @@ def apply_enemy_scaling():
         log_skip("Enemy.js: Endless scaling")
         return True
     
-    # Use modded file directly. This file is a vanilla 1.5.6 full-file base with
+    # Use modded file directly. This file is a vanilla 1.5.9 full-file base with
     # only the endless scaling/draw-skip overrides reapplied; optional Enemy.js
     # feature patches are applied separately to preserve feature toggles.
     modded_file = MODS_DIR / "patches" / "Enemy.modded.js"
@@ -1984,7 +1984,7 @@ def apply_tower_deltatime():
 def apply_orbital_tower_guard():
     """Prevent orbital towers from firing normal projectiles.
 
-    PokePath 1.5.6 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
+    PokePath 1.5.9 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
     compatibility. This surgical guard is applied after any optional Tower.js
     replacement so orbital Pokemon only update their orbit projectiles.
     """

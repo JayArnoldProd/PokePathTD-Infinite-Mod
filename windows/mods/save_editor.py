@@ -2497,32 +2497,36 @@ class App(tk.Tk):
         if not self.save.data:
             return
 
-        # Full expanded egg list (must match reset_eggs list)
+        # Runtime-obtainable list from pokemonData.js; must match reset_eggs.
         all_eggs = [
-            # === STARTERS ===
-            'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin',
-            'turtwig', 'chimchar', 'oshawott', 'sobble', 'rowlet', 'fuecoco',
-            # === ORIGINAL EGG POKEMON ===
-            'natu', 'spoink', 'murkrow',
-            'voltorb', 'machop', 'mankey',
-            'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela',
-            'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher',
-            'seel', 'staryu', 'psyduck', 'gulpin', 'lapras',
-            'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha',
-            'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel',
-            'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit',
-            'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
-            'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing',
-            'farfetchd', 'omanyte', 'kabuto', 'corsola',
+            # === Runtime eggListData ===
+            'charmander', 'treecko', 'froaki', 'natu', 'spoink', 'murkrow',
+            'voltorb', 'machop', 'mankey', 'chimchar', 'yamask', 'cryogonal',
+            'sableye', 'meowth', 'tangela', 'chikorita', 'spinarak', 'shroomish',
+            'barboach', 'drudiggon', 'remoraid', 'clauncher', 'seel', 'staryu',
+            'psyduck', 'gulpin', 'lapras', 'ferroseed', 'shuckle', 'maractus',
+            'sunkern', 'aron', 'hawlucha', 'cubone', 'binacle', 'absol',
+            'oshawott', 'sandshrew', 'sneasel', 'trapinch', 'pidgey', 'noibat',
+            'riolu', 'mareep', 'surskit', 'cottonee', 'petilil', 'hoppip',
+            'drilbur', 'ekans', 'girafarig', 'torkoal', 'spinda', 'dunsparce',
+            'ralts', 'koffing', 'farfetchd', 'omanyte', 'kabuto', 'corsola',
             'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos',
-            'starly', 'abra', 'gastly', 'ditto',
-            'magikarp', 'pikachu', 'larvesta', 'cherubi',
-            'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge',
-            'comfey', 'smeargle', 'carvanha',
-            # === NEW POKEMON (previously missing from shop) ===
-            'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
-            'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
-            'tarountula', 'carbink', 'buneary', 'dratini',
+            'starly', 'abra', 'gastly', 'ditto', 'magikarp', 'pikachu',
+            'fuecoco', 'larvesta', 'cherubi', 'rockruff', 'pawniard', 'sandile',
+            'wimpod', 'honedge', 'sobble', 'rowlet', 'comfey', 'smeargle',
+            'carvanha', 'nickit', 'bulbasaur', 'cyndaquil', 'mawile', 'mudkip',
+            'patrat', 'snivy', 'drifloon', 'dondozo', 'plusle', 'minun',
+            'hippopotas', 'tepig', 'squirtle', 'tentacool', 'snover', 'nincada',
+            'chespin', 'dewpider', 'budew', 'sewaddle', 'sprigatito', 'magnemite',
+            'horsea', 'amaura', 'tirtouga', 'buneary', 'dratini',
+            # === Runtime secretPokemon ===
+            'chatot', 'luvdisc', 'cacturne', 'stakataka', 'greavard', 'gholdengo',
+            'missingNo', 'shedinja', 'sandygast', 'ducklett', 'manaphy', 'phione',
+            # === Runtime challengePokemon ===
+            'wingull', 'inkay', 'totodile', 'turtwig', 'hoothoot', 'tarountula',
+            'archen', 'carbink', 'vulpix', 'munna', 'bidoof', 'fennekin',
+            'skrelp', 'charcadet', 'capsakid', 'tatsugiri', 'klink', 'deino',
+            'houndour', 'pineco', 'chinchou',
         ]
 
         # Get current shop data
@@ -2544,38 +2548,40 @@ class App(tk.Tk):
             print(f"[Mod] Injected {len(missing)} missing eggs into shop")
     
     def reset_eggs(self):
-        """Reset egg shop to EXPANDED egg list with all available Pokemon."""
+        """Reset egg shop to the runtime-obtainable Pokemon list."""
         if not self.save.data:
             return
         
-        # EXPANDED egg list - includes 17 additional Pokemon that were missing
+        # Runtime-obtainable list from pokemonData.js.
         original_egg_list = [
-            # === STARTERS ===
-            'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin', 
-            'turtwig', 'chimchar', 'oshawott', 'sobble', 'rowlet', 'fuecoco',
-            
-            # === ORIGINAL EGG POKEMON ===
-            'natu', 'spoink', 'murkrow',
-            'voltorb', 'machop', 'mankey', 
-            'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 
-            'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
-            'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
-            'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
-            'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel', 
-            'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
-            'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
-            'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
-            'farfetchd', 'omanyte', 'kabuto', 'corsola', 
-            'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
-            'starly', 'abra', 'gastly', 'ditto', 
-            'magikarp', 'pikachu', 'larvesta', 'cherubi',
-            'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
-            'comfey', 'smeargle', 'carvanha', 
-            
-            # === NEW POKEMON (previously missing from shop) ===
-            'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
-            'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
-            'tarountula', 'carbink', 'buneary', 'dratini',
+            # === Runtime eggListData ===
+            'charmander', 'treecko', 'froaki', 'natu', 'spoink', 'murkrow',
+            'voltorb', 'machop', 'mankey', 'chimchar', 'yamask', 'cryogonal',
+            'sableye', 'meowth', 'tangela', 'chikorita', 'spinarak', 'shroomish',
+            'barboach', 'drudiggon', 'remoraid', 'clauncher', 'seel', 'staryu',
+            'psyduck', 'gulpin', 'lapras', 'ferroseed', 'shuckle', 'maractus',
+            'sunkern', 'aron', 'hawlucha', 'cubone', 'binacle', 'absol',
+            'oshawott', 'sandshrew', 'sneasel', 'trapinch', 'pidgey', 'noibat',
+            'riolu', 'mareep', 'surskit', 'cottonee', 'petilil', 'hoppip',
+            'drilbur', 'ekans', 'girafarig', 'torkoal', 'spinda', 'dunsparce',
+            'ralts', 'koffing', 'farfetchd', 'omanyte', 'kabuto', 'corsola',
+            'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos',
+            'starly', 'abra', 'gastly', 'ditto', 'magikarp', 'pikachu',
+            'fuecoco', 'larvesta', 'cherubi', 'rockruff', 'pawniard', 'sandile',
+            'wimpod', 'honedge', 'sobble', 'rowlet', 'comfey', 'smeargle',
+            'carvanha', 'nickit', 'bulbasaur', 'cyndaquil', 'mawile', 'mudkip',
+            'patrat', 'snivy', 'drifloon', 'dondozo', 'plusle', 'minun',
+            'hippopotas', 'tepig', 'squirtle', 'tentacool', 'snover', 'nincada',
+            'chespin', 'dewpider', 'budew', 'sewaddle', 'sprigatito', 'magnemite',
+            'horsea', 'amaura', 'tirtouga', 'buneary', 'dratini',
+            # === Runtime secretPokemon ===
+            'chatot', 'luvdisc', 'cacturne', 'stakataka', 'greavard', 'gholdengo',
+            'missingNo', 'shedinja', 'sandygast', 'ducklett', 'manaphy', 'phione',
+            # === Runtime challengePokemon ===
+            'wingull', 'inkay', 'totodile', 'turtwig', 'hoothoot', 'tarountula',
+            'archen', 'carbink', 'vulpix', 'munna', 'bidoof', 'fennekin',
+            'skrelp', 'charcadet', 'capsakid', 'tatsugiri', 'klink', 'deino',
+            'houndour', 'pineco', 'chinchou',
         ]
         
         # Starting egg price
@@ -2590,7 +2596,7 @@ class App(tk.Tk):
             self.save.data['shop']['eggPrice'] = starting_price
         
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} eggs\nEgg price reset to: ${starting_price}")
+        messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} Pokemon\nEgg price reset to: ${starting_price}")
 
     def get_star_route_options(self):
         """Return routes that contribute normal route stars."""

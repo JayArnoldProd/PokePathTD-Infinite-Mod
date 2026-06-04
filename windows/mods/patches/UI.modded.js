@@ -30,6 +30,7 @@ const TARGET_MODES_TRADUCTIONS = {
 	area: ['Area', 'Área', 'Zone', 'Área', 'Area', 'Fläche', 'エリア', '지역', '区域', 'Obszar'],
 	aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
 	allies: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	orbital: ['Orbital', 'Orbital', 'Orbitale', 'Orbital', 'Orbitale', 'Orbital', '軌道', '궤도', '軌道', 'Orbital'],
 	available: ['Available', 'Disponibles', 'Disponibles', 'Disponíveis', 'Disponibili', 'Verfügbar', '利用可能', '이용 가능', '可用', 'Dostępne'],
 
 	first: ['First', 'Primero', 'Premier', 'Primeiro', 'Primo', 'Erster', '最初', '첫 번째', '第一个', 'Pierwszy'],
@@ -989,13 +990,15 @@ export class UI {
 	}
 
 	getCompactTargetLabel(pokemon) {
+		if (pokemon?.orbital > 0) return TARGET_MODES_TRADUCTIONS['orbital'][this.main.lang];
 		return TARGET_MODES_TRADUCTIONS[pokemon?.targetMode][this.main.lang] || pokemon?.targetMode[this.main.lang] || '';
 	}
 
 	canChangeSlotTargetMode(pokemon) {
 		if (!pokemon) return false;
-		if (pokemon?.item?.id == 'quickClaw') return false;
+		if (['quickClaw', 'spindaCocktail', 'silphScope'].includes(pokemon?.item?.id)) return false;
 		if ((pokemon?.id == 53 && pokemon?.item?.id !== 'ringTarget') || pokemon?.adn?.id == 53) return false;
+		if (pokemon?.orbital > 0) return false;
 		return !['area', 'aura', 'allies'].includes(pokemon.targetMode);
 	}
 
@@ -2255,6 +2258,15 @@ class FastScene {
 
 	  	this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
 
+		this.container.addEventListener('wheel', (e) => {
+		    e.preventDefault();
+
+		    this.container.scrollBy({
+		        top: e.deltaY * 0.8,
+		        behavior: 'smooth'
+		    });
+		}, { passive: false });
+
 	  	this.itemArray.forEach((item, i) => {
 	    	const slot = new Element(this.container, {
 	      		className: 'fast-scene-pokemon-item'
@@ -2277,7 +2289,13 @@ class FastScene {
 		      	if (item.id === 'quickClaw' && pokemon.attackType !== 'area') {
 		      		pokemon.changeTargetMode(TARGET_MODES[6]);
 		      		this.UI.updatePokemon();
-		      	}
+                } else if (item.id === 'spindaCocktail') {
+                    pokemon.changeTargetMode(TARGET_MODES[19]);
+                    this.UI.updatePokemon();
+                } else if (item.id === 'silphScope') {
+                    pokemon.changeTargetMode(TARGET_MODES[20]);
+                    this.UI.updatePokemon();
+                }
 	    	});
 	  	});
 

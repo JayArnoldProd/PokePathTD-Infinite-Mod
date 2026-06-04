@@ -2,7 +2,7 @@
 
 # PokePath TD: INFINITE - Enhanced Mod Pack v1.5
 
-**Compatible with PokePath TD v1.5.6 on Windows** ✅
+**Compatible with PokePath TD v1.5.9 on Windows** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
@@ -10,12 +10,9 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
-> **Windows v1.5.6 refresh (2026-06-01):**
-> - Rebased Windows compatibility onto PokePath TD 1.5.6
-> - Preserved the new Route 6-1 XL map support and 1.5.6 UI/combat/item changes
-> - Synced save editor Pokémon metadata to the 1.5.6 roster
-> - Kept the 1.5.5 orbital/projectile collision stability fixes
-> - Audited vanilla feature overlap: 1.5.6 now includes saved challenge-team retention, saved-team item tooltips, attack/field indicators, and an out-of-map attack fix
+> **Windows v1.5.9 refresh (2026-06-04):**
+> - Updated Windows compatibility for PokePath TD 1.5.9
+> - No new mod features; this release carries forward the existing feature set on the latest vanilla game build
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -59,8 +56,8 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Profile Tracking** - Records shiny enemies defeated in the Profile screen
 
 ### 🔧 Quality of Life
-- **Save/Load Button Labels** - Quick labels for team save/load buttons; vanilla 1.5.6 now also shows saved-team Pokémon/item tooltips
-- **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.5.6 now also includes its own attack/field indicators
+- **Save/Load Button Labels** - Quick labels for team save/load buttons; vanilla 1.5.9 also shows saved-team Pokémon/item tooltips
+- **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.5.9 also includes its own attack/field indicators and target-mode guards
 - **Unlockables Profile Tab** - Profile screen now includes a scrollable unlockables view with verified secrets and challenge rewards
 - **Live Profile Updates** - Profile stats refresh while the menu is open, including shiny enemy defeat tracking
 
@@ -131,7 +128,8 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.5.6** (Latest) | Windows | PokePath TD 1.5.6 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.6) |
+| **v1.5.9** (Latest) | Windows | PokePath TD 1.5.9 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.9) |
+| v1.5.6 | Windows | PokePath TD 1.5.6 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.6) |
 | v1.5.5 | Windows | PokePath TD 1.5.5 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.5) |
 | v1.5.4 | Windows | PokePath TD 1.5.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.4) |
 | v1.5.3 | Windows | PokePath TD 1.5.3 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.3) |
@@ -156,7 +154,7 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.6) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.9) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```
@@ -212,29 +210,13 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > See `README.md` inside the Mac mod folder for detailed macOS instructions, save editor usage, and troubleshooting.
 
-## 📋 Release Notes (Windows v1.5.6)
+## 📋 Release Notes (Windows v1.5.9)
 
-This release notes section covers the meaningful additions in the Windows v1.5.6 refresh.
+Windows v1.5.9 is a compatibility refresh for PokePath TD 1.5.9.
 
-### New and Expanded Features
-- **Unlockables in Profile** expanded to show unlockable items/Pokémon art and unlock conditions
-- **Localization support** added for all built-in game languages for mod-added UI text
-- **Orbital enemy support** updates for the current 1.5 line
-
-### Save Editor Improvements
-- Item-slot editing/manipulation tools in the Items tab
-- Route and wave setter support for save progression editing
-- UX polish
-
-### Compatibility + Installer
-- Windows compatibility rebases through game version 1.5.6
-- Updated installer compatibility fingerprints and diagnostics metadata
-- Continued support for feature mix-and-match install, selective uninstall, and vanilla restore flow
-
-### Included Bug Fixes
-- Preserved vanilla 1.5.6 projectile, item, UI, and XL map behavior while carrying forward the mod collision fixes
-- Fixed orbital/projectile collision rendering regressions caused by stale impact logic and canvas state drift
-- Fixed missing per-wave heal tracking that could crash enemy damage
+- No new mod features were added.
+- Updated installer compatibility fingerprints and diagnostics metadata for vanilla 1.5.9.
+- Rebased the Windows mod package so the existing feature set works on the latest vanilla game build.
 
 ---
 

@@ -78,6 +78,18 @@ const CREDITS = {
 	official: {
 		label: {
 			0: [
+				"Official Website",
+				"Web oficial",
+				"Site officiel",
+				"Site oficial",
+				"Sito ufficiale",
+				"Offizielle Webseite",
+				"公式ウェブサイト",
+				"공식 웹사이트",
+				"官方网站",
+				"Oficjalna internetowa"
+			],
+			1: [
 				"Community Discord",
 				"Discord",
 				"Discord",
@@ -89,11 +101,12 @@ const CREDITS = {
 				"社区Discord",
 				"Discord"
 			],
-			1: ['itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io']
+			2: ['itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io', 'itch.io']
 		},
 		content: {
-			0: '<a href="https://discord.com/invite/PjuyEjGp7r" target="_blank" class="link-red">PokéPath TD</a>',
-			1: '<a href="https://khydra98.itch.io/pokepath" target="_blank" class="link-red">khydra98</a>'
+			0: '<a href="https://pokepath.gg/en/play" target="_blank" class="link-red">PokePath.gg</a>',
+			1: '<a href="https://discord.com/invite/PjuyEjGp7r" target="_blank" class="link-red">PokéPath TD</a>',
+			2: '<a href="https://khydra98.itch.io/pokepath" target="_blank" class="link-red">khydra98</a>'
 		}
 		
 	},
@@ -291,11 +304,13 @@ export class MenuScene extends SectionScene {
 		this.titleOfficial = title;
 		this.contentOfficial = content;
 
+		this.officialWeb = this.createLabelValueRow(content);
 		this.officialDiscord = this.createLabelValueRow(content);
 		this.officialItchio = this.createLabelValueRow(content);
 
-		this.officialDiscord.content.innerHTML = CREDITS.official.content[0];
-		this.officialItchio.content.innerHTML = CREDITS.official.content[1];
+		this.officialWeb.content.innerHTML = CREDITS.official.content[0];
+		this.officialDiscord.content.innerHTML = CREDITS.official.content[1];
+		this.officialItchio.content.innerHTML = CREDITS.official.content[2];
 	}
 
 	renderSettings() {
@@ -396,7 +411,7 @@ export class MenuScene extends SectionScene {
 		this.importData = this.makeButton(content, 'menu-scene-import-data', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.5.6` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.5.9` }).element;
 	}
 
 	syncExportDataButtonState() {
@@ -473,8 +488,9 @@ export class MenuScene extends SectionScene {
 		this.titleShortcuts.innerHTML = text.menu.shortcuts.title[this.main.lang].toUpperCase();
 		this.titleData.innerHTML = text.menu.data.title[this.main.lang].toUpperCase();
 
-		this.officialDiscord.label.innerHTML = CREDITS.official.label[0][this.main.lang].toUpperCase();
-		this.officialItchio.label.innerHTML = CREDITS.official.label[1][this.main.lang].toUpperCase();
+		this.officialWeb.label.innerHTML = CREDITS.official.label[0][this.main.lang].toUpperCase();
+		this.officialDiscord.label.innerHTML = CREDITS.official.label[1][this.main.lang].toUpperCase();
+		this.officialItchio.label.innerHTML = CREDITS.official.label[2][this.main.lang].toUpperCase();
 
 		this.languageRow.label.innerText = text.menu.settings.language[this.main.lang].toUpperCase();
 		this.languageRow.value.innerText = OPTION.language[this.main.lang].toUpperCase();

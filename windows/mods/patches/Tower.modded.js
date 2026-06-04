@@ -838,7 +838,7 @@ export class Tower extends Sprite {
                 ...this.projectile,
                 power: this.projectile.power ?? this.basePower,
                 orbit: {
-                    radius: this.range,
+                    radius: this.pokemon.range,
                     angularSpeed: angularSpeed,
                     duration: Infinity,
                     hitCooldown: 350,

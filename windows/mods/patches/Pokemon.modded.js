@@ -78,6 +78,7 @@ export class Pokemon {
 		} else this.targetMode = targetMode;
 		if (this.ability.id == 'poisonDoubleShot') this.targetMode = 'available';
 		if (this.attackType == 'area') this.targetMode = 'area';
+		if (this.attackType == 'aura') this.targetMode = 'aura';
 
 		if (
 			this.item?.id == 'inverter' && 
@@ -361,7 +362,7 @@ export class Pokemon {
 
         if (this.lvl == 100) this.main.player.unlockAchievement(2);
 
-        if (this.lvl > 50 && this.item?.id === 'eviolite') this.retireItem();
+        if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
     }
 
 	// MOD: Endless mode cost scaling - costs continue scaling past level 100
@@ -614,9 +615,10 @@ export class Pokemon {
 		}
 
 		if (item?.megaStone) this.addMegaStone(item?.megaPos);
+		if (this.item.id == 'silphScope') this.targetMode = 'invisible';
 
 		this.main.UI.update();
-		if (this.lvl > 50 && this.item?.id === 'eviolite') this.retireItem();
+		if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
 	}
 
 	retireItem() {
@@ -643,6 +645,8 @@ export class Pokemon {
 			}
 
 			if (this.isMega) this.removeMegaStone();
+			if (this.item.id === 'ringTarget') this.targetMode = 'random';
+			if (this.item.id === 'silphScope') this.targetMode = 'first';
 
 			this.item = null;
 			this.main.UI.update();

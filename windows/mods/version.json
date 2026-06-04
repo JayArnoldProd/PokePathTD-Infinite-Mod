@@ -1,11 +1,11 @@
 {
-    "version": "1.5.6",
-    "game_version": "1.5.6",
-    "release_date": "2026-06-01",
+    "version": "1.5.9",
+    "game_version": "1.5.9",
+    "release_date": "2026-06-04",
     "changes": [
-        "Rebased Windows compatibility onto live PokePath TD 1.5.6 vanilla files",
-        "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.6",
-        "Preserved the 1.5.6 XL map viewport, route, shop, item, UI, and balance changes while carrying mod features forward",
-        "Kept the 1.5.5 collision/render stability fixes for orbital and projectile impacts"
+        "Rebased Windows compatibility onto live PokePath TD 1.5.9 vanilla files",
+        "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.9",
+        "Preserved the 1.5.7-1.5.9 UI, target-mode, Route 6-1, item, sprite, and balance fixes while carrying mod features forward",
+        "Synced save editor egg reset/injection data to the 1.5.9 runtime obtainable list"
     ]
 }

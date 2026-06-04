@@ -288,7 +288,7 @@ Vanilla 1.5.6 fixed Pokémon attacking enemies outside the map. Keep this mod cl
   - Shiny toggle for non-max-evo: only with `shiny` feature (not generic is_modded)
 
 ## Feature: Save Editor 1.5 Species + Sprite Coverage
-- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (316 keys for 1.5.6)
+- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (316 keys for 1.5.9)
 - [ ] Save editor species dropdown sources `allKeys` from regenerated metadata
 - [ ] Normal sprite lookup falls back from bundled `patches/normal_sprites` to extracted runtime `src/assets/images/pokemon/normal`
 - [ ] Runtime-only 1.5 species (example: Dewpider line) render correctly in save editor UI

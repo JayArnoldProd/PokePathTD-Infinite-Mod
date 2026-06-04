@@ -417,7 +417,10 @@ export class Area {
 
 			const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 100) + 1;
 			const futureWave = this.waves[displayWaveNum]?.preview || [];
-			const invisibles = [e.ditto, e.kecleon, e.absol, e.lunala, e.froslass];
+			const invisibles = [
+				e.ditto, e.kecleon, e.absol, e.lunala, e.froslass, e.mimikyu, e.huntail, e.octillery,
+				e.zorua, e.zoroark, e.mimeJr, e.mrMime,
+			];
 
 			if (this.autoWave && this.main.autoStop && futureWave.some(poke => invisibles.includes(poke))) {
 				this.switchAutoWave();

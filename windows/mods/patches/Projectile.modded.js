@@ -482,7 +482,7 @@ export class Projectile extends Sprite {
             this.tower?.pokemon?.item?.id ==  'nanabBerry'
         ) finalDamage += Math.ceil(this.power / 2);
 
-        if (this.tower?.pokemon?.item?.id == 'eviolite' && this.tower?.pokemon?.lvl <= 50) finalDamage += Math.ceil(this.power / 5);
+        if (this.tower?.pokemon?.item?.id == 'eviolite') finalDamage += Math.ceil(this.power / 5);
 
         if ( this.tower?.pokemon?.item?.id == 'sokudosPortfolio') {
             finalDamage = Math.ceil(finalDamage *(2 * this.tower.main.player.shinyAmount / 100));
