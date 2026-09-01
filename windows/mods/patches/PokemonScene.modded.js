@@ -19,13 +19,15 @@ const TERRAINS = {
 }
 
 const TARGET_MODES = [
-	'first', 'last', 'highHP', 'lowHP', 'highArmor', 'noArmor', 'faster', 'slower', 'poisoned', 'notPoisoned', 
-	'burned', 'notBurned', 'stuned', 'notStuned', 'slowed', 'notSlowed', 'cursed', 'curseable', 'nightmared', 'random', 'invisible'
+	'first', 'last', 'highHP', 'lowHP', 'highArmor', 'noArmor', 'faster', 'slower', 'poisoned', 'notPoisoned',
+	'burned', 'notBurned', 'stuned', 'notStuned', 'slowed', 'notSlowed', 'cursed', 'curseable', 'nightmared', 'random', 'invisible',
+	//'highTotal', 'lowTotal',
 ]
 
 const TARGET_MODES_TRADUCTIONS = {
 	area: ['Area', 'Área', 'Zone', 'Área', 'Area', 'Fläche', 'エリア', '지역', '区域', 'Obszar'],
 	aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	bombardment: ['Bombardment', 'Bombardeo', 'Bombardement', 'Bombardeio', 'Bombardamento', 'Bombardement', 'じゅうたん爆撃', '융단폭격', '轰炸', 'Bombardowanie'],
 	allies: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
 	orbital: ['Orbital', 'Orbital', 'Orbitale', 'Orbital', 'Orbitale', 'Orbital', '軌道', '궤도', '軌道', 'Orbital'],
 	available: ['Available', 'Disponibles', 'Disponibles', 'Disponíveis', 'Disponibili', 'Verfügbar', '利用可能', '이용 가능', '可用', 'Dostępne'],
@@ -149,6 +151,23 @@ export class PokemonScene extends GameScene {
 		this.itemIcon = new Element(this.itemContainer, { className: 'pokemon-scene-item-icon' }).element;
 		this.itemIcon.addEventListener('click' , () => { if (!this.isBlocked) this.itemWindow.open(this.pokemon); });
 
+		this.favoriteItemButton = new Element(this.itemContainer, { className: 'pokemon-scene-favorite-item-button', text: '⭐' }).element;
+		this.favoriteItemButton.addEventListener('click', () => {
+			playSound('hover2', 'ui')
+			//this.toggleFavorite();
+		})
+
+		this.favoriteItemButton.addEventListener('click', () => {
+			if (!this.pokemon.item) return;
+
+		    this.main.player.toggleFavoriteItem(
+		        this.pokemon.specie.id,
+		        this.pokemon.item.id
+		    );
+
+		    this.update();
+		})
+
 		this.levelUpContainer = new Element(this.container, { className: 'pokemon-scene-level-up-container' }).element;
 		this.levelUp = new Element(this.levelUpContainer, { className: 'pokemon-scene-level-up' }).element;
 		this.levelUp.addEventListener('click', () => {
@@ -195,17 +214,17 @@ export class PokemonScene extends GameScene {
 			}
 		})
 
-		this.levelUp.addEventListener('mouseover', () => { 
+		this.levelUp.addEventListener('mouseover', () => {
 			playSound('hover2', 'ui');
 			this.showLevelUpEffect()
 		})
 
-		this.levelUpFive.addEventListener('mouseover', () => { 
+		this.levelUpFive.addEventListener('mouseover', () => {
 			playSound('hover2', 'ui');
 			this.showLevelUpEffect(5)
 		})
 
-		this.levelUpTen.addEventListener('mouseover', () => { 
+		this.levelUpTen.addEventListener('mouseover', () => {
 			playSound('hover2', 'ui');
 			this.showLevelUpEffect(10)
 		})
@@ -224,7 +243,15 @@ export class PokemonScene extends GameScene {
 				this.main.team.pokemon.splice(0, 1);
 				this.main.team.pokemon.push(pokemon);
 
-				this.main.team.refreshDittoADN?.('pokemon-scene-dna-button');
+				if ([58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(this.pokemon.adn.id)) this.main.player.fossilInTeam--;
+				if ([179].includes(this.pokemon.adn.id)) this.main.player.pastInTeam--;
+				if ([178].includes(this.pokemon.adn.id)) this.main.player.futureInTeam--;
+				this.pokemon.adn = this.main.team.pokemon[0].specie;
+				if ([58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(this.pokemon.adn.id)) this.main.player.fossilInTeam++;
+				if ([179].includes(this.pokemon.adn.id)) this.main.player.pastInTeam++;
+				if ([178].includes(this.pokemon.adn.id)) this.main.player.futureInTeam++;
+				const oldTarget = this.pokemon.targetMode;
+				this.pokemon.transformADN(oldTarget);
 				this.main.UI.updatePokemon();
 				this.update();
 			}
@@ -234,7 +261,7 @@ export class PokemonScene extends GameScene {
 		this.buttonChangeForm.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
 		this.buttonChangeForm.addEventListener('click', () => {
 			playSound('teleport', 'effect')
-			
+
 			const specieKey = this.pokemon?.specie?.key;
 			switch (this.pokemon.id) {
 				case 76:
@@ -272,12 +299,18 @@ export class PokemonScene extends GameScene {
 						}
 					}
 					break;
+				case 163:
+					if (this.pokemon.specie.key == "jellicentF") this.pokemon.updateSpecie('jellicentM');
+					else if (this.pokemon.specie.key == "jellicentM") this.pokemon.updateSpecie('jellicentF');
+					else if (this.pokemon.specie.key == "frillishF") this.pokemon.updateSpecie('frillishM');
+					else if (this.pokemon.specie.key == "frillishM") this.pokemon.updateSpecie('frillishF');
+					break;
 			}
 
 			this.main.UI.updatePokemon();
 			this.update();
 		})
-		
+
 		this.evolutionSprite = new Element(this.container, { className: 'pokemon-scene-evolution-sprite' }).element;
 		this.evolutionLevel = new Element(this.evolutionSprite, { className: 'pokemon-scene-evolution-level' }).element;
 
@@ -299,7 +332,17 @@ export class PokemonScene extends GameScene {
 			this.skinSlot[i].addEventListener('click', () => { this.changeSkin(i) })
 		}
 
-		this.background.addEventListener('click', (e) => { if (e.target == this.background)this.close() })
+		this.background.addEventListener('click', (e) => { if (e.target == this.background)this.close() });
+
+		this.extraContainer = new Element(this.container, { className: 'pokemon-scene-extra-container' }).element;
+		this.extraContainerTitle = new Element(this.extraContainer, { className: 'pokemon-scene-extra-title' }).element;
+		this.extraContainerDescription = new Element(this.extraContainer, { className: 'pokemon-scene-extra-description' }).element;
+		this.extraContainerButton = new Element(this.extraContainer, { className: 'pokemon-scene-extra-button' }).element;
+		this.extraContainerButton.addEventListener('click', () => {
+			playSound('option', 'ui');
+			this.pokemon.extra = !this.pokemon.extra;
+			this.update();
+		})
 	}
 
 	update() {
@@ -315,8 +358,9 @@ export class PokemonScene extends GameScene {
 			this.window.style.transform = `revert-layer`;
 		}
 
+		this.extraContainer.style.display = 'none';
 		this.title.innerHTML = text.pokemon.title[this.main.lang].toUpperCase();
-		
+
 		if (!this.main.area.inChallenge.lvlCap) this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${this.pokemon.lvl}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${this.pokemon.lvl}]`;
 		else {
 			const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap);
@@ -339,8 +383,8 @@ export class PokemonScene extends GameScene {
 		if (this.pokemon.id == 64 || this.pokemon?.adn?.id == 64) {
 			this.abilityDescription.innerHTML += `<br><br> * ${text.pokemon.current[this.main.lang]} +${this.main.player.fossilInTeam} ${text.pokemon.projectiles[this.main.lang]}`;
 		} else if (
-			this.pokemon.id == 97 || this.pokemon?.adn?.id == 97 || 
-			this.pokemon.id == 2 || this.pokemon?.adn?.id == 2 || 
+			this.pokemon.id == 97 || this.pokemon?.adn?.id == 97 ||
+			this.pokemon.id == 2 || this.pokemon?.adn?.id == 2 ||
 			this.pokemon.id == 45 || this.pokemon?.adn?.id == 45 ||
 			this.pokemon.id == 72 || this.pokemon?.adn?.id == 72) {
 			this.abilityDescription.innerHTML += `<br><br> * ${this.pokemon.ricochet} ${text.pokemon.ricochets[this.main.lang]}`;
@@ -368,8 +412,9 @@ export class PokemonScene extends GameScene {
 
 		this.updateLevelButton();
 
-		if (this.pokemon.targetMode == 'area' || this.pokemon.targetMode == 'aura' || 
-			this.pokemon.targetMode == 'allies' || this.pokemon.targetMode == 'available' || 
+		if (this.pokemon.targetMode == 'area' || this.pokemon.targetMode == 'aura' ||
+			this.pokemon.targetMode == 'allies' || this.pokemon.targetMode == 'bombardment' ||
+			//(this.pokemon.targetMode == 'available' && this.pokemon?.item?.id != 'choiceScarf') ||
 			(this.pokemon.ability.id == 'spinda' && this.pokemon?.item?.id != 'ringTarget')
 		) {
 			this.data['attackType'].style.pointerEvents = 'none';
@@ -395,7 +440,7 @@ export class PokemonScene extends GameScene {
 			this.pokemon.changeTargetMode(TARGET_MODES[20]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
 		} else if (
-			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk' && this.pokemon.ability.id != 'vigilantFrisk' && this.pokemon.ability.id != 'illuminate'
+			this.pokemon?.item?.id != 'silphScope' && this.pokemon.targetMode == 'invisible' && this.pokemon.ability.id != 'frisk' && this.pokemon.ability.id != 'vigilantFrisk' && this.pokemon.ability.id != 'illuminate' && this.pokemon.ability.id != 'illuminateBuff'
 		) {
 			this.pokemon.changeTargetMode(TARGET_MODES[0]);
 			this.data['attackType'].value.innerHTML = `${TARGET_MODES_TRADUCTIONS[this.pokemon.targetMode][this.main.lang]}`;
@@ -412,11 +457,6 @@ export class PokemonScene extends GameScene {
 			if (this.pokemon?.item?.id == 'condensedBlizzard') this.data['rangeType'].value.innerHTML = `${text.pokemon['circle'][this.main.lang]}`;
 			else this.data['rangeType'].value.innerHTML = `${text.pokemon[this.pokemon.rangeType][this.main.lang]}`;
 		}
-
-		// if (this.pokemon.specie.key == 'malamar') {
-		// 	if (this.pokemon?.item?.id == 'inverter' && this.pokemon.lvl == 100) this.data['rangeType'].value.innerHTML = `${text.pokemon['donut'][this.main.lang]}`;
-		// 	else this.data['rangeType'].value.innerHTML = `${text.pokemon[this.pokemon.rangeType][this.main.lang]}`;
-		// }
 
 		if (this.pokemon.specie.evolution != undefined && this.pokemon.id != 70) {
 			this.evolutionSprite.style.display = 'block';
@@ -449,19 +489,25 @@ export class PokemonScene extends GameScene {
 		if (
 			(this.pokemon.id == 76 && this.pokemon.lvl >= 100) ||
 			(this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword') ||
-			(this.pokemon.id == 109  && this.pokemon.lvl >= 40)
+			(this.pokemon.id == 109  && this.pokemon.lvl >= 40) ||
+			this.pokemon.id == 163
 		) {
 			this.buttonChangeForm.style.display = 'block';
 
 			if (this.pokemon.id == 76) {
-				this.buttonChangeForm.style.backgroundImage = (this.pokemon.ability.id == "toughClawsDay") ? 
+				this.buttonChangeForm.style.backgroundImage = (this.pokemon.ability.id == "toughClawsDay") ?
 				`url("${pokemonData['lycanrocDay'].sprite.base}")` : `url("${pokemonData['lycanrocNight'].sprite.base}")`
 			} else if (this.pokemon.id == 80 || this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword') {
-				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == 'aegislash' || this.pokemon.ability.id == 'slow') ? 
+				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == 'aegislash' || this.pokemon.ability.id == 'slow') ?
 				`url("${pokemonData['aegislash'].sprite.base}")` : `url("${pokemonData['aegislashSword'].sprite.base}")`
 			} else if (this.pokemon.id == 109) {
-				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == "armarouge") ? 
+				this.buttonChangeForm.style.backgroundImage = (this.pokemon.specie.key == "armarouge") ?
 				`url("${pokemonData['armarouge'].sprite.base}")` : `url("${pokemonData['ceruledge'].sprite.base}")`
+			} else if (this.pokemon.id == 163) {
+				if (this.pokemon.specie.key == 'frillishF') this.buttonChangeForm.style.backgroundImage = `url("${pokemonData['frillishM'].sprite.base}")`;
+				if (this.pokemon.specie.key == 'frillishM') this.buttonChangeForm.style.backgroundImage = `url("${pokemonData['frillishF'].sprite.base}")`;
+				if (this.pokemon.specie.key == 'jellicentF') this.buttonChangeForm.style.backgroundImage = `url("${pokemonData['jellicentM'].sprite.base}")`;
+				if (this.pokemon.specie.key == 'jellicentM') this.buttonChangeForm.style.backgroundImage = `url("${pokemonData['jellicentF'].sprite.base}")`;
 			}
 
 			const allowDeployedFormSwitch = this.pokemon.specie.key == 'aegislash' || this.pokemon.specie.key == 'aegislashSword';
@@ -479,6 +525,7 @@ export class PokemonScene extends GameScene {
 		this.updateItem();
 		this.updateStatsChanges();
 		this.displaySkins();
+		this.checkExtraScenes();
 	}
 
 	updateItem() {
@@ -487,17 +534,25 @@ export class PokemonScene extends GameScene {
 			this.itemDescription.innerHTML = text.pokemon.noItemDescription[this.main.lang];
 			this.itemIcon.innerHTML = '+';
 			this.itemIcon.style.backgroundImage = "";
+			this.favoriteItemButton.style.display = 'none';
 		} else {
 			let lang = this.main.lang;
-       		if (this.pokemon.item.name.length <= lang) lang = 0;
+		if (this.pokemon.item.name.length <= lang) lang = 0;
 
 			this.itemName.innerHTML = this.pokemon.item.name[lang].toUpperCase();
 			this.itemDescription.innerHTML = this.pokemon.item.description[lang];
 			this.itemIcon.innerHTML = '';
-			this.itemIcon.style.backgroundImage = `url("${this.pokemon.item.sprite}")`
+			this.itemIcon.style.backgroundImage = `url("${this.pokemon.item.sprite}")`;
+			this.favoriteItemButton.style.display = 'revert-layer';
+
+			if (this.main.player.isFavoriteItem(this.pokemon.specie.id, this.pokemon.item.id)) {
+				this.favoriteItemButton.style.filter = 'revert-layer';
+			} else {
+				this.favoriteItemButton.style.filter = 'grayscale(100%)';
+			}
 		}
 
-		if (this.pokemon.isDeployed && ['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb', 'mitsuesCocktail'].includes(this.pokemon?.item?.id)) {
+		if (this.pokemon.isDeployed && ['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb', 'mitsuesCocktail','dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'blimpKeys'].includes(this.pokemon?.item?.id)) {
 			this.itemIcon.style.pointerEvents = 'none';
 			this.itemIcon.style.outline = "0px";
 			this.itemIcon.innerHTML = '';
@@ -509,7 +564,7 @@ export class PokemonScene extends GameScene {
 
 	changeAttackType(dir) {
 		let index = TARGET_MODES.findIndex((targetMode) => targetMode == this.pokemon.targetMode);
-		let indexMax = (this.pokemon.ability.id == 'illuminate' || this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
+		let indexMax = (this.pokemon.ability.id == 'illuminate' || this.pokemon.ability.id == 'illuminateBuff' || this.pokemon.ability.id == 'frisk' || this.pokemon.ability.id == 'vigilantFrisk' || this.pokemon?.item?.id == 'silphScope') ? 20 : 19;
 		let indexMin = 0;
 
 		index += dir;
@@ -559,7 +614,7 @@ export class PokemonScene extends GameScene {
 				this.levelUp.style.filter = 'brightness(0.8)';
 			} else {
 				this.levelUp.style.filter = 'revert-layer';
-			}		
+			}
 		}
 
 		// Only shiny Pokemon can level past 100 (x5 would push past 100)
@@ -575,8 +630,8 @@ export class PokemonScene extends GameScene {
 			if (this.main.player.gold < this.pokemon.checkCost(5)) {
 				this.levelUpFive.style.filter = 'brightness(0.8)';
 			} else {
-				this.levelUpFive.style.filter = 'revert-layer';			
-			}		
+				this.levelUpFive.style.filter = 'revert-layer';
+			}
 		}
 
 		// Only shiny Pokemon can level past 100 (x10 would push past 100)
@@ -592,8 +647,8 @@ export class PokemonScene extends GameScene {
 			if (this.main.player.gold < this.pokemon.checkCost(10)) {
 				this.levelUpTen.style.filter = 'brightness(0.8)';
 			} else {
-				this.levelUpTen.style.filter = 'revert-layer';			
-			}		
+				this.levelUpTen.style.filter = 'revert-layer';
+			}
 		}
 	}
 
@@ -644,7 +699,7 @@ export class PokemonScene extends GameScene {
 		const newRange = isOrbital
 			? this.calculatePreviewOrbitalRange(specie.range.base, specie.range.scale, newLevel)
 			: this.calculatePreviewRange(specie.range.base, specie.range.scale, newLevel, isAOE);
-		
+
 		const powerDiff = newPower - this.pokemon.power;
 		const speedDiff = isOrbital
 			? newSpeed - (this.pokemon.orbitalSpeed ?? 0)
@@ -659,7 +714,7 @@ export class PokemonScene extends GameScene {
 			this.data['speed'].value.innerHTML = isOrbital
 				? `${this.formatSpeedValue(this.pokemon)} <span style="color:var(--green)">(+${this.formatOrbitalSpeedDiff(speedDiff)})</span>`
 				: `${this.formatSpeedValue(this.pokemon)} <span style="color:var(--green)">(-${this.formatPanelStat(speedDiff, 3)}s)</span>`;
-		} 
+		}
 		if (criticalDiff > 0) {
 			this.data['critical'].value.innerHTML = `${this.pokemon.critical.toFixed(1)}% <span style="color:var(--green)">(+${criticalDiff}%)</span>`;
 		}
@@ -672,17 +727,25 @@ export class PokemonScene extends GameScene {
 		const numericValue = Number(value);
 		if (!Number.isFinite(numericValue) || numericValue === 0) return '0';
 
-		const absValue = Math.abs(numericValue);
-		const factor = Math.pow(10, significantDigits - Math.ceil(Math.log10(absValue)));
-		const roundedValue = Math.round(numericValue * factor) / factor;
-		if (!Number.isFinite(roundedValue) || roundedValue === 0) return '0';
+		if ([70, 75, 76, 80, 163].includes(this.pokemon.id)) return;
+		if (this.pokemon.isMega) return;
+		if (!this.main.player.hasSkinator) return;
+		if (this.pokemon.lvl < 100 && !this.pokemon.isReset) return;
 
 		if (Math.abs(roundedValue) >= 1000 && this.main?.utility?.numberDot) {
 			return this.main.utility.numberDot(Math.round(roundedValue));
 		}
 
-		return roundedValue.toString();
-	}
+		var indx = 0;
+
+		Object.entries(pokemonData).forEach((entries) => {
+			if (entries[1].id === this.pokemon.id && entries[1].base === undefined) {
+
+				this.skinSlot[indx].style.display = 'block';
+				this.skinSlot[indx].style.backgroundImage = `url("${entries[1].sprite.base}")`;
+				indx++;
+			}
+		})
 
 	formatSpeedValue(pokemon) {
 		if (pokemon.attackType === 'orbital') {
@@ -780,7 +843,7 @@ export class PokemonScene extends GameScene {
 		return 100 - remainingGap;
 	}
 
-	updateStatsChanges() { 
+	updateStatsChanges() {
 	    let flatPower = 0;
 	    let flatSpeed = 0;
 	    let flatCritical = 0;
@@ -801,85 +864,103 @@ export class PokemonScene extends GameScene {
 	    }
 
 	    if (this.pokemon?.ability?.id == 'armorCannon') {
-	    	flatSpeed -= (100 * (14 - this.main.player.health[this.main.area.routeNumber]));
+		flatSpeed -= (100 * (14 - this.main.player.health[this.main.area.routeNumber]));
 	    }
 
 	    if (this.pokemon?.item?.id == 'maliciousArmor') {
-	    	flatSpeed -= (20 * (14 - this.main.player.health[this.main.area.routeNumber]));
+		flatSpeed -= (20 * (14 - this.main.player.health[this.main.area.routeNumber]));
 	    }
 
 	    if (this.pokemon.isDeployed) {
 	        let tower = this.main.area.towers.find(t => t.pokemon === this.pokemon);
 
 	        if (
-	            (tower.tile && (tower.tile.land === 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassyTerrain') && (tower.pokemon.ability.id === 'toughClawsNight'  || tower.pokemon.ability.id === 'toughClaws')) ||
-	            (tower.tile && ((tower.tile.land === 4 || tower.tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && (tower.pokemon.ability.id === 'toughClawsDay')))
+	            (tower.tile &&
+		(tower.tile.land === 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassPlatform' || (tower.tile.land == 3 && tower.pokemon?.item?.id == 'subwoofer')) &&
+		(tower.pokemon.ability.id === 'toughClawsNight' || tower.pokemon.ability.id === 'toughClaws')
+	            ) ||
+	            (tower.tile &&
+		((tower.tile.land === 4 || tower.tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit' || ((tower.tile.land == 3 || tower?.carriedBy == 'icePlatform') && tower.pokemon?.item?.id == 'subwoofer')) &&
+	            (tower.pokemon.ability.id === 'toughClawsDay')))
 	        ) flatCritical = 100 - baseCritical;
 	    }
 
 	    switch (this.pokemon?.item?.id) {
 	        case 'protein':
-	            flatPower += 10; 
+	            flatPower += 10;
 	            break;
 
 	        case 'xAttack':
-	            flatPower += 50; 
+	            flatPower += 75;
+	            break;
+
+	        case 'oddKeystone':
+	            flatPower += 40;
+	            break;
+
+	        case 'expertBelt':
+	            flatPower += 50;
+	            flatCritical += 10;
 	            break;
 
 	        case 'bicycle':
 	            if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'chatot' && typeof this.main?.area?.inChallenge.lvlCap !== 'number') {
-	        		flatSpeed -= 4000;
-	        		flatCritical -= 4;
-	        	}
-	        	break;
+			flatSpeed -= 4000;
+			flatCritical -= 4;
+		}
+		break;
 
 	        case 'silphScope':
-	            if (this.pokemon.ability.id === 'frisk' || this.pokemon.ability.id === 'illuminate' || this.pokemon.ability.id === 'vigilantFrisk') {
-	            	flatRange += 15;
-	            	flatPower += 175; 
-	            	mulSpeed *= 1 - 0.25;
+	            if (this.pokemon.ability.id === 'frisk' ||  this.pokemon.ability.id === 'illuminateBuff' || this.pokemon.ability.id === 'illuminate' || this.pokemon.ability.id === 'vigilantFrisk') {
+		flatRange += 15;
+		flatPower += 175;
+		mulSpeed *= 1 - 0.25;
 	            }
 	            break;
 
 	        case 'ancientSword':
-	        	mulPower *= 1 + 0.2;
+		mulPower *= 1 + 0.2;
 	            mulSpeed *= 1 - 0.2;
-	        	break;
+		break;
 
 	        case 'ancientShield':
-	        	mulPower *= 1 + 0.2;
+		mulPower *= 1 + 0.2;
 	            mulRange *= 1 + 0.2;
-	         	break;
+		break;
 
-	        case 'inverter': 
-	        	if (this.pokemon.lvl == 100 && this.pokemon.specie.key == 'malamar') {
-	        		mulPower *= 1 + 0.5;
-	        		mulSpeed *= 1 - 0.75;
-	        		flatCritical += 15;
-	        	}
-	        	break;
+	        case 'strangeIdol':
+		mulPower *= 1 + 0.5;
+		break;
+
+	        case 'inverter':
+		if (this.pokemon.specie.key == 'malamar') {
+			mulPower *= 1 + 0.5;
+			mulSpeed *= 1 - 0.75;
+			flatCritical += 15;
+		}
+		break;
 
 	        case 'wrestlingMask':
-	        	mulSpeed *= 1 - 0.5;
+		mulSpeed *= 1 - 0.35;
 	            flatRange -= 75;
-	         	break;
+		break;
 
 	        case 'bindingBand':
-	        	flatSpeed += 1500;
-	        	break;
+		flatSpeed += 1500;
+		break;
 
 	        case 'shieldBreakerBullet':
-	        	flatSpeed += 2000;
-	        	break;
+		flatSpeed += 2000;
+		break;
 
 	        case 'direHit':
-	        	flatCritical += 10;
-	        	break;
+		flatCritical += 25;
+		break;
 
 	        case 'carbos':
 	            mulSpeed *= 1 - 0.15
 	            break;
-	            
+
 	        case 'cellBattery':
 	            mulPower *= 1 + 0.5;
 	            break;
@@ -890,8 +971,8 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'muscleBand':
-	        	mulSpeed *= 1 + 0.25;
-	        	break;
+		mulSpeed *= 1 + 0.25;
+		break;
 
 	        case 'choiceScarf':
 	            if (this.pokemon.ability.id === 'quadraShot' || this.pokemon.ability.id === 'quadraShotSand') mulSpeed *= 1 - 0.875;
@@ -904,7 +985,7 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'softSand':
-	        	mulPower *= 2;
+		mulPower *= 5;
 	            break;
 
 	        case 'hardStone':
@@ -912,11 +993,15 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'condensedBlizzard':
-	        	mulRange /= 2;
-	        	break;
+		mulRange /= 2;
+		break;
 
 	        case 'starCandy':
 	            flatRange += 0.1 * this.main.player.stars;
+	            break;
+
+	        case 'prismScale':
+	            flatRange += 0.5 * this.main.player.ribbons;
 	            break;
 
 	        case 'leek':
@@ -924,19 +1009,19 @@ export class PokemonScene extends GameScene {
 	            break;
 
 	        case 'sokudosPortfolio':
-	        	let speedLimit = Math.min(this.main.player.shinyAmount * 0.05, 0.75); 
-	        	mulSpeed *= 1 - speedLimit; 
+		let speedLimit = Math.min(this.main.player.shinyAmount * 0.05, 0.75);
+		mulSpeed *= 1 - speedLimit;
 	            mulPower *= (2 * this.main.player.shinyAmount / 100);
 	            break;
 
 	        case 'thickClub':
 	        case 'lightBall':
 	        case 'weaknessPolicy':
-	            mulPower *= 1 + 0.5; 
+	            mulPower *= 2.5;
 	            break;
 
 	        case 'clawFossil':
-	            flatPower += Math.ceil(basePower * 0.05 * this.main.player.fossilInTeam);
+	            flatPower += Math.ceil(basePower * 0.1 * this.main.player.fossilInTeam);
 	            break;
 
 	        case 'loadedDice':
@@ -945,9 +1030,9 @@ export class PokemonScene extends GameScene {
 
 	        case 'quickPowder':
 	            mulSpeed *= 1 - 0.25;
-            	if (this.pokemon.ability.id === 'defiant') mulPower *= 1 + 0.5;
-            	else mulPower *= 1 - 0.5;
-            	break;
+	if (this.pokemon.ability.id === 'defiant') mulPower *= 1 + 0.5;
+	else mulPower *= 1 - 0.5;
+	break;
 
 	        case 'metalPowder':
 	            mulPower *= 1 + 0.5;
@@ -978,7 +1063,7 @@ export class PokemonScene extends GameScene {
 			case 'scovillainSiracha':
 	            if (this.pokemon.ability.id === 'contrary') mulPower *= 1 + 0.5;
 	            else if (this.pokemon.ability.id === 'defiant') flatPower += 500;
-	            else mulPower *= 1 - 0.5;
+	            else if (this.pokemon.ability.id !== 'burnDoubleShot') mulPower *= 1 - 0.5;
 				break;
 
 			case 'laggingTail':
@@ -992,34 +1077,44 @@ export class PokemonScene extends GameScene {
 				flatRange += 25;
 				break;
 
+			case 'luminousMoss':
+				flatRange += 25;
+				break;
+
 			case 'sunflowerPetal':
 				flatRange -= 50;
 				break;
 
-	        case 'blueBandana': 
+	        case 'blueBandana':
 				const critPercentBB = baseCritical + flatCritical;
-   				mulPower *= 1 + (critPercentBB * 0.01);
+				mulPower *= 1 + (critPercentBB * 0.01);
 				break;
 
-			case 'heartScale': 
+			case 'heartScale':
 				if (this.main.area.heartScale) {
 					mulSpeed *= 1 - 0.5;
 				}
 				break;
-			
-			case 'helixFossil': 
+			case 'koffingJelly':
+	            if (this.pokemon.ability.id === 'defiant') flatPower += 500;
+
+				if (this.pokemon.ability.id === 'contrary') flatSpeed -= 1100;
+	            else if (this.pokemon.specie.id !== 56) flatSpeed += 1100;
+				break;
+
+			case 'helixFossil':
 				flatRange += 10 * this.main.player.fossilInTeam;
 				break;
 
-			case 'spindaCocktail': 
+			case 'spindaCocktail':
 				mulRange *= 1 + 0.25;
 				break;
 
-			case 'mitsuesCocktail': 
+			case 'mitsuesCocktail':
 				mulPower *= 1 + 1;
 				break;
 
-			case 'poisonBarb': 
+			case 'poisonBarb':
 				mulSpeed *= 1 - 0.2;
 				break;
 
@@ -1030,45 +1125,83 @@ export class PokemonScene extends GameScene {
 				break;
 
 			case 'eviolite':
-				if (this.pokemon.lvl <= 50) {
-					mulRange *= 1 + 0.2;
-					mulPower *= 1 + 0.2;
-					mulSpeed *= 1 - 0.2;
-				}
+				mulRange *= 1 + 0.2;
+				mulPower *= 1 + 0.2;
+				mulSpeed *= 1 - 0.2;
 				break;
 
-			case 'badgeOfHonor': 
+			case 'tropicalMail':
+				flatPower += 20 * this.main.UI.tilesCountNum[1];
+				break;
+
+			case 'waveMail':
+				mulSpeed -= 0.03 * this.main.UI.tilesCountNum[2];
+				break;
+
+			case 'brickMail':
+				flatRange += 8 * this.main.UI.tilesCountNum[3];
+				break;
+
+			case 'badgeOfHonor':
 				let bonusPercent = Math.min(30, (this.main.player.stars / 30)) * 0.01;
-    			mulPower *= 1 + bonusPercent;
+			mulPower *= 1 + bonusPercent;
 				break;
 
 	        default:
 	            break;
 	    }
 
-	    if (this.pokemon.ability.id === 'simple') {
-	        flatPower *= 1.5;
-	        flatSpeed *= 1.5;
-	        flatCritical *= 1.5;
-	        flatRange *= 1.5;
-
-	        mulPower = 1.5 * mulPower - 0.5;
-	        mulSpeed = 1.5 * mulSpeed - 0.5;
-	        mulCritical = 1.5 * mulCritical - 0.5;
-	        mulRange = 1.5 * mulRange - 0.5;
+	    if (this.pokemon.ability.id === 'nocturnal' && !this.main.utility.isBetweenHours(8, 20)) {
+		mulSpeed *= 1 - 0.25;
 	    }
 
+	    if (this.pokemon.ability.id === 'diurnal' && this.main.utility.isBetweenHours(8, 20)) {
+		mulPower *= 1 + 0.5;
+	    }
+
+	    if (this.pokemon.ability.id === 'simple') {
+	        flatPower *= 1.75;
+	        flatSpeed *= 1.75;
+	        flatCritical *= 1.75;
+	        flatRange *= 1.75;
+
+	        mulPower = 1.75 * mulPower - 0.75;
+	        mulSpeed = 1.75 * mulSpeed - 0.75;
+	        mulCritical = 17.5 * mulCritical - 0.75;
+	        mulRange = 1.75 * mulRange - 0.75;
+	    }
+
+	    flatPower += this.main.area.honeyGather;
+
+	    if (this.pokemon?.item?.id == 'nectar') {
+            for (let i = 0; i < 2; i++) flatPower += this.main.area.honeyGather;
+            if (this.pokemon.ability.id === 'simple') flatPower += this.main.area.honeyGather;
+        }
+
+        if (this.main.area.anchorShot) mulSpeed *= 1 + 2;
+
+        if ([165, 175, 176].includes(this.pokemon.id) && this.main.area.swordsDance) {
+	mulPower *= 1 + 0.2;
+        }
+
+        if ([165, 175, 176].includes(this.pokemon.id) && this.main.area.heartOfSteel) {
+	flatPower += (this.main.area.hitsReceived > 0) ? 75 : 25;
+	flatCritical += (this.main.area.hitsReceived > 0) ? 15 : 5;
+        }
+
+	    if (this.main.area.helpingHand && this.pokemon?.item == undefined) flatPower += (50 * this.main.area.helpingHand);
 
 	    if (this.pokemon.id == 66) {
 	        const currentHp = this.main.player.health[this.main.area.routeNumber] || 0;
-	        const missingHp = Math.max(0, 14 - currentHp); 
+	        const missingHp = Math.max(0, 14 - currentHp);
 	        const rate = (this.pokemon?.item?.id === 'rockyHelmet') ? 0.10 : 0.05;
 	        mulPower *= 1 + missingHp * rate;
 	    }
 
 	    if (this.pokemon.ability.id == 'makeItRain') {
-            let goldvalue = this.main.player.gold;
-            let goldBonus = goldvalue.toString().length * 0.05;
+		let goldPerDigit = (this.pokemon?.item?.id == 'amuletCoin') ? 0.15 : 0.075
+            let goldValue = this.main.player.stats.totalGold;
+            let goldBonus = goldValue.toString().length * goldPerDigit;
             mulPower *= 1 + goldBonus;
         }
 
@@ -1085,24 +1218,75 @@ export class PokemonScene extends GameScene {
 	        flatPower += (this.main.area.hitsReceived * 50);
 	    }
 
+	    if (this.pokemon.ability.id === 'marvelScale') {
+	        flatPower += (this.main.area.inChallenge) ? (this.main.player.ribbons * 3) : this.main.player.ribbons;
+	    }
+
+	    if (this.pokemon.ability.id === 'moxie') {
+	        let stacks = this.main.area.moxieUsers[this.pokemon.id] || 0;
+	        if (this.pokemon?.item?.id === 'blackGlasses') stacks *= 2;
+	        mulPower *= 1 + stacks * 0.05;
+	    }
+
+	    if (this.pokemon.ability.id === 'speedBoost' || this.pokemon.ability.id === 'strongJaw') {
+	        flatSpeed -= (this.main.area.speedBoostUsers[this.pokemon.id] || 0) * 300;
+	    }
+
+	    if (this.pokemon.ability.id === 'bulkUp') {
+	        flatPower += this.main.area.bulkUpUsers[this.pokemon.id]?.power ?? 0;
+	    }
+
 	    if (this.pokemon.isDeployed) {
 	        const tower = this.main.area.towers.find(t => t.pokemon === this.pokemon);
 	        let cherryFormBonus = false;
+
 	        if (tower) {
+		if (tower.isMounted &&  (this.pokemon.id == 114 || this.pokemon?.adn?.id == 114)) {
+			mulPower *= 1 + 0.5;
+					mulSpeed *= 1 - 0.25;
+			flatCritical += 30;
+		}
 
-	        	if (this.pokemon.ability.id === 'teleport') {
-	        		if (tower.teleportBuff != false) {
-	        			if (this.pokemon?.item?.id == 'twistedSpoon') flatPower += (tower.teleportBuff * this.pokemon.power * 0.25);
-	        			else flatPower += (tower.teleportBuff * this.pokemon.power);
-	        		}
-	        	}
+		if (this.pokemon.ability.id === 'teleport') {
+			if (tower.teleportBuff != false) {
+				if (this.pokemon?.item?.id == 'twistedSpoon') flatPower += (tower.teleportBuff * this.pokemon.power * 0.25);
+				else flatPower += (tower.teleportBuff * this.pokemon.power);
+			}
+		}
 
-	        	if (tower.pokemon?.item?.id == 'fullIncense') {
-	                flatPower += tower.incenseBuff
+		if (this.pokemon.ability.id === 'meteorBeam' && tower.isOrbitingSolrock) {
+			mulPower *= 1 + 1;
+		}
+
+		if (tower.pokemon?.item?.id == 'fullIncense') {
+	                flatPower += Math.floor(tower.incenseBuff)
 	            }
 
-	            if (this.pokemon.ability.id === 'speedBoost') {
-	                flatSpeed -= (tower.speedBoost || 0) * 300;
+	            if (this.pokemon.ability.id === 'meteorMash') {
+	                mulPower += (this.main.area.meteorMashUsers[this.pokemon.id] || 0) * 0.2;
+	            }
+
+	            if (this.pokemon.ability.id === 'rivalrySpeed' && this.main.area.rivalryAmount >= 2) {
+			mulSpeed *= 1 - 0.3;
+		}
+
+		if (this.pokemon.ability.id === 'rivalryPower' && this.main.area.rivalryAmount >= 2) {
+			mulPower *= 1 + 0.5;
+		}
+
+		if (tower.pokemon?.item?.id == 'salacBerry' && tower.salacBerryTimer > 0) {
+			if (this.pokemon.ability.id === 'simple') mulSpeed *= 1 - 0.875;
+	                else mulSpeed *= 1 - 0.5;
+	            }
+
+	            if (tower.pokemon?.item?.id == 'liechiBerry' && tower.liechiBerryTimer > 0) {
+	                flatPower += (this.pokemon.ability.id === 'simple') ? 350 : 200;
+	            }
+	            if (tower.pokemon?.item?.id == 'lansatBerry' && tower.lansatBerryTimer > 0) {
+	                flatCritical += (this.pokemon.ability.id === 'simple') ? 105 : 60;
+	            }
+	            if (tower.pokemon?.item?.id == 'starfBerry' && tower.starfBerryTimer > 0) {
+	                flatRange += (this.pokemon.ability.id === 'simple') ? 140 : 80;
 	            }
 
 	            const tile = tower.tile;
@@ -1110,78 +1294,118 @@ export class PokemonScene extends GameScene {
 
 	            if (
 	                tile && tower.pokemon?.item?.id !== 'mitsuesCocktail' &&
-	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser') || tower?.carriedBy == 'grassyTerrain') &&
+	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser') || tower?.carriedBy == 'grassPlatform') &&
 	                (towerAbility === 'ambusher' || towerAbility === 'castform')
 	            ) {
-	                mulPower *= 2; 
+	                mulPower *= 2;
 	            }
 
 	            if (
                     this.main.area.weather == 'rain' &&
-                    (tile.land == 3 || (tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle'))
+                    (tile.land == 3 || (tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle') || tower?.carriedBy == 'icePlatform')
                 ) {
                     mulPower *= 1.2;
                 }
 
                 if (
-		            this.main.area.weather == 'harshSunlight' &&
-		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser'))
+                    this.main.area.weather == 'rain' && tower.pokemon?.ability?.id == 'waterCompaction'
+                ) {
+                    flatCritical += 30;
+	mulPower *= 1.3;
+                }
+
+                if (
+		            this.main.area.weather == 'heavyRain' && tower.pokemon?.item?.id != 'safetyGoggles' &&
+		            (tile.land == 3 || (tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle') || tower?.carriedBy == 'icePlatform')
 		        ) {
-		            if (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassyTerrain') mulSpeed *= 1 - 0.2;
-		            if (towerAbility === 'chlorophyll') mulSpeed *= 1 - 0.5;
-		            if (this.pokemon.id == 75 && this.pokemon.lvl > 24) {
-		                cherryFormBonus = true;
-		                mulSpeed *= 1 - 0.25;
-		            }
+			if (this.main.area.cloudNine) mulPower *= 0.875;
+			        else if (this.main.area.airLock) mulPower *= 1;
+				else mulPower *= 0.5;
+
+		        }
+
+                if (
+		            this.main.area.weather == 'harshSunlight'
+		        ) {
+		            if (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassPlatform') mulSpeed *= 1 - 0.15;
+				if (towerAbility === 'drySkin')  mulPower *= 2;
 		        }
 
 		        if (
 		            this.main.area.weather == 'extremelyHarshSunlight' &&
-		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser'))
+		            (tile.land == 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassPlatform')
 		        ) {
-		            mulSpeed *= 1 + 2;
+			if (((this.pokemon.id == 75 || this.pokemon?.adn?.id == 75) && this.pokemon.lvl > 24) || towerAbility === 'chlorophyll') {
+
+			} else {
+			            if (this.main.area.cloudNine && tower.pokemon?.item?.id != 'safetyGoggles') mulSpeed *= 1 + 0.5;
+			            else if (this.main.area.airLock) mulSpeed *= 1;
+					else if (tower.pokemon?.item?.id != 'safetyGoggles') mulSpeed *= 1 + 2;
+
+					if (towerAbility === 'drySkin')  mulPower *= 3;
+				}
+		        }
+
+		        if (
+			this.main.area.weather == 'harshSunlight' || this.main.area.weather == 'extremelyHarshSunlight'
+		        ) {
+			if (towerAbility === 'chlorophyll') mulSpeed *= 1 - 0.5;
+			if ((this.pokemon.id == 75 || this.pokemon?.adn?.id == 75) && this.pokemon.lvl > 24) {
+				cherryFormBonus = true;
+					mulSpeed *= 1 - 0.25;
+			}
+			}
+
+		        if (this.main.area.weather == 'sandstorm' && tower.pokemon?.ability?.id == 'sandRush' ) {
+			mulSpeed *= 0.5;
 		        }
 
 	            if (
-	             	tile &&
+		tile &&
 		            this.main.player.health[this.main.area.routeNumber] <= 5 &&
 		            towerAbility === 'torrent' &&
-		            (tile.land === 3 || tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle')
+		            (tile.land === 3 || (tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle') || tower?.carriedBy == 'icePlatform')
 		        ) {
 		            mulPower *= 1.75;
 		        }
 
 		        if (
-	             	tile &&
+		tile &&
 		            this.main.player.health[this.main.area.routeNumber] <= 5 &&
 		            towerAbility === 'overgrow' &&
-		            (tile.land === 3 || tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser')
+		            (tile.land === 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassPlatform')
 		        ) {
 		            mulPower *= 1.75;
 		        }
-		        
+
 	            if (
 	                tile &&
-	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser')) &&
+	                (tile.land === 2 || (tile.land === 1 && tower.pokemon?.item?.id === 'fertiliser') || tower?.carriedBy == 'grassPlatform' || ((tower.tile.land == 3 || tower?.carriedBy == 'icePlatform') && tower.pokemon?.item?.id == 'subwoofer')) &&
 	                towerAbility === 'toughClawsNight'
 	            ) {
 	                mulPower *= 1.5;
 	            }
 
 	            if (
-	            	tile && 
-	            	(tile.land === 4 || tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && 
-	            	(towerAbility === 'toughClawsDay' || towerAbility === 'toughClaws')
+		tile &&
+		(tile.land === 4 || tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit' || ((tower.tile.land == 3 || tower?.carriedBy == 'icePlatform') && tower.pokemon?.item?.id == 'subwoofer')) &&
+		(towerAbility === 'toughClawsDay' || towerAbility === 'toughClaws')
 	            ) {
 	                mulPower *= 1.5;
 	            }
 
 	            if (
-	            	tile && 
-	            	(tile.land === 4 || tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') && 
-	            	(towerAbility === 'vigilant' || towerAbility === 'vigilantFrisk' || towerAbility === 'castform')
+		tile &&
+		(tile.land === 4 || tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit') &&
+		(towerAbility === 'vigilant' || towerAbility === 'vigilantFrisk' || towerAbility === 'castform')
 	            ) {
 	                mulRange *= 2;
+	            }
+
+	            if (
+		tile && tile.land === 4 && towerAbility === 'noGuard'
+	            ) {
+	                flatRange += 9999;
 	            }
 
 	            if ([3,4,5,10].includes(this.main.area.routeNumber) && (towerAbility === 'doubleShotSand' || towerAbility === 'quadraShotSand')) {
@@ -1190,34 +1414,35 @@ export class PokemonScene extends GameScene {
 
 	            if (
 	                tile &&
-	                (tile.land === 3 || (tile.land === 1 && tower.pokemon?.item?.id === 'squirtBottle')) &&
+	                (tile.land === 3 || (tile.land === 1 && tower.pokemon?.item?.id === 'squirtBottle') || tower?.carriedBy == 'icePlatform') &&
 	                (towerAbility === 'swimmer' || towerAbility === 'castform')
 	            ) mulSpeed *= 0.5;
-	            
-	            if (this.pokemon.ability.id === 'moxie') {
-	                const stacks = tower.moxieBuff || 0;
-	                mulPower *= 1 + stacks * 0.03;
-	            }
 
 	            if (tower.powerAura) {
 	                mulPower *= tower.powerAura;
-	                if (this.pokemon.id == 75 && this.pokemon.lvl > 24 && !cherryFormBonus) mulSpeed *= 1 - 0.25;
+	                if ((this.pokemon.id == 75 || this.pokemon?.adn?.id == 75) && this.pokemon.lvl > 24 && !cherryFormBonus) mulSpeed *= 1 - 0.25;
 	            }
 
 	            if (tower.triageAura) {
 	                mulSpeed *= 1 - 0.15;
 	            }
 
-	            if (tower.illuminateAura && this.pokemon.orbital <= 0) {
-	                flatRange += 15;
+	            if (tower.genesisAura) {
+		mulPower *= 1 + 0.15;
+	                mulSpeed *= 1 - 0.1;
+	                flatCritical += 5;
 	            }
 
-	            if (tower?.carriedBy == 'grassyTerrain') {
+	            if (tower.illuminateAura && this.pokemon.orbital <= 0) {
+	                flatRange += tower.illuminateAura;
+	            }
+
+	            if (tower?.carriedBy == 'grassPlatform' || tower?.carriedBy == 'icePlatform') {
 	                mulSpeed *= 1 - 0.15;
 	            }
 
 	            if (tower.criticalAura) {
-	                flatCritical += 10;
+	                flatCritical += 20;
 	            }
 	        }
 	    }
@@ -1235,17 +1460,17 @@ export class PokemonScene extends GameScene {
 	    // Include Star ability's direct per-star damage bonus in power preview
 	    let starPowerBonus = 0;
 	    if (this.pokemon?.ability?.id === 'star') {
-	    	starPowerBonus += this.main.player.stars;
-	    	if (this.pokemon?.favorite) starPowerBonus++;
-	    	if (this.pokemon?.isShiny) starPowerBonus++;
-	    	if (this.pokemon?.item?.id == 'starCandy') starPowerBonus++;
-	    	starPowerBonus += this.main.team.pokemon.filter((poke) => poke.id == 32).length;
+		starPowerBonus += this.main.player.stars;
+		if (this.pokemon?.favorite) starPowerBonus++;
+		if (this.pokemon?.isShiny) starPowerBonus++;
+		if (this.pokemon?.item?.id == 'starCandy') starPowerBonus++;
+		starPowerBonus += this.main.team.pokemon.filter((poke) => poke.id == 32).length;
 	    }
 	    const totalPowerGains = powerGains + starPowerBonus;
 
-    	if (totalPowerGains != 0) {
-			this.data['power'].value.innerHTML += (totalPowerGains > 0) ? 
-			` <span style="color: var(--green)"> (+${this.formatPanelStat(totalPowerGains)})<span>` : 
+	if (totalPowerGains != 0) {
+			this.data['power'].value.innerHTML += (totalPowerGains > 0) ?
+			` <span style="color: var(--green)"> (+${this.formatPanelStat(totalPowerGains)})<span>` :
 			` <span style="color: var(--red)"> (${this.formatPanelStat(totalPowerGains)})</span>`;
 		}
 		if (speedGains !== 0) {
@@ -1255,26 +1480,71 @@ export class PokemonScene extends GameScene {
 	            ` <span style="color: var(--red)">(+${speedSec}s)</span>`;
 	    }
 		if (criticalGains != 0) {
-			this.data['critical'].value.innerHTML += (criticalGains > 0) ? 
+			this.data['critical'].value.innerHTML += (criticalGains > 0) ?
 			` <span style="color:var(--green")> (+${criticalGains}%)<span>` :
 			` <span style="color:var(--red")> (${criticalGains}%)</span>`;
 		}
 		if (rangeGains != 0) {
-			this.data['range'].value.innerHTML += (rangeGains > 0) ? 
-			` <span style="color:var(--green")> (+${rangeGains})<span>` : 
+			this.data['range'].value.innerHTML += (rangeGains > 0) ?
+			` <span style="color:var(--green")> (+${rangeGains})<span>` :
 			` <span style="color:var(--red")> (${rangeGains})</span>`;
+		}
+	}
+
+	// extras
+
+	checkExtraScenes() {
+		switch(this.pokemon.specie.key){
+			case 'sharpedo':
+				if (this.main.itemController.hasItem('sharpedonite')) this.extraMegaSharpedo();
+			break;
+		}
+	}
+
+	extraMegaSharpedo() {
+		this.extraContainer.style.display = 'block';
+		this.extraContainerTitle.style.color = this.pokemon.specie.color;
+		this.extraContainerTitle.innerHTML = text.pokemon.extra.sharpedo.title[this.main.lang].toUpperCase();
+		this.extraContainerDescription.innerHTML = text.pokemon.extra.sharpedo.description[this.main.lang];
+
+		if (this.pokemon.extra) {
+			this.extraContainerButton.innerHTML = text.challenge.on[this.main.lang].toUpperCase();
+			this.extraContainerButton.style.backgroundColor = 'var(--green)';
+		} else {
+			this.extraContainerButton.innerHTML = text.challenge.off[this.main.lang].toUpperCase();
+			this.extraContainerButton.style.backgroundColor = 'var(--red)';
 		}
 	}
 }
 
 class ItemWindow {
 	constructor(main) {
-		this.main = main;
-		this.isOpen = false;
-		this.pokemon = undefined;
-		this.itemArray = [];
-		this.render();
+	    this.main = main;
+	    this.isOpen = false;
+	    this.pokemon = null;
+	    this.render();
 	}
+
+	render() {
+	    this.window = document.createElement('div');
+	    this.window.className = 'item-scene-window';
+	    this.window.style.zIndex = '10001';
+
+	    this.container = new Element(this.window, { className: 'item-scene-container' }).element;
+	    this.slot = [];
+
+	    for (let i = 0; i < 120; i++) {
+		this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
+
+		this.slot[i].addEventListener('click', () => {
+		if (this.slot[i].itemIndex !== undefined && this.slot[i].itemIndex !== null) {
+		this.equipItem(this.slot[i].itemIndex);
+		}
+		});
+
+		this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: 'E' }).element;
+		this.slot[i].favorite = new Element(this.slot[i], { className: 'item-scene-slot-favorite stroke', text: '★' }).element;
+	    }
 
 	render() {
 		this.window = document.createElement('div');
@@ -1304,22 +1574,86 @@ class ItemWindow {
 	}
 
 	open(pokemon) {
-		if (this.main.area.inChallenge.noItems) {
-			playSound('pop0', 'ui');
-			return;
-		}
+	if (this.main.area.inChallenge.noItems) {
+		playSound('pop0', 'ui');
+		return;
+	}
 
-		if (this.isOpen) {
-			this.close();
-			return;
-		}
+	if (!this.isOpen) {
+		    playSound('open', 'ui');
+		    this.isOpen = true;
+		    this.pokemon = pokemon;
 
-		playSound('open', 'ui');
-		this.isOpen = true;
-		this.pokemon = pokemon;
-		this.main.pokemonScene.window.appendChild(this.window);
-		this.window.style.display = 'block';
+		    this.main.pokemonScene.window.appendChild(this.window);
+		    this.window.style.display = 'block';
 		this.update();
+	    } else {
+		this.close();
+	    }
+	}
+
+	close() {
+	this.isOpen = false;
+	playSound('close', 'ui');
+	this.window.style.display = 'none';
+	this.main.tooltip.hide();
+    }
+
+	update() {
+	    this.slot.forEach(slot => {
+		slot.style.display = 'none';
+		slot.style.backgroundImage = "";
+		slot.style.pointerEvents = 'none';
+		slot.equiped.innerHTML = "";
+		slot.favorite.innerHTML = "";
+		slot.style.filter = '';
+		slot.itemIndex = null;
+	    });
+
+	    const originalItems = this.main.itemController.getItems();
+		const items = [...originalItems]; // copia: ya no se toca el array de Player
+
+		const favorites = new Set(
+		    this.main.player.favoriteItems[this.pokemon.specie.id] ?? []
+		);
+
+		items.sort((a, b) => {
+		    const af = favorites.has(a.id);
+		    const bf = favorites.has(b.id);
+
+		    if (af !== bf) return bf - af;
+
+		    return 0;
+		});
+
+	    let slotIndex = 0;
+
+	    items.forEach((item, i) => {
+		    const able = this.main.itemController.canEquip(item, this.pokemon);
+
+		    if (!able) return;
+		    if (slotIndex >= this.slot.length) return;
+
+		    const slotEl = this.slot[slotIndex];
+		    slotEl.style.display = '';
+		    slotEl.itemIndex = originalItems.indexOf(item); // índice real, no el de la copia ordenada
+
+
+		slotEl.style.backgroundImage = `url(${item.sprite})`;
+		slotEl.style.pointerEvents = 'revert-layer';
+		this.main.tooltip.bindTo(slotEl, item, 'item');
+
+		if (this.main.itemController.isEquipped(item)) {
+		slotEl.equiped.innerHTML = 'E';
+		slotEl.style.filter = 'drop-shadow(0 0 2px var(--yellow))';
+		} else slotEl.style.filter = 'drop-shadow(0 0 2px var(--white))';
+
+		if (this.main.player.isFavoriteItem(this.pokemon.specie.id, item.id)) {
+			slotEl.style.filter = 'drop-shadow(0 0 2px var(--red))';
+			slotEl.favorite.innerHTML = '★';
+		}
+		slotIndex++;
+	    });
 	}
 
 	close() {
@@ -1397,4 +1731,4 @@ class ItemWindow {
 		playSound('equip', 'ui');
 	}
 }
-	
+

@@ -10,25 +10,17 @@ import { saveData } from '../file/data.js';
 import { songData } from './data/songData.js';
 
 const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
-const SECTION_TOOLTIPS = {
-	profile: { name: ['Character'], description: ['Open your character profile.'] },
-	box: { name: ['Pokeboxes'], description: ['Open your Pokemon boxes.'] },
-	inventory: { name: ['Inventory'], description: ['Open your inventory.'] },
-	shop: { name: ['Shop'], description: ['Open the shop.'] },
-	map: { name: ['Map'], description: ['Open map and route selection.'] },
-	challenge: { name: ['Challenges'], description: ['Open challenge selection.'] },
-	damageDealt: { name: ['Damage Graph'], description: ['Show or hide damage graph overlay.'] },
-	menu: { name: ['Options'], description: ['Open game options menu.'] }
-};
+
 
 const TARGET_MODES = [
-	'first', 'last', 'highHP', 'lowHP', 'highArmor', 'noArmor', 'faster', 'slower', 'poisoned', 'notPoisoned', 
+	'first', 'last', 'highHP', 'lowHP', 'highArmor', 'noArmor', 'faster', 'slower', 'poisoned', 'notPoisoned',
 	'burned', 'notBurned', 'stuned', 'notStuned', 'slowed', 'notSlowed', 'cursed', 'curseable', 'nightmared', 'random', 'invisible'
 ]
 
 const TARGET_MODES_TRADUCTIONS = {
 	area: ['Area', 'Área', 'Zone', 'Área', 'Area', 'Fläche', 'エリア', '지역', '区域', 'Obszar'],
 	aura: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
+	bombardment: ['Bombardment', 'Bombardeo', 'Bombardement', 'Bombardeio', 'Bombardamento', 'Bombardement', 'じゅうたん爆撃', '융단폭격', '轰炸', 'Bombardowanie'],
 	allies: ['Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'Aura', 'オーラ', '오라', '气场', 'Aura'],
 	orbital: ['Orbital', 'Orbital', 'Orbitale', 'Orbital', 'Orbitale', 'Orbital', '軌道', '궤도', '軌道', 'Orbital'],
 	available: ['Available', 'Disponibles', 'Disponibles', 'Disponíveis', 'Disponibili', 'Verfügbar', '利用可能', '이용 가능', '可用', 'Dostępne'],
@@ -91,10 +83,24 @@ export class UI {
 		this.damageDealtType = 'trueDamage';
 		this.enemyPositionDisplay = 0;
 		this.tileTerrainHover = null;
-
 		this.waveInfoDisplay = false;
 
+		this.bellRhythmSequence = [1, 3, 1, 2, 1, 4, 2, 4, 1];
+		this.bellRhythmGroupIndex = 0;
+		this.bellRhythmClickCount = 0;
+		this.bellRhythmLastClickTime = 0;
+		this.bellRhythmAwaitingPause = false;
+
 		this.fastScene = new FastScene(this.main, this);
+
+		document.addEventListener('click', (event) => {
+		    const hasPending = this.main.area.towers.some(t => t.awaitingBombardZone);
+		    if (!hasPending) return;
+
+		    if (event.target === this.main.game.canvas) return; // el click en el mapa se gestiona aparte
+
+		    this.main.area.towers.forEach(t => { t.awaitingBombardZone = false; });
+		}, true);
 	}
 
 	getEffectiveWP(wavesPast100) {
@@ -254,7 +260,7 @@ export class UI {
 				this.showTeamSlotTooltip(i, 'save');
 			})
 			this.saveTeamButton[i].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
-			this.saveTeamButton[i].addEventListener('click', () => { 
+			this.saveTeamButton[i].addEventListener('click', () => {
 				if (this.main.game.stopped) return playSound('pop0', 'ui');
 				this.saveTeamButtonHandle(i);
 			});
@@ -270,8 +276,8 @@ export class UI {
 				this.showTeamSlotTooltip(i, 'load');
 			})
 			this.importTeamButton[i].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
-			this.importTeamButton[i].addEventListener('click', () => { 
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
+			this.importTeamButton[i].addEventListener('click', () => {
+				if (this.main.game.stopped || this.main.area.heavyMetal) return playSound('pop0', 'ui');
 				this.importTeamButtonHandle(i);
 			});
 		}
@@ -347,7 +353,7 @@ export class UI {
 		this.tilesCountContainer = new Element(this.bottomBar, { className: 'ui-tiles-count-container' }).element;
 		this.tilesCount = [];
 		this.tilesCountNum = [0, 0, 0, 0];
-		
+
 		for (let i = 0; i < 4; i++) {
 			this.tilesCount[i] = new Element(this.tilesCountContainer, { className: 'ui-tiles-count' }).element;
 			this.tilesCount[i].addEventListener('mouseenter', () => {
@@ -400,6 +406,7 @@ export class UI {
 			// this.pokemon[i].deploy.addEventListener('mouseenter', () => { this.showSlotButtonTooltip(i, 'deploy') });
 			// this.pokemon[i].deploy.addEventListener('mouseleave', () => { this.main.tooltip.hide() });
 			this.pokemon[i].deploy.addEventListener('click', () => {
+				if (this.main.area.heavyMetal) return playSound('pop0', 'ui');;
 				this.main.game.tryDeployUnit(i, true)
 			});
 
@@ -413,14 +420,27 @@ export class UI {
 
 			this.pokemon[i].levelUp.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 			this.pokemon[i].levelUp.addEventListener('click', () => {
-				if (this.main.game.stopped) return playSound('pop0', 'ui');
-				if (this.main.team.pokemon[i].lvl < 100 && this.main.player.gold >= this.main.team.pokemon[i].cost) {
-					this.main.player.changeGold(-this.main.team.pokemon[i].cost);
-					this.main.team.pokemon[i].levelUp();
-					this.updatePokemon();
-					playSound('obtain', 'ui');
-					if (this.fastScene.isOpen) this.fastScene.close();
-				}
+			    const pokemon = this.main.team.pokemon[i];
+
+			    if (pokemon?.attackType === 'bombardment') {
+			        if (this.main.game.stopped) return playSound('pop0', 'ui');
+
+			        const tower = this.main.area.towers.find(t => t.pokemon === pokemon);
+			        if (!tower) return playSound('pop0', 'ui');
+
+			        tower.awaitingBombardZone = true;
+			        playSound('select', 'ui'); // o el sonido que uses para "modo selección"
+			        return;
+			    }
+
+			    if (this.main.game.stopped) return playSound('pop0', 'ui');
+			    if (this.main.team.pokemon[i].lvl < 100 && this.main.player.gold >= this.main.team.pokemon[i].cost) {
+			        this.main.player.changeGold(-this.main.team.pokemon[i].cost);
+			        this.main.team.pokemon[i].levelUp();
+			        this.updatePokemon();
+			        playSound('obtain', 'ui');
+			        if (this.fastScene.isOpen) this.fastScene.close();
+			    }
 			});
 
 			this.pokemon[i].item.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
@@ -518,11 +538,21 @@ export class UI {
 			this.section[section].img = new Element(this.section[section], { className: 'ui-section-img', image: `./src/assets/images/icons/${section}.png` }).element;
 			this.section[section].addEventListener('mouseenter', () => {
 				playSound('hover1', 'ui');
-				// const tooltip = SECTION_TOOLTIPS[section];
-				// if (tooltip) this.main.tooltip.showItem(tooltip);
+				let tooltip;
+				if (
+					section === 'challenge' &&
+					(
+						this.main.area.isCustom ||
+						this.main.player.stars < 540 ||
+						this.main.player.records[this.main.area.map.id] < 100 ||
+						(this.main.team.pokemon.length + this.main.box.pokemon.length) < 30)
+					) {
+					tooltip = text.sectionTooltip["challengeLocked"];
+				} else tooltip = text.sectionTooltip[section];
+				if (tooltip) this.main.tooltip.showItem(tooltip);
 			});
-			// this.section[section].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
-		}) 
+			this.section[section].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
+		})
 
 		this.section['profile'].addEventListener('click', () => { this.main.profileScene.open() });
 		this.section['box'].addEventListener('click', () => { this.main.boxScene.open() });
@@ -532,7 +562,7 @@ export class UI {
 		this.section['challenge'].addEventListener('click', () => { this.main.challengeScene.open()  });
 		this.section['damageDealt'].addEventListener('click', () => { this.damageDealtSwitch() });
 		this.section['menu'].addEventListener('click', () => { this.main.menuScene.open() });
-		
+
 		this.mapPanelBackground = new Element(this.mapPanel, { className: 'ui-map-panel-background' }).element;
 		this.mapWavePokemonContainer = new Element(this.mapPanelBackground, { className: 'ui-map-wave-pokemon-container' }).element;
 		this.mapWavePokemon = [];
@@ -579,7 +609,7 @@ export class UI {
 
 		this.autoWave = new Element(this.mapPanel, { className: 'ui-auto-wave' }).element;
 		this.autoWave.addEventListener('mouseenter', () => { playSound('open', 'ui') })
-		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());	
+		this.autoWave.addEventListener('click', () => this.main.area.switchAutoWave());
 
 		this.speedWave = new Element(this.mapPanel, { className: 'ui-speed-wave', text: '🚀' }).element;
 		this.speedWave.addEventListener('mouseenter', () => { playSound('open', 'ui') });
@@ -599,45 +629,89 @@ export class UI {
 			this.damageDealtUnit[i].barContainer = new Element(this.damageDealtUnit[i], { className: 'ui-damage-dealt-unit-bar-container' }).element;
 			this.damageDealtUnit[i].barPrevious = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar-previous' }).element;
 			this.damageDealtUnit[i].bar = new Element(this.damageDealtUnit[i].barContainer, { className: 'ui-damage-dealt-unit-bar' }).element;
-		}	
+		}
 
 		this.renderInteractiveMap();
 	}
 
 	renderInteractiveMap() {
 		this.secretCacnea = new Element(this.main.scene, { className: 'secret-cacnea' }).element;
-		this.secretCacnea.addEventListener('click', () => { 
+		this.secretCacnea.addEventListener('click', () => {
 			this.secretCacnea.style.pointerEvents = 'none';
 			this.main.player.secrets.cacnea = true;
 			this.getSecret('cacnea');
 		});
 
+		this.secretDhelmise = new Element(this.main.scene, { className: 'secret-dhelmise' }).element;
+		this.secretDhelmise.addEventListener('click', () => {
+			this.secretDhelmise.style.pointerEvents = 'none';
+			this.main.player.secrets.dhelmise = true;
+			this.getSecret('dhelmise');
+		});
+
 		this.secretGreavard = new Element(this.main.scene, { className: 'secret-greavard' }).element;
-		this.secretGreavard.addEventListener('click', () => { 
+		this.secretGreavard.addEventListener('click', () => {
 			this.secretGreavard.style.pointerEvents = 'none';
 			this.main.player.secrets.greavard = true;
-			this.getSecret('greavard'); 
+			this.getSecret('greavard');
 		});
 
 		this.secretSandygast = new Element(this.main.scene, { className: 'secret-sandygast' }).element;
-		this.secretSandygast.addEventListener('click', () => { 
+		this.secretSandygast.addEventListener('click', () => {
 			this.secretSandygast.style.pointerEvents = 'none';
 			this.main.player.secrets.sandygast = true;
-			this.getSecret('sandygast'); 
+			this.getSecret('sandygast');
 		});
 
 		this.secretDucklett = new Element(this.main.scene, { className: 'secret-ducklett' }).element;
-		this.secretDucklett.addEventListener('click', () => { 
+		this.secretDucklett.addEventListener('click', () => {
 			this.secretDucklett.style.pointerEvents = 'none';
 			this.main.player.secrets.ducklett = true;
-			this.getSecret('ducklett'); 
+			this.getSecret('ducklett');
 		});
 
 		this.secretManaphyCave = new Element(this.main.scene, { className: 'secret-manaphy-cave' }).element;
-		this.secretManaphyCave.addEventListener('click', () => { 
+		this.secretManaphyCave.addEventListener('click', () => {
 			this.secretManaphyCave.style.pointerEvents = 'none';
 			this.main.player.secretMaps.manaphyCave = true;
-			this.getSecretMap(20); 
+			this.getSecretMap(20);
+		});
+
+		this.secretVictiniCave = new Element(this.main.scene, { className: 'secret-victini-cave' }).element;
+		this.secretVictiniCave.addEventListener('click', () => {
+			this.secretVictiniCave.style.pointerEvents = 'none';
+			this.main.player.secretMaps.victiniCave = true;
+			this.getSecretMap(31);
+		});
+
+		this.secretMarshadowCave = new Element(this.main.scene, { className: 'secret-marshadow-cave' }).element;
+		this.secretMarshadowCave.addEventListener('click', () => {
+			this.secretMarshadowCave.style.pointerEvents = 'none';
+			this.main.player.secretMaps.marshadowCave = true;
+			this.getSecretMap(32);
+		});
+
+		this.secretCastle = new Element(this.main.scene, { className: 'secret-castle' }).element;
+		this.secretCastle.addEventListener('click', () => {
+			this.secretCastle.style.pointerEvents = 'none';
+			this.main.player.secretMaps.secretCastle = true;
+			this.getSecretMap(33);
+		});
+
+		this.secretBronzor = new Element(this.main.scene, { className: 'secret-bronzor' }).element;
+		this.secretBronzor.addEventListener('click', () => {
+			if (this.main.area.waveNumber === 50) {
+				this.handleBellRhythmClick();
+			} else {
+				this.main.area.useBell();
+			}
+		});
+
+		this.secretSpiritomb = new Element(this.main.scene, { className: 'secret-spiritomb' }).element;
+		this.secretSpiritomb.addEventListener('click', () => {
+			this.secretSpiritomb.style.pointerEvents = 'none';
+			this.main.player.secrets.spiritomb = true;
+			this.getSecret('spiritomb');
 		});
 	}
 
@@ -654,7 +728,7 @@ export class UI {
 		this.waveSelectorContainer.style.display = 'none';
 		this.waveSelectorLabel.innerText = text.ui.waveManager[this.main.lang].toUpperCase();
 		if (!this.main.area.inChallenge && this.main.player.records[this.main.area.map.id] >= 100 && this.main.player.hasBike) this.waveSelectorContainer.style.display = 'revert-layer';
-		
+
 		this.musicContainer.style.display = 'none';
 		if (this.main.player.hasSubwoofer) {
 			this.musicContainer.style.display = 'revert-layer';
@@ -670,10 +744,10 @@ export class UI {
 			(this.main.team.pokemon.length + this.main.box.pokemon.length) > 30
 		) {
 			this.section['challenge'].style.opacity = 1;
-			this.section['challenge'].style.pointerEvents = 'revert-layer';	
+			this.section['challenge'].style.pointerEvents = 'revert-layer';
 		} else {
 			this.section['challenge'].style.opacity = 0.4;
-			this.section['challenge'].style.pointerEvents = 'none';
+			//this.section['challenge'].style.pointerEvents = 'none';
 		}
 
 		if (!this.main.area.isCustom) {
@@ -683,7 +757,7 @@ export class UI {
 				this.saveTeamButton[i].style.pointerEvents = 'revert-layer';
 				this.saveTeamButton[i].style.filter = 'revert-layer';
 			})
-		} 
+		}
 
 		if (this.main.area.inChallenge) {
 			this.challenge.style.display = 'revert-layer';
@@ -739,20 +813,30 @@ export class UI {
 				this.saveTeamButton[i].style.pointerEvents = 'none';
 				this.saveTeamButton[i].style.filter = 'brightness(0.7)';
 			})
-		} 
+		}
 
 		if (
-			this.main.area.routeNumber == 4 && 
+			this.main.area.routeNumber == 4 &&
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.cacnea
 		) {
 			this.secretCacnea.style.pointerEvents = 'revert-layer';
 		} else {
 			this.secretCacnea.style.pointerEvents = 'none';
-		} 
+		}
 
 		if (
-			this.main.area.routeNumber == 2 && 
+			this.main.area.routeNumber == 11 &&
+			!this.main.area.inChallenge &&
+			!this.main.player.secrets.dhelmise
+		) {
+			this.secretDhelmise.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretDhelmise.style.pointerEvents = 'none';
+		}
+
+		if (
+			this.main.area.routeNumber == 2 &&
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.greavard
 		) {
@@ -762,7 +846,7 @@ export class UI {
 		}
 
 		if (
-			this.main.area.routeNumber == 16 && 
+			this.main.area.routeNumber == 16 &&
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.sandygast
 		) {
@@ -772,7 +856,7 @@ export class UI {
 		}
 
 		if (
-			this.main.area.routeNumber == 13 && 
+			this.main.area.routeNumber == 13 &&
 			!this.main.area.inChallenge &&
 			!this.main.player.secrets.ducklett
 		) {
@@ -782,13 +866,60 @@ export class UI {
 		}
 
 		if (
-			this.main.area.routeNumber == 11 && 
+			this.main.area.routeNumber == 11 &&
 			!this.main.area.inChallenge &&
 			!this.main.area.waveActive
 		) {
 			this.secretManaphyCave.style.pointerEvents = 'revert-layer';
 		} else {
 			this.secretManaphyCave.style.pointerEvents = 'none';
+		}
+
+		if (
+			this.main.area.routeNumber == 26 &&
+			!this.main.area.inChallenge &&
+			!this.main.area.waveActive
+		) {
+			this.secretVictiniCave.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretVictiniCave.style.pointerEvents = 'none';
+		}
+
+		if (
+			this.main.area.routeNumber == 15 &&
+			!this.main.area.inChallenge &&
+			!this.main.area.waveActive
+		) {
+			this.secretMarshadowCave.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretMarshadowCave.style.pointerEvents = 'none';
+		}
+
+		if (
+			this.main.area.routeNumber == 29 &&
+			!this.main.area.inChallenge &&
+			!this.main.area.waveActive &&
+			this.main.player.secrets.klefki
+		) {
+			this.secretCastle.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretCastle.style.pointerEvents = 'none';
+		}
+
+		if (this.main.area.routeNumber == 27) {
+			this.secretBronzor.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretBronzor.style.pointerEvents = 'none';
+		}
+
+		if (
+			this.main.area.routeNumber == 28 &&
+			!this.main.area.inChallenge &&
+			!this.main.player.secrets.spiritomb
+		) {
+			this.secretSpiritomb.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretSpiritomb.style.pointerEvents = 'none';
 		}
 
 		this.updateWaveInfo();
@@ -960,9 +1091,11 @@ export class UI {
 	getAttackStyleSymbol(pokemon) {
 		if (pokemon?.attackType === 'area') return 'A';
 		if (pokemon?.attackType === 'aura') return '~';
+		if (pokemon?.attackType === 'bombardment') return 'B';
 		switch (pokemon?.rangeType) {
 			case 'cross': return '+';
 			case 'xShape': return 'X';
+			case 'vShape': return 'V';
 			case 'horizontalLine': return '-';
 			case 'donut':
 			case 'circle':
@@ -976,13 +1109,15 @@ export class UI {
 			donut: ['Ring range', 'En anillo', 'En anneau', 'Em anel', 'A anello', 'Ringbereich', 'ドーナツ型', '도넛형', '環状', 'Pierścieniowy'],
 			cross: ['Cross range', 'En cruz', 'En croix', 'Em cruz', 'A croce', 'Kreuzbereich', '十字', '십자', '十字', 'Krzyżowy'],
 			xShape: ['X-shaped', 'En X', 'En X', 'Em X', 'A forma di X', 'X-Form', 'X字', 'X자형', 'X字', 'W kształcie X'],
+			vShape: ['V-shaped', 'En V', 'En V', 'Em V', 'A forma di V', 'V-Form', 'V字', 'V자형', 'V字', 'W kształcie V'],
 			horizontalLine: ['Line range', 'En horizontal', 'En ligne', 'Em linha', 'In linea', 'Linienbereich', '直線', '직선', '直線', 'Liniowy']
 		};
 		const targetNames = {
 			single: ['single target', 'monobjetivo', 'cible unique', 'alvo único', 'bersaglio singolo', 'einzelziel', '単体', '단일 대상', '單體', 'pojedynczy cel'],
 			area: ['area target', 'en area', 'en zone', 'em área', 'ad area', 'flächenschaden', '範囲', '광역', '範疇', 'obszarowy'],
 			aura: ['aura', 'aura', 'aura', 'aura', 'aura', 'aura', 'オーラ', '오라', '氣場', 'aura'],
-			orbital: ['orbital', 'orbital', 'orbitale', 'orbital', 'orbitale', 'orbital', '軌道', '궤도', '軌道', 'orbital']
+			orbital: ['orbital', 'orbital', 'orbitale', 'orbital', 'orbitale', 'orbital', '軌道', '궤도', '軌道', 'orbital'],
+			bombardment: ['Bombardment', 'Bombardeo', 'Bombardement', 'Bombardeio', 'Bombardamento', 'Bombardement', 'じゅうたん爆撃', '융단폭격', '轰炸', 'Bombardowanie'],
 		};
 		const shape = shapeNames[pokemon?.rangeType][this.main.lang] || 'Circle range';
 		const target = targetNames[pokemon?.attackType][this.main.lang] || pokemon?.attackType || 'target';
@@ -999,7 +1134,7 @@ export class UI {
 		if (['quickClaw', 'spindaCocktail', 'silphScope'].includes(pokemon?.item?.id)) return false;
 		if ((pokemon?.id == 53 && pokemon?.item?.id !== 'ringTarget') || pokemon?.adn?.id == 53) return false;
 		if (pokemon?.orbital > 0) return false;
-		return !['area', 'aura', 'allies'].includes(pokemon.targetMode);
+		return !['area', 'aura', 'allies', 'bombardment'].includes(pokemon.targetMode);
 	}
 
 	changeSlotTargetMode(index, dir) {
@@ -1008,7 +1143,7 @@ export class UI {
 
 		let modeIndex = TARGET_MODES.findIndex(mode => mode === pokemon.targetMode);
 		if (modeIndex === -1) modeIndex = 0;
-		const maxIndex = (pokemon.ability.id == 'frisk' || pokemon.ability.id == 'illuminate' || pokemon.ability.id == 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? 20 : 19;
+		const maxIndex = (pokemon.ability.id == 'frisk' || pokemon.ability.id == 'illuminateBuff' || pokemon.ability.id == 'illuminate' || pokemon.ability.id == 'vigilantFrisk' || pokemon?.item?.id == 'silphScope') ? 20 : 19;
 
 		modeIndex += dir;
 		if (modeIndex > maxIndex) modeIndex = 0;
@@ -1080,35 +1215,74 @@ export class UI {
 	}
 
 	showTeamSlotTooltip(slot, mode) {
-		const isChallenge = !!this.main.area.inChallenge;
-		const routeText = this.mapRoute?.innerText?.replace(/\s+/g, ' ').trim();
-		const routeLabel = isChallenge
-			? (this.main.area.inChallenge.draft ? 'Draft Pick Challenge' : 'Challenge')
-			: (routeText || `Route ${this.main.area.routeNumber}`);
-		const slotLabel = `#${slot + 1}`;
-		const entries = mode === 'save'
-			? (this.main.team.pokemon || []).filter(Boolean)
-			: this.getSavedTeamSlot(slot);
-		const lines = this.formatTeamSlotLines(entries);
-		const title = mode === 'save' ? `Save Team ${slotLabel}` : `Load Team ${slotLabel}`;
-		const slotLimit = this.main.area.inChallenge?.slotLimit;
-		const noItemsText = mode === 'load' && this.main.area.inChallenge?.noItems && entries.length > 0
-			? '<br>Held items will be ignored for No Items.'
-			: '';
-		const storedChallengeTeam = this.main.area.inChallenge
-			? this.main.teamManager.getChallengeTeam(slot)
-			: [];
-		const slotLimitText = mode === 'load' && typeof slotLimit === 'number' && storedChallengeTeam.length > slotLimit
-			? `<br>Only the first ${slotLimit} Pokemon will load for this slot limit.`
-			: '';
-		const actionText = mode === 'save'
-			? `${text.ui.saveCurrentTeam[this.main.lang]} ${routeLabel}.`
-			: (entries.length === 0 ? `${text.ui.noSavedTeamFor[this.main.lang]} ${routeLabel}.` : `${text.ui.savedTeamFor[this.main.lang]} ${routeLabel}:${slotLimitText}${noItemsText}`);
-		const description = entries.length === 0 && mode === 'load'
-			? actionText
-			: `${actionText}<br><br>${lines.join('<br>')}`;
+		this.main.tooltip.tooltip.style.paddingBottom = "10px";
 
-		this.main.tooltip.showItem({ name: [title], description: [description] });
+	    const isChallenge = !!this.main.area.inChallenge;
+	    const routeText = this.mapRoute?.innerText?.replace(/\s+/g, ' ').trim();
+	    const routeLabel = isChallenge
+	        ? (this.main.area.inChallenge.draft ? 'Draft Pick Challenge' : 'Challenge')
+	        : (routeText || `Route ${this.main.area.routeNumber}`);
+	    const slotLabel = `#${slot + 1}`;
+	    const entries = mode === 'save'
+	        ? (this.main.team.pokemon || []).filter(Boolean)
+	        : this.getSavedTeamSlot(slot);
+	    const title = mode === 'save' ? `Save Team ${slotLabel}` : `Load Team ${slotLabel}`;
+	    const slotLimit = this.main.area.inChallenge?.slotLimit;
+	    const noItemsText = mode === 'load' && this.main.area.inChallenge?.noItems && entries.length > 0
+	        ? '<br><span style="font-size:8px;color:#aaa">Held items will be ignored for No Items.</span>'
+	        : '';
+	    const storedChallengeTeam = this.main.area.inChallenge
+	        ? this.main.teamManager.getChallengeTeam(slot)
+	        : [];
+	    const slotLimitText = mode === 'load' && typeof slotLimit === 'number' && storedChallengeTeam.length > slotLimit
+	        ? `<br><span style="font-size:8px;color:#aaa">Only the first ${slotLimit} Pokemon will load for this slot limit.</span>`
+	        : '';
+	    const actionText = mode === 'save'
+	        ? `${text.ui.saveCurrentTeam[this.main.lang]} ${routeLabel}.`
+	        : (entries.length === 0
+	            ? `${text.ui.noSavedTeamFor[this.main.lang]} ${routeLabel}.`
+	            : `${routeLabel} ${slotLimitText}${noItemsText}`);
+
+	    const spritesHTML = entries.length > 0
+	        ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${this.buildTeamSlotSpritesHTML(entries)}</div>`
+	        : '';
+
+	    this.main.tooltip.tooltip.innerHTML = `
+	        <div class="tooltip-content">
+	            <span class="tooltip-name">${title}</span>
+	            <span class="tooltip-description">${actionText}</span>
+	            ${spritesHTML}
+	        </div>
+	    `;
+	    this.main.tooltip.tooltip.style.display = 'block';
+	    this.main.tooltip._ensurePositionOnce();
+	}
+
+	buildTeamSlotSpritesHTML(entries) {
+	    if (!Array.isArray(entries) || entries.length === 0) return '<span style="font-size:9px;color:#888">EMPTY</span>';
+
+	    return entries.slice(0, 12).map((entry, index) => {
+	        const matched = this.getMatchingPokemonForTeamEntry(entry, index);
+	        const spriteUrl = matched?.sprite?.base
+	            ?? matched?.specie?.sprite?.base
+	            ?? '';
+	        const item = entry?.item;
+
+	        if (item != undefined) this.main.tooltip.tooltip.style.paddingBottom = "35px";
+	        const itemUrl = item?.sprite ?? (typeof item === 'string' ? itemData[item]?.sprite : null) ?? '';
+	        const passengerMark = entry.isPassenger
+	            ? '<span style="position:absolute;top:0;right:0;font-size:7px;line-height:1;background:rgba(0,0,0,0.7);color:#fff;padding:1px 2px;">P</span>'
+	            : '';
+	        const itemEl = itemUrl
+	            ? `<img src="${itemUrl}" class="tooltip-item-sprite"/>`
+	            : '';
+
+	        return `<span style="position:relative;display:inline-block;width:28px;height:28px;flex-shrink:0;">
+	            ${spriteUrl ? `<img src="${spriteUrl}" style="width:28px;height:28px;object-fit:contain;" />` : '<span style="display:block;width:28px;height:28px;background:#333;"></span>'}
+	            ${itemEl}
+	            ${passengerMark}
+	        </span>`;
+	    }).join('');
 	}
 
 	showSlotButtonTooltip(index, type) {
@@ -1152,7 +1326,7 @@ export class UI {
 			this.pokemon[i].sprite.style.cursor = "";
 			this.pokemon[i].style.transform = `revert-layer`
 			this.pokemon[i].sprite.style.transform = `revert-layer`
-			
+
 			this.pokemon[i].item.style.background = "revert-layer";
 			this.pokemon[i].item.style.pointerEvents = 'none';
 			this.pokemon[i].item.style.display = 'none';
@@ -1180,7 +1354,7 @@ export class UI {
 
 			this.pokemon[i].stars.style.display = 'none';
 			this.pokemon[i].attackStyle.style.display = 'none';
-			this.pokemon[i].attackStyle.classList.remove('is-circle', 'is-donut', 'is-cross', 'is-x-shape', 'is-line');
+			this.pokemon[i].attackStyle.classList.remove('is-circle', 'is-donut', 'is-cross', 'is-x-shape', 'is-v-shape', 'is-line');
 			this.pokemon[i].attackStyle.innerText = '';
 			this.pokemon[i].fieldStatus.style.display = 'none';
 			this.pokemon[i].fieldStatus.classList.remove('is-deployed', 'is-undeployed');
@@ -1201,15 +1375,15 @@ export class UI {
 			if (pokemon.name[lang] == undefined) lang = 0;
 
 			this.pokemon[i].noPokemon.style.display = 'none';
-			
+
 			this.pokemon[i].name.innerText = (pokemon.alias != undefined) ? pokemon.alias.toUpperCase() : pokemon.name[lang].toUpperCase();
-			
+
 			if (pokemon.id == 70) this.pokemon[i].dittoBg.style.display = 'revert-layer';
-	
+
 			if (typeof this.main.area.inChallenge.lvlCap == 'number') {
 				this.pokemon[i].level.innerText = `Lv ${Math.min(pokemon.lvl, this.main.area.inChallenge.lvlCap)}`;
 			} else this.pokemon[i].level.innerText = `Lv ${pokemon.lvl}`;
-			
+
 			this.pokemon[i].sprite.style.backgroundImage = `url("${pokemon.sprite.base}")`;
 			if (pokemon.item != undefined) {
 				this.pokemon[i].item.innerText = '';
@@ -1223,7 +1397,7 @@ export class UI {
 				this.pokemon[i].shiny.style.display = 'revert-layer';
 				this.pokemon[i].shiny.classList.add('is-inline');
 			}
-			
+
 			this.pokemon[i].sprite.style.cursor = "grab";
 			this.damageDealtUnit[i].sprite.style.display = 'revert-layer';
 			this.damageDealtUnit[i].number.style.display = 'revert-layer';
@@ -1254,6 +1428,7 @@ export class UI {
 			this.pokemon[i].attackStyle.classList.toggle('is-donut', pokemon.rangeType === 'donut');
 			this.pokemon[i].attackStyle.classList.toggle('is-cross', pokemon.rangeType === 'cross');
 			this.pokemon[i].attackStyle.classList.toggle('is-x-shape', pokemon.rangeType === 'xShape');
+			this.pokemon[i].attackStyle.classList.toggle('is-v-shape', pokemon.rangeType === 'vShape');
 			this.pokemon[i].attackStyle.classList.toggle('is-line', pokemon.rangeType === 'horizontalLine');
 			this.pokemon[i].fieldStatus.style.display = (this.main.indicatorField) ? 'revert-layer' : 'none';
 			this.pokemon[i].fieldStatus.innerText = pokemon.isDeployed ? '✓' : '✕';
@@ -1283,23 +1458,35 @@ export class UI {
 				this.pokemon[i].item.title = '';
 			}
 
-			if (typeof this.main.area.inChallenge.lvlCap !== 'number') {
-				if (pokemon.lvl < 100) this.pokemon[i].levelUp.style.display = 'revert-layer';
-				if (pokemon.lvl < 100 && this.main.player.gold >= pokemon.cost) {
-					this.pokemon[i].levelUp.style.pointerEvents = 'all';
-					this.pokemon[i].levelUp.style.filter = 'revert-layer';
-				}	
-			}	
+			if (pokemon.attackType === 'bombardment') {
+			    this.pokemon[i].levelUp.innerText = '◎';
+			    this.pokemon[i].levelUp.style.fontSize = "18px";
+			    this.pokemon[i].levelUp.style.lineHeight = "19px";
+			    this.pokemon[i].levelUp.style.display = 'revert-layer';
+			    this.pokemon[i].levelUp.style.pointerEvents = 'all';
+			    this.pokemon[i].levelUp.style.filter = 'revert-layer';
+			} else {
+			    this.pokemon[i].levelUp.innerText = '+1';
+			     this.pokemon[i].levelUp.style.fontSize = "revert-layer";
+			    this.pokemon[i].levelUp.style.lineHeight = "revert-layer";
+			    if (typeof this.main.area.inChallenge.lvlCap !== 'number') {
+			        if (pokemon.lvl < 100) this.pokemon[i].levelUp.style.display = 'revert-layer';
+			        if (pokemon.lvl < 100 && this.main.player.gold >= pokemon.cost) {
+			            this.pokemon[i].levelUp.style.pointerEvents = 'all';
+			            this.pokemon[i].levelUp.style.filter = 'revert-layer';
+			        }
+			    }
+			}
 
 			if (pokemon.isDeployed) {
 				if (
-					['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 
+					['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
 					'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb', 'mitsuesCocktail',
-					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY'].includes(pokemon?.item?.id)) {
+					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY', 'blimpKeys'].includes(pokemon?.item?.id)) {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
-				this.pokemon[i].deploy.style.background = 
+				this.pokemon[i].deploy.style.background =
 					`url("./src/assets/images/icons/pokeball-open.png") center / 50% no-repeat, linear-gradient(180deg,rgba(178, 61, 39, 1) 0%, rgba(157, 56, 41, 1) 100%)`
 			}
 		})
@@ -1308,7 +1495,7 @@ export class UI {
 			this.pokemon[i].noPokemon.style.display = 'none';
 			this.pokemon[i].style.background = 'rgba(0, 0, 0, 0.55)';
 			this.pokemon[i].name.innerText = text.ui.locked[this.main.lang].toUpperCase();
-			this.pokemon[i].stars.style.display = 'revert-layer';		
+			this.pokemon[i].stars.style.display = 'revert-layer';
 		}
 
 		if (typeof this.main.area.inChallenge.slotLimit == 'number') {
@@ -1326,7 +1513,7 @@ export class UI {
 	}
 
 
- 	setupPokemonDragAndDrop() {
+	setupPokemonDragAndDrop() {
 	    if (this.main.area.inChallenge?.draft) return;
 
 	    // Forzar pointer-events
@@ -1373,6 +1560,7 @@ export class UI {
 	    };
 
 	    const onPointerMoveDuringDrag = (e) => {
+		if (this.main.game.stopped || this.main.area.heavyMetal) return playSound('pop0', 'ui');
 	        if (!clone) return;
 	        clone.style.left = `${e.pageX - clone.offsetWidth / 2}px`;
 	        clone.style.top = `${e.pageY - clone.offsetHeight / 2}px`;
@@ -1419,6 +1607,7 @@ export class UI {
 	    };
 
 	    const onPointerUpDuringDrag = (e) => {
+		if (this.main.game.stopped || this.main.area.heavyMetal) return playSound('pop0', 'ui');
 
 	        // quitar listeners de arrastre
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
@@ -1474,7 +1663,7 @@ export class UI {
 	                this.main.game.cancelDeployUnit();
 	            } else {
 	                // validar si la unidad puede colocarse en ese tipo de tile
-	                const canPlace = tile?.canPlacePokemonHere 
+	                const canPlace = tile?.canPlacePokemonHere
 				    ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
 				    : (
 				        this.main.game.deployingUnit.tiles.includes(tile.land) ||
@@ -1518,7 +1707,7 @@ export class UI {
 						        const base = clickedPokemon; // pokemon que hace de base en la tile
 						        const hasPassenger = !!tile.passenger;
 
-						        // helper: comprobar si la unidad arrastrada puede ir sobre esta tile (incluye reglas para grassyTerrain)
+						        // helper: comprobar si la unidad arrastrada puede ir sobre esta tile (incluye reglas para grassPlatform)
 						        const canBePlacedHere = tile?.canPlacePokemonHere
 						            ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
 						            : (
@@ -1531,8 +1720,8 @@ export class UI {
 						                (this.main.game.deployingUnit?.item?.id == 'subwoofer' && tile.land == 3 && [76, 86, 120].includes(this.main.game.deployingUnit.id))
 						            );
 
-						        // Si la base permite passenger (grassyTerrain)
-						        if (base?.ability?.id === 'grassyTerrain' || base?.ability?.id === 'mount') {
+						        // Si la base permite passenger (grassPlatform)
+						        if (base?.ability?.id === 'grassPlatform' || base?.ability?.id === 'mount' || base?.ability?.id === 'icePlatform') {
 						            if (!hasPassenger) {
 						                // no hay pasajero -> moveUnitToTile colocará como passenger
 						                this.main.game.moveUnitToTile(tile);
@@ -1605,7 +1794,7 @@ export class UI {
 			            slotElement.classList?.remove('is-dragging', 'drag-over');
 			        }
 			    } catch (e) {
-			       
+
 			    }
 
 			    const pokemon = this.main.team.pokemon[draggedIndex];
@@ -1625,7 +1814,7 @@ export class UI {
 			    this.main.team.removePokemon(pokemon);
 
 			    if (this.main.area.checkWeather) this.main.area.checkWeather();
-			    this.updatePokemon(); 
+			    this.updatePokemon();
 
 			    if (this.main.boxScene && this.main.boxScene.isOpen) this.main.boxScene.update();
 			    if (this.main.UI) this.main.UI.update();
@@ -1660,10 +1849,25 @@ export class UI {
 	                this.updatePokemon();
 	                playSound('click1', 'ui');
 
-	                if (this.main.team.pokemon[0] !== firstBefore && this.main.team.refreshDittoADN?.('ui-party-reorder')) {
-	                    playSound('teleport', 'effect');
-	                    this.main.UI.updatePokemon();
-	                    this.update();
+	                if (this.main.team.pokemon[0] !== firstBefore) {
+	                    const ditto = this.main.team.pokemon.find(p => p.id === 70);
+	                    if (ditto != undefined && !ditto.isDeployed) {
+	                        playSound('teleport', 'effect')
+
+	                        const oldTarget = ditto.targetMode
+
+	                        if ([58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(ditto.adn.id)) this.main.player.fossilInTeam--;
+	                        if ([179].includes(ditto.adn.id)) this.main.player.pastInTeam--;
+							if ([178].includes(ditto.adn.id)) this.main.player.futureInTeam--;
+	                        ditto.adn = this.main.team.pokemon[0].specie;
+	                        if ([58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(ditto.adn.id)) this.main.player.fossilInTeam++;
+	                        if ([179].includes(ditto.adn.id)) this.main.player.pastInTeam++;
+							if ([178].includes(ditto.adn.id)) this.main.player.futureInTeam++;
+	                        ditto.transformADN(oldTarget);
+
+	                        this.main.UI.updatePokemon();
+	                        this.update();
+	                    }
 	                }
 	            }
 	        }
@@ -1695,6 +1899,7 @@ export class UI {
 	    };
 
 	    const startDragActual = (e, index, originatingSlot) => {
+		if (this.main.game.stopped || this.main.area.heavyMetal) return playSound('pop0', 'ui');
 	        if (!this.main.team.pokemon[index] || index >= this.main.player.teamSlots) {
 	            clearDragState();
 	            return;
@@ -1793,7 +1998,7 @@ export class UI {
 	        slot.addEventListener('dragstart', (e) => e.preventDefault());
 	    });
 	}
-	
+
 	displayEnemyInfo(enemy, pos) {
 		const wavePreview = this.getCurrentWavePreviewList();
 		if (pos >= this.mapWavePokemon.length || !enemy) {
@@ -1809,24 +2014,44 @@ export class UI {
 
 		const scaledEnemy = this.scalePreviewEnemy(enemy, this.main.area.waveNumber);
 
-		if (this.main.area.isCustom) {
-			gold = 0;
-			hp += Math.floor(hp * (this.main.area.customData.health / 100));
-			armor += Math.floor(armor * (this.main.area.customData.armor / 100));
+		if (this.main.area.inChallenge.draft && this.main.area.waveNumber === 100) {
+			scaledEnemy.hp -= Math.floor(scaledEnemy.hp * (25 / 100));
+			scaledEnemy.armor -= Math.floor(scaledEnemy.armor * (25 / 100));
 		}
 
-		this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase(); 
-		this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.hp)}</span>`;
-		this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.armor || 0)}</span>`;
-		this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.speed, 3)}</span>`;
-		this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.power)}</span>`;
-		this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.regeneration)}/s</span>`;
-		this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;
-		this.infoSlow.innerHTML = `${text.ui.slow[this.main.lang].toUpperCase()}`;
-		this.infoBurn.innerHTML = `${text.ui.burn[this.main.lang].toUpperCase()}`;
-		this.infoPoison.innerHTML = `${text.ui.poison[this.main.lang].toUpperCase()}`;
-		this.infoInvisible.innerHTML = `${text.ui.invisible[this.main.lang].toUpperCase()} <span class="pos-right">${(scaledEnemy.invisible) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase()}</span>`;
-		this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${this.formatPreviewStat(scaledEnemy.gold)}</span>`;
+		if (this.main.area.isCustom) {
+			scaledEnemy.gold = 0;
+			scaledEnemy.hp += Math.floor(scaledEnemy.hp * (this.main.area.customData.health / 100));
+			scaledEnemy.armor += Math.floor(scaledEnemy.armor * (this.main.area.customData.armor / 100));
+		}
+
+		if (enemy.id !== 'mew') {
+			this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase();
+			this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.hp)}</span>`;
+			this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.armor || 0)}</span>`;
+			this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.speed, 3)}</span>`;
+			this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.power)}</span>`;
+			this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.regeneration)}/s</span>`;
+			this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;
+			this.infoSlow.innerHTML = `${text.ui.slow[this.main.lang].toUpperCase()}`;
+			this.infoBurn.innerHTML = `${text.ui.burn[this.main.lang].toUpperCase()}`;
+			this.infoPoison.innerHTML = `${text.ui.poison[this.main.lang].toUpperCase()}`;
+			this.infoInvisible.innerHTML = `${text.ui.invisible[this.main.lang].toUpperCase()} <span class="pos-right">${(scaledEnemy.invisible) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase()}</span>`;
+			this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${this.formatPreviewStat(scaledEnemy.gold)}</span>`;
+		} else {
+			this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase();
+			this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">???</span>`;
+			this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">???</span>`;
+			this.infoSpeed.innerHTML =`${text.ui.speed[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.speed, 3)}</span>`;
+			this.infoPower.innerHTML = `${text.ui.power[this.main.lang].toUpperCase()} <span class="pos-right">???</span>`;
+			this.infoRegen.innerHTML = `${text.ui.regen[this.main.lang].toUpperCase()} <span class="pos-right">???</span>`;
+			this.infoStun.innerHTML = `${text.ui.stun[this.main.lang].toUpperCase()}`;
+			this.infoSlow.innerHTML = `${text.ui.slow[this.main.lang].toUpperCase()}`;
+			this.infoBurn.innerHTML = `${text.ui.burn[this.main.lang].toUpperCase()}`;
+			this.infoPoison.innerHTML = `${text.ui.poison[this.main.lang].toUpperCase()}`;
+			this.infoInvisible.innerHTML = `${text.ui.invisible[this.main.lang].toUpperCase()} <span class="pos-right">${(enemy.invisible) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase()}</span>`;
+			this.infoGold.innerHTML = `${text.ui.gold[this.main.lang].toUpperCase()} <span class="pos-right">$${this.main.utility.numberDot(10000, this.main.lang)}</span>`;
+		}
 
 		if ([6,7,8].includes(this.main.lang)) {
 			this.infoStatContainer.style.lineHeight = '10px'
@@ -1841,12 +2066,18 @@ export class UI {
 		} else {
 			this.infoPassive.style.display = 'none';
 		}
-		
-		this.infoStun.innerHTML += (enemy.canStun) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
-		this.infoSlow.innerHTML += (enemy.canSlow) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
-		this.infoBurn.innerHTML += (enemy.canBurn) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
-		this.infoPoison.innerHTML += (enemy.canPoison) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`	
 
+		if (enemy.id !== 'mew') {
+			this.infoStun.innerHTML += (enemy.canStun) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
+			this.infoSlow.innerHTML += (enemy.canSlow) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
+			this.infoBurn.innerHTML += (enemy.canBurn) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
+			this.infoPoison.innerHTML += (enemy.canPoison) ? `<span class="pos-right">${text.ui.vulnerable[this.main.lang].toUpperCase()}</span>` : `<span class="pos-right">${text.ui.resistant[this.main.lang].toUpperCase()}</span>`
+		} else {
+			this.infoStun.innerHTML += '<span class="pos-right">???</span>';
+			this.infoSlow.innerHTML += '<span class="pos-right">???</span>';
+			this.infoBurn.innerHTML += '<span class="pos-right">???</span>';
+			this.infoPoison.innerHTML += '<span class="pos-right">???</span>';
+		}
 		this.enemyPositionDisplay = pos;
 	}
 
@@ -1860,7 +2091,7 @@ export class UI {
 		this.mapWavePokemon = [];
 		wavePreview.forEach((pokemon, i) => {
 			this.mapWavePokemon[i] = new Element(this.mapWavePokemonContainer, { className: 'ui-map-wave-pokemon', image: pokemon.sprite.base }).element;
-			this.mapWavePokemon[i].addEventListener('click', () => { 
+			this.mapWavePokemon[i].addEventListener('click', () => {
 				playSound('click1', 'ui');
 				this.displayEnemyInfo(pokemon, i);
 			})
@@ -1876,11 +2107,11 @@ export class UI {
 
 		this.autoWave.innerHTML = text.ui.autoWave[this.main.lang].toUpperCase();
 		this.nextWave.innerText = text.ui.nextWave[this.main.lang].toUpperCase();
-	
+
 		this.autoWave.style.filter = `revert-layer`;
 		this.autoWave.style.pointerEvents = `revert-layer`;
 		this.speedWave.style.filter = `revert-layer`;
-		this.speedWave.style.pointerEvents = `revert-layer`;	
+		this.speedWave.style.pointerEvents = `revert-layer`;
 
 		if (this.main.area.waveActive) {
 			this.nextWave.style.filter = `brightness(0.8)`;
@@ -1967,7 +2198,7 @@ export class UI {
 			if (damageDealt > 0) {
 				const per = Math.ceil((damageDealt / totalDamageDealt) * 100)
 				this.damageDealtUnit[i].number.innerHTML = `
-					${this.main.utility.numberDot(damageDealt, this.main.lang)} 
+					${this.main.utility.numberDot(damageDealt, this.main.lang)}
 					<span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(${per}%)</span>
 				`;
 				this.damageDealtUnit[i].bar.style.width = `${per}%`;
@@ -1975,13 +2206,13 @@ export class UI {
 				this.damageDealtUnit[i].number.innerHTML = `0 <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(0%)</span>`;
 				this.damageDealtUnit[i].bar.style.width = '0%';
 			}
-			if (pokemon.id == 19 || pokemon.id == 83 || pokemon.id == 101) {
+			if ([19, 83, 101, 111, 144, 173].includes(pokemon.id)) {
 				this.damageDealtUnit[i].number.innerHTML = `${text.ui.helping[this.main.lang]} <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">:)</span>`;
 			}
 		});
 	}
 
-	refreshDamageDealt(force = false) {	
+	refreshDamageDealt(force = false) {
 		for (let i = 0; i < 10; i++) {
 			if (this.main.team.pokemon[i]) {
 				this.main.team.pokemon[i].damageDealt = 0;
@@ -2045,26 +2276,115 @@ export class UI {
 		})
 	}
 
+	handleBellRhythmClick() {
+		const now = performance.now();
+		const PAUSE_MIN = 500;
+		const PAUSE_MAX = 3000;
+		const INTRA_MAX = 450;
+
+		playSound('bronzor1', 'effect')
+
+		if (this.bellRhythmGroupIndex === 0 && this.bellRhythmClickCount === 0) {
+			this.bellRhythmClickCount = 1;
+			this.bellRhythmLastClickTime = now;
+			this.bellRhythmAwaitingPause = false;
+			this.checkBellRhythmGroupComplete();
+			return;
+		}
+
+		const elapsed = now - this.bellRhythmLastClickTime;
+
+		if (this.bellRhythmAwaitingPause) {
+			if (elapsed < PAUSE_MIN || elapsed > PAUSE_MAX) {
+				// console.log("mal");
+				playSound('bell', 'effect')
+				this.resetBellRhythm();
+				return;
+			}
+
+			// console.log("bien");
+			this.bellRhythmGroupIndex++;
+			this.bellRhythmClickCount = 1;
+			this.bellRhythmLastClickTime = now;
+			this.bellRhythmAwaitingPause = false;
+			this.checkBellRhythmGroupComplete();
+			return;
+		}
+
+
+		if (elapsed > INTRA_MAX) {
+			// console.log("mal (too slow within group)");
+			playSound('bell', 'effect')
+			this.resetBellRhythm();
+			return;
+		}
+
+		this.bellRhythmClickCount++;
+		this.bellRhythmLastClickTime = now;
+
+		const expectedCount = this.bellRhythmSequence[this.bellRhythmGroupIndex];
+
+		if (this.bellRhythmClickCount > expectedCount) {
+			// console.log("mal");
+			playSound('bell', 'effect')
+			this.resetBellRhythm();
+			return;
+		}
+
+		this.checkBellRhythmGroupComplete();
+	}
+
+	checkBellRhythmGroupComplete() {
+		const expectedCount = this.bellRhythmSequence[this.bellRhythmGroupIndex];
+
+		if (this.bellRhythmClickCount !== expectedCount) return;
+
+		if (this.bellRhythmGroupIndex === this.bellRhythmSequence.length - 1) {
+			// console.log("correcto");
+			playSound('bronzor2', 'effect')
+			this.resetBellRhythm();
+
+			if (
+				!this.main.area.inChallenge &&
+				!this.main.player.secrets.bronzor
+			) {
+				this.main.player.secrets.bronzor = true;
+				this.getSecret('bronzor');
+			}
+
+			return;
+		}
+
+		this.bellRhythmAwaitingPause = true;
+	}
+
+	resetBellRhythm() {
+		this.bellRhythmGroupIndex = 0;
+		this.bellRhythmClickCount = 0;
+		this.bellRhythmLastClickTime = 0;
+		this.bellRhythmAwaitingPause = false;
+	}
+
 	getSecret(poke) {
 		const pokemon = pokemonData[poke];
 		const isShiny = Math.random() < (1 / 30);
 
-		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
+		if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
 			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny)
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny);
 		} else {
 			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny)
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny);
 		}
 
 		this.main.player.stats.pokemonOwned++;
 		this.main.player.stats.totalPokemonLevel++;
-		this.main.player.achievementProgress.evolutionCount++;
-		
-		if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
+		// this.main.player.achievementProgress.evolutionCount++;
+
+		// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
 
 		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
-		this.main.UI.update();	
+		this.main.UI.update();
 	}
 
 	getSecretMap(mapId) {
@@ -2081,7 +2401,7 @@ export class UI {
 		if (this.main.isSectionOpen()) return playSound('pop0', 'ui');
 		if (!this.main.area.inChallenge && this.main.teamManager.teams[i][this.main.area.routeNumber].length == 0) return
 		if (this.main.area.inChallenge && this.main.teamManager.getChallengeTeam(i).length == 0) return
-			
+
 		const msg = new Element(this.main.scene, {
 			className: 'team-saved-message',
 			text: text.ui.loadTeam[this.main.lang].toUpperCase()
@@ -2097,8 +2417,8 @@ export class UI {
 			setTimeout(() => msg.remove(), 500);
 		}, 1500);
 
-		if (this.main.area.inChallenge) this.main.teamManager.importTeam(i, true); 
-		else this.main.teamManager.importTeam(i); 
+		if (this.main.area.inChallenge) this.main.teamManager.importTeam(i, true);
+		else this.main.teamManager.importTeam(i);
 	}
 
 	saveTeamButtonHandle(i) {
@@ -2117,8 +2437,8 @@ export class UI {
 			setTimeout(() => msg.remove(), 500);
 		}, 1500);
 
-		if (this.main.area.inChallenge) this.main.teamManager.saveTeam(i, true); 
-		else this.main.teamManager.saveTeam(i); 
+		if (this.main.area.inChallenge) this.main.teamManager.saveTeam(i, true);
+		else this.main.teamManager.saveTeam(i);
 	}
 
 	waveSelectorBlockHandle() {
@@ -2134,7 +2454,7 @@ export class UI {
 	}
 
 	changeMusic(dir) {
-   	 	playSound('option', 'ui');
+		playSound('option', 'ui');
 
 	    let currentIndex = songData.findIndex(s => s.id === this.main.area.music.id);
 	    currentIndex += dir;
@@ -2154,7 +2474,7 @@ export class UI {
 		this.damageDealtButton.innerHTML = text.ui[this.damageDealtType][this.main.lang].toUpperCase();
 		this.updateDamageDealt();
 	}
-	
+
 }
 
 class FastScene {
@@ -2169,7 +2489,7 @@ class FastScene {
 		this.pokemonArray = [];
 		this.itemArray = [];
 
-		this.render(); 
+		this.render();
 	}
 
 	render() {
@@ -2177,7 +2497,7 @@ class FastScene {
 		this.window.className = 'item-scene-window';
 
         this.container = new Element(this.window, { className: 'fast-scene-container' }).element;
-        this.prompt = new Element(this.window, { className: 'fast-scene-prompt' }).element; 
+        this.prompt = new Element(this.window, { className: 'fast-scene-prompt' }).element;
 
         //ITEM
         this.itemSlot = [];
@@ -2187,7 +2507,7 @@ class FastScene {
 	}
 
 	open(scene, position) {
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
+		if (this.main.game.stopped || this.main.area.heavyMetal) return playSound('pop0', 'ui');
 		if (this.isOpen && this.position == position) return this.close();
 		if (this.main.area.inChallenge.noItems && scene == 'item') {
 			playSound('pop0', 'ui');
@@ -2250,13 +2570,13 @@ class FastScene {
 	}
 
 	openItemScene() {
-	  	const pokemon = this.main.team.pokemon[this.position];
+		const pokemon = this.main.team.pokemon[this.position];
 
-	  	this.itemArray = this.main.itemController
-	    	.getItems()
-	    	.filter(item => this.main.itemController.canEquip(item, pokemon));
+		this.itemArray = this.main.itemController
+		.getItems()
+		.filter(item => this.main.itemController.canEquip(item, pokemon));
 
-	  	this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
+		this.container.style.background = `linear-gradient(30deg, ${pokemon.specie.color}2D 100%, ${pokemon.specie.color}5D 100%), #555`;
 
 		this.container.addEventListener('wheel', (e) => {
 		    e.preventDefault();
@@ -2267,76 +2587,102 @@ class FastScene {
 		    });
 		}, { passive: false });
 
-	  	this.itemArray.forEach((item, i) => {
-	    	const slot = new Element(this.container, {
-	      		className: 'fast-scene-pokemon-item'
-	    	}).element;
+		const favorites = new Set(
+		    this.main.player.favoriteItems[pokemon.specie.id] ?? []
+		);
+
+		this.itemArray.sort((a, b) => {
+		    const af = favorites.has(a.id);
+		    const bf = favorites.has(b.id);
+
+		    if (af !== bf) return bf - af;
+
+		    return 0;
+		});
+
+		this.itemArray.forEach((item, i) => {
+		const slot = new Element(this.container, {
+			className: 'fast-scene-pokemon-item'
+		}).element;
 
 		    slot.equiped = new Element(slot, {
-		      	className: 'item-scene-slot-equiped stroke'
+			className: 'item-scene-slot-equiped stroke'
 		    }).element;
 
-	    	slot.style.backgroundImage = `url("${item.sprite}")`;
-	    	slot.equiped.innerHTML = this.main.itemController.isEquipped(item) ? 'E' : '';
-	    	if (this.main.tooltip) this.main.tooltip.bindTo(slot, item, 'item');
+		    slot.favorite = new Element(slot, {
+			    className: 'item-scene-slot-favorite stroke'
+			}).element;
 
-	    	slot.addEventListener('click', () => {
-		      	playSound('equip', 'ui');
-		      	//this.main.tooltip.hide();
-		      	this.main.itemController.equip(item, pokemon);
-		      	this.UI.update();
-		      	this.close();
-		      	if (item.id === 'quickClaw' && pokemon.attackType !== 'area') {
-		      		pokemon.changeTargetMode(TARGET_MODES[6]);
-		      		this.UI.updatePokemon();
-                } else if (item.id === 'spindaCocktail') {
-                    pokemon.changeTargetMode(TARGET_MODES[19]);
-                    this.UI.updatePokemon();
-                } else if (item.id === 'silphScope') {
-                    pokemon.changeTargetMode(TARGET_MODES[20]);
-                    this.UI.updatePokemon();
-                }
-	    	});
-	  	});
+		slot.style.backgroundImage = `url("${item.sprite}")`;
+		slot.equiped.innerHTML = this.main.itemController.isEquipped(item) ? 'E' : '';
 
-	  	// Remove-item shortcut at end of list.
-	  	const removeSlot = new Element(this.container, {
-	  		className: 'fast-scene-pokemon-item'
-	  	}).element;
-	  	removeSlot.textContent = '✕';
-	  	removeSlot.style.display = 'flex';
-	  	removeSlot.style.alignItems = 'center';
-	  	removeSlot.style.justifyContent = 'center';
-	  	removeSlot.style.fontWeight = 'bold';
-	  	removeSlot.style.fontSize = '14px';
-	  	removeSlot.style.color = '#f4f4f4';
-	  	removeSlot.style.textShadow = '1px 1px black'
+		slot.favorite.innerHTML = this.main.player.isFavoriteItem(pokemon.specie.id, item.id) ? '★' : '';
+		if (this.main.tooltip) this.main.tooltip.bindTo(slot, item, 'item');
 
-	  	const deployedLockedItems = [
-	  		'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
-	  		'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
-	  		'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'mitsuesCocktail', 'charizarditeY'
-	  	];
+		slot.addEventListener('mouseenter', () => {
+			playSound('hover3', 'ui');
+			//this.UI.showCompactItemTooltip(item);
+		});
+		//slot.addEventListener('mouseleave', () => { this.main.tooltip.hide(); });
 
-	  	const cannotRemoveNow = !pokemon?.item || (pokemon.isDeployed && deployedLockedItems.includes(pokemon?.item?.id));
-	  	if (cannotRemoveNow) {
-	  		removeSlot.style.filter = 'brightness(0.6)';
-	  		removeSlot.style.pointerEvents = 'none';
-	  		removeSlot.style.cursor = 'not-allowed';
-	  	} else {
-	  		removeSlot.style.cursor = 'pointer';
-	  		removeSlot.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
-	  		removeSlot.addEventListener('mouseenter', () => {
-	  			this.main.tooltip.showItem({ name: text.pokemon.removeItem, description: text.pokemon.removeItemDescription });
-	  		});
-	  		removeSlot.addEventListener('mouseleave', () => { this.main.tooltip.hide(); });
-	  		removeSlot.addEventListener('click', () => {
-	  			playSound('unequip', 'ui');
-	  			this.main.tooltip.hide();
-	  			pokemon.retireItem();
-	  			this.UI.update();
-	  			this.close();
-	  		});
-	  	}
+		slot.addEventListener('click', () => {
+			playSound('equip', 'ui');
+			//this.main.tooltip.hide();
+			this.main.itemController.equip(item, pokemon);
+			this.UI.update();
+			this.close();
+
+			if (item.id === 'quickClaw' && pokemon.attackType !== 'area') {
+				pokemon.changeTargetMode(TARGET_MODES[6]);
+			} else if (item.id === 'spindaCocktail') {
+				pokemon.changeTargetMode(TARGET_MODES[19]);
+			}
+			// else if (item.id === 'silphScope') {
+				// 	pokemon.changeTargetMode(TARGET_MODES[20]);
+			// }
+			this.UI.updatePokemon();
+		});
+		});
+
+		// Remove-item shortcut at end of list.
+		const removeSlot = new Element(this.container, {
+			className: 'fast-scene-pokemon-item'
+		}).element;
+		removeSlot.textContent = '✕';
+		removeSlot.style.display = 'flex';
+		removeSlot.style.alignItems = 'center';
+		removeSlot.style.justifyContent = 'center';
+		removeSlot.style.fontWeight = 'bold';
+		removeSlot.style.fontSize = '14px';
+		removeSlot.style.color = '#f4f4f4';
+		removeSlot.style.textShadow = '1px 1px black'
+
+		const deployedLockedItems = [
+			'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
+			'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
+			'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'mitsuesCocktail', 'charizarditeY',
+			'blimpKeys'
+		];
+
+		const cannotRemoveNow = !pokemon?.item || (pokemon.isDeployed && deployedLockedItems.includes(pokemon?.item?.id));
+		if (cannotRemoveNow) {
+			removeSlot.style.filter = 'brightness(0.6)';
+			removeSlot.style.pointerEvents = 'none';
+			removeSlot.style.cursor = 'not-allowed';
+		} else {
+			removeSlot.style.cursor = 'pointer';
+			removeSlot.addEventListener('mouseenter', () => { playSound('hover3', 'ui') });
+			removeSlot.addEventListener('mouseenter', () => {
+				this.main.tooltip.showItem({ name: text.pokemon.removeItem, description: text.pokemon.removeItemDescription });
+			});
+			removeSlot.addEventListener('mouseleave', () => { this.main.tooltip.hide(); });
+			removeSlot.addEventListener('click', () => {
+				playSound('unequip', 'ui');
+				this.main.tooltip.hide();
+				pokemon.retireItem();
+				this.UI.update();
+				this.close();
+			});
+		}
 	}
 }

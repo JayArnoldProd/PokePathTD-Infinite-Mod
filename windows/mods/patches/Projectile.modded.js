@@ -137,6 +137,18 @@ export class Projectile extends Sprite {
             return;
         }
 
+        if ((!this.enemy || this.enemy.hp <= 0) && this.tower) {
+            // MOD: Retarget from the tower position within its actual range.
+            const towerRange = this.tower.range || 100;
+            const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);
+            if (newTarget) {
+                this.enemy = newTarget;
+            } else {
+                this.markedForDeletion = true;
+                return;
+            }
+        }
+
         if (!this.enemy || this.enemy.hp <= 0) {
             this.markedForDeletion = true;
             return;
@@ -389,7 +401,7 @@ export class Projectile extends Sprite {
 
     processImpact() {
         // efectos de impacto
-        if (this.tower?.ability?.id === 'curse' || this.tower?.ability?.id === 'magicBounce' || this.tower?.ability?.id === 'curseDoubleShot') {
+        if (this.tower?.ability?.id === 'curse' || this.tower?.ability?.id === 'magicBounce' || this.tower?.ability?.id === 'curseDoubleShot' || this.tower?.ability?.id === 'curseSplash') {
             this.enemy.applyStatusEffect({ type: 'curse' });
         }
 
@@ -398,7 +410,12 @@ export class Projectile extends Sprite {
         let isCritical = false;
         let critical = this.critical;
 
-        if (this.tower?.pokemon?.item?.id == 'silphScope' && (this.tower?.ability?.id == 'frisk' || this.tower?.ability?.id == 'illuminate' || this.tower?.ability?.id == 'vigilantFrisk')) finalDamage += 175;
+        if (this.tower?.pokemon?.item?.id == 'silphScope' && (
+            this.tower?.ability?.id == 'frisk' ||
+            this.tower?.ability?.id == 'illuminate' ||
+            this.tower?.ability?.id == 'illuminateBuff' ||
+            this.tower?.ability?.id == 'vigilantFrisk'
+        )) finalDamage += 175;
 
         if (this.tower?.ability?.id === 'star') {
             finalDamage += Math.min(1200, this.tower.main.player.stars);
@@ -407,6 +424,7 @@ export class Projectile extends Sprite {
             if (this.tower?.pokemon?.item?.id == 'starCandy') finalDamage++;
             this.tower.main.team.pokemon.forEach((poke) => {
                 if (poke.id == 32) finalDamage ++;
+                if (poke.id == 148) finalDamage ++;
             })
         }
 
@@ -427,8 +445,26 @@ export class Projectile extends Sprite {
             }
         }
 
-        if (this.tower?.ability?.id === 'speedBoost' && this.tower?.speedBoost < 10) {
-            this.tower.speedBoost++;
+        if (this.tower?.ability?.id === 'speedBoost') {
+            if (this.tower.main.area.speedBoostUsers[this.tower.pokemon.id] === undefined) this.tower.main.area.speedBoostUsers[this.tower.pokemon.id] = 1;
+            else if (this.tower.main.area.speedBoostUsers[this.tower.pokemon.id] < 10) this.tower.main.area.speedBoostUsers[this.tower.pokemon.id]++;
+
+            if (this.tower.main.area.speedBoostUsers[this.tower.pokemon.id] > 10) this.tower.main.area.speedBoostUsers[this.tower.pokemon.id] = 10;
+
+            if (
+                this.tower.main.area.speedBoostUsers[this.tower.pokemon.id] === 10 &&
+                this.tower.pokemon.extra &&
+                !this.tower.main.area.inChallenge.noItems &&
+                this.tower?.pokemon?.item?.id != "dampMulch"
+            ) {
+                const sharpedonite = this.tower.main.player.items[this.tower.main.itemController.getItemPosition('sharpedonite')]
+                if (sharpedonite) {
+                    if (this.tower?.pokemon?.recoverTarget) this.tower.pokemon.targetMode = this.tower?.pokemon?.recoverTarget;
+                    this.tower.pokemon.recoverItem = this.tower.pokemon.item;
+                    this.tower.main.itemController.equip(sharpedonite, this.tower.pokemon);
+                    //console.log(this.tower.pokemon.targetMode)
+                }
+            }
         }
 
         if (this.tower?.pokemon?.item?.id == 'loadedDice') {
@@ -437,7 +473,7 @@ export class Projectile extends Sprite {
         }
 
         if (this.tower?.pokemon?.ability?.id == 'makeItRain') {
-            let goldPerDigit = (this.tower?.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.05
+            let goldPerDigit = (this.tower?.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.075
             let goldValue = this.tower.main.player.stats.totalGold;
             let goldBonus = goldValue.toString().length * goldPerDigit;
             finalDamage += Math.ceil(finalDamage * goldBonus);
@@ -452,7 +488,7 @@ export class Projectile extends Sprite {
 
         if (this.tower?.pokemon?.ability?.id == 'noGuard') {
             let dist = Math.sqrt(Math.pow(this.enemy.position.x - this.tower.position.x, 2) + Math.pow(this.enemy.position.y - this.tower.position.y, 2));
-            let bonus = (Math.floor(dist/100) * finalDamage)/10;
+            let bonus = (Math.floor(dist/100) * finalDamage)/20;
 
             finalDamage = Math.floor(finalDamage + bonus);
         }
@@ -461,17 +497,25 @@ export class Projectile extends Sprite {
             let dist = Math.sqrt(Math.pow(this.enemy.position.x - this.tower.position.x, 2) + Math.pow(this.enemy.position.y - this.tower.position.y, 2));
             let bonus = (dist > 150) ? 1.25 : 0.8;
             if (this.tower?.ability?.id == 'contrary') bonus = 1.25;
-            if (this.tower?.ability?.id == 'simple' && bonus > 1) bonus *= 1.375;
-            if (this.tower?.ability?.id == 'simple' && bonus < 1) bonus /= 1.375;
+            if (this.tower?.ability?.id == 'simple' && bonus > 1) bonus *= 2.1875;
+            if (this.tower?.ability?.id == 'simple' && bonus < 1) bonus /= 2.1875;
             finalDamage = Math.floor(finalDamage * bonus);
         }
 
         if (this.tower?.ability?.id === 'moxie') {
-            if (this.tower?.pokemon?.item?.id == 'blackGlasses') finalDamage += Math.floor(finalDamage * this.tower.moxieBuff * 0.1);
-            else finalDamage += Math.floor(finalDamage * this.tower.moxieBuff * 0.05);
+            if (this.tower.main.area.moxieUsers[this.tower.pokemon.id] != undefined) {
+                finalDamage += Math.floor(finalDamage * this.tower.main.area.moxieUsers[this.tower.pokemon.id] * 0.05);
+                if (this.tower?.pokemon?.item?.id == 'blackGlasses') finalDamage += Math.floor(finalDamage * this.tower.main.area.moxieUsers[this.tower.pokemon.id] * 0.05);
+            }
         }
+
+        if (this.tower?.ability?.id === 'meteorMash') {
+            let mmBonus = (this.tower.main.area.meteorMashUsers[this.tower.pokemon.id] == undefined) ? 0 : this.tower.main.area.meteorMashUsers[this.tower.pokemon.id];
+            finalDamage += Math.floor(finalDamage * mmBonus * 0.2);
+        }
+
         if (this.tower?.pokemon?.item?.id == 'hardStone') finalDamage += Math.floor(finalDamage * 0.25);
-        if (this.tower?.pokemon?.item?.id == 'clawFossil') finalDamage += Math.floor(finalDamage * (this.tower.main.player.fossilInTeam * 0.05));
+        if (this.tower?.pokemon?.item?.id == 'clawFossil') finalDamage += Math.floor(finalDamage * (this.tower.main.player.fossilInTeam * 0.1));
         if (this.tower?.pokemon?.item?.id == 'cellBattery') finalDamage += Math.floor(finalDamage * 0.5);
 
         if (
@@ -488,15 +532,47 @@ export class Projectile extends Sprite {
             finalDamage = Math.ceil(finalDamage *(2 * this.tower.main.player.shinyAmount / 100));
         }
 
-        if (this.tower?.pokemon?.item?.id == "crunchies") finalDamage -= Math.ceil(this.power * 0.4);  
+        if (this.tower?.ability?.id === 'diurnal' && this.tower?.main.utility.isBetweenHours(8, 20)) {
+            finalDamage += Math.ceil(this.power / 2);
+        }
 
-        if (this.tower?.pokemon?.item?.id == 'zoomLens' || 
-            this.tower?.pokemon?.item?.id == 'quickPowder' || 
+        if (this.tower?.ability?.id === 'rivalryPower' && this.tower?.main.area.rivalryAmount >= 2) {
+            finalDamage += Math.ceil(this.power / 2);
+        }
+
+        if (this.tower?.ability?.id === 'defeatist' && this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 7) {
+            finalDamage = Math.ceil(finalDamage / 2);
+        }
+
+        if (this.tower?.main.area.shellSmashActive && this.tower?.ability?.id === 'shellSmash') {
+            finalDamage = Math.ceil(finalDamage * 1.5);
+        }
+
+        if (
+            this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 5 &&
+            this.tower?.ability?.id === 'torrent' &&
+            (this.tower?.tile.land === 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'squirtBottle') || this.tower?.carriedBy == 'icePlatform')
+        ) {
+            finalDamage = Math.ceil(finalDamage * 1.75);
+        }
+
+        if (
+            this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 5 &&
+            this.tower?.ability?.id === 'overgrow' &&
+            (this.tower?.tile.land === 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassPlatform')
+        ) {
+            finalDamage = Math.ceil(finalDamage * 1.75);
+        }
+
+        if (this.tower?.pokemon?.item?.id == "crunchies") finalDamage -= Math.ceil(this.power * 0.4);
+
+        if (this.tower?.pokemon?.item?.id == 'zoomLens' ||
+            this.tower?.pokemon?.item?.id == 'quickPowder' ||
             this.tower?.pokemon?.item?.id == 'quickClaw' ||
-            this.tower?.pokemon?.item?.id == 'scovillainSiracha'
+            (this.tower?.pokemon?.item?.id == 'scovillainSiracha' && this.tower?.ability?.id !== 'burnDoubleShot')
         ) {
             if (this.tower?.ability?.id != 'contrary' && this.tower?.ability?.id != 'defiant') {
-                finalDamage -= (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.75) : Math.ceil(this.power * 0.5);
+                finalDamage -= (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.875) : Math.ceil(this.power * 0.5);
             } else if (this.tower?.ability?.id === 'defiant') {
                 finalDamage += 500;
             }
@@ -505,16 +581,16 @@ export class Projectile extends Sprite {
 
         if (this.tower?.pokemon?.item?.id == 'laggingTail') {
             if (this.tower?.ability?.id === 'defiant') finalDamage += 750;
-            finalDamage += (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.75) : Math.ceil(this.power * 0.5);
+            finalDamage += (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.875) : Math.ceil(this.power * 0.5);
         }
 
         if (this.tower?.pokemon?.ability?.id === 'tailGlow' && this.tower.main.area.heartScale > 0) {
             finalDamage += Math.ceil(this.power * 0.75);
         }
 
-        if (this.tower?.pokemon?.item?.id == "weaknessPolicy") finalDamage += finalDamage;
+        if (this.tower?.pokemon?.item?.id == "weaknessPolicy") finalDamage = Math.ceil(finalDamage * 2.5);
 
-        if (this.tower?.pokemon?.item?.id == 'inverter' && this.tower?.pokemon?.lvl == 100 && this.tower?.pokemon?.specie?.key == 'malamar') {
+        if (this.tower?.pokemon?.item?.id == 'inverter' && this.tower?.pokemon?.specie?.key == 'malamar') {
             critical += 15;
             finalDamage += Math.ceil(finalDamage * 0.5);
         }
@@ -536,15 +612,31 @@ export class Projectile extends Sprite {
         if (this.tower?.pokemon?.item?.id === 'domeFossil') critical += this.tower.main.player.fossilInTeam * 5;
 
         // rockruff
-        if (this.tower?.pokemon.ability.id == 'toughClawsNight' && (this.tower?.tile.land == 2 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassyTerrain')) {
+        if (
+            this.tower?.pokemon.ability.id == 'toughClawsNight' &&
+            (this.tower?.tile.land == 2 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassPlatform') ||
+            ((this.tower?.tile.land == 3 || this.tower?.carriedBy == 'icePlatform') && this.tower?.pokemon?.item?.id == 'subwoofer')
+        ) {
             finalDamage = Math.ceil(finalDamage * 1.5);
             critical = 100;
-        } else if (this.tower?.pokemon.ability.id == 'toughClawsDay' && (this.tower?.tile.land == 4 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'hikingKit'))) {
+        } else if (
+            this.tower?.pokemon.ability.id == 'toughClawsDay' &&
+            (this.tower?.tile.land == 4 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'hikingKit')) ||
+            ((this.tower?.tile.land == 3 || this.tower?.carriedBy == 'icePlatform') && this.tower?.pokemon?.item?.id == 'subwoofer')
+        ) {
             finalDamage = Math.ceil(finalDamage * 1.5);
             critical = 100;
-        } else if (this.tower?.pokemon.ability.id == 'toughClaws' && (this.tower?.tile.land == 2 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassyTerrain')) {
+        } else if (
+            this.tower?.pokemon.ability.id == 'toughClaws' &&
+            (this.tower?.tile.land == 2 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassPlatform') ||
+            ((this.tower?.tile.land == 3 || this.tower?.carriedBy == 'icePlatform') && this.tower?.pokemon?.item?.id == 'subwoofer')
+        ) {
             critical = 100;
-        } else if (this.tower?.pokemon.ability.id == 'toughClaws' && (this.tower?.tile.land == 4 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'hikingKit'))) {
+        } else if (
+            this.tower?.pokemon.ability.id == 'toughClaws' &&
+            (this.tower?.tile.land == 4 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'hikingKit')) ||
+            ((this.tower?.tile.land == 3 || this.tower?.carriedBy == 'icePlatform') && this.tower?.pokemon?.item?.id == 'subwoofer')
+        ) {
             finalDamage = Math.ceil(finalDamage * 1.5);
         }
 
@@ -554,13 +646,36 @@ export class Projectile extends Sprite {
 
         if (
             this.tower.main.area.weather == 'rain' &&
-            (this.tower?.tile.land == 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'squirtBottle'))
+            (this.tower?.tile.land == 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'squirtBottle') || this.tower?.carriedBy == 'icePlatform')
         ) {
             finalDamage = Math.ceil(finalDamage * 1.2);
         }
 
-        if (this.tower.criticalAura) critical += 10;
-        if (this.tower?.pokemon?.item?.id == 'direHit') critical += (this.tower?.ability?.id == 'simple') ? 15 : 10;
+        if (
+            this.tower.main.area.weather == 'heavyRain' && this.pokemon?.item?.id != 'safetyGoggles' &&
+            (this.tower?.tile.land == 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'squirtBottle') || this.tower?.carriedBy == 'icePlatform')
+        ) {
+            if (!this.tower.main.area.airLock) {
+                finalDamage = (this.tower.main.area.cloudNine) ? Math.ceil(finalDamage * 0.875) : Math.ceil(finalDamage * 0.5);
+            }
+        }
+
+        if (
+            this.tower?.pokemon.ability.id == 'drySkin' &&
+            (this.tower.main.area.weather == 'extremelyHarshSunlight' || this.tower.main.area.weather == 'harshSunlight') &&
+            (this.tower?.tile.land == 2 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassPlatform')
+        ) {
+            finalDamage = (this.tower.main.area.weather == 'extremelyHarshSunlight') ? Math.ceil(finalDamage * 3) : Math.ceil(finalDamage * 2)
+        }
+
+        if (this.tower.criticalAura) critical += 20;
+        if (this.tower.genesisAura) critical += 5;
+
+        if (this.tower?.pokemon?.item?.id == 'direHit') critical += (this.tower?.ability?.id == 'simple') ? 43.8 : 25;
+        if (this.tower?.pokemon?.item?.id == 'expertBelt') critical += (this.tower?.ability?.id == 'simple') ? 17.5 : 10;
+        if (this.tower?.pokemon?.item?.id == 'lansatBerry' && this.tower?.lansatBerryTimer > 0) {
+            critical += (this.tower?.ability?.id == 'simple') ? 105 : 60;
+        }
 
         if (this.tower?.ability?.id == 'chatter') {
             if (this.tower?.pokemon?.lvl == 100 && this.tower?.pokemon?.item?.id == 'bicycle' && typeof this.tower?.main?.area?.inChallenge.lvlCap !== 'number') {
@@ -570,19 +685,21 @@ export class Projectile extends Sprite {
             else finalDamage *= Math.floor((JSON.parse(window.localStorage.getItem("data")).config.audio['effects'] * 0.2));
         }
 
+        if (this.tower?.ability?.id == 'flowerTrick' || this.tower?.ability?.id == 'armaldo') critical = Math.min(95, critical);
+
         if ((Math.random() * 100) < critical && (this.tower?.pokemon?.item?.id != 'blueBandana' || this.tower?.ability?.id == 'contrary')) {
             isCritical = true;
             let multiplier = (this.tower?.ability?.id === 'superCritical') ? 2.0 : 1.5;
             if (this.tower?.pokemon?.item?.id === 'leek') multiplier *= 2;
             if (this.tower.criticalDamageAura) multiplier *= 1.5;
-            if (this.tower?.pokemon?.item?.id == 'clover') multiplier *= (this.tower?.ability?.id == 'simple') ? 1.45 : 1.3;
-            if (this.tower?.main?.area?.weather == 'hail') multiplier *= 1.1;
+            if (this.tower?.pokemon?.item?.id == 'clover') multiplier *= (this.tower?.ability?.id == 'simple') ? 2.625 : 1.5;
+            if (this.tower?.main?.area?.weather == 'hail') multiplier *= 1.25;
             finalDamage = Math.ceil(finalDamage * multiplier);
             if (this.tower?.ability?.id === 'armaldo') this.ricochetsLeft++;
         }
 
         if (this.tower?.pokemon?.item?.id === 'blueBandana') {
-            finalDamage = Math.ceil(finalDamage * (1 + critical * 0.01));
+            finalDamage = (this.tower?.ability?.id === 'simple') ? Math.ceil(finalDamage * (1 + critical * 0.0175)) : Math.ceil(finalDamage * (1 + critical * 0.01));
         }
 
         if (this.tower?.ability?.id === 'focus' || this.tower?.pokemon?.item?.id === 'focusBand') {
@@ -594,7 +711,7 @@ export class Projectile extends Sprite {
                 }
 
                 if (this.tower?.pokemon?.item?.id === 'focusBand') {
-                    focusBoost += (this.tower?.ability?.id == 'simple') ? 0.075 : 0.05;
+                    focusBoost += (this.tower?.ability?.id == 'simple') ? 0.0875 : 0.05;
                 }
 
                 this.tower.damageBoost += focusBoost;
@@ -638,13 +755,51 @@ export class Projectile extends Sprite {
             this.tower.main.player.changeGold(g);
         }
 
+        // voltSurge - cadena eléctrica: golpea hasta 3 enemigos más, encadenando desde el último golpeado, alcance 100px
+        if (this.tower?.ability?.id === 'voltSurge' && this.tower.voltSurgeChains) {
+            const chainHits = [this.enemy];
+            const enemies = this.tower.main.area.enemies;
+            const revealInvisible = this.tower.revealInvisible || this.tower.targetMode === 'invisible';
+            const chainNumber = 3 + this.tower.main.player.pastInTeam;
+
+            for (let i = 0; i < chainNumber; i++) {
+                const from = chainHits[chainHits.length - 1];
+                let next = null;
+                let minDist = 150;
+
+                for (const e of enemies) {
+                    if (!e || e.hp <= 0 || e.invulnerable || chainHits.includes(e)) continue;
+                    if (e.invisible && !revealInvisible) continue;
+
+                    const dist = Math.hypot(e.center.x - from.center.x, e.center.y - from.center.y);
+                    if (dist <= minDist) {
+                        minDist = dist;
+                        next = e;
+                    }
+                }
+
+                if (!next) break;
+
+                next.getDamaged(finalDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower);
+                chainHits.push(next);
+            }
+
+            if (chainHits.length > 1) {
+                this.tower.voltSurgeChains.push({
+                    points: chainHits.map(e => ({ x: e.center.x, y: e.center.y })),
+                    remaining: 260,
+                    duration: 260
+                });
+            }
+        }
+
         // efectos secundarios
         if (this.enemy.canSlow && this.tower?.pokemon?.item?.id === 'magnet' && this.enemy.armor > 0) {
-            if (this.tower?.ability?.id == 'simple') this.enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 1.5 });
+            if (this.tower?.ability?.id == 'simple') this.enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 1.75 });
             else this.enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 1 });
         }
         if (isCritical && this.tower?.pokemon?.item?.id == 'razorClaw' && this.enemy.canSlow) {
-            if (this.tower?.ability?.id == 'simple') this.enemy.applyStatusEffect({ type: 'slow', duration: 0.3, slowPercent: 0.5 })
+            if (this.tower?.ability?.id == 'simple') this.enemy.applyStatusEffect({ type: 'slow', duration: 0.35, slowPercent: 0.5 })
             else this.enemy.applyStatusEffect({ type: 'slow', duration: 0.2, slowPercent: 0.5 })
         }
 
@@ -671,12 +826,27 @@ export class Projectile extends Sprite {
             statusPool[randomIndex]();
         }
 
-        if (this.enemy.canBurn && (this.tower?.ability?.id === 'burn' || this.tower?.ability?.id === 'burnSplash' || this.tower?.ability?.id === 'burnDoubleShot' || this.tower?.pokemon?.item?.id == 'scovillainSiracha')) {
+        if (this.enemy.canBurn && (
+            this.tower?.ability?.id === 'burn' ||
+            this.tower?.ability?.id === 'burnSplash' ||
+            this.tower?.ability?.id === 'burnDoubleShot' ||
+            this.tower?.pokemon?.item?.id == 'scovillainSiracha' ||
+            this.tower?.ability?.id === 'drought' ||
+            (this.tower?.pokemon?.item?.id  == 'koffingJelly' && this.tower?.pokemon?.id === 56)
+            )
+        ) {
             if (this.tower?.pokemon?.item?.id == 'magmaStone') this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.tower.pokemon);
             else if (this.tower?.pokemon?.item?.id == 'falmeOrb') this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.tower.pokemon);
             else this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.tower.pokemon);
         }
-        if (this.enemy.canPoison && (this.tower?.ability?.id === 'poison' || this.tower?.ability?.id === 'poisonDoubleShot')) {
+
+        if (this.enemy.canPoison &&
+            (
+                this.tower?.ability?.id === 'poison' ||
+                this.tower?.ability?.id === 'poisonDoubleShot' ||
+                this.tower?.pokemon?.item?.id  == 'koffingJelly' ||
+                (this.tower?.pokemon?.item?.id  == 'scovillainSiracha' && this.tower?.ability?.id === 'burnDoubleShot')
+            )) {
             this.enemy.applyStatusEffect({ type: 'poison', damagePercent: 0.001, stacks: 1 }, this.tower.pokemon);
             if (this.tower?.pokemon?.item?.id  == 'toxicOrb' || (this.tower?.pokemon?.item?.id == 'poisonBarb' && Math.random() < 0.5)) this.enemy.applyStatusEffect({ type: 'poison', damagePercent: 0.001, stacks: 1 }, this.tower.pokemon);
         }
@@ -684,9 +854,9 @@ export class Projectile extends Sprite {
         if (
             (this.enemy.canSlow || this.tower?.pokemon?.item?.id === 'bindingBand') &&
             (
-                this.tower?.ability?.id === 'slow' || 
-                this.tower?.ability?.id === 'slowRicochet' || 
-                this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' || 
+                this.tower?.ability?.id === 'slow' ||
+                this.tower?.ability?.id === 'slowRicochet' ||
+                this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||
                 this.tower?.ability?.id === 'cradily'
             )
         ) {
@@ -720,13 +890,14 @@ export class Projectile extends Sprite {
                 this.tower?.pokemon?.item?.id == "maliciousArmor" ||
                 (isCritical && this.tower?.pokemon?.item?.id == "crunchies") ||
                 this.tower?.ability?.id === 'splash' ||  this.tower?.ability?.id === 'auraSphere' ||
-                this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' || 
+                this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||
                 this.tower?.ability?.id === 'burnSplash' ||
                 this.tower?.ability?.id === 'armorBreakSplash' ||
                 this.tower?.ability?.id === 'synchronySplash' ||
+                this.tower?.ability?.id ==='curseSplash' ||
                 this.tower?.ability?.id === 'armorCannon' ||
                 this.tower?.pokemon?.item?.id == 'sprayduck' ||
-                this.tower?.lightningRodCharge === 10 || 
+                this.tower?.lightningRodCharge === 10 ||
                 this.forcedSplash
             ) && this.tower?.pokemon?.item?.id != "weaknessPolicy"
         ) {
@@ -750,6 +921,8 @@ export class Projectile extends Sprite {
                         if (e.canSlow && (this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill')) {
                             (this.tower?.pokemon?.item?.id == 'lightClay') ? e.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2.2 }) : e.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
                         }
+
+                        if (this.tower?.ability?.id === 'curseSplash') e.applyStatusEffect({ type: 'curse' });
                         if (this.tower?.ability?.id === 'synchronySplash') {
                             this.enemy.statusEffects.forEach(effect => {
                                 if (effect.type === 'burn' && e.canBurn) e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.tower.pokemon);
@@ -796,7 +969,7 @@ export class Projectile extends Sprite {
 
         // rebote
         if (this.ricochetsLeft > 0 && this.tower && this.tower?.pokemon?.item?.id != 'loadedDice') {
-            const next = this.findClosestEnemy(this.tower, this.tower.range || 100, this.enemy);
+            const next = this.findClosestEnemy(this.enemy, 200);
             if (next) {
                 const reducedPower = (this.tower?.pokemon?.item?.id === 'metronome') ? Math.ceil(this.power * 0.85) : Math.ceil(this.power * 0.7);
                 const sx = this.enemy.center.x + (Math.random() - 0.5) * 6;
@@ -824,11 +997,12 @@ export class Projectile extends Sprite {
         if ((
             this.tower?.pokemon?.item?.id == "maliciousArmor" ||
             (isCritical && this.tower?.pokemon?.item?.id == "crunchies") ||
-            this.tower?.ability?.id === 'splash' || this.tower?.ability?.id === 'auraSphere' || 
-            this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||  
+            this.tower?.ability?.id === 'splash' || this.tower?.ability?.id === 'auraSphere' ||
+            this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||
             this.tower?.ability?.id === 'burnSplash' ||
             this.tower?.ability?.id === 'armorBreakSplash' ||
             this.tower?.ability?.id === 'synchronySplash' ||
+            this.tower?.ability?.id === 'curseSplash' ||
             this.tower?.ability?.id === 'armorCannon' ||
             this.tower?.pokemon?.item?.id == 'sprayduck' ||
             this.tower?.lightningRodCharge === 10 ||
@@ -867,16 +1041,16 @@ export class Projectile extends Sprite {
         return;
     }
 
-    findClosestEnemy(fromEnemy, maxDist = 200, excludeEnemy = null) {
+    findClosestEnemy(fromEnemy, maxDist = 200) {
         let closest = null;
-        let minDist = maxDist;
+        let minDistSq = maxDist * maxDist;
         for (const e of this.tower.main.area.enemies) {
-            if (!e || e === fromEnemy || e === excludeEnemy || e.hp <= 0 || e.invisible) continue;
+            if (!e || e === fromEnemy || e.hp <= 0 || e.invisible) continue;
             const dx = e.center.x - fromEnemy.center.x;
             const dy = e.center.y - fromEnemy.center.y;
-            const d = Math.hypot(dx, dy);
-            if (d < minDist) {
-                minDist = d;
+            const distanceSq = dx * dx + dy * dy;
+            if (distanceSq < minDistSq) {
+                minDistSq = distanceSq;
                 closest = e;
             }
         }

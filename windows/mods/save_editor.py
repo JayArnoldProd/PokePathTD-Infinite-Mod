@@ -64,7 +64,7 @@ CELL_SIZE = 58  # Fixed cell size
 def find_paths():
     import os
     script_dir = Path(__file__).parent.resolve()
-    
+
     # Check locations in order: script dir, parent, standard install path
     check_dirs = [
         script_dir,
@@ -72,7 +72,7 @@ def find_paths():
         Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'pokePathTD_Electron',
         Path.home() / 'AppData' / 'Local' / 'Programs' / 'pokePathTD_Electron',
     ]
-    
+
     result = {
         'game_root': None,
         'sprites': None,
@@ -81,22 +81,22 @@ def find_paths():
         'mod_normal_sprites': None,
         'extracted_normal_sprites': None,
     }
-    
+
     # Check for mod's bundled sprites first (works in distributed installs)
     # These are the MOST RELIABLE source — never overwrite them with extracted paths
     mod_shiny_path = script_dir / 'patches' / 'shiny_sprites'
     if mod_shiny_path.exists():
         result['mod_shiny_sprites'] = mod_shiny_path
-    
+
     mod_normal_path = script_dir / 'patches' / 'normal_sprites'
     if mod_normal_path.exists():
         result['mod_normal_sprites'] = mod_normal_path
         result['sprites'] = mod_normal_path
-    
+
     for check_dir in check_dirs:
         if check_dir and (check_dir / 'resources').exists():
             result['game_root'] = check_dir
-            
+
             # Try extracted folder (development environment)
             pokemon_base = check_dir / 'resources' / 'app_extracted' / 'src' / 'assets' / 'images' / 'pokemon'
             if pokemon_base.exists():
@@ -112,7 +112,7 @@ def find_paths():
                     result['sprites_shiny'] = extracted_shiny
                 if result['sprites']:
                     return result
-            
+
             # For distributed installs, check sprite_cache as fallback
             asar_path = check_dir / 'resources' / 'app.asar'
             if asar_path.exists():
@@ -125,7 +125,7 @@ def find_paths():
                 else:
                     result['asar_path'] = asar_path
                 return result
-    
+
     return result
 
 PATHS = find_paths()
@@ -309,7 +309,7 @@ class SaveData:
     def __init__(self):
         self.data = None
         self.source = None
-    
+
     def load_from_game(self, modded=None) -> bool:
         if modded is None:
             modded = IS_MODDED
@@ -346,7 +346,7 @@ class SaveData:
             self.last_error = str(e)
             print(f"Load error: {e}")
         return False
-    
+
     def save_to_game(self, modded=None) -> bool:
         if modded is None:
             modded = IS_MODDED
@@ -380,7 +380,7 @@ class SaveData:
             self.last_error = str(e)
             print(f"Save error: {e}")
         return False
-    
+
     def load_from_file(self, path: Path) -> bool:
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -390,7 +390,7 @@ class SaveData:
         except Exception as e:
             print(f"Load error: {e}")
         return False
-    
+
     def export_to_file(self, path: Path) -> bool:
         try:
             with open(path, 'w', encoding='utf-8') as f:
@@ -398,23 +398,23 @@ class SaveData:
             return True
         except:
             return False
-    
+
     @property
     def save_obj(self):
         return self.data.get('save', self.data) if self.data else {}
-    
+
     @property
     def player(self):
         return self.save_obj.get('player', {})
-    
+
     @property
     def team(self):
         return self.save_obj.get('team', [])
-    
+
     @property
     def box(self):
         return self.save_obj.get('box', [])
-    
+
     def get_pokemon_at_slot(self, slot_index):
         team = self.team
         box = self.box
@@ -423,7 +423,7 @@ class SaveData:
         else:
             box_index = slot_index - TEAM_SLOTS
             return box[box_index] if box_index < len(box) else None
-    
+
     def set_pokemon_at_slot(self, slot_index, pokemon):
         if not self.data:
             return
@@ -441,7 +441,7 @@ class SaveData:
             save['box'][box_index] = pokemon
             while save['box'] and save['box'][-1] is None:
                 save['box'].pop()
-    
+
     def delete_at_slot(self, slot_index):
         if not self.data:
             return
@@ -453,7 +453,7 @@ class SaveData:
             box_index = slot_index - TEAM_SLOTS
             if box_index < len(save['box']):
                 save['box'].pop(box_index)
-    
+
     def set_player(self, key, val):
         if 'save' in self.data:
             self.data['save']['player'][key] = val
@@ -551,13 +551,13 @@ class PokemonData:
         self.data = {}
         self.sprites = {}
         self.all_pokemon = []
-        
+
         if POKEMON_DATA_FILE.exists():
             with open(POKEMON_DATA_FILE, encoding='utf-8') as f:
                 self.data = json.load(f)
-        
+
         self.all_pokemon = sorted(self.data.get('allKeys', []))
-    
+
     # Sprite filename mappings for Pokemon with non-standard names
     SPRITE_NAME_MAP = {
         'aegislash': 'aegislashShield',
@@ -565,7 +565,7 @@ class PokemonData:
         'lycanrocDay': 'lycanroc1',
         'lycanrocNight': 'lycanroc2',
     }
-    
+
     def get_sprite(self, key, size=48, is_shiny=False):
         if not HAS_PIL:
             return None
@@ -573,7 +573,7 @@ class PokemonData:
         if cache_key not in self.sprites:
             # Map special sprite names
             sprite_key = self.SPRITE_NAME_MAP.get(key, key)
-            
+
             # Try shiny paths in order of priority
             if is_shiny:
                 shiny_paths = []
@@ -583,7 +583,7 @@ class PokemonData:
                 # 2. Extracted shiny sprites folder
                 if PATHS.get('sprites_shiny'):
                     shiny_paths.append(PATHS['sprites_shiny'] / f"{sprite_key}.png")
-                
+
                 for shiny_path in shiny_paths:
                     if shiny_path.exists():
                         try:
@@ -593,7 +593,7 @@ class PokemonData:
                             return self.sprites[cache_key]
                         except:
                             pass
-            
+
             # Normal sprite lookup, prefer bundled mod sprites but fall back to extracted runtime sprites
             normal_paths = []
             if PATHS.get('mod_normal_sprites'):
@@ -619,7 +619,7 @@ class PokemonData:
                 except:
                     continue
         return self.sprites.get(cache_key)
-    
+
     # Display name overrides for Pokemon with unclear internal keys
     DISPLAY_NAMES = {
         'aegislash': 'Aegislash Shield',
@@ -627,7 +627,7 @@ class PokemonData:
         'lycanrocDay': 'Lycanroc Day',
         'lycanrocNight': 'Lycanroc Night',
     }
-    
+
     def get_display_name(self, key):
         if key in self.DISPLAY_NAMES:
             return self.DISPLAY_NAMES[key]
@@ -635,17 +635,17 @@ class PokemonData:
         import re
         name = re.sub(r'([a-z])([A-Z])', r'\1 \2', key)
         return name.replace('-', ' ').title()
-    
+
     def get_base_forms(self):
         return self.data.get('baseForms', [])
-    
+
     def get_next_evo(self, key):
         """Get the next evolution (one step) of a Pokemon."""
         evos = self.data.get('evolutions', {})
         if key in evos:
             return evos[key]['evolves_to']
         return key
-    
+
     # Form alternates and mega evolutions that should resolve to their main form
     FORM_TO_MAIN = {
         'aegislashSword': 'aegislash',
@@ -655,7 +655,7 @@ class PokemonData:
         'megaSceptile': 'sceptile',
         'megaAlakazam': 'alakazam',
     }
-    
+
     def get_prev_evo(self, key):
         """Get the previous evolution (one step back) of a Pokemon.
         For form alternates (e.g. aegislashSword), resolve to the main form first."""
@@ -665,14 +665,14 @@ class PokemonData:
             key = self.FORM_TO_MAIN[key]
         reverse = {v['evolves_to']: k for k, v in evos.items()}
         return reverse.get(key, key)
-    
+
     def get_final_evo(self, key):
         """Get the final evolution of a Pokemon."""
         evos = self.data.get('evolutions', {})
         while key in evos:
             key = evos[key]['evolves_to']
         return key
-    
+
     def get_base_form(self, key):
         """Get the base form of a Pokemon by reversing the evolution chain.
         Resolves form alternates and mega evolutions first."""
@@ -689,7 +689,7 @@ class PokemonData:
         while key in reverse:
             key = reverse[key]
         return key
-    
+
     def get_chain(self, key):
         """Get all species keys in an evolution chain (from base to final)."""
         base = self.get_base_form(key)
@@ -714,7 +714,7 @@ class PokemonData:
             if self.get_prev_evo(key) == key:
                 roots.append(key)
         return roots
-    
+
     def create_new_pokemon(self, species_key):
         return {
             "specieKey": species_key,
@@ -732,37 +732,37 @@ class PokemonData:
 
 class PokemonCell(tk.Frame):
     """A single Pokemon slot in the grid."""
-    
+
     def __init__(self, parent, slot_index, on_click):
         super().__init__(parent, width=CELL_SIZE, height=CELL_SIZE + 15, bg='#2a2a2a')
         self.pack_propagate(False)
-        
+
         self.slot_index = slot_index
         self.on_click = on_click
         self.is_selected = False
         self.has_pokemon = False
-        
+
         # Sprite canvas (fixed size, no resizing)
-        self.sprite_canvas = tk.Canvas(self, width=48, height=48, bg='#2a2a2a', 
+        self.sprite_canvas = tk.Canvas(self, width=48, height=48, bg='#2a2a2a',
                                         highlightthickness=0)
         self.sprite_canvas.pack(pady=(3, 0))
         self.sprite_image = None
         self.held_item_image = None
         self.sprite_id = None
-        
+
         # Level label
-        self.level_label = tk.Label(self, text="", font=('Arial', 8), 
+        self.level_label = tk.Label(self, text="", font=('Arial', 8),
                                      bg='#2a2a2a', fg='#666666')
         self.level_label.pack()
-        
+
         # Bindings
         self.bind('<Button-1>', self._on_click)
         self.sprite_canvas.bind('<Button-1>', self._on_click)
         self.level_label.bind('<Button-1>', self._on_click)
-    
+
     def _on_click(self, event=None):
         self.on_click(self.slot_index)
-    
+
     def set_pokemon(self, sprite_image, level, is_shiny=False, held_item_sprite=None):
         """Update cell with Pokemon data."""
         self.has_pokemon = True
@@ -782,7 +782,7 @@ class PokemonCell(tk.Frame):
 
         # Set background
         self._update_bg()
-    
+
     def set_item(self, sprite_image, label='item'):
         """Update cell with item data."""
         self.has_pokemon = True
@@ -809,12 +809,12 @@ class PokemonCell(tk.Frame):
         self.level_label.config(text=label, fg='#444444')
 
         self._update_bg()
-    
+
     def set_selected(self, selected):
         """Update selection state."""
         self.is_selected = selected
         self._update_bg()
-    
+
     def _update_bg(self):
         """Update background colors based on state."""
         if self.is_selected:
@@ -823,7 +823,7 @@ class PokemonCell(tk.Frame):
             bg = '#3c3c3c'
         else:
             bg = '#2a2a2a'
-        
+
         self.config(bg=bg)
         self.sprite_canvas.config(bg=bg)
         self.level_label.config(bg=bg)
@@ -838,7 +838,7 @@ class App(tk.Tk):
         self.title(f"PokePath TD Save Editor v{MOD_VERSION} (Game v{GAME_VERSION})")
         self.geometry("1100x800")
         self.configure(bg='#2b2b2b')
-        
+
         self.save = SaveData()
         self.poke_data = PokemonData()
         self.route_options = _load_route_options()
@@ -860,10 +860,10 @@ class App(tk.Tk):
         self.team_cols = TEAM_SLOTS
         self.box_cols = DEFAULT_GRID_COLS
         self._relayout_job = None
-        
+
         self.build_ui()
         self.auto_load()
-    
+
     def build_ui(self):
         style = ttk.Style()
         style.theme_use('clam')
@@ -872,43 +872,43 @@ class App(tk.Tk):
         style.configure('TLabelframe', background='#2b2b2b', foreground='white')
         style.configure('TLabelframe.Label', background='#2b2b2b', foreground='white')
         style.configure('TButton', padding=5)
-        
+
         main = ttk.Frame(self)
         main.pack(fill='both', expand=True, padx=10, pady=10)
-        
+
         # Toolbar
         toolbar = ttk.Frame(main)
         toolbar.pack(fill='x', pady=(0, 10))
-        
+
         ttk.Button(toolbar, text="Load from Game", command=self.load_game).pack(side='left', padx=2)
         ttk.Button(toolbar, text="Load File", command=self.load_file).pack(side='left', padx=2)
         ttk.Button(toolbar, text="Save to Game", command=self.save_game).pack(side='left', padx=2)
         ttk.Button(toolbar, text="Export", command=self.export).pack(side='left', padx=2)
-        
+
         ttk.Separator(toolbar, orient='vertical').pack(side='left', fill='y', padx=10)
-        
+
         # Vanilla/Modded toggle
         self.save_mode_var = tk.StringVar(value="modded" if IS_MODDED else "vanilla")
         ttk.Label(toolbar, text="Save:").pack(side='left', padx=(0, 2))
         ttk.Radiobutton(toolbar, text="Vanilla", variable=self.save_mode_var, value="vanilla").pack(side='left')
         ttk.Radiobutton(toolbar, text="Modded", variable=self.save_mode_var, value="modded").pack(side='left', padx=(0, 5))
-        
+
         ttk.Separator(toolbar, orient='vertical').pack(side='left', fill='y', padx=10)
         self.source_label = ttk.Label(toolbar, text="No save loaded", font=('Arial', 10, 'bold'))
         self.source_label.pack(side='left', padx=5)
         self.loaded_as_modded = IS_MODDED  # Track which save type was actually loaded
-        
+
         # Stats
         stats = ttk.LabelFrame(main, text="Player Stats", padding=10)
         stats.pack(fill='x', pady=(0, 10))
-        
+
         self.stat_vars = {}
-        
+
         # Name (display only)
         ttk.Label(stats, text="Name:").grid(row=0, column=0, padx=5, sticky='e')
         self.stat_vars['name'] = tk.StringVar(value="-")
         ttk.Label(stats, textvariable=self.stat_vars['name'], font=('Arial', 11, 'bold')).grid(row=0, column=1, padx=5, sticky='w')
-        
+
         # Gold (editable)
         ttk.Label(stats, text="Gold:").grid(row=0, column=2, padx=5, sticky='e')
         self.gold_var = tk.StringVar(value="0")
@@ -916,7 +916,7 @@ class App(tk.Tk):
         self.gold_entry.grid(row=0, column=3, padx=5, sticky='w')
         ttk.Button(stats, text="Set", command=self.set_gold, width=5).grid(row=0, column=4, padx=2)
         ttk.Button(stats, text="Max Gold", command=lambda: self.set_gold_value(9007199254740991 if _has_feature('qol') else 99999999999)).grid(row=0, column=5, padx=5)
-        
+
         # Stars (display only - calculated from records)
         ttk.Label(stats, text="Stars:").grid(row=0, column=6, padx=5, sticky='e')
         self.stars_var = tk.StringVar(value="0")
@@ -941,7 +941,7 @@ class App(tk.Tk):
         ttk.Button(route_wave_btns, text='+1', width=5, command=lambda: self.adjust_wave(1)).pack(side='left', padx=1)
         ttk.Button(route_wave_btns, text='+10', width=5, command=lambda: self.adjust_wave(10)).pack(side='left', padx=1)
         ttk.Button(route_wave_btns, text='Set Route/Wave', command=self.set_route_wave).pack(side='left', padx=(6, 0))
-        
+
         # Global mode tabs (visible above grids)
         self.mode_tabs = ttk.Notebook(main)
         self.mode_tabs.pack(fill='x', pady=(0, 8))
@@ -954,46 +954,46 @@ class App(tk.Tk):
         # Content
         content = ttk.Frame(main)
         content.pack(fill='both', expand=True)
-        
+
         # Left - Grid
         self.left_frame = ttk.LabelFrame(content, text="Pokemon Grid", padding=5)
         self.left_frame.pack(side='left', fill='both', expand=True, padx=(0, 10))
-        
+
         # Team section
-        self.team_header = tk.Label(self.left_frame, text="TEAM (6 slots)", font=('Arial', 9, 'bold'), 
+        self.team_header = tk.Label(self.left_frame, text="TEAM (6 slots)", font=('Arial', 9, 'bold'),
                                bg='#2b2b2b', fg='#88ff88')
         self.team_header.pack(anchor='w', pady=(0, 5))
-        
+
         self.team_grid = tk.Frame(self.left_frame, bg='#1e1e1e')
         self.team_grid.pack(fill='x', pady=(0, 10))
-        
+
         for i in range(TEAM_SLOTS):
             cell = PokemonCell(self.team_grid, i, self.on_cell_click)
             cell.grid(row=0, column=i, padx=2, pady=2)
             self.cells[i] = cell
-        
+
         # Box section
-        self.box_header = tk.Label(self.left_frame, text="BOX (200 slots)", font=('Arial', 9, 'bold'), 
+        self.box_header = tk.Label(self.left_frame, text="BOX (200 slots)", font=('Arial', 9, 'bold'),
                               bg='#2b2b2b', fg='#88ff88')
         self.box_header.pack(anchor='w', pady=(5, 5))
-        
+
         # Scrollable box frame
         self.box_container = tk.Frame(self.left_frame, bg='#1e1e1e')
         self.box_container.pack(fill='both', expand=True)
-        
+
         box_canvas = tk.Canvas(self.box_container, bg='#1e1e1e', highlightthickness=0)
         box_scrollbar = ttk.Scrollbar(self.box_container, orient='vertical', command=box_canvas.yview)
         box_inner = tk.Frame(box_canvas, bg='#1e1e1e')
         self.box_canvas = box_canvas
         self.box_inner = box_inner
-        
+
         box_canvas.configure(yscrollcommand=box_scrollbar.set)
         box_scrollbar.pack(side='right', fill='y')
         box_canvas.pack(side='left', fill='both', expand=True)
-        
+
         box_canvas.create_window((0, 0), window=box_inner, anchor='nw')
         box_inner.bind('<Configure>', lambda e: box_canvas.configure(scrollregion=box_canvas.bbox('all')))
-        
+
         # Create box slots
         for i in range(BOX_SLOTS):
             slot_index = TEAM_SLOTS + i
@@ -1002,29 +1002,29 @@ class App(tk.Tk):
             cell = PokemonCell(box_inner, slot_index, self.on_cell_click)
             cell.grid(row=row, column=col, padx=CELL_PAD, pady=CELL_PAD)
             self.cells[slot_index] = cell
-        
+
         # Right - Editor (with scrollbar for small screens)
         right_outer = ttk.Frame(content, width=320)
         right_outer.pack(side='right', fill='y')
         right_outer.pack_propagate(False)
-        
+
         # Create canvas and scrollbar for right panel
         self.right_canvas = tk.Canvas(right_outer, bg='#2b2b2b', highlightthickness=0, width=300)
         right_scrollbar = ttk.Scrollbar(right_outer, orient='vertical', command=self.right_canvas.yview)
         right_frame = ttk.Frame(self.right_canvas)
-        
+
         self.right_canvas.configure(yscrollcommand=right_scrollbar.set)
         right_scrollbar.pack(side='right', fill='y')
         self.right_canvas.pack(side='left', fill='both', expand=True)
-        
+
         self.right_canvas.create_window((0, 0), window=right_frame, anchor='nw')
         right_frame.bind('<Configure>', lambda e: self.right_canvas.configure(scrollregion=self.right_canvas.bbox('all')))
-        
+
         # Enable mouse wheel scrolling on right panel
         def on_right_mousewheel(event):
             self.right_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         self.right_canvas.bind_all('<MouseWheel>', on_right_mousewheel)
-        
+
         # Global Mods at top
         mods_frame = ttk.LabelFrame(right_frame, text="Global Mods", padding=8)
         mods_frame.pack(fill='x', pady=(0, 10), padx=5)
@@ -1058,7 +1058,7 @@ class App(tk.Tk):
         self.item_mods_frame = ttk.Frame(mods_frame)
         ttk.Button(self.item_mods_frame, text="Clear All Items", command=self.clear_all_items).pack(fill='x', pady=1)
         ttk.Button(self.item_mods_frame, text="Unlock All Items", command=self.unlock_all_items).pack(fill='x', pady=1)
-        
+
         ttk.Separator(right_frame, orient='horizontal').pack(fill='x', pady=5, padx=5)
 
         self.editor_panel = ttk.Frame(right_frame)
@@ -1166,14 +1166,14 @@ class App(tk.Tk):
         item_btns2 = ttk.Frame(items_tab)
         item_btns2.pack(fill='x', padx=5, pady=(0, 10))
         ttk.Button(item_btns2, text='Add Item to Open Slot', command=self.add_item_slot).pack(side='left', expand=True, fill='x', padx=1)
-        
+
         # Status
         self.status = ttk.Label(main, text="Ready", relief='sunken', padding=5)
         self.status.pack(fill='x', side='bottom', pady=(10, 0))
 
         self.team_grid.bind('<Configure>', self._on_grid_area_configure)
         self.box_canvas.bind('<Configure>', self._on_grid_area_configure)
-    
+
     def _sync_item_dropdown_from_selected_slot(self):
         if not self.save.data or self.selected_item_slot is None:
             return
@@ -1202,7 +1202,7 @@ class App(tk.Tk):
         # Pokemon mode
         self.selected_slot = slot_index
         self.refresh_grid()
-    
+
     def auto_load(self):
         # Warn if sprites won't load
         if not HAS_PIL:
@@ -1210,11 +1210,11 @@ class App(tk.Tk):
         elif not PATHS.get('sprites'):
             self.status.config(text="Warning: Sprite folder not found — Pokemon images won't display")
         self.load_game()
-    
+
     def load_game(self):
         self.status.config(text="Loading...")
         self.update()
-        
+
         use_modded = self.save_mode_var.get() == "modded"
         if self.save.load_from_game(modded=use_modded):
             mode_str = "Modded" if use_modded else "Vanilla"
@@ -1228,7 +1228,7 @@ class App(tk.Tk):
         else:
             error_detail = getattr(self.save, 'last_error', '') or 'Unknown error'
             self.status.config(text=f"Failed: {error_detail[:80]}")
-            
+
             if 'lock' in error_detail.lower() or 'running' in error_detail.lower():
                 messagebox.showwarning("Load Failed",
                     f"Save database is locked.\n\n"
@@ -1260,14 +1260,14 @@ class App(tk.Tk):
                         f"Error: {error_detail}"
                     )
                 messagebox.showwarning(title, message)
-    
+
     def load_file(self):
         path = filedialog.askopenfilename(filetypes=[("Save files", "*.json *.txt")])
         if path and self.save.load_from_file(Path(path)):
             self.source_label.config(text=f"File: {Path(path).name}")
             self._inject_missing_eggs()
             self.refresh_grid()
-    
+
     def save_game(self):
         if not self.save.data:
             return
@@ -1280,7 +1280,7 @@ class App(tk.Tk):
             self.status.config(text="Saved!")
         else:
             messagebox.showerror("Error", "Failed to save")
-    
+
     def export(self):
         path = filedialog.asksaveasfilename(defaultextension=".json")
         if path and self.save.export_to_file(Path(path)):
@@ -1943,13 +1943,13 @@ class App(tk.Tk):
     def update_editor(self):
         """Update the editor panel for selected slot."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
-        
+
         slot_type = "Team" if self.selected_slot is not None and self.selected_slot < TEAM_SLOTS else "Box"
         slot_num = self.selected_slot if self.selected_slot is not None and self.selected_slot < TEAM_SLOTS else (self.selected_slot - TEAM_SLOTS if self.selected_slot else 0)
-        
+
         # Clear sprite display
         self.sprite_display.delete('all')
-        
+
         if poke:
             key = poke.get('specieKey', '?')
             name = self.poke_data.get_display_name(key)
@@ -1975,21 +1975,21 @@ class App(tk.Tk):
 
         self._refresh_party_button_state()
         self._refresh_switch_form_button_state()
-    
+
     def on_species_change(self, event=None):
         if self.selected_slot is None or not self.save.data:
             return
-        
+
         display_name = self.species_var.get()
         if not display_name:
             return
-        
+
         new_key = None
         for k in self.poke_data.all_pokemon:
             if self.poke_data.get_display_name(k) == display_name:
                 new_key = k
                 break
-        
+
         if new_key:
             poke = self.save.get_pokemon_at_slot(self.selected_slot)
             if poke:
@@ -2000,7 +2000,7 @@ class App(tk.Tk):
                 new_poke = self.poke_data.create_new_pokemon(new_key)
                 self.save.set_pokemon_at_slot(self.selected_slot, new_poke)
             self.refresh_grid()
-    
+
     def on_level_entry(self, event=None):
         if self.selected_slot is None:
             return
@@ -2009,25 +2009,25 @@ class App(tk.Tk):
             self.set_level(max(1, level))
         except ValueError:
             pass
-    
+
     def change_level(self, delta):
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
         if poke:
             new_level = max(1, poke.get('lvl', 1) + delta)
             self.set_level(new_level)
-    
+
     def set_level(self, level):
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
         if poke:
             poke['lvl'] = max(1, level)
             self.refresh_grid()
-    
+
     def toggle_shiny(self):
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
         if poke:
             poke['isShiny'] = not poke.get('isShiny', False)
             self.refresh_grid()
-    
+
     def evolve_pokemon(self):
         """Evolve selected Pokemon one step in its evolution chain."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
@@ -2040,7 +2040,7 @@ class App(tk.Tk):
                 self.status.config(text=f"Evolved to {self.poke_data.get_display_name(new_key)}!")
             else:
                 self.status.config(text="Already fully evolved!")
-    
+
     def devolve_pokemon(self):
         """Devolve selected Pokemon one step back in its evolution chain."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
@@ -2053,7 +2053,7 @@ class App(tk.Tk):
                 self.status.config(text=f"Devolved to {self.poke_data.get_display_name(new_key)}!")
             else:
                 self.status.config(text="Already base form!")
-    
+
     # Form switching map: key -> alternate form key (matches in-game updateSpecie calls)
     FORM_SWITCHES = {
         'lycanrocDay': 'lycanrocNight',
@@ -2061,7 +2061,7 @@ class App(tk.Tk):
         'aegislash': 'aegislashSword',
         'aegislashSword': 'aegislash',
     }
-    
+
     def switch_form(self):
         """Switch a Pokemon to its alternate form (Lycanroc Day/Night, Aegislash Shield/Sword, etc.)."""
         poke = self.save.get_pokemon_at_slot(self.selected_slot) if self.selected_slot is not None and self.save.data else None
@@ -2074,39 +2074,39 @@ class App(tk.Tk):
                 self.status.config(text=f"Switched form to {self.poke_data.get_display_name(new_key)}!")
             else:
                 self.status.config(text="This Pokemon has no alternate form.")
-    
+
     def add_pokemon(self):
         if self.selected_slot is None or not self.save.data:
             messagebox.showinfo("Select Slot", "Click an empty slot first!")
             return
-        
+
         dialog = tk.Toplevel(self)
         dialog.title("Add Pokemon")
         dialog.geometry("300x400")
         dialog.transient(self)
         dialog.grab_set()
-        
+
         ttk.Label(dialog, text="Search and select:").pack(pady=10)
-        
+
         search_var = tk.StringVar()
         search_entry = ttk.Entry(dialog, textvariable=search_var)
         search_entry.pack(fill='x', padx=10)
-        
+
         listbox = tk.Listbox(dialog, height=15)
         listbox.pack(fill='both', expand=True, padx=10, pady=10)
-        
+
         all_names = [(k, self.poke_data.get_display_name(k)) for k in self.poke_data.all_pokemon]
-        
+
         def update_list(*args):
             listbox.delete(0, tk.END)
             search = search_var.get().lower()
             for key, name in all_names:
                 if search in name.lower():
                     listbox.insert(tk.END, name)
-        
+
         search_var.trace('w', update_list)
         update_list()
-        
+
         def on_select():
             sel = listbox.curselection()
             if sel:
@@ -2118,11 +2118,11 @@ class App(tk.Tk):
                         self.refresh_grid()
                         dialog.destroy()
                         return
-        
+
         ttk.Button(dialog, text="Add", command=on_select).pack(pady=10)
         listbox.bind('<Double-1>', lambda e: on_select())
         search_entry.focus()
-    
+
     def delete_pokemon(self):
         if self.selected_slot is None or not self.save.data:
             return
@@ -2132,7 +2132,7 @@ class App(tk.Tk):
         if messagebox.askyesno("Delete", "Delete this Pokemon?"):
             self.save.delete_at_slot(self.selected_slot)
             self.refresh_grid()
-    
+
     def _profile_ownership_key(self, key, obtainable_keys):
         if not key:
             return None
@@ -2237,12 +2237,12 @@ class App(tk.Tk):
 
         self.refresh_grid()
         messagebox.showinfo("Done", f"Added {count} new Pokemon!\n({added_to_team} added to Team, {count - added_to_team} added to Box)\n({skipped} already covered)")
-    
+
     def make_all_shiny(self):
         """Make all Pokemon in team and box shiny. On vanilla saves, only max evolutions."""
         if not self.save.data:
             return
-        
+
         has_shiny_mod = _has_feature('shiny')
         count = 0
         skipped = 0
@@ -2253,13 +2253,13 @@ class App(tk.Tk):
                     continue
                 poke['isShiny'] = True
                 count += 1
-        
+
         self.refresh_grid()
         msg = f"Made {count} Pokemon shiny!"
         if skipped:
             msg += f"\n({skipped} non-max evolutions skipped — Shiny mod not installed, no sprites for them)"
         messagebox.showinfo("Done", msg)
-    
+
     def max_all(self):
         if not self.save.data:
             return
@@ -2276,7 +2276,7 @@ class App(tk.Tk):
                 count += 1
         self.refresh_grid()
         messagebox.showinfo("Done", f"Maxed {count} Pokemon to Lv100+ and fully evolved!")
-    
+
     def evolve_all(self):
         """Evolve all Pokemon to their final evolution without changing level."""
         if not self.save.data:
@@ -2291,7 +2291,7 @@ class App(tk.Tk):
                     count += 1
         self.refresh_grid()
         messagebox.showinfo("Done", f"Evolved {count} Pokemon to final form!")
-    
+
     def devolve_all(self):
         """Devolve all Pokemon to their base form without changing level."""
         if not self.save.data:
@@ -2306,7 +2306,7 @@ class App(tk.Tk):
                     count += 1
         self.refresh_grid()
         messagebox.showinfo("Done", f"Devolved {count} Pokemon to base form!")
-    
+
     def _is_max_evo(self, poke):
         """Check if a Pokemon is at its max evolution."""
         key = poke.get('specieKey') or poke.get('specie', {}).get('key', '')
@@ -2343,31 +2343,31 @@ class App(tk.Tk):
         state_text = "shiny" if new_state else "normal"
         no_mod_msg = f" ({len(eligible)} max evolutions — Shiny mod not installed)" if not has_shiny_mod and len(eligible) < len(all_poke) else ""
         messagebox.showinfo("Done", f"All{no_mod_msg} Pokemon are now {state_text}!")
-    
+
     def delete_all(self):
         if not self.save.data:
             return
-        
+
         team_count = len(self.save.team)
         box_count = len(self.save.box)
         total = team_count + box_count
-        
+
         if total == 0:
             messagebox.showinfo("Empty", "No Pokemon to delete!")
             return
-        
+
         if not messagebox.askyesno("Delete All", f"Delete ALL {total} Pokemon?\n\nTeam: {team_count}\nBox: {box_count}\n\nThis cannot be undone!"):
             return
-        
+
         # Clear team and box
         save_obj = self.save.save_obj
         save_obj['team'] = []
         save_obj['box'] = []
-        
+
         self.selected_slot = None
         self.refresh_grid()
         messagebox.showinfo("Done", f"Deleted {total} Pokemon!")
-    
+
     def remove_duplicate_pokemon(self):
         if not self.save.data:
             return
@@ -2475,7 +2475,7 @@ class App(tk.Tk):
         if self.save.data:
             self.save.set_player('gold', 9007199254740991 if _has_feature('qol') else 99999999999)
             self.refresh_grid()
-    
+
     def set_gold(self):
         """Set gold from entry field."""
         if not self.save.data:
@@ -2485,13 +2485,13 @@ class App(tk.Tk):
             self.set_gold_value(max(0, gold))
         except ValueError:
             messagebox.showerror("Error", "Enter a valid number")
-    
+
     def set_gold_value(self, amount):
         """Set gold to specific amount."""
         if self.save.data:
             self.save.set_player('gold', amount)
             self.refresh_grid()
-    
+
     def _inject_missing_eggs(self):
         """Auto-add missing eggs to shop without resetting progress or price."""
         if not self.save.data:
@@ -2528,6 +2528,7 @@ class App(tk.Tk):
             'skrelp', 'charcadet', 'capsakid', 'tatsugiri', 'klink', 'deino',
             'houndour', 'pineco', 'chinchou',
         ]
+        all_eggs = list(self.poke_data.data.get('allObtainable', all_eggs))
 
         # Get current shop data
         if 'save' in self.save.data:
@@ -2546,12 +2547,12 @@ class App(tk.Tk):
             else:
                 self.save.data['shop']['eggList'] = current_eggs
             print(f"[Mod] Injected {len(missing)} missing eggs into shop")
-    
+
     def reset_eggs(self):
         """Reset egg shop to the runtime-obtainable Pokemon list."""
         if not self.save.data:
             return
-        
+
         # Runtime-obtainable list from pokemonData.js.
         original_egg_list = [
             # === Runtime eggListData ===
@@ -2583,10 +2584,11 @@ class App(tk.Tk):
             'skrelp', 'charcadet', 'capsakid', 'tatsugiri', 'klink', 'deino',
             'houndour', 'pineco', 'chinchou',
         ]
-        
+        original_egg_list = list(self.poke_data.data.get('allObtainable', original_egg_list))
+
         # Starting egg price
         starting_price = 10
-        
+
         # Update shop data
         if 'save' in self.save.data:
             self.save.data['save']['shop']['eggList'] = original_egg_list.copy()
@@ -2594,7 +2596,7 @@ class App(tk.Tk):
         else:
             self.save.data['shop']['eggList'] = original_egg_list.copy()
             self.save.data['shop']['eggPrice'] = starting_price
-        
+
         self.refresh_grid()
         messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} Pokemon\nEgg price reset to: ${starting_price}")
 
@@ -2603,7 +2605,7 @@ class App(tk.Tk):
         star_routes = []
         for route in self.route_options:
             route_name = str(route.get('name', '')).strip().lower()
-            if route.get('id') == 20 or 'manaphy cave' in route_name:
+            if not route_name.startswith('route '):
                 continue
             star_routes.append(route)
         return star_routes
@@ -2612,7 +2614,7 @@ class App(tk.Tk):
         star_routes = self.get_star_route_options()
         if star_routes:
             return len(star_routes) * 100
-        return 2100
+        return 2900
 
     def get_complete_all_stages_label(self):
         return f"Complete All Stages ({self.get_complete_all_stages_star_count()} Stars)"

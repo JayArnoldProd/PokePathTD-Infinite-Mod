@@ -51,7 +51,7 @@ export class Tooltip {
         let left = mouseX + 10 - tooltipWidthUnscaled / 2;
         let top = mouseY - tooltipHeightUnscaled - 13;
         if (top < 0) top = mouseY + 25;
-        
+
 
         const maxLeft = this.root.offsetWidth - tooltipWidthUnscaled;
         const maxTop = this.root.offsetHeight - tooltipHeightUnscaled;
@@ -77,9 +77,10 @@ export class Tooltip {
     showAchievement(achievement) {
         this.tooltip.innerHTML = `
             <div class="tooltip-content">
-                <span class="tooltip-description">${achievement.description[this.main.lang].toUpperCase()}</span>  
+                <span class="tooltip-description">${achievement.description[this.main.lang].toUpperCase()}</span>
             </div>
         `;
+		this.tooltip.style.paddingBottom = "10px";
         this.tooltip.style.display = "block";
         this._ensurePositionOnce();
     }
@@ -88,10 +89,11 @@ export class Tooltip {
         let lang = this.main.lang;
         if (item.name.length <= lang) lang = 0;
 
-        this.tooltip.innerHTML = `
+		this.tooltip.style.paddingBottom = "10px";
+		this.tooltip.innerHTML = `
             <div class="tooltip-content" style="max-width: 280px; width: auto;">
-                <span class="tooltip-name" style="display: block; margin-bottom: 4px;">${item.name[lang].toUpperCase()}</span>  
-                <span class="tooltip-description" style="display: block; white-space: normal; word-wrap: break-word;">${item.description[lang].toUpperCase()}</span>  
+                <span class="tooltip-name" style="display: block; margin-bottom: 4px;">${item.name[lang].toUpperCase()}</span>
+                <span class="tooltip-description" style="display: block; white-space: normal; word-wrap: break-word;">${item.description[lang].toUpperCase()}</span>
             </div>
         `;
         this.tooltip.style.cssText = "position: absolute; pointer-events: none; display: block; max-width: 280px;";
@@ -101,7 +103,7 @@ export class Tooltip {
     showText(text) {
         this.tooltip.innerHTML = `
             <div class="tooltip-content" style="width: fit-content !important; min-width: unset !important; max-width: fit-content !important; padding: 4px 10px !important;">
-                <span class="tooltip-name" style="white-space: nowrap; display: inline-block;">${text.toUpperCase()}</span>  
+                <span class="tooltip-name" style="white-space: nowrap; display: inline-block;">${text.toUpperCase()}</span>
             </div>
         `;
         this.tooltip.style.cssText = "position: absolute; pointer-events: none; display: block; width: fit-content !important; min-width: unset !important; max-width: fit-content !important;";

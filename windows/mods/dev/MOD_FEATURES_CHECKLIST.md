@@ -108,21 +108,21 @@ This document lists all mod features that MUST be present in the modded files. U
 - [ ] Endless scaling - enemy HP/power scales for waves 100+
 - [ ] Shiny enemy spawn roll: `this.isShiny = Math.random() < (1 / 1000);`
 - [ ] Shiny enemies swap to `/shiny/` sprite path when available
-- [ ] Shiny enemy gameplay modifiers: +50% HP, +50% armor, 2-heart damage, 1000x gold
+- [ ] Shiny enemy gameplay modifiers: +100% HP, +100% armor, 2-heart damage, 1000x gold
 - [ ] Shiny enemy defeats increment `this.main.player.stats.shinyEnemiesDefeated`
 - [ ] **PERF**: Center point mutation (not new object) in update loop
 - [ ] **PERF**: `_markedForRemoval` flag for batch removal (not indexOf+splice per enemy)
 - [ ] **PERF**: Single-pass status effect compaction (replaces two .filter() calls)
 
 ## Tower.modded.js
-- [ ] Delta time fix for accurate projectile timing
-- [ ] Projectile retargeting in `updateProjectiles()`: search from tower position with tower's range
+- [ ] Delta-time catch-up loops for area and normal attacks, capped at 50 attacks per frame
+- [ ] 1.6.1 bombardment, beam, platform, passenger, and projectile cleanup behavior preserved
+- [ ] Orbital tower guard plus level-scaled `orbitalSpeed` and `refreshOrbitalProjectiles()`
+- [ ] Projectile retargeting uses the 1.6.1 fallback path without allowing orbital towers to fire normal projectiles
 - [ ] `findClosestEnemy()` method on Tower: searches from given position within maxDist
 - [ ] **PERF**: `recalculatePower()` only runs on `_isFirstStep` (not every sub-step)
-- [ ] **PERF**: Single-pass aura detection in recalculatePower (replaces 4 separate .filter() calls)
-- [ ] **PERF**: Squared distance for aura range, snowCloak, static stun checks
+- [ ] **PERF**: Squared-distance snowCloak checks
 - [ ] **PERF**: Pre-computed snowCloak from `_snowCloakEnemies` (not iterating all enemies per tower)
-- [ ] **PERF**: Cached `_tempCanvas`/`_tempCtx` for ADN tower tint draws (not createElement every frame)
 - [ ] **PERF**: `findClosestEnemy` uses squared distance, skips off-screen enemies
 
 ## Projectile.modded.js
@@ -236,10 +236,9 @@ Vanilla 1.5.6 fixed Pokémon attacking enemies outside the map. Keep this mod cl
 - [ ] recalculatePower only on first sub-step per frame
 - [ ] Pre-computed snowCloak list once per frame
 - [ ] Batch enemy removal via `_markedForRemoval` flag
-- [ ] Cached temp canvas for ADN tower tint draws
 - [ ] Throttled damage UI updates (every 5 frames)
 - [ ] Object reuse for enemy/projectile center points (reduces GC pressure)
-- [ ] Single-pass aura detection, status effect compaction
+- [ ] Single-pass status effect compaction
 - [ ] _skipDraw on non-last sub-steps for enemies and towers
 
 ## Feature: Endless Wave Density (always-on)
@@ -287,11 +286,11 @@ Vanilla 1.5.6 fixed Pokémon attacking enemies outside the map. Keep this mod cl
   - Max Gold: 9 quadrillion only with `qol`, else vanilla 99.9B
   - Shiny toggle for non-max-evo: only with `shiny` feature (not generic is_modded)
 
-## Feature: Save Editor 1.5 Species + Sprite Coverage
-- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (316 keys for 1.5.9)
+## Feature: Save Editor 1.6.1 Species + Sprite Coverage
+- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (378 keys / 183 obtainable entries for 1.6.1)
 - [ ] Save editor species dropdown sources `allKeys` from regenerated metadata
 - [ ] Normal sprite lookup falls back from bundled `patches/normal_sprites` to extracted runtime `src/assets/images/pokemon/normal`
-- [ ] Runtime-only 1.5 species (example: Dewpider line) render correctly in save editor UI
+- [ ] New 1.6 species (including the Dreepy line) render correctly in save editor UI
 
 ---
 

@@ -6,17 +6,23 @@ export class Game {
 	static CANVAS_W    = 720;
 	static CANVAS_H    = 624;
 	static CANVAS_W_XL = 1440;
+	static CANVAS_H_XLV = 1872;
 
 	constructor(main) {
 	    this.main = main;
 
 	    // ── Scroll / viewport state for XL maps ───────────────────────────
-	    this.isXL        = false;   // set by resizeCanvas() when map has xl:true
+	    this.isXL        = false;   // set by resizeCanvas() when map has xl:true (horizontal x2)
+	    this.isXLV       = false;   // set by resizeCanvas() when map has xlv:true (vertical x3)
 	    this.scrollX     = 0;       // current horizontal scroll offset (canvas px)
+	    this.scrollY     = 0;       // current vertical scroll offset (canvas px)
 	    this.mouseViewX  = undefined; // cursor X relative to the 720-px viewport (for edge-pan)
+	    this.mouseViewY  = undefined; // cursor Y relative to the 624-px viewport (for edge-pan)
 	    this._scrolling  = false;   // internal pan flag
 	    this._panStartX  = 0;
+	    this._panStartY  = 0;
 	    this._panStartScrollX = 0;
+	    this._panStartScrollY = 0;
 	    // ──────────────────────────────────────────────────────────────────
 
 	    this.canvas = document.createElement('canvas');
@@ -48,50 +54,69 @@ export class Game {
 	    this.chrono;
 
 	    this.canvasShake  = {
-		  	active: false,
-		  	intensity: 0,  
-		  	duration: 0, 
-		  	elapsed: 0  
+			active: false,
+			intensity: 0,
+			duration: 0,
+			elapsed: 0
 		};
 	}
 
-	resizeCanvas(xl = false) {
-	    this.isXL = xl;
+	resizeCanvas(xl = false, xlv = false) {
+	    this.isXL  = xl;
+	    this.isXLV = xlv;
 	    this.scrollX = 0;
+	    this.scrollY = 0;
 	    this.mouseViewX = undefined;
-	    this.canvas.width  = xl ? Game.CANVAS_W_XL : Game.CANVAS_W;
-	    this.canvas.height = Game.CANVAS_H;
+	    this.mouseViewY = undefined;
+	    this.canvas.width  = xl  ? Game.CANVAS_W_XL  : Game.CANVAS_W;
+	    this.canvas.height = xlv ? Game.CANVAS_H_XLV : Game.CANVAS_H;
 
-	    if (xl) {
-	        this.canvasWrapper.classList.add('xl-map');
+	    this.canvasWrapper.classList.toggle('xl-map', xl);
+	    this.canvasWrapper.classList.toggle('xlv-map', xlv);
+
+	    if (xl || xlv) {
 	        this._applyScroll();
 	    } else {
-	        this.canvasWrapper.classList.remove('xl-map');
 	        this.canvas.style.left      = '';
 	        this.canvas.style.transform = 'translate(-50%, -50%)';
 	    }
 	}
 
-
 	_applyScroll() {
-	    if (!this.isXL) return;
-	    const maxScroll = Game.CANVAS_W_XL - Game.CANVAS_W;
-	    this.scrollX = Math.max(0, Math.min(this.scrollX, maxScroll));
-	    this.canvas.style.transform = `translate(calc(-50% + ${-this.scrollX + Game.CANVAS_W_XL / 2 - Game.CANVAS_W / 2}px), -50%)`;
-	    const pct = maxScroll > 0 ? this.scrollX / maxScroll : 0;
-	    this.canvasWrapper.style.setProperty('--scroll-pct', pct.toFixed(4));
+	    if (!this.isXL && !this.isXLV) return;
+
+	    let offsetX = 0, offsetY = 0;
+
+	    if (this.isXL) {
+	        const maxScrollX = Game.CANVAS_W_XL - Game.CANVAS_W;
+	        this.scrollX = Math.max(0, Math.min(this.scrollX, maxScrollX));
+	        offsetX = -this.scrollX + Game.CANVAS_W_XL / 2 - Game.CANVAS_W / 2;
+	        const pctX = maxScrollX > 0 ? this.scrollX / maxScrollX : 0;
+	        this.canvasWrapper.style.setProperty('--scroll-pct', pctX.toFixed(4));
+	    }
+
+	    if (this.isXLV) {
+	        const maxScrollY = Game.CANVAS_H_XLV - Game.CANVAS_H;
+	        this.scrollY = Math.max(0, Math.min(this.scrollY, maxScrollY));
+	        offsetY = -this.scrollY + Game.CANVAS_H_XLV / 2 - Game.CANVAS_H / 2;
+	        const pctY = maxScrollY > 0 ? this.scrollY / maxScrollY : 0;
+	        this.canvasWrapper.style.setProperty('--scroll-pct-v', pctY.toFixed(4));
+	    }
+
+	    this.canvas.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+	    this.main.UI.secretVictiniCave.style.top =  `${1430 - this.scrollY}px`;
 	}
 
 	_clientToCanvasX(clientX) {
 	    const rect   = this.canvasWrapper.getBoundingClientRect();
-	    const scaleX = Game.CANVAS_W / rect.width;  
+	    const scaleX = Game.CANVAS_W / rect.width;
 	    return (clientX - rect.left) * scaleX + this.scrollX;
 	}
 
 	_clientToCanvasY(clientY) {
 	    const rect   = this.canvasWrapper.getBoundingClientRect();
 	    const scaleY = Game.CANVAS_H / rect.height;
-	    return (clientY - rect.top) * scaleY;
+	    return (clientY - rect.top) * scaleY + this.scrollY;
 	}
 
 	scrollBy(dx) {
@@ -104,8 +129,18 @@ export class Game {
 	    this._applyScroll();
 	}
 
+	scrollByY(dy) {
+	    this.scrollY += dy;
+	    this._applyScroll();
+	}
 
-  	load() {
+	scrollToY(y) {
+	    this.scrollY = y;
+	    this._applyScroll();
+	}
+
+
+	load() {
 	    this.stopped = false;
 	    this.lastTime = performance.now();
 
@@ -115,7 +150,7 @@ export class Game {
 
 	    const workerCode = `
 	        let timerId;
-	        const interval = ${this.frameDuration}; 
+	        const interval = ${this.frameDuration};
 
 	        self.onmessage = function(e) {
 	            if (e.data === 'start') {
@@ -171,15 +206,16 @@ export class Game {
 	        const intensity = this.canvasShake.intensity * ease;
 	        const sdx = (Math.random() - 0.75) * 2 * intensity;
 	        const sdy = (Math.random() - 0.75) * 2 * intensity;
-	        if (this.isXL) {
-	            const baseX = -this.scrollX + Game.CANVAS_W_XL / 2 - Game.CANVAS_W / 2;
-	            this.canvas.style.transform = `translate(calc(-50% + ${baseX + sdx}px), calc(-50% + ${sdy}px))`;
+	        if (this.isXL || this.isXLV) {
+	            const baseX = this.isXL  ? (-this.scrollX + Game.CANVAS_W_XL  / 2 - Game.CANVAS_W  / 2) : 0;
+	            const baseY = this.isXLV ? (-this.scrollY + Game.CANVAS_H_XLV / 2 - Game.CANVAS_H  / 2) : 0;
+	            this.canvas.style.transform = `translate(calc(-50% + ${baseX + sdx}px), calc(-50% + ${baseY + sdy}px))`;
 	        } else {
 	            this.canvas.style.transform = `translate(calc(-50% + ${sdx}px), calc(-50% + ${sdy}px))`;
 	        }
 	        if (progress >= 1) {
 	            this.canvasShake.active = false;
-	            if (this.isXL) this._applyScroll();
+	            if (this.isXL || this.isXLV) this._applyScroll();
 	            else this.canvas.style.transform = `translate(-50%, -50%)`;
 	        }
 	    }
@@ -230,7 +266,19 @@ export class Game {
                             enemy.position.y - 20 > this.canvas.height ||
                             enemy.position.y < -20
                         ) {
+							if (enemy.enemy.id === 'mew' && enemy.hp === enemy.hpMax && this.main.UI.tilesCountNum) {
+								const towersNum = this.main.UI.tilesCountNum.reduce((count, n) => count + n, 0);
+								if (towersNum >= 3) enemy.power = 0;
+							}
+							if (enemy.enemy.id === 'klefki' && !this.main.player.secrets.klefki && !this.main.area.inChallenge && !this.main.area.isCustom) {
+								this.main.area.map.background = './src/assets/images/maps/8-1bis.png';
+								this.main.game.canvasBackground.src = this.main.area.map.background;
+								enemy.power = 0;
+								this.main.player.secrets.klefki = true;
+								playSound('door', 'effect');
+							}
                             playSound('hit2', 'effect');
+							this.main.area.hitsReceived++;
                             this.main.player.getDamaged(enemy.power);
                             const idx = this.main.area.enemies.indexOf(enemy);
                             if (idx !== -1) this.main.area.enemies.splice(idx, 1);
@@ -272,6 +320,7 @@ export class Game {
         // ── FIN SUBSTEPS ────────────────────────────────────────────────────
 
         this.main.area.placementTiles.forEach(tile => tile.update(this.mouse));
+		this.drawWindCurrents(time);
 
         if (this.main?.area?.updateLinkBeams) {
             this.main.area.updateLinkBeams(safeDelta);
@@ -295,12 +344,26 @@ export class Game {
         }
 
         if (this.ranges) {
-            this.main.area.placementTiles.forEach(tile => {
-                if (tile.tower) {
-                    tile.drawRange(tile.tower.range, tile.tower.rangeType, tile.tower.innerRange, tile.tower.ability, tile.tower.item, true);
-                }
-            });
+			this.main.area.towers.forEach(tower => {
+				if (tower) {
+					tower.tile.drawRange(tower.tile.computeEffectiveRange(tower), tower.rangeType, tower.innerRange, tower.ability, tower?.pokemon?.item, true);
+				}
+			});
         }
+
+		this.main.area.towers.forEach(tower => {
+			if (tower.awaitingBombardZone) {
+				tower.tile.drawRange(
+					tower.tile.computeEffectiveRange(tower, tower.center),
+					tower.rangeType,
+					tower.innerRange,
+					tower.ability,
+					tower?.pokemon?.item,
+					true,
+					tower.center
+				);
+			}
+		});
 
         if (this.main.mapEffects != 2) {
             if (this.effectEnabled) {
@@ -372,31 +435,32 @@ export class Game {
 	// 	}
 	// }
 
-  	tryDeployUnit(pos, ui) {
-  		if (this.stopped || this.main.isSectionOpen()) return;
+	tryDeployUnit(pos, ui) {
+		if (this.stopped || this.main.isSectionOpen()) return;
 	    if (this.deployingUnit != undefined) return this.cancelDeployUnit();
 	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
 	    this.deployingUnit = this.main.team.pokemon[pos];
 	    if (this.main.team.pokemon[pos].isDeployed && ui) {
-	      	this.retireUnit();
-	      	return;
+		this.retireUnit();
+		return;
 	    }
 	    playSound('click1', 'ui');
 	    this.main.UI.nextWave.style.filter = 'brightness(0.75)';
 	    this.main.UI.nextWave.style.pointerEvents = 'none';
-  	}
+	}
 
-  	cancelDeployUnit() {
+	cancelDeployUnit() {
 	    this.deployingUnit = undefined;
 	    this.main.UI.updatePokemon();
 	    if (!this.main.area.waveActive) {
-	      	this.main.UI.revertUI();
-	      	this.main.UI.nextWave.style.filter = 'revert-layer';
-	      	this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
+		this.main.UI.revertUI();
+		this.main.UI.nextWave.style.filter = 'revert-layer';
+		this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
 	    }
-  	}
+	}
 
-  	moveUnitToTile(newTile, mute = false) {
+	moveUnitToTile(newTile, mute = false) {
+		if (this.main.area.heavyMetal) return playSound('pop0', 'ui')
 	    if (!this.deployingUnit || !newTile || this.main.isSectionOpen()) return;
 
 	    const pokemon = this.deployingUnit;
@@ -437,6 +501,17 @@ export class Game {
 			newTower.center = tileCenter;
 			this.main.area.towers.push(newTower);
 
+			if (newTower.ability.id === 'heavyMetal' && !this.main.area.heavyMetal) {
+				if (this.main.area.waveActive) {
+					playSound('bell', 'effect');
+					const heavyMetalStunDuration = (newTower?.pokemon?.item?.id === 'metalCoat') ? 4 : 2;
+					this.main.area.heavyMetal = true;
+					this.main.area.enemies.forEach(enemy => {
+						if (!enemy.dying) enemy.applyStatusEffect({ type: 'stun', duration: heavyMetalStunDuration });
+					});
+				}
+			}
+
             pokemon.tilePosition = newTile.id;
             pokemon.isDeployed = true;
             pokemon.isPassenger = false;
@@ -458,7 +533,7 @@ export class Game {
             return;
         }
 
-        if (newTile.tower?.ability?.id === 'grassyTerrain' || newTile.tower?.ability?.id === 'mount' ) {
+        if (newTile.tower?.ability?.id === 'grassPlatform' || newTile.tower?.ability?.id === 'mount' || newTile.tower?.ability?.id === 'icePlatform') {
             if (newTile.passenger) {
                 const oldPassenger = newTile.passenger;
                 const movingUnit = this.deployingUnit;
@@ -494,7 +569,7 @@ export class Game {
         if (!pokemon) return false;
 
         // base debe tener habilidad
-        if (tile.tower?.ability?.id !== 'grassyTerrain' && tile.tower?.ability?.id !== 'mount') return false;
+        if (tile.tower?.ability?.id !== 'grassPlatform' && tile.tower?.ability?.id !== 'mount' && tile.tower?.ability?.id !== 'icePlatform') return false;
 
         // no puede haber passenger ya
         if (tile.passenger) return false;
@@ -534,8 +609,21 @@ export class Game {
         this.main.area.towers = this.main.area.towers.filter(t => t.pokemon !== pokemon);
 		this.main.area.towers.push(passengerTower);
 
+		if (passengerTower.ability.id === 'heavyMetal' && !this.main.area.heavyMetal) {
+			if (this.main.area.waveActive) {
+				playSound('bell', 'effect');
+				const heavyMetalStunDuration = (passengerTower?.pokemon?.item?.id === 'metalCoat') ? 4 : 2;
+				this.main.area.heavyMetal = true;
+				this.main.area.enemies.forEach(enemy => {
+					if (!enemy.dying) enemy.applyStatusEffect({ type: 'stun', duration: heavyMetalStunDuration });
+				});
+			}
+		}
+
         // UI count como torre normal
-        this.main.UI.tilesCountNum[tile.land - 1]++;
+		if (passengerTower.carriedBy === 'icePlatform') this.main.UI.tilesCountNum[2] = (this.main.UI.tilesCountNum[2] || 0) + 1;
+		else if (passengerTower.carriedBy === 'grassPlatform') this.main.UI.tilesCountNum[1] = (this.main.UI.tilesCountNum[1] || 0) + 1;
+		else this.main.UI.tilesCountNum[tile.land - 1] = (this.main.UI.tilesCountNum[tile.land - 1] || 0) + 1;
 
         this.main.area.recalculateAuras();
         this.main.area.checkWeather();
@@ -593,7 +681,6 @@ export class Game {
             if (tile.passenger === this.deployingUnit) {
                 tile.passenger = false;
 
-                this.main.UI.tilesCountNum[tile.land - 1]--;
                 this.main.area.towers.splice(index, 1);
 
                 this.deployingUnit.tilePosition = -1;
@@ -602,9 +689,14 @@ export class Game {
 
                 this.deployingUnit = undefined;
 
-                this.main.area.towers.forEach(tower => {
-                    if (tower.pokemon.id == tile.tower.id) tower.isMounted = false;
-                });
+				this.main.area.towers.forEach(tower => {
+					if (tower.pokemon.id == tile.tower.id) {
+						tower.isMounted = false;
+						if (tower.ability.id === 'icePlatform') this.main.UI.tilesCountNum[2]--;
+						else if (tower.ability.id === 'grassPlatform') this.main.UI.tilesCountNum[1]--;
+						else this.main.UI.tilesCountNum[tile.land - 1]--;
+					}
+				});
 
                 this.main.UI.update();
                 this.main.area.checkWeather();
@@ -623,7 +715,9 @@ export class Game {
 
                     // 2. Limpiar al pasajero ANTES que a la base
                     if (pIndex !== -1) this.main.area.towers.splice(pIndex, 1);
-                    this.main.UI.tilesCountNum[tile.land - 1]--;
+					if (tile.tower.ability.id === 'icePlatform') this.main.UI.tilesCountNum[2]--;
+					else if (tile.tower.ability.id === 'grassPlatform') this.main.UI.tilesCountNum[1]--;
+					else this.main.UI.tilesCountNum[tile.land - 1]--;
 
                     // 3. Resetear flags del Pokémon pasajero
                     passengerPokemon.isDeployed = false;
@@ -659,13 +753,142 @@ export class Game {
         this.main.area.recalculateAuras();
 	}
 
+	drawWindCurrents(time) {
+	    const area = this.main?.area;
+	    const wind = area?.windTiles2D;
 
+	    if (!Array.isArray(wind) || wind.length === 0) return;
+
+	    const ctx = this.ctx;
+	    const t = (time || 0) * 0.001;
+
+	    const TILE = 24;
+	    const CANVAS_W = Game.CANVAS_W;
+	    const CANVAS_H = Game.CANVAS_H;
+
+	    if (
+	        !this._windCache ||
+	        this._windCache.source !== wind ||
+	        this._windCache.rows !== wind.length
+	    ) {
+	        const tiles = [];
+	        const backgroundPath = new Path2D();
+
+	        for (let row = 0; row < wind.length; row++) {
+	            const tileRow = wind[row];
+	            if (!Array.isArray(tileRow)) continue;
+
+	            const ty = row * TILE;
+
+	            for (let col = 0; col < tileRow.length; col++) {
+	                if (tileRow[col] !== 8) continue;
+
+	                const tx = col * TILE;
+	                const seed = row * 7.13 + col * 3.71;
+
+	                tiles.push({
+	                    x: tx,
+	                    y: ty,
+	                    seed1: seed,
+	                    seed2: seed + 11.7,
+	                    alphaSeed: col * 0.5
+	                });
+
+	                backgroundPath.rect(tx, ty, TILE, TILE);
+	            }
+	        }
+
+	        this._windCache = {
+	            source: wind,
+	            rows: wind.length,
+	            tiles,
+	            backgroundPath
+	        };
+	    }
+
+	    const cache = this._windCache;
+	    const tiles = cache.tiles;
+
+	    if (tiles.length === 0) return;
+
+	    ctx.save();
+	    ctx.globalCompositeOperation = 'lighter';
+
+	    ctx.globalAlpha = 0.05 + 0.02 * Math.sin(t * 2);
+	    ctx.fillStyle = 'rgba(200, 230, 255, 1)';
+	    ctx.fill(cache.backgroundPath);
+
+	    const streakPath = new Path2D();
+
+	    const movement = t * 60;
+	    const laneMovement = t * 1.3;
+
+	    for (let i = 0; i < tiles.length; i++) {
+	        const tile = tiles[i];
+
+	        const viewX = this.isXL
+	            ? tile.x - this.scrollX
+	            : tile.x;
+
+	        const viewY = this.isXLV
+	            ? tile.y - this.scrollY
+	            : tile.y;
+
+	        if (
+	            viewX < -TILE ||
+	            viewX > CANVAS_W ||
+	            viewY < -TILE ||
+	            viewY > CANVAS_H
+	        ) {
+	            continue;
+	        }
+
+	        let localX = (movement + tile.seed1 * 13) % TILE;
+	        let laneY = tile.y + 6 + 4 * Math.sin(laneMovement + tile.seed1);
+
+	        if (localX > 0 && localX < TILE) {
+	            streakPath.moveTo(tile.x + localX, laneY);
+	            streakPath.lineTo(tile.x + localX + 10, laneY);
+	        }
+
+	        localX = (movement + tile.seed2 * 13) % TILE;
+	        laneY = tile.y + 18 + 4 * Math.sin(laneMovement + tile.seed2);
+
+	        if (localX > 0 && localX < TILE) {
+	            streakPath.moveTo(tile.x + localX, laneY);
+	            streakPath.lineTo(tile.x + localX + 10, laneY);
+	        }
+	    }
+
+	    ctx.globalAlpha = 0.35;
+	    ctx.strokeStyle = 'rgba(220, 240, 255, 1)';
+	    ctx.lineWidth = 1.2;
+	    ctx.lineCap = 'round';
+	    ctx.stroke(streakPath);
+
+	    ctx.restore();
+	}
 
       isEnemyInRange(tower, enemy) {
         const dx = enemy.center.x - tower.center.x;
-        const dy = enemy.center.y - tower.center.y;
+        let dy = enemy.center.y - tower.center.y;
         const distance = Math.hypot(dx, dy);
         const r = tower.range;
+
+		if (tower.isPassenger) dy -= 13;
+
+		let valueSmall = 24;
+		let valueBig = 48;
+
+		if (tower.pokemon?.item?.id == 'wideLens') {
+			valueSmall *= 2;
+			valueBig *= 2;
+		}
+		if (this.main.area.victoryStar) {
+			valueSmall *= 1.5;
+			valueBig *= 1.5;
+		}
+
         switch (tower.pokemon.rangeType) {
               case 'circle':
                 return distance <= r;
@@ -673,41 +896,51 @@ export class Game {
                 return distance >= tower.innerRange && distance <= tower.range;
               case 'cross':
                 if (tower.pokemon?.item?.id == 'starPiece') {
-                  return ((Math.abs(Math.abs(dx) - Math.abs(dy)) < 24 && distance <= r) || ((Math.abs(dx) <= 24 && Math.abs(dy) <= r) || (Math.abs(dy) <= 24 && Math.abs(dx) <= r)))
-                } else if (tower.pokemon?.item?.id == 'wideLens') {
-                  return ((Math.abs(dx) <= 48 && Math.abs(dy) <= r) || (Math.abs(dy) <= 48 && Math.abs(dx) <= r));
+                  return ((Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r) || ((Math.abs(dx) <= valueSmall && Math.abs(dy) <= r) || (Math.abs(dy) <= valueSmall && Math.abs(dx) <= r)))
                 } else {
-                  return ((Math.abs(dx) <= 24 && Math.abs(dy) <= r) || (Math.abs(dy) <= 24 && Math.abs(dx) <= r));
+                  return ((Math.abs(dx) <= valueSmall && Math.abs(dy) <= r) || (Math.abs(dy) <= valueSmall && Math.abs(dx) <= r));
                 }
+			  case 'vShape': {
+				const p0 = { x: 0, y: -r * 0.06 };
+				const p1 = { x: -r * 0.7, y: -r * 0.65 };
+				const p2 = { x: 0, y: r };
+				const p3 = { x: r * 0.7, y: -r * 0.65 };
+				const p = { x: dx, y: dy };
+				const pointInTriangle = (point, a, b, c) => {
+					const area = (pa, pb, pc) =>
+						(pb.x - pa.x) * (pc.y - pa.y) - (pb.y - pa.y) * (pc.x - pa.x);
+					const d1 = area(point, a, b);
+					const d2 = area(point, b, c);
+					const d3 = area(point, c, a);
+					const hasNeg = d1 < 0 || d2 < 0 || d3 < 0;
+					const hasPos = d1 > 0 || d2 > 0 || d3 > 0;
+					return !(hasNeg && hasPos);
+				};
+				return pointInTriangle(p, p0, p1, p2) || pointInTriangle(p, p0, p2, p3);
+			  }
               case 'xShape':
                 if (tower.pokemon?.item?.id == 'condensedBlizzard') {
                   return distance <= r;
                 } else if (tower.pokemon?.item?.id == 'starPiece') {
-                  return ( (Math.abs(Math.abs(dx) - Math.abs(dy)) < 24 && distance <= r) || ((Math.abs(dx) <= 24 && Math.abs(dy) <= r) || (Math.abs(dy) <= 24 && Math.abs(dx) <= r)))
+                  return ( (Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r) || ((Math.abs(dx) <= valueSmall && Math.abs(dy) <= r) || (Math.abs(dy) <= valueSmall && Math.abs(dx) <= r)))
                 } else if (tower.pokemon?.item?.id == 'wideLens') {
-                  return (Math.abs(Math.abs(dx) - Math.abs(dy)) < 72 && distance <= r);
+                  return (Math.abs(Math.abs(dx) - Math.abs(dy)) < (valueSmall + 24) && distance <= r);
                 } else {
-                  return (Math.abs(Math.abs(dx) - Math.abs(dy)) < 24 && distance <= r);
+                  return (Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r);
                 }
               case 'horizontalLine':
-                  if (tower.pokemon?.item?.id == 'wideLens') {
-                      return ( Math.abs(dy) <= 48 && Math.abs(dx) <= r );
-                  }
-                return ( Math.abs(dy) <= 24 && Math.abs(dx) <= r );
+				return ( Math.abs(dy) <= valueSmall && Math.abs(dx) <= r );
               case 'verticalLine':
-                if (tower.pokemon?.item?.id == 'wideLens') {
-                      return ( Math.abs(dx) <= 48 && Math.abs(dy) <= r );
-                  }
-                  return ( Math.abs(dx) <= 24 && Math.abs(dy) <= r );
+				return ( Math.abs(dx) <= valueSmall && Math.abs(dy) <= r );
               default:
                 return distance <= r;
         }
 	}
 
-  	setEvents() {
+	setEvents() {
 	    const canPlaceOn = (pokemon, tile) => {
 		    if (!pokemon || !tile) return false;
-		    // si la tile implementa el helper, usarlo (incluye grassyTerrain)
+		    // si la tile implementa el helper, usarlo (incluye grassPlatform)
 		    if (typeof tile.canPlacePokemonHere === 'function') return tile.canPlacePokemonHere(pokemon);
 
 		    // fallback a comprobaciones clásicas
@@ -725,11 +958,16 @@ export class Game {
 	        // offsetX/Y are already in canvas coordinates (no scroll compensation needed)
 	        this.mouse.x = event.offsetX;
 	        this.mouse.y = event.offsetY;
-	        // Also track viewport-relative X for edge-pan (independent of canvas scroll)
+	        // Also track viewport-relative X/Y for edge-pan (independent of canvas scroll)
 	        if (this.isXL) {
 	            const wrapperRect = this.canvasWrapper.getBoundingClientRect();
 	            const scaleX = Game.CANVAS_W / wrapperRect.width;
 	            this.mouseViewX = (event.clientX - wrapperRect.left) * scaleX;
+	        }
+	        if (this.isXLV) {
+	            const wrapperRect = this.canvasWrapper.getBoundingClientRect();
+	            const scaleY = Game.CANVAS_H / wrapperRect.height;
+	            this.mouseViewY = (event.clientY - wrapperRect.top) * scaleY;
 	        }
 	        this.activeTile = null;
 
@@ -750,6 +988,7 @@ export class Game {
 	    // Stop edge-pan when cursor leaves the canvas area
 	    this.canvas.addEventListener('mouseleave', () => {
 	        this.mouseViewX = undefined;
+	        this.mouseViewY = undefined;
 	    });
 
 	    this.mapDragging = false;
@@ -761,6 +1000,85 @@ export class Game {
 		        return;
 		    }
 
+		    const pendingBomber = this.main.area.towers.find(t => t.awaitingBombardZone);
+
+			if (pendingBomber) {
+				const clickX = this._clientToCanvasX(event.clientX);
+				const clickY = this._clientToCanvasY(event.clientY);
+
+			    const dx = clickX - pendingBomber.center.x;
+				const dy = clickY - pendingBomber.center.y;
+
+				const maxDist = pendingBomber.tile.computeEffectiveRange(pendingBomber, pendingBomber.center);
+
+				let zoneX, zoneY;
+
+				if (pendingBomber.rangeType === 'cross') {
+					const axes = [
+						{ x: 1, y: 0 },
+						{ x: 0, y: 1 }
+					];
+
+					if (pendingBomber.pokemon?.item?.id === 'starPiece') {
+						axes.push({ x: Math.SQRT1_2, y: Math.SQRT1_2 });
+						axes.push({ x: Math.SQRT1_2, y: -Math.SQRT1_2 });
+					}
+
+					let bestAxis = axes[0];
+					let bestProj = -Infinity;
+
+					for (const axis of axes) {
+						const proj = Math.abs(dx * axis.x + dy * axis.y);
+						if (proj > bestProj) {
+							bestProj = proj;
+							bestAxis = axis;
+						}
+					}
+
+					const signedProj = dx * bestAxis.x + dy * bestAxis.y;
+					const clamped = Math.max(-maxDist, Math.min(maxDist, signedProj));
+
+					const perpX = dx - bestAxis.x * signedProj;
+					const perpY = dy - bestAxis.y * signedProj;
+
+					const perpDist = Math.hypot(perpX, perpY);
+					let maxOffset = pendingBomber.pokemon.bombardmentArea / 2;
+
+					if (pendingBomber.pokemon?.item?.id === "wideLens") maxOffset *= 2;
+					if (this.main.area.victoryStar)	maxOffset *= 1.5;
+
+					const scale = perpDist > maxOffset ? maxOffset / perpDist : 1;
+
+					zoneX =
+						pendingBomber.center.x +
+						bestAxis.x * clamped +
+						perpX * scale;
+
+					zoneY =
+						pendingBomber.center.y +
+						bestAxis.y * clamped +
+						perpY * scale;
+				}else {
+				    const dist = Math.hypot(dx, dy);
+				    zoneX = clickX;
+				    zoneY = clickY;
+
+				    if (dist > maxDist) {
+				        const ratio = maxDist / dist;
+				        zoneX = pendingBomber.center.x + dx * ratio;
+				        zoneY = pendingBomber.center.y + dy * ratio;
+				    }
+				}
+
+				const zoneRadius = pendingBomber.pokemon.bombardmentArea / 2;
+
+				pendingBomber.bombardZone = { x: zoneX, y: zoneY, radius: zoneRadius };
+				pendingBomber.bombardShells = [];
+				pendingBomber.bombardCooldown = 0;
+				pendingBomber.awaitingBombardZone = false;
+			    return;
+			}
+
 		    if (!this.activeTile) return;
 
 		    // Dos vistas de "capa superior":
@@ -771,6 +1089,7 @@ export class Game {
 
 		    // Si hay una unidad en modo deploy, procesamos la colocación
 		    if (this.deployingUnit) {
+
 		        // Guardar referencia estable a la unidad que el jugador está intentando colocar
 		        const newPokemon = this.deployingUnit;
 
@@ -791,8 +1110,8 @@ export class Game {
 		            return;
 		        }
 
-		        // 2) Si la base acepta passengers (grassyTerrain)
-		        if (this.activeTile.tower?.ability?.id === 'grassyTerrain' || this.activeTile.tower?.ability?.id === 'mount') {
+		        // 2) Si la base acepta passengers (grassPlatform)
+		        if (this.activeTile.tower?.ability?.id === 'grassPlatform' || this.activeTile.tower?.ability?.id === 'mount' || this.activeTile.tower?.ability?.id === 'icePlatform') {
 		            // 2.a) Si NO hay passenger -> place as passenger
 		            if (!this.activeTile.passenger) {
 		                this.deployingUnit = newPokemon;
@@ -901,12 +1220,37 @@ export class Game {
 		});
 
 	    this.canvas.addEventListener('contextmenu', (event) => {
-	        if (this.activeTile?.tower || this.activeTile?.passenger) {
-	            const poke = this.activeTile.passenger || this.activeTile.tower;
-	            const index = this.main.team.pokemon.findIndex(pokemon => poke === pokemon);
-	            this.main.pokemonScene.open(poke, index);
-	        }
-	    });
+		    event.preventDefault();
+
+		    // Buscar un Pokémon desplegado con unburden + blimpKeys que aún siga al mouse
+		    const follower = this.main.area.towers.find(t =>
+		        t.pokemon?.ability?.id === 'unburden' &&
+		        t.pokemon?.item?.id === 'blimpKeys' &&
+		        t.isWandering
+		    );
+
+		    if (follower) {
+		        if (follower.anchored) {
+		            // Ya estaba anclado: soltarlo para que vuelva a seguir el mouse
+		            follower.anchored = false;
+		            follower.wanderTarget = null;
+		        } else {
+		            // Anclarlo en el punto clickeado
+		            const clickX = this._clientToCanvasX(event.clientX);
+		            const clickY = this._clientToCanvasY(event.clientY);
+
+		            follower.wanderTarget = { x: clickX, y: clickY };
+		            follower.anchored = true;
+		        }
+		        return; // no abrir la ficha del Pokémon en este caso
+		    }
+
+		    if (this.activeTile?.tower || this.activeTile?.passenger) {
+		        const poke = this.activeTile.passenger || this.activeTile.tower;
+		        const index = this.main.team.pokemon.findIndex(pokemon => poke === pokemon);
+		        this.main.pokemonScene.open(poke, index);
+		    }
+		});
 
 	    let mapDrag = {
 	        active: false,
@@ -920,21 +1264,30 @@ export class Game {
 	        startY: 0
 	    };
 
-	    // ── XL map: middle-button or right-button pan ──────────────────────
+	    // ── XL/XLV map: middle-button or right-button pan ───────────────────
 	    this.canvas.addEventListener('pointerdown', (e) => {
-	        if (!this.isXL) return;
+	        if (!this.isXL && !this.isXLV) return;
 	        if (e.button !== 1 && e.button !== 2) return; // only middle or right btn for pan
 	        e.preventDefault();
 	        this._scrolling = true;
 	        this._panStartX = e.clientX;
+	        this._panStartY = e.clientY;
 	        this._panStartScrollX = this.scrollX;
+	        this._panStartScrollY = this.scrollY;
 
 	        const onPanMove = (ev) => {
 	            if (!this._scrolling) return;
-	            const rect   = this.canvasWrapper.getBoundingClientRect();
-	            const scaleX = Game.CANVAS_W / rect.width;
-	            const dx = (this._panStartX - ev.clientX) * scaleX;
-	            this.scrollTo(this._panStartScrollX + dx);
+	            const rect = this.canvasWrapper.getBoundingClientRect();
+	            if (this.isXL) {
+	                const scaleX = Game.CANVAS_W / rect.width;
+	                const dx = (this._panStartX - ev.clientX) * scaleX;
+	                this.scrollTo(this._panStartScrollX + dx);
+	            }
+	            if (this.isXLV) {
+	                const scaleY = Game.CANVAS_H / rect.height;
+	                const dy = (this._panStartY - ev.clientY) * scaleY;
+	                this.scrollToY(this._panStartScrollY + dy);
+	            }
 	        };
 	        const onPanUp = () => {
 	            this._scrolling = false;
@@ -947,7 +1300,7 @@ export class Game {
 
 	    // ── XL map: scroll wheel pans horizontally ─────────────────────────
 	    window.addEventListener('wheel', (e) => {
-		    if (!this.isXL) return;
+		    if (!this.isXL && !this.isXLV) return;
 
 		    const panel = this.main.UI.playerPanel.getBoundingClientRect()
 
@@ -959,10 +1312,17 @@ export class Game {
 
 			if (overPanel) return;
 
-		    this.scrollBy(
-		        e.deltaY * 0.5 +
-		        e.deltaX * 0.5
-		    );
+		    if (this.isXL) {
+		        this.scrollBy(
+		            e.deltaY * 0.5 +
+		            e.deltaX * 0.5
+		        );
+		    } else if (this.isXLV) {
+		        this.scrollByY(
+		            e.deltaY * 0.5 +
+		            e.deltaX * 0.5
+		        );
+		    }
 		}, { passive: false });
 	    // ───────────────────────────────────────────────────────────────────
 
@@ -984,12 +1344,14 @@ export class Game {
 
 	        const topPokemon = tile ? (tile.passenger || tile.tower) : null;
 
-	        // ── XL map: left-click drag on empty canvas pans the view ─────────
-	        if (this.isXL && !topPokemon && !this.deployingUnit) {
+	        // ── XL/XLV map: left-click drag on empty canvas pans the view ──────
+	        if ((this.isXL || this.isXLV) && !topPokemon && !this.deployingUnit) {
 	            e.preventDefault();
 
 	            const panStartClientX  = e.clientX;
+	            const panStartClientY  = e.clientY;
 	            const panStartScrollX  = this.scrollX;
+	            const panStartScrollY  = this.scrollY;
 	            let   hasPanned        = false;
 	            const PAN_THRESHOLD    = 4; // px before pan commits
 
@@ -998,17 +1360,21 @@ export class Game {
 
 	            const onPanMove = (ev) => {
 	                const dx = (panStartClientX - ev.clientX) * scaleX;
-	                if (!hasPanned && Math.abs(dx) > PAN_THRESHOLD) hasPanned = true;
+	                const dy = (panStartClientY - ev.clientY) * scaleY;
+	                if (!hasPanned && (Math.abs(dx) > PAN_THRESHOLD || Math.abs(dy) > PAN_THRESHOLD)) hasPanned = true;
 	                if (!hasPanned) return;
 	                this.canvas.style.cursor = 'grabbing';
 	                // Disable edge-pan while the user is manually dragging
 	                this.mouseViewX = undefined;
-	                this.scrollTo(panStartScrollX + dx);
+	                this.mouseViewY = undefined;
+	                if (this.isXL)  this.scrollTo(panStartScrollX + dx);
+	                if (this.isXLV) this.scrollToY(panStartScrollY + dy);
 	            };
 
 	            const onPanUp = () => {
 	                this.canvas.style.cursor = '';
 	                this.mouseViewX = undefined; // will be refreshed on next mousemove
+	                this.mouseViewY = undefined;
 	                window.removeEventListener('pointermove', onPanMove);
 	                window.removeEventListener('pointerup',   onPanUp);
 	                window.removeEventListener('pointercancel', onPanUp);
@@ -1087,9 +1453,9 @@ export class Game {
 	        const onDraggingMove = (ev) => {
 	            if (!mapDrag.active) return;
 	            if (mapDrag.clone) {
-	            	mapDrag.clone.style.left = `${ev.pageX}px`;
-	            	mapDrag.clone.style.top = `${ev.pageY}px`;
-	            	mapDrag.clone.style.opacity = '1';
+		mapDrag.clone.style.left = `${ev.pageX}px`;
+		mapDrag.clone.style.top = `${ev.pageY}px`;
+		mapDrag.clone.style.opacity = '1';
 	            }
 
 	            const canvasX = this._clientToCanvasX(ev.clientX);
@@ -1127,6 +1493,17 @@ export class Game {
 	            const domTarget = document.elementFromPoint(ev.clientX, ev.clientY);
 	            const droppedOnUI = domTarget && domTarget.closest('.ui-player-panel, .ui-pokemon-container, .ui-pokemon');
 
+	            if (this.main.area.heavyMetal) {
+		this.deployingUnit = undefined;
+
+			        if (!this.main.area.waveActive) {
+			            this.main.UI.revertUI();
+			            this.main.UI.nextWave.style.filter = 'revert-layer';
+			            this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
+			        }
+		return playSound('pop0', 'ui')
+	            }
+
 	            if (droppedOnUI) {
 	                this.deployingUnit = pokemon;
 	                this.retireUnit();
@@ -1157,7 +1534,7 @@ export class Game {
 	                            shouldEndDeploy = true;
 	                        }
 
-	                        else if (targetBase?.ability?.id === 'grassyTerrain' || targetBase?.ability?.id === 'mount') {
+	                        else if (targetBase?.ability?.id === 'grassPlatform' || targetBase?.ability?.id === 'mount' || targetBase?.ability?.id === 'icePlatform') {
 	                            this.deployingUnit = pokemon;
 	                            this.moveUnitToTile(targetTile);
 	                            shouldEndDeploy = true;

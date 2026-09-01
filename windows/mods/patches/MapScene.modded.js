@@ -10,15 +10,7 @@ export class MapScene extends SectionScene {
 	    super();
 	    this.main = main;
 
-	    // console.log("routeData:", routeData);
-	    // console.log("typeof routeData:", typeof routeData);
-	    // console.log("keys de routeData:", routeData ? Object.keys(routeData) : "routeData es null/undefined");
-
 	    this.sortedRoutes = Object.values(routeData || {}).sort((a, b) => a.order - b.order);
-
-	    // console.log("sortedRoutes después de crear:", this.sortedRoutes);
-	    // console.log("longitud:", this.sortedRoutes?.length);
-
 	    this.render();
 	}
 
@@ -27,16 +19,12 @@ export class MapScene extends SectionScene {
 	    this.routes = [];
 	    this.secretRoutes = [];
 
-	    // Build a pos→route map. XL routes declare pos as an array [startPos, endPos].
-	    // We register them by their first (anchor) position; occupied secondary cells
-	    // are tracked in a Set so the loop can skip them.
 	    const routesByPos = {};
 	    const occupiedCells = new Set();
 
 	    this.sortedRoutes.forEach(r => {
 	        if (Array.isArray(r.pos)) {
 	            routesByPos[r.pos[0]] = r;
-	            // Mark every position after the first as occupied (no empty tile there)
 	            for (let p = 1; p < r.pos.length; p++) occupiedCells.add(r.pos[p]);
 	        } else {
 	            routesByPos[r.pos] = r;
@@ -44,35 +32,46 @@ export class MapScene extends SectionScene {
 	    });
 
 	    for (let i = 0; i < 54; i++) {
-	        // This cell is covered by the span of an XL route — skip it entirely
 	        if (occupiedCells.has(i)) continue;
 
 	        const route = routesByPos[i];
 
 	        if (!route) {
-	            new Element(this.routeContainer, { 
-	                className: 'maps-scene-route-empty', 
-	                text: '?' 
-	            });
-	            continue;
-	        }
+			    new Element(this.routeContainer, {
+			        className: 'maps-scene-route-empty',
+			        text: '?'
+			    });
+			    continue;
+			}
 
-	        // Determine grid placement.
-	        // XL routes with pos:[c, c+1] span 2 columns in the same row.
-	        const isXL = Array.isArray(route.pos) && route.pos.length >= 2;
-	        const anchorPos = isXL ? route.pos[0] : route.pos;
+	        const isMultiCell = Array.isArray(route.pos) && route.pos.length >= 2;
+	        const isXL  = isMultiCell && !!route.xl;
+	        const isXLV = isMultiCell && !!route.xlv;
+	        const anchorPos = isMultiCell ? route.pos[0] : route.pos;
 	        const col = (anchorPos % 9) + 1;
 	        const row = Math.floor(anchorPos / 9) + 1;
 
 	        const routeElement = new Element(this.routeContainer, {
-	            className: isXL ? 'maps-scene-route maps-scene-route-xl' : 'maps-scene-route',
+	            className: isXL
+	                ? 'maps-scene-route maps-scene-route-xl'
+	                : isXLV
+	                ? 'maps-scene-route maps-scene-route-xlv'
+	                : 'maps-scene-route',
 	            image: route.background
 	        }).element;
 
 	        routeElement.style.gridColumn = isXL ? `${col} / span 2` : `${col}`;
-	        routeElement.style.gridRow = `${row}`;
+	        routeElement.style.gridRow = isXLV ? `${row} / span 3` : `${row}`;
 
-	        routeElement.dataset.routeId = route.id;      
+	        routeElement.dataset.routeId = route.id;
+
+	        const emptyElement = new Element(this.routeContainer, {
+			    className: 'maps-scene-route-empty',
+			    text: '?'
+			}).element;
+
+			emptyElement.style.gridColumn = routeElement.style.gridColumn;
+			emptyElement.style.gridRow = routeElement.style.gridRow;
 
 	        const nameEl = new Element(routeElement, {
 	            className: 'maps-scene-route-name',
@@ -92,19 +91,20 @@ export class MapScene extends SectionScene {
 	        }).element;
 
 	        this.routes.push({
-	            element: routeElement,
-	            name: nameEl,
-	            recordContainer,
-	            record: recordEl,
-	            requires: requiresEl,
-	            data: route
-	        });
+			    element: routeElement,
+			    empty: emptyElement,
+			    name: nameEl,
+			    recordContainer,
+			    record: recordEl,
+			    requires: requiresEl,
+			    data: route
+			});
 
 	        routeElement.addEventListener('click', () => this.changeMap(route.id));
 	        routeElement.addEventListener('mouseenter', () => playSound('hover2', 'ui'));
 	    }
 
-	    this.editorButton = new Element(this.container, { className: 'maps-scene-editor-button' }).element; 
+	    this.editorButton = new Element(this.container, { className: 'maps-scene-editor-button' }).element;
 	    this.editorButton.addEventListener('mouseenter', () => playSound('hover3', 'ui'));
 	    this.editorButton.addEventListener('click', () => { this.main.editorScene.open(); })
 	}
@@ -121,19 +121,32 @@ export class MapScene extends SectionScene {
                 this.editorButton.style.pointerEvents = 'none';
 			}
 		} else this.editorButton.style.display = 'none'
-		
-        this.routes.forEach(({ element, record, requires, name, data: route }) => {      	
+
+        this.routes.forEach(({ element, empty, record, requires, name, data: route }) => {
+	const visible =
+			    route.id !== 30 ||
+			    this.main.player.mirageIslandDiscovered ||
+			    this.showMirageIsland;
+
+			element.style.display = visible ? '' : 'none';
+
+			if (empty) {
+			    empty.style.display = visible ? 'none' : '';
+			}
+
+			if (!visible) return;
+
             const current = this.main.area.routeNumber;
             const stars = this.main.player.stars;
             const recordValue = this.main.player.records[route.id] || 0;
-            
+
             name.innerText = route.name[this.main.lang].toUpperCase();
 
             if (current === route.id) {
                 element.style.borderColor = 'var(--red)';
                 record.parentElement.style.backgroundColor = 'var(--red)';
                 element.style.pointerEvents = 'none';
-            } else if (recordValue >= 100) {
+            } else if (recordValue >= 100 || (route.id === 30 && this.main.player.secrets['mew'])) {
                 element.style.borderColor = '#2d70e3';
                 record.parentElement.style.backgroundColor = '#2d70e3';
             } else {
@@ -156,7 +169,11 @@ export class MapScene extends SectionScene {
                 requires.innerHTML = `<span class="msrre">⭐</span>${route.unlock}`;
             }
 
-            record.innerHTML = `<span class="msrre">⭐</span>${recordValue}`;
+			if (route.id === 30) {
+			    record.innerHTML = `<span class="msrre">⭐</span>???`;
+			} else {
+			    record.innerHTML = `<span class="msrre">⭐</span>${recordValue}`;
+			}
         });
     }
 
@@ -167,7 +184,11 @@ export class MapScene extends SectionScene {
 	}
 
 	changeMap(pos) {
+		if (pos === 30 && !this.main.player.mirageIslandDiscovered) {
+	        this.main.player.mirageIslandDiscovered = true;
+	    }
 		if (pos === this.main.area.routeNumber) return this.close();
+
 		this.main.area.loadArea(pos);
 		this.main.UI.update();
 		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
@@ -178,56 +199,25 @@ export class MapScene extends SectionScene {
 		playSound('step', 'ui');
 	}
 
-	// displayRoutes() {
-	// 	for (let i = 0; i < 12; i++) {
-	// 		if (this.main.area.routeNumber === i) { 
-	// 			this.routes[i].style.borderColor = 'var(--red)';
-	// 			this.routes[i].recordContainer.style.backgroundColor = 'var(--red)';
-	// 		} else {
-	// 			if (this.main.player.records[i] >= 100) {
-	// 				this.routes[i].style.borderColor = '#2d70e3';
-	// 				this.routes[i].recordContainer.style.backgroundColor = '#2d70e3';
-	// 			} else {
-	// 				this.routes[i].style.borderColor = 'revert-layer';
-	// 				this.routes[i].recordContainer.style.backgroundColor = 'revert-layer';
-	// 			}
-	// 		}
-
-	// 		if (this.main.player.stars >= routeData[i].unlock) {
-	// 			this.routes[i].requires.innerHTML = ``;
-	// 			if (!this.main.area.waveActive) {
-	// 				this.routes[i].style.filter = `revert-layer`;
-	// 				this.routes[i].style.pointerEvents = `all`;
-	// 			} else {
-	// 				this.routes[i].style.filter = `brightness(0.8)`;
-	// 				this.routes[i].style.pointerEvents = `none`;
-	// 			}	
-	// 		} else {
-	// 			this.routes[i].style.filter = `brightness(0.5)`;
-	// 			this.routes[i].style.pointerEvents = `none`;
-	// 			this.routes[i].requires.innerHTML = `<span class="msrre">⭐</span>${routeData[i].unlock}`;
-	// 		}
-
-	// 		if (this.main.area.routeNumber === i) this.routes[i].style.pointerEvents = `none`;
-	// 		this.routes[i].name.innerText = routeData[i].name[this.main.lang].toUpperCase();
-	// 		this.routes[i].record.innerHTML = `<span class="msrre">⭐</span>${Math.min(100, this.main.player.records[i])}`;
-	// 	}	
-	// }
-
 	open() {
-		if (this.main.area.inChallenge) return;
-		if (this.main.game.stopped) return playSound('pop0', 'ui');
-		if (this.isOpen) return this.close();
-		
-		this.main.sections.forEach(section => {
-			if (section.isOpen && section != this) section.close();
-		})
-		
-		super.open();
-		this.update();
-		this.main.game.cancelDeployUnit()
-		this.main.UI.section['map'].classList.add('is-selected');
-		if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
+	    if (this.main.area.inChallenge) return;
+	    if (this.main.game.stopped) return playSound('pop0', 'ui');
+	    if (this.isOpen) return this.close();
+
+	    // ¿Debe aparecer la Isla Espejismo esta vez?
+	    this.showMirageIsland =
+		    this.main.player.mirageIslandDiscovered ||
+		    Math.random() < 0.01;
+
+	    this.main.sections.forEach(section => {
+	        if (section.isOpen && section != this) section.close();
+	    });
+
+	    super.open();
+	    this.update();
+	    this.main.game.cancelDeployUnit();
+	    this.main.UI.section['map'].classList.add('is-selected');
+	    if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
 	}
 
 	close() {

@@ -2,7 +2,7 @@ import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Pokemon {
-	constructor(specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false, hideShiny = false, isMega = false, isReset = false, skin = null) {
+	constructor(specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false, hideShiny = false, isMega = false, isReset = false, skin = null, extra = false) {
 		this.main = main;
 
 		this.specie = specie;
@@ -18,7 +18,8 @@ export class Pokemon {
 		this.isReset = isReset;
 
 		this.skin = skin;
-		this.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin));  // MOD: Deep copy to prevent shared sprite mutation
+		this.extra = extra;
+		this.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin)); // MOD: isolate per-Pokémon sprite paths
 		this.name = specie.name;
 		this.alias = alias;
 		this.ability = specie.ability;
@@ -49,25 +50,28 @@ export class Pokemon {
 		//HABILIDADES
 		this.ricochet = this.specie.ricochet ?? 0;
 		this.orbital = this.calculateOrbitalCount(this.specie.orbital ?? 0, lvl);
-		
+		this.bombardmentArea = this.specie.bombardmentArea ?? 0;
+		this.bombardmentSplash = this.specie.bombardmentSplash ?? 0;
+
 		this.innerRange = this.specie.range.inner;
 		this.critical = this.calculateEndlessCrit(this.specie.critical.base, this.specie.critical.scale, lvl);
 		this.setCost();
 
 		this.isDeployed = false;
 		this.inGroup = false;
-		
+
 		this.healUsed = false;
 		this.damageDealt = 0;
 		this.trueDamageDealt = 0;
 
 		if (targetMode == undefined) {
 			if (this.attackType == 'area') this.targetMode = 'area';
-			else if (
-				this.ability.id == 'quadraShot' || this.ability.id == 'tripleShot' || this.ability.id == 'doubleShot' || 
-				this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily' || this.ability.id == 'poisonDoubleShot' || 
-				this.ability.id == 'armorBreakDoubleShot'
-			) this.targetMode = 'available';
+			if (this.attackType == 'bombardment') this.targetMode = 'bombardment';
+			// else if (
+			// 	this.ability.id == 'quadraShot' || this.ability.id == 'tripleShot' || this.ability.id == 'doubleShot' ||
+			// 	this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily' || this.ability.id == 'poisonDoubleShot' ||
+			// 	this.ability.id == 'armorBreakDoubleShot' || this.ability.id == 'octaShot'
+			// ) this.targetMode = 'available';
 			else if (this.attackType == 'aura') this.targetMode = 'aura';
 			else if (this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
 			else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
@@ -76,14 +80,14 @@ export class Pokemon {
 			else if (this.ability.id == 'willOWisp') this.targetMode = 'cursed';
 			else this.targetMode = 'first';
 		} else this.targetMode = targetMode;
-		if (this.ability.id == 'poisonDoubleShot') this.targetMode = 'available';
+		//if (this.ability.id == 'poisonDoubleShot') this.targetMode = 'available';
 		if (this.attackType == 'area') this.targetMode = 'area';
 		if (this.attackType == 'aura') this.targetMode = 'aura';
+		if (this.attackType == 'bombardment') this.targetMode = 'bombardment';
 
 		if (
-			this.item?.id == 'inverter' && 
-			this.specie.key == 'malamar' &&
-			this.lvl == 100
+			this.item?.id == 'inverter' &&
+			this.specie.key == 'malamar'
 		) {
 			this.innerRange = 150;
 			this.range = 300;
@@ -106,23 +110,23 @@ export class Pokemon {
 		if (level <= 100) {
 			return Math.floor(baseSpeed + (scale * level));
 		}
-		
+
 		// For levels > 100, use asymptotic curve
 		// Speed at level 100 as baseline
 		const speed100 = baseSpeed + (scale * 100);
-		
+
 		// Minimum speed floor (5% of speed at level 100, minimum 50ms)
 		const minSpeed = Math.max(50, Math.floor(speed100 * 0.05));
-		
+
 		// Calculate asymptotic approach: speed decreases but never goes below minSpeed
 		// AOE Pokemon decay 4x slower to balance their multi-target advantage
 		const excessLevels = level - 100;
 		const decayRate = isAOE ? 0.00125 : 0.005;
 		const decayFactor = Math.exp(-decayRate * excessLevels);
-		
+
 		// Interpolate between speed100 and minSpeed
 		const asymptoticSpeed = minSpeed + (speed100 - minSpeed) * decayFactor;
-		
+
 		return Math.max(minSpeed, Math.floor(asymptoticSpeed));
 	}
 
@@ -248,7 +252,8 @@ export class Pokemon {
 	            isMega: this.isMega,
 	            isReset: this.isReset,
 	            skin: this.skin,
-	            tilePosition: this.tilePosition  // MOD: Persist tower placement
+	            extra: this.extra,
+	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    } else {
 	        return {
@@ -264,7 +269,8 @@ export class Pokemon {
 	            isMega: this.isMega,
 	            isReset: this.isReset,
 	            skin: this.skin,
-	            tilePosition: this.tilePosition  // MOD: Persist tower placement
+	            extra: this.extra,
+	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    }
 	}
@@ -299,7 +305,8 @@ export class Pokemon {
 	        data.hideShiny,
 	        data.isMega,
 	        data.isReset,
-	        data.skin
+	        data.skin,
+	        data.extra
 	    );
 	    // MOD: Restore saved tower placement position
 	    pokemon.tilePosition = data.tilePosition ?? -1;
@@ -310,7 +317,7 @@ export class Pokemon {
 		this.targetMode = mode;
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
-            if (tower) tower.targetMode = mode;       
+            if (tower) tower.targetMode = mode;
         }
 	}
 
@@ -318,22 +325,22 @@ export class Pokemon {
 		// MOD: No level cap - remove the level 100 cap check
         this.lvl++;
         if (this.lvl >= this.specie.evolution?.level && this.id != 95) {
-        	if (this.id != 76) this.updateSpecie(this.specie.evolution.pokemon);
-        	else {
-        		if (this.main.utility.isBetweenHours(8, 18)) this.updateSpecie('lycanrocDay');
-        		else this.updateSpecie('lycanrocNight');
-        	}
-        	this.main.player.achievementProgress.evolutionCount++;
-        	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
-        	if (this.id === 124 && !this.isReset) {
-        		this.main.UI.getSecret('shedinja');
-        	}
+	if (this.id != 76) this.updateSpecie(this.specie.evolution.pokemon);
+	else {
+		if (this.main.utility.isBetweenHours(8, 18)) this.updateSpecie('lycanrocDay');
+		else this.updateSpecie('lycanrocNight');
+	}
+	// this.main.player.achievementProgress.evolutionCount++;
+	// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
+	if (this.id === 124 && !this.isReset) {
+		this.main.UI.getSecret('shedinja');
+	}
         }
 
-        if (this.lvl >= this.specie.evolution?.level && this.id == 95 && this.item?.id == 'inverter') {
-        	this.updateSpecie(this.specie.evolution.pokemon);
-        	this.main.player.achievementProgress.evolutionCount++;
-        	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
+        if (this.lvl >= this.specie.evolution?.level && this.id == 95 && (this.item?.id == 'inverter' || this.isReset)) {
+	this.updateSpecie(this.specie.evolution.pokemon);
+	// this.main.player.achievementProgress.evolutionCount++;
+	// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
         }
 
         this.updateStats();
@@ -348,19 +355,19 @@ export class Pokemon {
         if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
             if (tower) {
-            	tower.updateStatsFromPokemon();
-            	if (this.id == 61) {
+	tower.updateStatsFromPokemon();
+	if (this.id == 61) {
 		            if (tower.tile.land == 2) tower.updateTowerSprite(tower.pokemon.sprite.imageGrass, tower.pokemon.sprite.framesGrass, tower.pokemon.specie.projectileGrass);
 		            else if (tower.tile.land == 3) tower.updateTowerSprite(tower.pokemon.sprite.imageWater, tower.pokemon.sprite.framesWater, tower.pokemon.specie.projectileWater);
-		            else if (tower.tile.land == 4) tower.updateTowerSprite(tower.pokemon.sprite.imageMountain, tower.pokemon.sprite.framesMountain, tower.pokemon.specie.projectileMountain);      
-		        } 
+		            else if (tower.tile.land == 4) tower.updateTowerSprite(tower.pokemon.sprite.imageMountain, tower.pokemon.sprite.framesMountain, tower.pokemon.specie.projectileMountain);
+		        }
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
                 }
             }
-        }  
+        }
 
-        if (this.lvl == 100) this.main.player.unlockAchievement(2);
+        // if (this.lvl == 100) this.main.player.unlockAchievement(2);
 
         if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
     }
@@ -370,11 +377,11 @@ export class Pokemon {
 	// Levels 101+: Cost = (previous ├ù 1.02) + 8000, capping at 1 billion
 	setCost() {
 		const vanillaCap = this.specie.costScale === 'veryHigh' ? 150000 : 100000;
-		
+
 		// Calculate vanilla cost at the effective level (capped at 100 for formula)
 		const effectiveLevel = Math.min(this.lvl, 100);
 		let baseCost;
-		
+
 		if (this.specie.costScale === 'low') {
 			baseCost = Math.ceil(27 * Math.pow(1.12, effectiveLevel)) - 11;
 		} else if (this.specie.costScale === 'mid') {
@@ -386,10 +393,10 @@ export class Pokemon {
 		} else {
 			baseCost = vanillaCap;
 		}
-		
+
 		// Apply vanilla cap for levels 1-99
 		baseCost = Math.min(vanillaCap, baseCost);
-		
+
 		// MOD: For levels >= 100, apply endless scaling from the capped level 100 cost
 		if (this.lvl >= 100) {
 			const excessLevels = this.lvl - 99;
@@ -397,7 +404,7 @@ export class Pokemon {
 				baseCost = Math.floor(baseCost * 1.02) + 8000;
 			}
 		}
-		
+
 		this.cost = this.isReset ? 0 : Math.min(1000000000, baseCost);
 	}
 
@@ -410,7 +417,7 @@ export class Pokemon {
 			const checkLevel = this.lvl + i;
 			const effectiveLevel = Math.min(checkLevel, 100);
 			let levelCost;
-			
+
 			if (this.specie.costScale === 'low') {
 				levelCost = Math.ceil(27 * Math.pow(1.12, effectiveLevel)) - 11;
 			} else if (this.specie.costScale === 'mid') {
@@ -422,10 +429,10 @@ export class Pokemon {
 			} else {
 				levelCost = vanillaCap;
 			}
-			
+
 			// Apply vanilla cap for levels 1-99
 			levelCost = Math.min(vanillaCap, levelCost);
-			
+
 			// MOD: Add endless scaling for levels >= 100
 			// (cost at level 100 is cost to reach 101, so scaling starts here)
 			if (checkLevel >= 100) {
@@ -434,10 +441,10 @@ export class Pokemon {
 					levelCost = Math.floor(levelCost * 1.02) + 8000;
 				}
 			}
-			
+
 			totalCost += Math.min(1000000000, levelCost);
 		}
-		
+
 		return totalCost;
 	}
 
@@ -473,12 +480,16 @@ export class Pokemon {
 	}
 
 	updateSpecie(specieName) {
+		if (specieName === undefined) return;
 		const newSpecie = pokemonData[specieName];
 		this.specie = newSpecie;
 		this.id = newSpecie.id;
 
-		this.ricochet = newSpecie.ricochet ?? 0;
-		this.orbital = this.calculateOrbitalCount(newSpecie.orbital ?? 0, this.lvl);
+		this.ricochet = newSpecie?.ricochet ?? 0;
+		this.orbital = this.calculateOrbitalCount(newSpecie?.orbital ?? 0, this.lvl);
+		this.bombardmentArea = newSpecie?.bombardmentArea ?? 0;
+		this.bombardmentSplash = newSpecie?.bombardmentSplash ?? 0;
+
 		this.sprite = newSpecie.sprite;
 		this.name = newSpecie.name;
 		this.ability = newSpecie.ability;
@@ -488,23 +499,22 @@ export class Pokemon {
 		this.attackType = newSpecie.attackType;
 		this.form = (this.specie.form) ? this.specie.key : false;
 
-		this.updateStats(); 
+		this.updateStats();
 		this.setCost();
 		if (this.isShiny) this.setShiny();
 		if (this.main.boxScene.isOpen) this.main.boxScene.update()
 	}
 
-	transformADN() {
-		// Always look up current slot 1 to prevent stale adn from save data.
+	transformADN(targetModeOld = 'first') {
+		// MOD: Refresh Ditto from the current lead slot before transforming.
 		if (this.main?.team?.pokemon) {
 			const firstSlot = this.main.team.pokemon[0];
-			if (firstSlot && firstSlot !== this) {
-				this.adn = firstSlot.specie;
-			} else if (!firstSlot || firstSlot === this) {
-				this.adn = pokemonData['ditto'];
-			}
+			if (firstSlot && firstSlot !== this) this.adn = firstSlot.specie;
+			else if (!firstSlot || firstSlot === this) this.adn = pokemonData['ditto'];
 		}
-		if (this.adn?.base) this.adn = pokemonData[this.adn.base]
+		if (this.adn?.base) this.adn = pokemonData[this.adn.base];
+
+		if (['aura', 'invisible', 'area', 'curseable', 'bombardment'].includes(targetModeOld)) targetModeOld = 'first';
 		this.sprite = this.adn.sprite;
 
 		this.ability = this.adn.ability;
@@ -528,7 +538,9 @@ export class Pokemon {
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;
 		this.orbital = this.calculateOrbitalCount(this.adn.orbital ?? 0, level);
-		
+		this.bombardmentArea = this.adn.bombardmentArea ?? 0;
+		this.bombardmentSplash = this.adn.bombardmentSplash ?? 0;
+
 		this.innerRange = this.adn.range.inner;
 		this.critical = this.calculateEndlessCrit(this.adn.critical.base, this.adn.critical.scale, level);
 
@@ -536,16 +548,17 @@ export class Pokemon {
 		this.trueDamageDealt = 0;
 
 		if (this.attackType == 'area') this.targetMode = 'area';
-		else if (
-			this.ability.id == 'quadraShot' || this.ability.id == 'tripleShot' || this.ability.id == 'doubleShot' || 
-			this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily'
-		) this.targetMode = 'available';
+		if (this.attackType == 'bombardment') this.targetMode = 'bombardment';
+		// else if (
+		// 	this.ability.id == 'quadraShot' || this.ability.id == 'tripleShot' || this.ability.id == 'doubleShot' ||
+		// 	this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily' || this.ability.id == 'octaShot'
+		// ) this.targetMode = 'available';
 		else if (this.attackType == 'aura') this.targetMode = 'aura';
-		else if (this.ability.id == 'illuminate' || this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
+		else if (['illuminate', 'illuminateBuff', 'frisk', 'vigilantFrisk'].includes(this.ability.id)) this.targetMode = 'invisible';
 		else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
 		else if (this.ability.id == 'spinda') this.targetMode = 'random';
 		else if (this.ability.id == 'curse') this.targetMode = 'curseable';
-		else this.targetMode = 'first';
+		else this.targetMode = targetModeOld;
 
 		if (this.adn.id == 70 && this.isShiny) this.setShiny();
 	}
@@ -557,11 +570,11 @@ export class Pokemon {
 			const pokes = [...this.main.team.pokemon, ...this.main.box.pokemon];
 			const pokeWhitItem = pokes.find(poke => poke.id == item.equipedBy);
 			if (
-				pokeWhitItem.isDeployed && 
+				pokeWhitItem.isDeployed &&
 				[
-					'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon', 
+					'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon',
 					'subwoofer', 'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY',
-					'jadeOrb', 'lustrousOrb', 'mitsuesCocktail'
+					'jadeOrb', 'lustrousOrb', 'mitsuesCocktail', 'blimpKeys'
 				].includes(item?.id)
 			) {
 				playSound('pop0', 'ui')
@@ -571,27 +584,32 @@ export class Pokemon {
 		}
 		playSound('equip', 'ui');
 		this.item = item;
+
 		if (this.ability.id != 'magician') this.item.equipedBy = this.id;
+
+		if (item.id == 'strangeIdol' && this.specie.key === 'corsola' && !this.main.player.secrets.corsolaGalar) {
+			this.main.player.secrets.corsolaGalar = true;
+			this.main.UI.getSecret('corsolaGalar');
+		}
 
 		if (item.id == 'inverter' && this.lvl > 30 && this.id == 95 && this.specie.evolution) {
 			this.updateSpecie(this.specie.evolution.pokemon);
-        	this.main.player.achievementProgress.evolutionCount++;
-        	if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
+	// this.main.player.achievementProgress.evolutionCount++;
+	// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
 		}
 
 		if (
-			this.isDeployed && 
-			this.item.id == 'silphScope' && 
-			(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate')
+			this.isDeployed &&
+			this.item.id == 'silphScope' &&
+			(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate' && this.ability.id !== 'illuminateBuff')
 		) {
 			const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 			this.main.area.towers[index].revealInvisible = true;
 		}
 
 		if (
-			this.item.id == 'inverter' && 
-			this.specie.key == 'malamar' &&
-			this.lvl == 100
+			this.item.id == 'inverter' &&
+			this.specie.key == 'malamar'
 		) {
 			this.innerRange = 150;
 			this.range = 300;
@@ -599,24 +617,23 @@ export class Pokemon {
 		}
 
 		if (
-			this.isDeployed && 
+			this.isDeployed &&
 			['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY'].includes(this.item.id)
 		) {
 			this.main.area.checkWeather()
 		}
 
 		if (
-			this.isDeployed && 
+			this.isDeployed &&
 			this.specie?.orbital > 0
 		) {
-			this.main.area.towers.forEach(t => { 
+			this.main.area.towers.forEach(t => {
 				if (t.pokemon == this) t.spawnOrbitales();
 			});
 		}
 
 		if (item?.megaStone) this.addMegaStone(item?.megaPos);
-		if (this.item.id == 'silphScope') this.targetMode = 'invisible';
-
+		if (this.item?.id == 'silphScope') this.targetMode = 'invisible';
 		this.main.UI.update();
 		if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
 	}
@@ -626,51 +643,59 @@ export class Pokemon {
 			if (this.ability.id != 'magician') this.item.equipedBy = undefined;
 
 			if (
-				this.isDeployed && 
-				this.item.id == 'silphScope' && 
-				(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate')
+				this.isDeployed &&
+				this.item.id == 'silphScope' &&
+				(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate' && this.ability.id !== 'illuminateBuff')
 			) {
 				const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 				this.main.area.towers[index].revealInvisible = false;
 			}
 
 			if (
-				this.item.id == 'inverter' && 
-				this.specie.key == 'malamar' &&
-				this.lvl == 100
+				this.item.id == 'inverter' &&
+				this.specie.key == 'malamar'
 			) {
 				this.innerRange = 0;
 				this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * this.lvl));
 				this.rangeType = 'circle';
 			}
 
-			if (this.isMega) this.removeMegaStone();
-			if (this.item.id === 'ringTarget') this.targetMode = 'random';
-			if (this.item.id === 'silphScope') this.targetMode = 'first';
+			if (
+				this.isDeployed &&
+				this.item.id == 'boiledEgg'
+			) {
+				const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
+				if (this.main.area.towers[index].feathers > 20) this.main.area.towers[index].feathers = 20;
+			}
 
+			if (this.isMega) this.removeMegaStone();
+			if (this.item.id === 'silphScope') this.targetMode = 'first';
+			if (this.item.id === 'ringTarget' || this.id == 53) this.targetMode = 'random';
 			this.item = null;
 			this.main.UI.update();
 		}
 	}
- 
+
 	addMegaStone(pos) {
+		if (this.specie.mega == undefined) return this.retireItem();
 		if (this.main.player.megaInTeam) this.findMega();
 		this.baseSpecie = this.specie;
 		this.isMega = true;
 		this.main.player.megaInTeam = true;
 
 		this.updateSpecie(this.specie.mega[pos]);
-		
+
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
+
             if (tower.pokemon.id == 16) tower.ricochet = 2;
             if (tower) {
-            	tower.updateStatsFromPokemon();
+	tower.updateStatsFromPokemon();
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
                 }
             }
-        } 
+        }
 
         this.main.area.checkWeather();
 	}
@@ -683,13 +708,23 @@ export class Pokemon {
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
             if (tower) {
-            	if (tower.pokemon.id == 16) tower.ricochet = 0;
-            	tower.updateStatsFromPokemon();
+	if (tower.pokemon.id == 16) tower.ricochet = 0;
+	if (tower.pokemon.id == 11 && tower.tile.land === 4) {
+		const index = this.main.area.towers.findIndex(tower => tower.pokemon === this);
+		if (index !== -1) {
+						this.main.area.towers[index].tile.tower = false;
+						this.main.area.towers.splice(index, 1);
+						this.isDeployed = false;
+						this.tilePosition = -1;
+					}
+	}
+
+	tower.updateStatsFromPokemon();
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
                 }
             }
-        } 
+        }
 	}
 
 	findMega() {
@@ -745,15 +780,18 @@ export class Pokemon {
 	}
 
 	resetPokemon() {
+		const oldTarget = this.targetMode;
+
 		this.isReset = true;
-		this.retireItem();
+
 		this.lvl = 1;
 		let newSpecie = undefined
 		Object.entries(pokemonData).forEach((entries) => {
 			if (entries[1].id === this.id && newSpecie === undefined) newSpecie = entries[1].key;
 		})
 		this.updateSpecie(newSpecie);
-		if (this.id == 70) this.transformADN();
+		if (this.id == 70) this.transformADN(oldTarget);
+		if (!this.main.itemController.canEquip(this.item, this)) this.retireItem();
 	}
 
 	// setDebugOverrides(overrides = {}) {
@@ -832,7 +870,7 @@ export function findSpecieInCatalog(oldSpecie) {
         const s = pokemonData[key];
         let score = 0;
 
-        if (oldSpecie.id !== undefined && s.id !== undefined && oldSpecie.id === s.id) score += 1; 
+        if (oldSpecie.id !== undefined && s.id !== undefined && oldSpecie.id === s.id) score += 1;
         if (oldSpecie.rangeType && s.rangeType && oldSpecie.rangeType === s.rangeType) score += 2;
         if (oldSpecie.attackType && s.attackType && oldSpecie.attackType === s.attackType) score += 2;
         if (oldSpecie.projectileSound && s.projectileSound && oldSpecie.projectileSound === s.projectileSound) score += 1;
@@ -842,7 +880,7 @@ export function findSpecieInCatalog(oldSpecie) {
 
         if (oldSpecie.speed?.base !== undefined && s.speed?.base !== undefined) {
             if (oldSpecie.speed.base === s.speed.base) score += 1;
-            else if (Math.abs(oldSpecie.speed.base - s.speed.base) < 50) score += 0.5; 
+            else if (Math.abs(oldSpecie.speed.base - s.speed.base) < 50) score += 0.5;
         }
         if (oldSpecie.power?.base !== undefined && s.power?.base !== undefined) {
             if (oldSpecie.power.base === s.power.base) score += 1;

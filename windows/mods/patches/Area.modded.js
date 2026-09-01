@@ -46,7 +46,26 @@ export class Area {
 		this.leftoversWaveUsed = false;
 		this.healUsed = {};
 		this.heartScale = 0;
+		this.moxieUsers = {};
+		this.speedBoostUsers = {};
+		this.bulkUpUsers = {};
+		this.meteorMashUsers = {};
+		this.usedBell = false;
+		this.extraBell = false;
+		this.honeyGather = 0;
+		this.rivalryAmount = 0;
+		this.pendingHeal = 0;
+		this.anchorShot = false;
+
 		this.shellSmashActive = false;
+		this.cloudNine = false;
+		this.victoryStar = false;
+		this.swordsDance = false;
+		this.heartOfSteel = false;
+		this.airLock = false;
+		this.helpingHand = 0;
+		this.heavyMetal = false;
+		this.anchorShot = false;
 
 		this.inChallenge = false;
 		this.music;
@@ -62,7 +81,7 @@ export class Area {
 		this.goldWave = 0;
 
 		this.waveStartTime = null;
-    	this.waveElapsedTime = 0;
+	this.waveElapsedTime = 0;
 	}
 
 	getSaveData() {
@@ -74,11 +93,32 @@ export class Area {
 	}
 
 	checkWeather() {
+		this.cloudNine = false;
+		this.victoryStar = false;
+		this.swordsDance = false;
+		this.heartOfSteel = false;
+		this.airLock = false;
+		this.helpingHand = 0;
+		this.rivalryAmount = 0;
+
+		this.towers.forEach(t => {
+			if (t.ability.id == 'cloudNine' && !this.airLock) this.cloudNine = true;
+			if (t.ability.id == 'airLock') {
+				this.cloudNine = false;
+				this.airLock = true;
+			}
+			if (t.ability.id == 'helpingHand') this.helpingHand++;
+			if (t.ability.id == 'victoryStar') this.victoryStar = true;
+			if (t.ability.id == 'swordsDance') this.swordsDance = true;
+			if (t.ability.id == 'heartOfSteel') this.heartOfSteel = true;
+			if (['rivalryPower', 'rivalrySpeed'].includes(t.ability.id)) this.rivalryAmount++;
+		});
+
 		if (this.imposedWeather) return;
 		this.weather = false;
 		this.weatherBy = null;
-		
-		this.towers.forEach(t => { 
+
+		this.towers.forEach(t => {
 			if (t.ability.id == 'drizzle' || t.pokemon?.item?.id == 'dampRock') this.weather = 'rain';
 			if (t.ability.id == 'sandStream' || t.pokemon?.item?.id == 'smoothRock') {
 				this.weather = 'sandstorm';
@@ -120,7 +160,6 @@ export class Area {
 		this.waveStartTime = null;
 		this.waveElapsedTime = 0;
 		this.goldWave = 0;
-
 		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
@@ -131,6 +170,12 @@ export class Area {
 		this.heartScale = 0;
 		this.shellSmashActive = false;
 		this.linkBeams = [];
+		this.moxieUsers = {};
+		this.speedBoostUsers = {};
+		this.bulkUpUsers = {};
+		this.meteorMashUsers = {};
+		this.pendingHeal = 0;
+		this.anchorShot = false;
 
 		if (!clearTowerEffects || !Array.isArray(this.towers)) return;
 		this.towers.forEach(tower => {
@@ -141,6 +186,35 @@ export class Area {
 		});
 	}
 
+
+	getWindFactorAt(x, y, dx) {
+	    if (!Array.isArray(this.windTiles2D) || this.windTiles2D.length === 0) return 1;
+	    if (!dx) return 1;
+
+	    const col = Math.floor(x / 24);
+	    const row = Math.floor(y / 24);
+
+	    const tileRow = this.windTiles2D[row];
+	    if (!tileRow) return 1;
+	    const tileValue = tileRow[col];
+	    if (tileValue !== 8) return 1;
+
+	    return dx > 0 ? 2 : 0.6;
+	}
+
+	getSlowFactorAt(x, y) {
+	    if (!Array.isArray(this.slowTiles2D) || this.slowTiles2D.length === 0) return 1;
+
+	    const col = Math.floor(x / 24);
+	    const row = Math.floor(y / 24);
+
+	    const tileRow = this.slowTiles2D[row];
+	    if (!tileRow) return 1;
+	    const tileValue = tileRow[col];
+	    if (tileValue !== 7) return 1;
+	    return 0.3
+	}
+
 	loadArea(routeNumber, wave, keepTowers = false, challenge = false, custom = false, customData = {}) {
 		this.repeat = false;
 		this.isCustom = custom;
@@ -148,6 +222,14 @@ export class Area {
 		this.main.UI.waveSelectorBlock.style.background = 'revert-layer';
 		this.imposedWeather = false;
 		this.autoWave = false;
+		this.usedBell = false;
+		this.extraBell = false;
+		this.heavyMetal = false;
+		this.honeyGather = 0;
+		this.rivalryAmount = 0;
+		this.pendingHeal = 0;
+		this.anchorShot = false;
+
 		this.main.UI.autoWave.style.background = 'revert-layer';
 		this.resetWaveRuntime();
 
@@ -177,7 +259,7 @@ export class Area {
 				}
 			}
 		}
-			
+
 		if (wave != undefined) this.routeWaves[routeNumber] = wave;
 
 		this.routeNumber = routeNumber;
@@ -189,21 +271,40 @@ export class Area {
 		// Never enable endless mode during Challenge runs — challenges must end at wave 100
 		this.endlessMode = !this.inChallenge && (this.waveNumber > 100 || (this.main.player.records[routeNumber] || 0) > 100);
 
+		if (this.waveNumber === null) this.waveNumber = 1;
+
+		if (this.map?.weather) {
+			this.imposedWeather = true;
+			this.weather = this.map.weather;
+		}
+
 		if (!keepTowers) {
 			this.placementTiles = [];
 			this.placementTile2D = [];
+			this.windTiles2D = [];
+			this.slowTiles2D = [];
 
 			this.waves = this.map.waves;
 			this.waypoints = this.map.waypoints;
 
-			// XL maps have a 60-column tile grid; normal maps use 30 columns
 			const tileColumns = this.map.xl ? 60 : 30;
 
-			// Resize the canvas (and reset scroll) whenever the map changes
-			this.main.game.resizeCanvas(!!this.map.xl);
+			this.main.game.resizeCanvas(!!this.map.xl, !!this.map.xlv);
 
 			for (let i = 0; i < this.map.placementTile.length; i += tileColumns) {
 			    this.placementTile2D.push(this.map.placementTile.slice(i, i + tileColumns))
+			}
+
+			if (Array.isArray(this.map.windTiles)) {
+			    for (let i = 0; i < this.map.windTiles.length; i += tileColumns) {
+			        this.windTiles2D.push(this.map.windTiles.slice(i, i + tileColumns))
+			    }
+			}
+
+			if (Array.isArray(this.map.slowTiles)) {
+			    for (let i = 0; i < this.map.slowTiles.length; i += tileColumns) {
+			        this.slowTiles2D.push(this.map.slowTiles.slice(i, i + tileColumns))
+			    }
 			}
 
 			let counter = 0;
@@ -211,7 +312,7 @@ export class Area {
 			    row.forEach((symbol, x) => {
 			        if (symbol !== 0) {
 			            this.placementTiles.push(
-			            	new PlacementTile(this.main, x * 24, y * 24, this.main.game.ctx, symbol, counter)
+				new PlacementTile(this.main, x * 24, y * 24, this.main.game.ctx, symbol, counter)
 			            )
 			            counter++;
 			        }
@@ -221,6 +322,7 @@ export class Area {
 
 		this.enemies = [];
 		this.main.game.canvasBackground.src = this.map.background;
+		if (this.main.player.secrets.klefki && this.map.id == 29) this.main.game.canvasBackground.src = './src/assets/images/maps/8-1bis.png';
 
 		if (this.map.effect != null) {
 			this.main.game.canvasEffect.src = this.map.effect;
@@ -236,7 +338,10 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.healUsed = {};
-		this.heartScale = false;
+		this.moxieUsers = {};
+		this.speedBoostUsers = {};
+		this.bulkUpUsers = {};
+		this.meteorMashUsers = {};
 		this.main.UI.refreshDamageDealt(true);
 		this.music = this.map.music;
 		playMusic(this.music.song);
@@ -277,32 +382,50 @@ export class Area {
 		this._spawnQueue = [];  // MOD: Clear deferred spawn queue
 		this._spawnElapsed = 0;
 		this.main.UI.waveIncomeState.waveEarned = 0;
+		this.usedBell = false;
+		this.extraBell = false;
+		this.heavyMetal = false;
+		this.honeyGather = 0;
+		this.pendingHeal = 0;
+		this.anchorShot = false;
+
 		playSound('select', 'ui');
-		
+
 		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
 		this.totalTrueDamageDealt = 0;
 		this.shellBellWaveUsed = false;
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
-		this.heartScale = false;
+		this.heartScale = 0;
+		this.shellSmashActive = false;
+		this.healUsed = {};
+		this.moxieUsers = {};
+		this.speedBoostUsers = {};
+		this.bulkUpUsers = {};
+		this.meteorMashUsers = {};
+
 		this.main.UI.refreshDamageDealt();
 
 		this.waveStartTime = performance.now();
-    	this.waveElapsedTime = 0;
+	this.waveElapsedTime = 0;
 
 		this.waveActive = true;
 		this.spawnEnemies();
 		this.main.UI.update();
 
+		if (this.map.id == 29 && this.waveNumber === 100) this.main.player.getHealed(14);
+
 		this.towers.forEach(t => {
-			t.moxieBuff = 0;
-			t.speedBoost = 0;
 			t.incenseBuff = 0;
 			t.incenseTimer = 0;
 			t.lightningRodCharge = 0;
 			t.healUsed = false;
 			t.shiftGearSpeed = 0;
+			t.bulkUpStop = false;
+			t.bulkUpTimer = 0;
+			t.bulkUpPower = 0;
+			t.meteorMashCount = 0;
 
 			if (t.ability?.id == 'shellSmash' && this.main.player.health[this.routeNumber] > 1) {
 				playSound('hit2', 'effect');
@@ -317,6 +440,10 @@ export class Area {
 	                proj.angularSpeed = 0;
 	            })
 			}
+
+			if (t.ability?.id == 'featherDance') {
+				t.feathers = (t.pokemon?.item?.id == 'boiledEgg') ? 30 : 20;
+			}
 		});
 
 		if (this.inChallenge) this.main.game.chrono.start();
@@ -325,7 +452,9 @@ export class Area {
 	}
 
 	endWave() {
-		this.imposedWeather = false;
+		this.heavyMetal = false;
+		this.anchorShot = false;
+		if (this.map?.weather == undefined) this.imposedWeather = false;
 		if (this.main.player.health[this.routeNumber] <= 0) return;
 
 		if (this.waveStartTime !== null) {
@@ -352,18 +481,48 @@ export class Area {
 		}
 
 		this.towers.forEach(t => {
-			t.moxieBuff = 0;
-			t.speedBoost = 0;
 			t.incenseBuff = 0;
 			t.incenseTimer = 0;
 			t.lightningRodCharge = 0;
+			t.bulkUpStop = false;
+			t.bulkUpTimer = 0;
+			t.bulkUpPower = 0;
+			t.meteorMashCount = 0;
 			t.healUsed = false;
+
 			if (t.ability.id == 'triage' && Math.random() < 0.05) {
 				this.main.player.getHealed(1);
-		        this.main.player.achievementProgress.heartRestore += 1;
-		    	if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+		        // this.main.player.achievementProgress.heartRestore += 1;
+			//if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+			}
+			if (t.ability?.id == 'shiftGear') {
+				const maxProj = t.projectiles.length;
+				t.shiftGearSpeed = 0;
+				t.projectiles.forEach((proj, i) => {
+	                proj.angularSpeed = 0;
+	                proj.angle = (i * Math.PI * 2) / maxProj;
+	            })
+
+			}
+			if (t.pokemon.specie.key === 'megaSharpedo' && t.pokemon.extra) {
+				t.pokemon.recoverTarget = t.pokemon.targetMode;
+				if (t.pokemon.recoverItem) {
+					this.main.itemController.equip(t.pokemon.recoverItem, t.pokemon);
+					if (t.pokemon.item.id === 'quickClaw') {
+					t.pokemon.changeTargetMode('faster');
+				} else if (t.pokemon.item.id === 'spindaCocktail') {
+					t.pokemon.changeTargetMode('random');
+				}
+				}
 			}
 		});
+
+		if (this.pendingHeal > 0) {
+			playSound('hit3', 'effect');
+			this.main.player.getHealed(this.pendingHeal);
+		    // this.main.player.achievementProgress.heartRestore += 1;
+			this.pendingHeal = 0;
+		}
 
 		this.main.player.changeGold(bonusGold);
 		this.goldWave += bonusGold;
@@ -381,7 +540,7 @@ export class Area {
 		this.goldWave = 0;
 
 		this.waveActive = false;
-		if (this.main.player.health[this.routeNumber] === 1) this.main.player.unlockAchievement(12);
+		// if (this.main.player.health[this.routeNumber] === 1) this.main.player.unlockAchievement(12);
 
 		if (this.isCustom) return this.main.defeatScene.open(true);
 
@@ -411,15 +570,14 @@ export class Area {
 
 			playSound('end', 'ui');
 
-			// MOD: Display enemy info with cycled wave number for endless
+			// MOD: Preview endless waves without indexing beyond the vanilla table.
 			const previewEnemy = this.getWavePreview(this.waveNumber);
 			if (previewEnemy) this.main.UI.displayEnemyInfo(previewEnemy, 0);
-
 			const displayWaveNum = this.waveNumber <= 100 ? this.waveNumber : ((this.waveNumber - 1) % 100) + 1;
 			const futureWave = this.waves[displayWaveNum]?.preview || [];
 			const invisibles = [
 				e.ditto, e.kecleon, e.absol, e.lunala, e.froslass, e.mimikyu, e.huntail, e.octillery,
-				e.zorua, e.zoroark, e.mimeJr, e.mrMime,
+				e.zorua, e.zoroark, e.mimeJr, e.mrMime, e.scraggy, e.scrafty, e.nickit, e.thievul,
 			];
 
 			if (this.autoWave && this.main.autoStop && futureWave.some(poke => invisibles.includes(poke))) {
@@ -436,18 +594,17 @@ export class Area {
 			if (this.main.mapScene.isOpen) this.main.mapScene.update();
 			if (this.main.shopScene.isOpen) this.main.shopScene.update();
 		} else {
-			// Wave 100 reached - show final scene with continue option
-			if (this.main.team.pokemon.some(p => p.specie.name[0] == 'shuckle')) this.main.player.unlockAchievement(6);
-			if (this.main.player.health[this.routeNumber] >= 10) this.main.player.unlockAchievement(7);
-			if (this.routeNumber == 0) this.main.player.unlockAchievement(22);
-			if (this.routeNumber == 1) this.main.player.unlockAchievement(23);
-			if (this.routeNumber == 2) this.main.player.unlockAchievement(24);
-			if (this.routeNumber == 3) this.main.player.unlockAchievement(25);
-			if (this.routeNumber == 4) this.main.player.unlockAchievement(26);
-			if (this.routeNumber == 5) this.main.player.unlockAchievement(27);
-			if (this.routeNumber == 6) this.main.player.unlockAchievement(28);
-			if (this.routeNumber == 7) this.main.player.unlockAchievement(29);
-			if (this.routeNumber == 8) this.main.player.unlockAchievement(30);
+			// if (this.main.team.pokemon.some(p => p.specie.name[0] == 'shuckle')) this.main.player.unlockAchievement(6);
+			// if (this.main.player.health[this.routeNumber] >= 10) this.main.player.unlockAchievement(7);
+			// if (this.routeNumber == 0) this.main.player.unlockAchievement(22);
+			// if (this.routeNumber == 1) this.main.player.unlockAchievement(23);
+			// if (this.routeNumber == 2) this.main.player.unlockAchievement(24);
+			// if (this.routeNumber == 3) this.main.player.unlockAchievement(25);
+			// if (this.routeNumber == 4) this.main.player.unlockAchievement(26);
+			// if (this.routeNumber == 5) this.main.player.unlockAchievement(27);
+			// if (this.routeNumber == 6) this.main.player.unlockAchievement(28);
+			// if (this.routeNumber == 7) this.main.player.unlockAchievement(29);
+			// if (this.routeNumber == 8) this.main.player.unlockAchievement(30);
 
 			if (!this.repeat) this.main.finalScene.open();
 			else {
@@ -566,7 +723,9 @@ export class Area {
 		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;
 
 		const wave = this.waves[falseWaveNumber].wave;
-		const waveOffset = this.normalizeWaveOffset(this.waves[falseWaveNumber].offSet);
+		const waveOffset = this.inChallenge.mirror
+			? this.map.offsetMirror
+			: this.normalizeWaveOffset(this.waves[falseWaveNumber].offSet ?? this.map.offset);
 
 		wave.forEach((enemy, i) => {
 			const xOffset = (i + 1) * waveOffset.x;
@@ -599,9 +758,11 @@ export class Area {
 	}
 
 	selectWaypoints() {
-		if (this.waveNumber === 100 && this.map.id === 21) return this.waypoints[0];
+		const waypoints = (this.inChallenge.mirror) ? this.map.waypointsMirror : this.waypoints;
 
-		return this.waypoints[Math.floor(Math.random() * this.waypoints.length)];
+		if (this.waveNumber === 100 && this.map.id === 21) return waypoints[0];
+
+		return waypoints[Math.floor(Math.random() * waypoints.length)];
 	}
 
 	rebuildPlusMinusLinks(maxSearchRange = 2000) {
@@ -633,7 +794,7 @@ export class Area {
 	            const exists = this.linkBeams.some(lb => lb && lb.pairKey === pairKey);
 	            if (exists) continue;
 
-	            const lb = new LinkBeam(p, m, { width: 10, hitCooldown: 300, maxRange: 2000, color: (p.pokemon?.specie?.color || '#ff6600') });
+	            const lb = new LinkBeam(p, m, { width: 10, hitCooldown: 900, maxRange: 2000, color: (p.pokemon?.specie?.color || '#ff6600') });
 
 	            lb.type = 'plusminus';
 	            lb.pairKey = pairKey;
@@ -674,7 +835,7 @@ export class Area {
 			hpMult = base * Math.pow(extra / 100 + 1, 0.6);
 		}
 		const powerBudget = Math.floor(baseBudget * hpMult * 0.775); // ~22.5% HP reduction (shifted W5200→W5000)
-		
+
 		// MOD: Speed scaling — gentle logarithmic curve (uses effective wp)
 		const speedMult = 1 + 0.3 * Math.log2(1 + ewp / 2500); // slowed: 30% speed scaling
 		// MOD: Regeneration scaling — flat percentage of max HP, no DPS-based cap
@@ -1140,20 +1301,21 @@ export class Area {
 	    });
 
 	    if (this.map.id == 20 && !this.main.player.secrets.phione && this.towers.length == 2) {
-	    	if (
-	    		[104, 70].includes(this.towers[0].pokemon.id) &&
-	    		[104, 70].includes(this.towers[1].pokemon.id)
-	    	) {
-	    		this.main.player.secrets.phione = true;
-	    		this.main.UI.getSecret('phione');
-	    	}
+		if (
+			[104, 70].includes(this.towers[0].pokemon.id) &&
+			[104, 70].includes(this.towers[1].pokemon.id)
+		) {
+			this.main.player.secrets.phione = true;
+			this.main.UI.getSecret('phione');
+		}
 	    }
 	}
 
 	getRouteTag(route, wave) {
-	  	const r1 = Math.floor(route / 3) + 1;
-	  	const r2 = (route % 3) + 1;
-	  	return `R${r1}-${r2} W${wave}`;
+		if (route > 20) route--;
+		const r1 = Math.floor(route / 4) + 1;
+		const r2 = (route % 4) + 1;
+		return `R${r1}-${r2} W${wave}`;
 	}
 
 	changeWave(i) {
@@ -1173,11 +1335,14 @@ export class Area {
 		this.goldWave = 0;
 
 		this.towers.forEach(t => {
-			t.moxieBuff = 0;
-			t.speedBoost = 0;
 			t.incenseBuff = 0;
 			t.incenseTimer = 0;
 			t.lightningRodCharge = 0;
+			t.shiftGearSpeed = 0;
+			t.bulkUpStop = false;
+			t.bulkUpTimer = 0;
+			t.bulkUpPower = 0;
+			t.meteorMashCount = 0;
 			t.healUsed = false;
 		});
 
@@ -1198,8 +1363,49 @@ export class Area {
 		this.shellBellWaveUsed = false;
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
-		this.heartScale = false;
+		this.heartScale = 0;
+		this.healUsed = {};
+		this.moxieUsers = {};
+		this.speedBoostUsers = {};
+		this.bulkUpUsers = {};
+		this.meteorMashUsers = {};
 
 		this.main.UI.update();
+	}
+
+	useBell() {
+		if (this.waveNumber === 100) {
+			playSound('bronzor1', 'effect');
+			if (this.waveActive) {
+				this.enemies.forEach(enemy => {
+				if (!enemy.dying) {
+					enemy.passiveCharges = 0;
+					enemy.baseSpeed += 0.3;
+					enemy.speed += 0.3;
+				}
+			});
+			}
+		} else if (!this.usedBell) {
+			if (
+				(this.inChallenge?.lvlCap || this.inChallenge?.toughEnemies || this.inChallenge?.slotLimit || this.inChallenge?.noItems) &&
+				!this.extraBell
+			) {
+				this.extraBell = true;
+			} else {
+				this.usedBell = true;
+				this.main.UI.secretBronzor.style.pointerEvents = 'none';
+			}
+
+			playSound('bell', 'effect');
+
+			let stunDuration = (this.inChallenge) ? 2 : 1;
+			stunDuration += this.waveNumber * 0.04;
+
+			if (this.waveActive) {
+				this.enemies.forEach(enemy => {
+				if (!enemy.dying) enemy.applyStatusEffect({ type: 'stun', duration: stunDuration });
+			});
+			}
+		}
 	}
 }

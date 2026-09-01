@@ -1,7 +1,7 @@
 import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
 import { saveData } from '../../file/data.js';
 import { itemData, itemListData, itemBackup } from '../data/itemData.js';
-import { pokemonData, eggListData } from '../data/pokemonData.js';	
+import { pokemonData, eggListData } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Shop {
@@ -49,7 +49,7 @@ export class Shop {
 		this.removeGimmighoulIfGholdengo();
 
 		this.updateEggList();
-		if (this.eggList.length == 0) this.main.player.unlockAchievement(0);
+		// if (this.eggList.length == 0) this.main.player.unlockAchievement(0);
 	}
 
 	getSaveData() {
@@ -69,7 +69,7 @@ export class Shop {
 		let index = Math.floor(Math.random() * this.eggList.length);
 
 		if (this.eggList.length == 108) index = Math.floor(Math.random() * 3) + 2;
-		
+
 		let egg = this.eggList[index];
 		let pokemon;
 
@@ -102,16 +102,16 @@ export class Shop {
 		this.main.player.stats.pokemonOwned++;
 
 		this.main.player.stats.totalPokemonLevel++;
-		this.main.player.achievementProgress.evolutionCount++;
+		// this.main.player.achievementProgress.evolutionCount++;
 
 		this.main.player.changeGold(-Math.min(50000, this.eggPrice));
 		this.eggList.splice(index, 1);
 		this.eggPrice = Math.min(50000, Math.ceil(this.eggPrice * 1.12 + 35));
 		this.main.shopScene.update();
-		this.main.UI.update();	
-		
-		if (this.eggList.length === 0) this.main.player.unlockAchievement(0);
-		if (this.main.player.achievementProgress.evolutionCount === 210) this.main.player.unlockAchievement(1);
+		this.main.UI.update();
+
+		// if (this.eggList.length === 0) this.main.player.unlockAchievement(0);
+		// if (this.main.player.achievementProgress.evolutionCount === 210) this.main.player.unlockAchievement(1);
 
 		if (!this.main.area.waveActive) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
@@ -122,35 +122,35 @@ export class Shop {
 
 	    playSound('purchase', 'ui');
 	    this.main.player.changeGold(-itemBought.price);
-	   
+
 	    if (itemBought.isEquipable) {
-	    	this.main.player.obtainItem(itemBought);
-	    	this.main.player.itemAmount++;
-	    } 
+		this.main.player.obtainItem(itemBought);
+		this.main.player.itemAmount++;
+	    }
 
 	    // Reemplazar el slot i con el siguiente elemento válido de itemList (no duplicado)
 	    this.itemStock[i] = this.getNextNonDuplicateFromList();
 
 	    this.main.shopScene.update();
 	    this.main.tooltip.hide();
-	    
+
 	    if (itemBought.id == 'bicycle') {
-	    	this.main.player.hasBike = true;
-	    	this.main.UI.update();
+		this.main.player.hasBike = true;
+		this.main.UI.update();
 	    } else if (itemBought.id == "gimmighoul") {
-	    	this.main.UI.getSecret('gholdengo');
+		this.main.UI.getSecret('gholdengo');
 	    } else if (itemBought.id == "mitsuesCocktail") {
-	    	this.main.player.hasCocktail = true;
+		this.main.player.hasCocktail = true;
 	    } else if (itemBought.id == "sokudosPortfolio") {
-	    	this.main.player.hasSkinator = true;
+		this.main.player.hasSkinator = true;
 	    } else if (itemBought.id == "revysBook") {
-	    	this.main.player.hasEditable = true;
+		this.main.player.hasEditable = true;
 	    }
 	}
 
 	generateStock() {
 	    for (let i = 0; i < 8; i++) {
-	        if (!this.itemStock[i]) { 
+	        if (!this.itemStock[i]) {
 	            // tomamos el siguiente id válido desde itemList evitando duplicados
 	            this.itemStock[i] = this.getNextNonDuplicateFromList();
 	        }
@@ -318,7 +318,7 @@ export class Shop {
 		this.itemList = this.itemList.filter(iid => {
 			if (!iid) return false;
 			if (!itemData[iid]) return false;
-			if (this.stockHasId(iid)) return false; 
+			if (this.stockHasId(iid)) return false;
 			if (seen.has(iid)) return false;
 			seen.add(iid);
 			return true;
@@ -331,7 +331,7 @@ export class Shop {
 		pokemon.forEach(pokemon => {
 			if (pokemon.id == 102) isGholdengo = true;
 		})
-		
+
 		if (!isGholdengo) return;
 
 		for (let i = 0; i < this.itemStock.length; i++) {

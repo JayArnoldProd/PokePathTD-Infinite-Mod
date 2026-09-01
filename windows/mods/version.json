@@ -1,11 +1,11 @@
 {
-    "version": "1.5.9",
-    "game_version": "1.5.9",
-    "release_date": "2026-06-04",
+    "version": "1.6.1",
+    "game_version": "1.6.1",
+    "release_date": "2026-09-01",
     "changes": [
-        "Rebased Windows compatibility onto live PokePath TD 1.5.9 vanilla files",
-        "Updated installer vanilla compatibility fingerprints and diagnostics metadata for 1.5.9",
-        "Preserved the 1.5.7-1.5.9 UI, target-mode, Route 6-1, item, sprite, and balance fixes while carrying mod features forward",
-        "Synced save editor egg reset/injection data to the 1.5.9 runtime obtainable list"
+        "Rebased Windows compatibility onto the PokePath TD 1.6.1 vanilla files",
+        "Preserved the 1.6.0 content expansion and the 1.6.1 balance and bug-fix changes",
+        "Reworked infinite-speed tower handling on the new bombardment, beam, platform, and orbital runtime",
+        "Updated installer fingerprints, diagnostics, save data, documentation, and release packaging for 1.6.1"
     ]
 }

@@ -9,7 +9,7 @@ import { playSound } from '../../file/audio.js';
 import { pokemonData, eggListData } from '../data/pokemonData.js';
 import { itemData } from '../data/itemData.js';
 import { routeData } from '../data/routeData.js';
-import { achievementData } from '../data/achievementData.js';
+import { achievementReworkData } from '../data/achievementReworkData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
@@ -147,7 +147,7 @@ export class ProfileScene extends SectionScene {
 
 		this.achievementsContainer = new Element(this.container, { className: 'profile-scene-achievements-container' }).element;
 		this.achievement = [];
-		for (let i = 0; i < 32; i++) {
+		for (let i = 0; i < 39; i++) {
 			this.achievement[i] = new Element(this.achievementsContainer, { className: 'profile-scene-achievement' }).element;
 		}
 
@@ -165,8 +165,8 @@ export class ProfileScene extends SectionScene {
 		this.stats = [];
 		for (let i = 0; i < 22; i++) {
 			this.stats[i] = new Element(this.statsContainer, { className: 'profile-stat' }).element;
-		 	this.stats[i].label = new Element(this.stats[i], { className: 'profile-stat-label' }).element;
-		 	this.stats[i].value = new Element(this.stats[i], { className: 'profile-stat-value' }).element;
+			this.stats[i].label = new Element(this.stats[i], { className: 'profile-stat-label' }).element;
+			this.stats[i].value = new Element(this.stats[i], { className: 'profile-stat-value' }).element;
 		}
 		this.statsContainer.insertBefore(this.stats[21], this.stats[11]);
 		this.statsContainer.style.top = '168px';
@@ -183,7 +183,7 @@ export class ProfileScene extends SectionScene {
 		this.stats[19].value.addEventListener('click', () => { this.deleteRecord.open(19) });
 		this.stats[20].value.addEventListener('click', () => { this.deleteRecord.open(20) });
 
-		this.achievement[12].addEventListener('click', () => {
+		this.achievement[7].addEventListener('click', () => {
 			if (
 				!this.main.player.secrets.luvdisc &&
 				!this.main.area.inChallenge
@@ -768,16 +768,16 @@ export class ProfileScene extends SectionScene {
 		this.portrait.style.backgroundImage = `url("./src/assets/images/portraits/${this.main.player.portrait}.png")`;
 
 		this.achievement.forEach((achievement, i) => {
-			this.achievement[i].style.backgroundImage = `url("${achievementData[i].image}")`;
-			this.achievement[i].style.filter = (this.main.player.achievements[i].status)
+			this.achievement[i].style.backgroundImage = `url("${achievementReworkData[i].image}")`;
+			this.achievement[i].style.filter = (this.main.player.achievementsRework[i].status)
 				? 'drop-shadow(2px 2px black) brightness(1)'
 				: 'drop-shadow(1px 1px black) grayscale(1) brightness(0.5)';
-			this.main.tooltip.bindTo(this.achievement[i], achievementData[i]);
+			this.main.tooltip.bindTo(this.achievement[i], achievementReworkData[i], 'item');
 		});
 
 		for (let i = 0; i < 22; i++) {
 			const statLabel = getProfileStatLabel(i, this.main.lang);
-		 	this.stats[i].label.innerText = statLabel.toUpperCase();
+			this.stats[i].label.innerText = statLabel.toUpperCase();
 		}
 
 		this.stats[0].value.innerText = this.main.utility.minutsToTime(this.main.player.stats.timePlayed);
@@ -791,11 +791,11 @@ export class ProfileScene extends SectionScene {
 		this.stats[4].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestPokemonLevel, this.main.lang)}`;
 		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}`;
 		this.stats[6].value.innerText = `$${this.main.utility.numberDot(this.main.player.stats.totalGold, this.main.lang)}`;
-		this.stats[7].value.innerText = `${this.main.player.itemAmount}/121`;
+		this.stats[7].value.innerText = `${this.main.player.itemAmount}/139`;
 		this.stats[8].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.wavesCompleted, this.main.lang)}`;
 		this.stats[9].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestHit, this.main.lang)}`;
 		this.stats[10].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.defeatedEnemies, this.main.lang)}`;
-		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/217`;
+		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/274`;
 		this.stats[12].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedStuns, this.main.lang)}`;
 		this.stats[13].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedSlows, this.main.lang)}`;
 		this.stats[14].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedBurns, this.main.lang)}`;

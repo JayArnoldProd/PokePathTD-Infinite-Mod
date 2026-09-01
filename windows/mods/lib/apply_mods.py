@@ -50,7 +50,7 @@ def get_version_info():
 
 def detect_game_root():
     """Resolve the actual installed game root.
-    
+
     In distributed installs, mods/ lives inside the game directory so MODS_DIR.parent is
     correct. In the GitHub repo, mods/ lives under .../windows/mods, so we need to fall
     back to the standard installed game path.
@@ -80,27 +80,27 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  54035,
-    "src/js/game/component/Pokemon.js":     26042,
-    "src/js/game/scenes/PokemonScene.js":   62739,
-    "src/js/game/core/Area.js":             19938,
-    "src/js/game/core/Team.js":             1854,
-    "src/js/game/core/Box.js":              703,
-    "src/js/game/component/Tower.js":        115623,
-    "src/js/game/component/Enemy.js":        52727,
-    "src/js/game/scenes/MenuScene.js":       54116,
+    "src/js/game/Game.js":                  67645,
+    "src/js/game/component/Pokemon.js":     28057,
+    "src/js/game/scenes/PokemonScene.js":   73144,
+    "src/js/game/core/Area.js":             25697,
+    "src/js/game/core/Team.js":             2725,
+    "src/js/game/core/Box.js":              787,
+    "src/js/game/component/Tower.js":       174707,
+    "src/js/game/component/Enemy.js":        67130,
+    "src/js/game/scenes/MenuScene.js":       54339,
 }
 
 def check_game_version_compatibility():
     """Check if extracted vanilla files match expected sizes.
-    
+
     Returns:
         tuple: (compatible: bool, mismatches: list of str)
     """
     mismatches = []
     if not APP_EXTRACTED.exists():
         return True, []  # Can't check yet, will be checked after extraction
-    
+
     for rel_path, expected_size in EXPECTED_VANILLA_FILES.items():
         file_path = APP_EXTRACTED / rel_path.replace("/", os.sep)
         if not file_path.exists():
@@ -109,7 +109,7 @@ def check_game_version_compatibility():
         actual_size = file_path.stat().st_size
         if actual_size != expected_size:
             mismatches.append(f"{rel_path}: {actual_size} bytes (expected {expected_size})")
-    
+
     return len(mismatches) == 0, mismatches
 
 
@@ -153,11 +153,11 @@ def remove_tree_safe(path: Path, retries: int = 3, delay_seconds: float = 0.35):
 def is_game_modded(check_asar=False):
     """
     Check if the game has mod markers (already modded).
-    
+
     Args:
         check_asar: If True and app_extracted doesn't exist, extract to temp and check.
                     This is slower but more accurate.
-    
+
     Returns:
         bool: True if mod markers are detected.
     """
@@ -173,7 +173,7 @@ def is_game_modded(check_asar=False):
                         return True
             except Exception:
                 pass
-        
+
         # Check Pokemon.js
         pokemon_js = JS_ROOT / "game" / "component" / "Pokemon.js"
         if pokemon_js.exists():
@@ -183,7 +183,7 @@ def is_game_modded(check_asar=False):
                     return True
             except Exception:
                 pass
-        
+
         # Check Shop.js for shiny marker
         shop_js = JS_ROOT / "game" / "core" / "Shop.js"
         if shop_js.exists():
@@ -193,7 +193,7 @@ def is_game_modded(check_asar=False):
                     return True
             except Exception:
                 pass
-    
+
     # If app_extracted doesn't exist and we want to check asar, extract to temp
     elif check_asar and APP_ASAR.exists():
         import tempfile
@@ -212,7 +212,7 @@ asar.extractAll({repr(str(APP_ASAR))}, {repr(str(temp_dir))});
                 creationflags=creationflags,
                 cwd=str(MODS_DIR)
             )
-            
+
             if result.returncode == 0:
                 # Check extracted temp files for markers
                 temp_game_js = temp_dir / "src" / "js" / "game" / "Game.js"
@@ -229,16 +229,16 @@ asar.extractAll({repr(str(APP_ASAR))}, {repr(str(temp_dir))});
                 shutil.rmtree(temp_dir)
             except Exception:
                 pass
-    
+
     return False
 
 def ensure_vanilla_backup():
     """
     Ensure we have a vanilla backup of app.asar.
-    
+
     Returns:
         tuple: (success: bool, message: str)
-        
+
     If app.asar.vanilla exists, returns True (we have a backup).
     If it doesn't exist:
       - Check if current app.asar appears modded (via app_extracted markers)
@@ -248,10 +248,10 @@ def ensure_vanilla_backup():
     if APP_ASAR_VANILLA.exists():
         print(f"  [OK] Vanilla backup exists: {APP_ASAR_VANILLA.name}")
         return True, "Vanilla backup exists"
-    
+
     if not APP_ASAR.exists():
         return False, f"app.asar not found at {APP_ASAR}"
-    
+
     # Check if game appears already modded (check extracted files or asar itself)
     if is_game_modded(check_asar=True):
         return False, (
@@ -259,7 +259,7 @@ def ensure_vanilla_backup():
             "Please reinstall the vanilla game first, then run the mod installer.\n"
             "Your save data is safe (stored separately in browser data)."
         )
-    
+
     # Create backup
     print(f"  [*] Creating vanilla backup: {APP_ASAR_VANILLA.name}")
     try:
@@ -272,23 +272,23 @@ def ensure_vanilla_backup():
 def extract_from_vanilla(progress_callback=None):
     """
     Extract game files from app.asar.vanilla for a clean slate.
-    
+
     Always extracts from .vanilla (not .asar) to ensure clean state.
     Deletes app_extracted/ first if it exists.
-    
+
     Args:
         progress_callback: Optional callback(current, total, message)
-    
+
     Returns:
         tuple: (success: bool, message: str)
     """
     source = APP_ASAR_VANILLA if APP_ASAR_VANILLA.exists() else APP_ASAR
-    
+
     if not source.exists():
         return False, f"Source asar not found: {source}"
-    
+
     source_name = "vanilla backup" if source == APP_ASAR_VANILLA else "app.asar (no vanilla backup)"
-    
+
     # Delete existing extraction
     if APP_EXTRACTED.exists():
         print(f"  [*] Removing old extraction...")
@@ -300,14 +300,14 @@ def extract_from_vanilla(progress_callback=None):
                 "Failed to remove old extraction. Close the game and retry. "
                 f"Details: {remove_msg}"
             )
-    
+
     # Extract from source
     print(f"  [*] Extracting from {source_name}...")
     if progress_callback:
         progress_callback(0, 1, f"Extracting from {source_name}...")
-    
+
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
-    
+
     # Try local extract script first
     extract_script = SCRIPT_DIR / "extract_game.js"
     if extract_script.exists():
@@ -333,14 +333,14 @@ console.log('OK: Extracted to', dest);
                 return True, f"Extracted from {source_name}"
         except Exception as e:
             print(f"  [WARN] Node extraction failed, trying npx: {e}")
-    
+
     # Fallback to npx
     try:
         if sys.platform == 'win32':
             cmd = ['cmd', '/c', 'npx', 'asar', 'extract', str(source), str(APP_EXTRACTED)]
         else:
             cmd = ['npx', 'asar', 'extract', str(source), str(APP_EXTRACTED)]
-        
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -348,7 +348,7 @@ console.log('OK: Extracted to', dest);
             timeout=300,
             creationflags=creationflags
         )
-        
+
         if result.returncode == 0:
             print(f"  [OK] Extracted successfully from {source_name}")
             return True, f"Extracted from {source_name}"
@@ -384,7 +384,7 @@ MOD_FEATURES = {
     'endless': {
         'name': 'Endless Mode',
         'description': 'Continue past wave 100 with scaling difficulty, checkpoints, auto-continue, and uncapped wave record display on the map',
-        'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints', 
+        'functions': ['apply_endless_mode', 'apply_endless_waves', 'apply_endless_checkpoints',
                       'apply_enemy_scaling',
                       'apply_text_continue_option', 'apply_menu_autoreset_range',
                       'apply_map_record_uncap', 'apply_wave_manager_fix',
@@ -406,7 +406,7 @@ MOD_FEATURES = {
     },
     'shiny_enemies': {
         'name': 'Shiny Enemies (1/1000)',
-        'description': 'Adds 1 in 1000 shiny enemies and bosses with shiny sprites, +50% health, +50% armor, 2-heart damage, 1000x gold, and profile tracking for shiny enemies defeated',
+        'description': 'Adds 1 in 1000 shiny enemies and bosses with shiny sprites, +100% health, +100% armor, 2-heart damage, 1000x gold, and profile tracking for shiny enemies defeated',
         'functions': ['apply_enemy_shiny_spawn'],
         'default': True,
     },
@@ -427,14 +427,14 @@ MOD_FEATURES = {
     # Keeping them in the shop would create duplicates. See transcript guide.
     'deltatime': {
         'name': 'Delta Time & Performance',
-        'description': 'Sub-stepping simulation, accurate projectile timing, squared-distance checks, batch removal, throttled UI, cached draws',
+        'description': 'Sub-stepping simulation, accurate high-speed attacks and projectiles, squared-distance checks, batch removal, throttled UI, and sub-step draw skipping',
         'functions': ['_ensure_game_modded', 'apply_tower_deltatime', 'apply_orbital_tower_guard', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'],
         'default': True,
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix (prevents shiny path bleed), projectile retargeting from tower position, off-screen target cleanup, Shell Bell / Clefairy Doll damage tracking fix',
-        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_orbital_tower_guard', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
+        'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix, projectile retargeting, off-screen cleanup, Shell Bell / Clefairy Doll tracking, and published 1.6.1 balance corrections omitted from the supplied build',
+        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_orbital_tower_guard', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix', 'apply_v161_published_balance_fixes'],
         'default': True,
     },
     'allow_dupes': {
@@ -479,24 +479,24 @@ def copy_modded_file(src, dest):
 def apply_shiny_sprites():
     """Copy pre-generated shiny sprites for non-max evolution Pokemon."""
     print("\n[*] Installing custom shiny sprites...")
-    
+
     shiny_src = MODS_DIR / "patches" / "shiny_sprites"
     shiny_dest = APP_EXTRACTED / "src" / "assets" / "images" / "pokemon" / "shiny"
-    
+
     if not shiny_src.exists():
         print("  [SKIP] No pre-generated shiny sprites found")
         return
-    
+
     # Ensure destination exists
     shiny_dest.mkdir(parents=True, exist_ok=True)
-    
+
     # Copy all sprite files
     count = 0
     for sprite_file in shiny_src.glob("*.png"):
         dest_file = shiny_dest / sprite_file.name
         shutil.copy2(sprite_file, dest_file)
         count += 1
-    
+
     if count > 0:
         log_success(f"Shiny sprites: {count} custom sprites installed")
     else:
@@ -509,32 +509,32 @@ def apply_text_continue_option():
     """Add 'Continue' as 4th auto-reset option in all languages."""
     path = JS_ROOT / "file" / "text.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if "'Continue'" in content or '"Continue"' in content:
         log_skip("text.js: Continue option")
         return True
-    
+
     # Find the reset object and add option 3
     old_pattern = """reset: {
 				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关é--­', 'Wył.'],
 				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
 				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
 			}"""
-    
+
     new_pattern = """reset: {
 				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关é--­', 'Wył.'],
 				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
 				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
 				3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],
 			}"""
-    
+
     if old_pattern in content:
         content = content.replace(old_pattern, new_pattern)
         write_file(path, content)
         log_success("text.js: Continue option added")
         return True
-    
+
     # Try alternate pattern matching (encoding might differ)
     # Match the structure and add line 3
     pattern = r"(reset:\s*\{\s*\n\s*0:\s*\[[^\]]+\],\s*\n\s*1:\s*\[[^\]]+\],\s*\n\s*2:\s*\[[^\]]+\],)(\s*\n\s*\},?)"
@@ -545,7 +545,7 @@ def apply_text_continue_option():
         write_file(path, content)
         log_success("text.js: Continue option added (regex)")
         return True
-    
+
     log_fail("text.js: Continue option")
     return False
 
@@ -559,12 +559,12 @@ def apply_menu_autoreset_range():
     changed = False
 
     old_pattern = """updateAutoReset = (dir) => {
-    	let pos = Number(this.main.autoReset) + dir;
+	let pos = Number(this.main.autoReset) + dir;
 		if (pos < 0) pos = 2;
 		else if (pos == 3) pos = 0;"""
 
     new_pattern = """updateAutoReset = (dir) => {
-    	let pos = Number(this.main.autoReset) + dir;
+	let pos = Number(this.main.autoReset) + dir;
 		if (pos < 0) pos = 3;
 		else if (pos == 4) pos = 0;"""
 
@@ -672,19 +672,19 @@ def apply_shiny_eggs():
     """Add 1/30 shiny chance when buying eggs - uses full file replacement."""
     path = JS_ROOT / "game" / "core" / "Shop.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'isShinyEgg' in content or '1/30' in content:
         log_skip("Shop.js: Shiny eggs")
         return True
-    
+
     # Use full file replacement from patches/Shop.modded.js
     modded_path = MODS_DIR / "patches" / "Shop.modded.js"
     if modded_path.exists():
         copy_modded_file(modded_path, path)
         log_success("Shop.js: Shiny eggs (full file replacement)")
         return True
-    
+
     log_fail("Shop.js: Shiny eggs", "Shop.modded.js not found")
     return False
 
@@ -695,38 +695,38 @@ def apply_shiny_starters():
     """Add 1/30 shiny chance when selecting starter."""
     path = JS_ROOT / "game" / "scenes" / "NewGameScene.js"
     content = read_file(path)
-    
+
     # Check if already applied (handle both "1/30" and "1 / 30" spacing)
     if 'isShiny' in content and ('1/30' in content or '1 / 30' in content):
         log_skip("NewGameScene.js: Shiny starters")
         return True
-    
+
     # Use modded file if available (safer, idempotent)
     modded_file = MODS_DIR / "patches" / "NewGameScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("NewGameScene.js: Shiny starters (full file replacement)")
         return True
-    
+
     # Fallback: inline patch
     old_pattern = """	close() {
 		super.close();
 		this.main.team.addPokemon(new Pokemon(STARTER[this.starterSelected], 1, null, this.main));
 		this.main.shop.eggList.splice(this.starterSelected, 1);"""
-    
+
     new_pattern = """	close() {
 		super.close();
 		// 1 in 30 chance for shiny starter
 		const isShiny = Math.random() < (1 / 30);
 		this.main.team.addPokemon(new Pokemon(STARTER[this.starterSelected], 1, null, this.main, undefined, false, null, undefined, isShiny));
 		this.main.shop.eggList.splice(this.starterSelected, 1);"""
-    
+
     if old_pattern in content:
         content = content.replace(old_pattern, new_pattern)
         write_file(path, content)
         log_success("NewGameScene.js: Shiny starters (1/30)")
         return True
-    
+
     log_fail("NewGameScene.js: Shiny starters")
     return False
 
@@ -737,34 +737,34 @@ def apply_shiny_reveal():
     """Add shiny reveal display with sparkle animation."""
     path = JS_ROOT / "game" / "scenes" / "ShopScene.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'isShinyReveal' in content:
         log_skip("ShopScene.js: Shiny reveal")
         return True
-    
+
     # Modify DisplayPokemon constructor
     old_constructor = """class DisplayPokemon extends GameScene {
 	constructor(main) {
 		super(200, 200);
 		this.main = main;
 		this.pokemon;
-		
+
 		this.header.removeChild(this.closeButton);
 		this.render();
 	}"""
-    
+
     new_constructor = """class DisplayPokemon extends GameScene {
 	constructor(main) {
 		super(200, 200);
 		this.main = main;
 		this.pokemon;
 		this.isShinyReveal = false;
-		
+
 		this.header.removeChild(this.closeButton);
 		this.render();
 	}"""
-    
+
     # Modify render to add shiny symbol
     old_render = """	render() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
@@ -772,7 +772,7 @@ def apply_shiny_reveal():
 		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
 		this.closeButton = new Element(this.container, { className: 'shop-scene-purchase' }).element;"""
-    
+
     new_render = """	render() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
 		this.prompt = new Element(this.container, { className: 'dp-scene-prompt' }).element;
@@ -780,12 +780,12 @@ def apply_shiny_reveal():
 		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
 		// Scale up the Pokemon sprite 2.4x (96px = 40px * 2.4)
 		this.image.style.cssText = 'width:96px;height:96px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
-		
+
 		// Shiny symbol - enlarged star positioned in corner
 		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
 		this.shinySymbol.innerHTML = '<span class="msrre">\u2b50</span>';
 		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
-		
+
 		// Add pulse animation keyframe if not exists
 		if (!document.getElementById('shinyPulseStyle')) {
 			const style = document.createElement('style');
@@ -794,9 +794,9 @@ def apply_shiny_reveal():
 			document.head.appendChild(style);
 		}
 		this.shinySymbol.style.animation = 'shinyPulse 1s ease-in-out infinite';
-		
+
 		this.closeButton = new Element(this.container, { className: 'shop-scene-purchase' }).element;"""
-    
+
     # Modify update to show shiny text
     old_update = """	update() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
@@ -806,7 +806,7 @@ def apply_shiny_reveal():
 		this.image.style.backgroundImage = `url("${this.pokemon.sprite.base}")`;
 		this.closeButton.innerHTML = 'OK';
 	}"""
-    
+
     new_update = """	update() {
 		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
 		if (this.isShinyReveal) {
@@ -818,11 +818,11 @@ def apply_shiny_reveal():
 		this.pokemonName.style.color = this.pokemon.specie.color;
 		this.image.style.backgroundImage = `url("${this.pokemon.sprite.base}")`;
 		this.closeButton.innerHTML = 'OK';
-		
+
 		// Show shiny symbol if it's a shiny reveal
 		this.shinySymbol.style.display = this.isShinyReveal ? 'block' : 'none';
 	}"""
-    
+
     # Modify open to accept isShiny param
     old_open = """	open(pokemon) {
 		playSound('results', 'ui');
@@ -831,7 +831,7 @@ def apply_shiny_reveal():
 		super.open();
 		this.update();
 	}"""
-    
+
     new_open = """	open(pokemon, isShiny = false) {
 		playSound('results', 'ui');
 		this.pokemon = pokemon;
@@ -840,30 +840,30 @@ def apply_shiny_reveal():
 		super.open();
 		this.update();
 	}"""
-    
+
     changes_made = 0
-    
+
     if old_constructor in content:
         content = content.replace(old_constructor, new_constructor)
         changes_made += 1
-    
+
     if old_render in content:
         content = content.replace(old_render, new_render)
         changes_made += 1
-    
+
     if old_update in content:
         content = content.replace(old_update, new_update)
         changes_made += 1
-    
+
     if old_open in content:
         content = content.replace(old_open, new_open)
         changes_made += 1
-    
+
     if changes_made > 0:
         write_file(path, content)
         log_success(f"ShopScene.js: Shiny reveal ({changes_made} changes)")
         return True
-    
+
     log_fail("ShopScene.js: Shiny reveal")
     return False
 
@@ -873,46 +873,46 @@ def apply_shiny_reveal():
 def apply_secret_shiny():
     """Patch getSecret() in UI.js to add 1/30 shiny chance for hidden Pokemon."""
     path = JS_ROOT / "game" / "UI.js"
-    
+
     if not path.exists():
         log_skip("UI.js: Secret shiny (file not yet installed)")
         return True
-    
+
     content = read_file(path)
-    
+
     if 'const isShiny = Math.random() < (1 / 30);' in content and 'getSecret' in content:
         log_skip("UI.js: Secret shiny")
         return True
-    
+
     old = """	getSecret(poke) {
 		const pokemon = pokemonData[poke];
 
-		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
+		if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
 			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1))
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1));
 		} else {
 			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1))
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1));
 		}"""
-    
+
     new = """	getSecret(poke) {
 		const pokemon = pokemonData[poke];
 		const isShiny = Math.random() < (1 / 30);
 
-		if (this.main.team.pokemon.length < this.main.player.teamSlots) {
+		if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
 			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny)
+			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny);
 		} else {
 			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny)
+			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny);
 		}"""
-    
+
     if old in content:
         content = content.replace(old, new)
         write_file(path, content)
         log_success("UI.js: Secret shiny (1/30 chance for hidden Pokemon)")
         return True
-    
+
     log_fail("UI.js: Secret shiny", "getSecret pattern not found")
     return False
 
@@ -983,26 +983,26 @@ def apply_challenge_reward_shiny():
 def apply_enemy_shiny_spawn():
     """Patch Enemy.js to add the shiny enemy gameplay variant."""
     path = JS_ROOT / "game" / "component" / "Enemy.js"
-    
+
     if not path.exists():
         log_skip("Enemy.js: Shiny enemy spawn (file not yet installed)")
         return True
-    
+
     content = read_file(path)
-    
+
     if "this.isShiny = Math.random() < (1 / 1000);" in content and "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content:
         log_skip("Enemy.js: Shiny enemy spawn")
         return True
-    
+
     old_constructor = """		this.enemy = enemy;
 		this.hp = enemy.hp;
 		this.hpMax = enemy.hp;
 		this.armor = enemy.armor || 0;
 		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0; 
-		this.regenTimer = 0; 
-		this.speed = enemy.speed; 
-		this.baseSpeed = this.speed; 
+		this.regeneration = enemy.regeneration || 0;
+		this.regenTimer = 0;
+		this.speed = enemy.speed;
+		this.baseSpeed = this.speed;
 		this.power = enemy.power;
 		this.gold = enemy.gold + this.main.player.extraGold;
 """
@@ -1012,10 +1012,10 @@ def apply_enemy_shiny_spawn():
 		this.hpMax = enemy.hp;
 		this.armor = enemy.armor || 0;
 		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0; 
-		this.regenTimer = 0; 
-		this.speed = enemy.speed; 
-		this.baseSpeed = this.speed; 
+		this.regeneration = enemy.regeneration || 0;
+		this.regenTimer = 0;
+		this.speed = enemy.speed;
+		this.baseSpeed = this.speed;
 		this.power = enemy.power;
 		this.gold = enemy.gold + this.main.player.extraGold
 """
@@ -1030,10 +1030,10 @@ def apply_enemy_shiny_spawn():
 		this.hpMax = enemy.hp;
 		this.armor = enemy.armor || 0;
 		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0; 
-		this.regenTimer = 0; 
-		this.speed = enemy.speed; 
-		this.baseSpeed = this.speed; 
+		this.regeneration = enemy.regeneration || 0;
+		this.regenTimer = 0;
+		this.speed = enemy.speed;
+		this.baseSpeed = this.speed;
 		this.power = enemy.power;
 		this.gold = enemy.gold + this.main.player.extraGold;
 		if (this.isShiny) {
@@ -1046,11 +1046,11 @@ def apply_enemy_shiny_spawn():
 		}
 """
     old_defeat = """	    	this.main.player.stats.defeatedEnemies++;
-	    	this.main.player.stats.defeatedSpecies.add(this.enemy.id);
+		this.main.player.stats.defeatedSpecies.add(this.enemy.id);
 """
     new_defeat = """	    	this.main.player.stats.defeatedEnemies++;
-	    	if (this.isShiny) this.main.player.stats.shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;
-	    	this.main.player.stats.defeatedSpecies.add(this.enemy.id);
+		if (this.isShiny) this.main.player.stats.shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;
+		this.main.player.stats.defeatedSpecies.add(this.enemy.id);
 """
 
     changed = False
@@ -1119,19 +1119,19 @@ def apply_endless_mode():
     """Add Continue/Restart buttons and endless mode logic."""
     path = JS_ROOT / "game" / "scenes" / "FinalScene.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'continueEndless' in content:
         log_skip("FinalScene.js: Endless mode")
         return True
-    
+
     # This requires extensive changes - use the modded file directly
     modded_file = MODS_DIR / "patches" / "FinalScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("FinalScene.js: Endless mode (full file replacement)")
         return True
-    
+
     log_fail("FinalScene.js: Endless mode - modded file not found")
     return False
 
@@ -1142,19 +1142,19 @@ def apply_item_tooltips():
     """Add enhanced tooltip functionality for items."""
     path = JS_ROOT / "utils" / "Tooltip.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'showText' in content:
         log_skip("Tooltip.js: Item tooltips")
         return True
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "Tooltip.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Tooltip.js: Item tooltips (full file replacement)")
         return True
-    
+
     log_fail("Tooltip.js: Item tooltips - modded file not found")
     return False
 
@@ -1165,19 +1165,19 @@ def apply_ui_mods():
     """Apply UI modifications including save/load tooltips and level cap removal."""
     path = JS_ROOT / "game" / "UI.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'showText' in content and '// Level cap removed' in content:
         log_skip("UI.js: All mods")
         return True
-    
+
     # Use modded file directly (too many changes)
     modded_file = MODS_DIR / "patches" / "UI.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("UI.js: All mods (full file replacement)")
         return True
-    
+
     log_fail("UI.js: mods - modded file not found")
     return False
 
@@ -1188,7 +1188,7 @@ def apply_pause_micromanagement():
     """
     Surgically patch Game.js to enable pause micromanagement.
 
-    The current Game.modded.js is based on vanilla 1.5.9, which already has a
+    The current Game.modded.js is based on vanilla 1.6.1, which already has a
     Worker-driven render loop, passenger/mount placement handling, spike zones,
     and link-beam rendering. Pause micro keeps the render loop alive, skips
     simulation/tower attacks while stopped, and leaves canvas input enabled so
@@ -1319,17 +1319,17 @@ def _ensure_game_modded():
     """Install Game.modded.js if not already present. Returns True if file is modded."""
     path = JS_ROOT / "game" / "Game.js"
     content = read_file(path)
-    
+
     # Check if already modded (has sub-stepping loop)
     if 'SUB-STEPPING' in content:
         return True
-    
+
     modded_file = MODS_DIR / "patches" / "Game.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Game.js: Enhanced game loop (full file replacement)")
         return True
-    
+
     log_fail("Game.js: Game.modded.js not found")
     return False
 
@@ -1339,73 +1339,73 @@ def _ensure_game_modded():
 def apply_speed_mod():
     """Surgically patch Game.js to add 1x/1.5x/2x/3x/5x/10x speed options."""
     path = JS_ROOT / "game" / "Game.js"
-    
+
     # Ensure Game.modded.js is installed first
     _ensure_game_modded()
-    
+
     content = read_file(path)
-    
+
     # Check if already applied
     if "speedWave.innerText = '10x'" in content or 'speedFactor === 10' in content:
         log_skip("Game.js: Speed mod")
         return True
-    
+
     changes = 0
-    
+
     # IMPORTANT: Replace toggleSpeed FIRST before changing speedFactor values,
     # otherwise the pattern won't match after global replacement
-    
+
     # 1. Replace vanilla toggleSpeed with enhanced version
     old_toggle = """	toggleSpeed() {
 	    playSound('option', 'ui');
 	    if (this.speedFactor === 0.8) {
-	      	this.speedFactor = 1.2;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
+		this.speedFactor = 1.2;
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
 	    } else if (this.speedFactor === 1.2) {
-	      	this.speedFactor = 1.7;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 50%, rgba(107, 114, 128, 1) 50%)';
+		this.speedFactor = 1.7;
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 50%, rgba(107, 114, 128, 1) 50%)';
 	    } else if (this.speedFactor === 1.7) {
-	      	this.speedFactor = 2;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 75%, rgba(107, 114, 128, 1) 75%)';
+		this.speedFactor = 2;
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 75%, rgba(107, 114, 128, 1) 75%)';
 	    } else if (this.speedFactor === 2) {
-	      	this.speedFactor = 2.5;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)';
+		this.speedFactor = 2.5;
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 100%, rgba(107, 114, 128, 1) 100%)';
 	    } else {
-	      	this.speedFactor = 0.8;
-	      	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+		this.speedFactor = 0.8;
+		this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
 	    }
 	}"""
-    
+
     new_toggle = """	// MOD: Enhanced speed toggle with 1x, 1.5x, 2x, 3x, 5x, 10x options
 	toggleSpeed() {
 	    playSound('option', 'ui');
 	    if (this.speedFactor === 1) {
-	      	this.speedFactor = 1.5;
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
-	      	this.main.UI.speedWave.innerText = '1.5x';
+		this.speedFactor = 1.5;
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(34, 197, 94, 1) 25%, rgba(107, 114, 128, 1) 25%)';
+		this.main.UI.speedWave.innerText = '1.5x';
 	    } else if (this.speedFactor === 1.5) {
-	      	this.speedFactor = 2;
-	      	this.main.UI.speedWave.innerText = '2x';
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
+		this.speedFactor = 2;
+		this.main.UI.speedWave.innerText = '2x';
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(59, 130, 246, 1) 40%, rgba(107, 114, 128, 1) 40%)';
 	    } else if (this.speedFactor === 2) {
-	      	this.speedFactor = 3;
-	      	this.main.UI.speedWave.innerText = '3x';
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
+		this.speedFactor = 3;
+		this.main.UI.speedWave.innerText = '3x';
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(245, 158, 11, 1) 55%, rgba(107, 114, 128, 1) 55%)';
 	    } else if (this.speedFactor === 3) {
-	      	this.speedFactor = 5;
-	      	this.main.UI.speedWave.innerText = '5x';
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 75%, rgba(107, 114, 128, 1) 75%)';
+		this.speedFactor = 5;
+		this.main.UI.speedWave.innerText = '5x';
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(239, 68, 68, 1) 75%, rgba(107, 114, 128, 1) 75%)';
 	    } else if (this.speedFactor === 5) {
-	      	this.speedFactor = 10;
-	      	this.main.UI.speedWave.innerText = '10x';
-	      	this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(168, 85, 247, 1) 100%, rgba(107, 114, 128, 1) 100%)';
+		this.speedFactor = 10;
+		this.main.UI.speedWave.innerText = '10x';
+		this.main.UI.speedWave.style.background = 'url("./src/assets/images/textures/texture1.png"), linear-gradient(0deg,rgba(168, 85, 247, 1) 100%, rgba(107, 114, 128, 1) 100%)';
 	    } else {
-	      	this.speedFactor = 1;
-	      	this.main.UI.speedWave.innerText = '1x';
-	      	this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
+		this.speedFactor = 1;
+		this.main.UI.speedWave.innerText = '1x';
+		this.main.UI.speedWave.style.background = `url("./src/assets/images/textures/texture1.png"), #6B7280`;
 	    }
 	}"""
-    
+
     if old_toggle in content:
         content = content.replace(old_toggle, new_toggle)
         changes += 1
@@ -1420,7 +1420,7 @@ def apply_speed_mod():
         if replacements > 0:
             content = content2
             changes += 1
-    
+
     # 2. Fix restoreSpeed to use 1 instead of 0.8
     old_restore = "this.speedFactor = 0.8;\n    \tthis.main.UI.speedWave.style.background"
     new_restore = "this.speedFactor = 1;\n    \tthis.main.UI.speedWave.innerText = '1x';\n    \tthis.main.UI.speedWave.style.background"
@@ -1437,15 +1437,15 @@ def apply_speed_mod():
         if replacements > 0:
             content = content2
             changes += 1
-    
+
     # 3. Change initial speedFactor from 0.8 to 1 (do this LAST to avoid breaking other patterns)
     content = content.replace('this.speedFactor = 0.8;', 'this.speedFactor = 1;')
-    
+
     if changes > 0:
         write_file(path, content)
         log_success(f"Game.js: 10x speed options ({changes} patches)")
         return True
-    
+
     log_fail("Game.js: Speed mod", "toggleSpeed pattern not found")
     return False
 
@@ -1456,19 +1456,19 @@ def apply_pokemon_mods():
     """Apply Pokemon modifications including level cap removal and stat scaling."""
     path = JS_ROOT / "game" / "component" / "Pokemon.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'calculateAsymptoticSpeed' in content:
         log_skip("Pokemon.js: All mods")
         return True
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "Pokemon.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Pokemon.js: All mods (full file replacement)")
         return True
-    
+
     log_fail("Pokemon.js: mods - modded file not found")
     return False
 
@@ -1479,26 +1479,26 @@ def apply_pokemonscene_mods():
     """Remove level caps from +1/+5/+10 buttons."""
     path = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if '// Level cap removed' in content:
         log_skip("PokemonScene.js: Level cap removal")
         return True
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "PokemonScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("PokemonScene.js: Level cap removal (full file replacement)")
         return True
-    
+
     log_fail("PokemonScene.js: mods - modded file not found")
     return False
 
 
 def apply_recharge_precision():
     """Show 3 decimal places for recharge time when it drops below 0.1s.
-    
+
     Patches PokemonScene.js in 3 locations:
     1. Base stat display (update method)
     2. Level-up hover preview (+1/x5/x10 buttons)
@@ -1506,7 +1506,7 @@ def apply_recharge_precision():
     """
     path = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
     content = read_file(path)
-    
+
     if 'speedDecimals' in content:
         log_skip("PokemonScene.js: Recharge precision (already applied)")
         return True
@@ -1514,9 +1514,9 @@ def apply_recharge_precision():
     if 'formatPanelStat(' in content:
         log_skip("PokemonScene.js: Recharge precision (covered by panel stat formatter)")
         return True
-    
+
     patched = 0
-    
+
     # 1. Base stat display: this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s`;
     old1 = "this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s`;"
     new1 = ("const _spd = this.pokemon.speed / 1000; const speedDecimals = _spd < 0.1 ? 3 : 2;\n"
@@ -1524,7 +1524,7 @@ def apply_recharge_precision():
     if old1 in content:
         content = content.replace(old1, new1, 1)
         patched += 1
-    
+
     # 2. Level-up hover preview: speedDiff and display lines
     old2 = "const speedDiff = Math.abs((newSpeed / 1000).toFixed(2) - (this.pokemon.speed / 1000).toFixed(2)).toFixed(2);"
     new2 = ("const _curSpd = this.pokemon.speed / 1000; const _newSpd = newSpeed / 1000;\n"
@@ -1533,13 +1533,13 @@ def apply_recharge_precision():
     if old2 in content:
         content = content.replace(old2, new2, 1)
         patched += 1
-    
+
     old2b = "this.data['speed'].value.innerHTML = `${(this.pokemon.speed / 1000).toFixed(2)}s <span style=\"color:var(--green)\">(-${(speedDiff)}s)</span>`;"
     new2b = "this.data['speed'].value.innerHTML = `${_curSpd.toFixed(_spdDec)}s <span style=\"color:var(--green)\">(-${(speedDiff)}s)</span>`;"
     if old2b in content:
         content = content.replace(old2b, new2b, 1)
         patched += 1
-    
+
     # 3. Item/ability gains: const speedSec = (Math.abs(speedGains) / 1000).toFixed(2);
     old3 = "const speedSec = (Math.abs(speedGains) / 1000).toFixed(2);"
     new3 = ("const _spdDec3 = (this.pokemon.speed / 1000) < 0.1 ? 3 : 2;\n"
@@ -1547,12 +1547,12 @@ def apply_recharge_precision():
     if old3 in content:
         content = content.replace(old3, new3, 1)
         patched += 1
-    
+
     if patched > 0:
         write_file(path, content)
         log_success(f"PokemonScene.js: Recharge precision ({patched} patches)")
         return True
-    
+
     log_fail("PokemonScene.js: Recharge precision - no matching patterns")
     return False
 
@@ -1686,42 +1686,42 @@ def apply_endless_waves():
     """Apply endless mode wave spawning with power budget system."""
     path = JS_ROOT / "game" / "core" / "Area.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'POWER BUDGET' in content or 'endlessMode' in content:
         log_skip("Area.js: Endless waves")
         return True
-    
+
     # Use modded file directly (256 lines added!)
     modded_file = MODS_DIR / "patches" / "Area.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("Area.js: Endless waves (full file replacement)")
         return True
-    
+
     log_fail("Area.js: Endless waves - modded file not found")
     return False
 
 
 def apply_endless_stat_safety():
     """Clamp vanilla stat formulas for levels past 100 when Infinite Levels isn't installed.
-    
+
     Without Infinite Levels, vanilla Pokemon.js uses linear formulas that break at high levels:
     - Speed goes negative (e.g. -0.40s recharge at level 1000)
     - Costs use Math.pow(1.12, level) which explodes past 100
-    
+
     This patches updateStats() and setStatsLevel() to clamp the effective level at 100
     for stat calculation, and clamps cost calculation level at 100.
     The Pokemon's actual level is preserved, only the formulas are capped.
     """
     path = JS_ROOT / "game" / "component" / "Pokemon.js"
     content = read_file(path)
-    
+
     # Don't patch if Pokemon.modded.js is installed (has asymptotic scaling)
     if 'calculateAsymptoticSpeed' in content:
         log_skip("Pokemon.js: Endless stat safety (infinite levels installed)")
         return True
-    
+
     if '// MOD: Clamp stat level at 100' in content:
         log_skip("Pokemon.js: Endless stat safety")
         return True
@@ -1754,14 +1754,14 @@ def apply_endless_stat_safety():
         content = content.replace(old_update_stats, new_update_stats)
         changed = True
 
-    old_set_stats = """	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+    old_set_stats = """	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba
 		this.speed = Math.floor(this.specie.speed.base + (this.specie.speed.scale * level));
 		this.power = Math.floor(this.specie.power.base + (this.specie.power.scale * level));
 		this.range = Math.floor(this.specie.range.base + (this.specie.range.scale * level));
 		this.critical = this.specie.critical.base + (this.specie.critical.scale * level);
 	}"""
 
-    new_set_stats = """	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba 
+    new_set_stats = """	setStatsLevel(level = 50) { // BORRAR y cambiar por lo de arriba
 		// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
 		const statLevel = Math.min(level, 100);
 		this.speed = Math.max(200, Math.floor(this.specie.speed.base + (this.specie.speed.scale * statLevel)));
@@ -1786,17 +1786,17 @@ def apply_endless_stat_safety():
         if old_cost in content:
             content = content.replace(old_cost, new_cost)
             changed = True
-    
+
     old_adn = """this.speed = Math.floor(this.adn.speed.base + (this.adn.speed.scale * level));
 		this.power = Math.floor(this.adn.power.base + (this.adn.power.scale * level));
 		this.range = Math.floor(this.adn.range.base + (this.adn.range.scale * level));
 
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;
-		
+
 		this.innerRange = this.adn.range.inner;
 		this.critical = this.adn.critical.base + (this.adn.critical.scale * level);"""
-    
+
     new_adn = """// MOD: Clamp stat level at 100 for vanilla formulas (endless safety)
 		const adnStatLevel = Math.min(level, 100);
 		this.speed = Math.max(200, Math.floor(this.adn.speed.base + (this.adn.speed.scale * adnStatLevel)));
@@ -1805,10 +1805,10 @@ def apply_endless_stat_safety():
 
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;
-		
+
 		this.innerRange = this.adn.range.inner;
 		this.critical = this.adn.critical.base + (this.adn.critical.scale * adnStatLevel);"""
-    
+
     if old_adn in content:
         content = content.replace(old_adn, new_adn)
         changed = True
@@ -1816,7 +1816,7 @@ def apply_endless_stat_safety():
     if not changed:
         log_fail("Pokemon.js: Endless stat safety", "1.5 stat/cost patterns not found")
         return False
-    
+
     write_file(path, content)
     log_success("Pokemon.js: Endless stat safety (stats capped at level 100, min speed 200ms)")
     return True
@@ -1824,7 +1824,7 @@ def apply_endless_stat_safety():
 
 def apply_endless_levelbutton_safety():
     """Fix level-up buttons for levels past 100 when Infinite Levels isn't installed.
-    
+
     Vanilla PokemonScene.js checks === 100 / > 95 / > 90 for MAX display.
     With Endless saves past 100, these don't match and buttons appear clickable.
     Patch to >= 100 so all three buttons show MAX for any level >= 100.
@@ -1832,30 +1832,30 @@ def apply_endless_levelbutton_safety():
     """
     path = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
     content = read_file(path)
-    
+
     # Don't patch if modded file is installed
     if 'calculateAsymptoticSpeed' in content or 'isShiny' in content and 'inLvlCapChallenge' in content:
         log_skip("PokemonScene.js: Endless level button safety (modded file installed)")
         return True
-    
+
     if '// MOD: Level-up allowed during challenge' in content:
         # Our vanilla bugfix patch is present — the lvlCap block is already removed
         # Now fix the level 100 checks to >= 100
         pass
-    
+
     patched = False
-    
+
     # x1 button: === 100 -> >= 100
     old_x1 = "if (this.pokemon.lvl === 100) {"
     new_x1 = "if (this.pokemon.lvl >= 100) {"
     if old_x1 in content:
         content = content.replace(old_x1, new_x1)
         patched = True
-    
+
     # x5 button: > 95 -> >= 96 (same meaning) — actually this already catches 96+
     # But level 1000 > 95 is true, so x5 already shows MAX. Same for x10 (> 90).
     # Only x1 (=== 100) is broken for levels past 100.
-    
+
     if patched:
         write_file(path, content)
         log_success("PokemonScene.js: Endless level button safety (MAX at >= 100)")
@@ -1870,17 +1870,17 @@ def apply_endless_levelbutton_safety():
 
 def apply_wave_manager_fix():
     """Fix wave manager visibility for endless mode records > 100.
-    
+
     Vanilla UI.js checks records === 100 (exact match), which fails when
     endless mode pushes records past 100. Patch to >= 100.
     Only needed when UI.modded.js is NOT installed (QoL not selected).
     """
     path = JS_ROOT / "game" / "UI.js"
     content = read_file(path)
-    
+
     old_check = ".records[this.main.area.map.id] === 100 && this.main.player.hasBike)"
     new_check = ".records[this.main.area.map.id] >= 100 && this.main.player.hasBike)"
-    
+
     if '>= 100 && this.main.player.hasBike)' in content:
         log_skip("UI.js: Wave manager >= 100 fix")
         return True
@@ -1902,19 +1902,19 @@ def apply_endless_checkpoints():
     """Apply endless mode checkpoints every 50 waves."""
     path = JS_ROOT / "game" / "scenes" / "DefeatScene.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'ENDLESS MODE: Dynamic checkpoint' in content:
         log_skip("DefeatScene.js: Endless checkpoints")
         return True
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "DefeatScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("DefeatScene.js: Endless checkpoints (full file replacement)")
         return True
-    
+
     log_fail("DefeatScene.js: Endless checkpoints - modded file not found")
     return False
 
@@ -1927,13 +1927,13 @@ def apply_enemy_scaling():
     content = read_file(path)
 
     had_shiny_enemy_spawn = "this.isShiny = Math.random() < (1 / 1000);" in content
-    
+
     # Check if already applied
     if 'ENDLESS MODE' in content and 'wave > 100' in content:
         log_skip("Enemy.js: Endless scaling")
         return True
-    
-    # Use modded file directly. This file is a vanilla 1.5.9 full-file base with
+
+    # Use modded file directly. This file is a vanilla 1.6.1 full-file base with
     # only the endless scaling/draw-skip overrides reapplied; optional Enemy.js
     # feature patches are applied separately to preserve feature toggles.
     modded_file = MODS_DIR / "patches" / "Enemy.modded.js"
@@ -1943,7 +1943,7 @@ def apply_enemy_scaling():
             apply_enemy_shiny_spawn()
         log_success("Enemy.js: Endless scaling (full file replacement)")
         return True
-    
+
     log_fail("Enemy.js: Endless scaling - modded file not found")
     return False
 
@@ -1984,7 +1984,7 @@ def apply_tower_deltatime():
 def apply_orbital_tower_guard():
     """Prevent orbital towers from firing normal projectiles.
 
-    PokePath 1.5.9 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
+    PokePath 1.6.1 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
     compatibility. This surgical guard is applied after any optional Tower.js
     replacement so orbital Pokemon only update their orbit projectiles.
     """
@@ -2044,7 +2044,7 @@ def apply_projectile_scaling():
     """Apply endless mode damage calculations."""
     path = JS_ROOT / "game" / "component" / "Projectile.js"
     content = read_file(path)
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "Projectile.modded.js"
     if modded_file.exists():
@@ -2055,7 +2055,7 @@ def apply_projectile_scaling():
         else:
             log_skip("Projectile.js: Already applied")
         return True
-    
+
     log_fail("Projectile.js: modded file not found")
     return False
 
@@ -2072,7 +2072,7 @@ def apply_projectile_speed_scaling():
         return True
 
     old = """        const rawSpeed = projectile.speed ?? 5;
-        this.speed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed; 
+        this.speed = rawSpeed <= 30 ? rawSpeed * 60 : rawSpeed;
 """
 
     new = """        const rawSpeed = projectile.speed ?? 5;
@@ -2110,32 +2110,32 @@ def apply_projectile_speed_scaling():
 def apply_box_expansion():
     """Expand Pokemon box storage from 103 to 200 slots."""
     path = JS_ROOT / "game" / "scenes" / "BoxScene.js"
-    
+
     if not path.exists():
         log_fail("BoxScene.js: File not found")
         return False
-    
+
     content = read_file(path)
-    
+
     # Check if already expanded
     if "< 200" in content:
         log_skip("BoxScene.js: Box expansion (already 200 slots)")
         return True
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "BoxScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("BoxScene.js: Box expanded to 200 slots")
         return True
-    
+
     # Fallback: direct replacement
     if "< 103" in content:
         content = content.replace("< 103", "< 200")
         write_file(path, content)
         log_success("BoxScene.js: Box expanded to 200 slots (inline)")
         return True
-    
+
     log_fail("BoxScene.js: Box expansion pattern not found")
     return False
 
@@ -2145,25 +2145,25 @@ def apply_box_expansion():
 def apply_profile_endless_stats():
     """Update profile stats for endless mode (no caps, unique species count)."""
     path = JS_ROOT / "game" / "scenes" / "ProfileScene.js"
-    
+
     if not path.exists():
         log_fail("ProfileScene.js: File not found")
         return False
-    
+
     content = read_file(path)
-    
+
     # Check if already applied
     if "countUniqueSpecies" in content:
         log_skip("ProfileScene.js: Endless stats")
         return True
-    
+
     # Use modded file directly
     modded_file = MODS_DIR / "patches" / "ProfileScene.modded.js"
     if modded_file.exists():
         copy_modded_file(modded_file, path)
         log_success("ProfileScene.js: Endless stats (full file replacement)")
         return True
-    
+
     log_fail("ProfileScene.js: modded file not found")
     return False
 
@@ -2173,13 +2173,13 @@ def apply_profile_endless_stats():
 def apply_expanded_egg_list():
     """Add missing Pokemon to the egg shop that exist in game but weren't in shop."""
     path = JS_ROOT / "game" / "data" / "pokemonData.js"
-    
+
     if not path.exists():
         log_fail("pokemonData.js: File not found")
         return False
-    
+
     content = read_file(path)
-    
+
     # Check if already expanded (look for one of the new Pokemon)
     if "'bidoof'" in content and "'turtwig'" in content and "'vulpix'" in content:
         # Check if they're in the eggListData specifically
@@ -2187,66 +2187,66 @@ def apply_expanded_egg_list():
         if "'bidoof'" in egg_section and "'turtwig'" in egg_section:
             log_skip("pokemonData.js: Egg list already expanded")
             return True
-    
+
     # Old egg list (matches vanilla 1.4.4)
     old_egg_list = """export const eggListData = [
-	'charmander', 'treecko', 'froaki', 
+	'charmander', 'treecko', 'froaki',
 
 	'natu', 'spoink', 'murkrow',
-	'voltorb', 'machop', 'mankey', 'chimchar', 
-	'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 'chikorita', 
-	'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
-	'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
-	'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
-	'cubone', 'binacle', 'absol', 'oshawott', 'sandshrew', 'sneasel', 
-	'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
+	'voltorb', 'machop', 'mankey', 'chimchar',
+	'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 'chikorita',
+	'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher',
+	'seel', 'staryu', 'psyduck', 'gulpin', 'lapras',
+	'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha',
+	'cubone', 'binacle', 'absol', 'oshawott', 'sandshrew', 'sneasel',
+	'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit',
 	'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
-	'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
-	'farfetchd', 'omanyte', 'kabuto', 'corsola', 
-	'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
-	'starly', 'abra', 'gastly', 'ditto', 
+	'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing',
+	'farfetchd', 'omanyte', 'kabuto', 'corsola',
+	'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos',
+	'starly', 'abra', 'gastly', 'ditto',
 
 	'magikarp', 'pikachu', 'fuecoco', 'larvesta', 'cherubi',
-	'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
-	'sobble', 'rowlet', 'comfey', 'smeargle', 'carvanha', 
+	'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge',
+	'sobble', 'rowlet', 'comfey', 'smeargle', 'carvanha',
 ]"""
-    
+
     # New expanded egg list with 17 additional Pokemon
     new_egg_list = """export const eggListData = [
 	// === STARTERS ===
-	'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin', 
+	'charmander', 'treecko', 'froaki', 'chikorita', 'totodile', 'fennekin',
 	'turtwig', 'chimchar', 'oshawott', 'sobble', 'rowlet', 'fuecoco',
 
 	// === ORIGINAL EGG POKEMON ===
 	'natu', 'spoink', 'murkrow',
-	'voltorb', 'machop', 'mankey', 
-	'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela', 
-	'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher', 
-	'seel', 'staryu', 'psyduck', 'gulpin', 'lapras', 
-	'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha', 
-	'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel', 
-	'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit', 
+	'voltorb', 'machop', 'mankey',
+	'yamask', 'cryogonal', 'sableye', 'meowth', 'tangela',
+	'spinarak', 'shroomish', 'barboach', 'drudiggon', 'remoraid', 'clauncher',
+	'seel', 'staryu', 'psyduck', 'gulpin', 'lapras',
+	'ferroseed', 'shuckle', 'maractus', 'sunkern', 'aron', 'hawlucha',
+	'cubone', 'binacle', 'absol', 'sandshrew', 'sneasel',
+	'trapinch', 'pidgey', 'noibat', 'riolu', 'mareep', 'surskit',
 	'cottonee', 'petilil', 'hoppip', 'drilbur', 'ekans',
-	'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing', 
-	'farfetchd', 'omanyte', 'kabuto', 'corsola', 
-	'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos', 
-	'starly', 'abra', 'gastly', 'ditto', 
+	'girafarig', 'torkoal', 'spinda', 'dunsparce', 'ralts', 'koffing',
+	'farfetchd', 'omanyte', 'kabuto', 'corsola',
+	'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos',
+	'starly', 'abra', 'gastly', 'ditto',
 	'magikarp', 'pikachu', 'larvesta', 'cherubi',
-	'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge', 
-	'comfey', 'smeargle', 'carvanha', 
+	'rockruff', 'pawniard', 'sandile', 'wimpod', 'honedge',
+	'comfey', 'smeargle', 'carvanha',
 
 	// === NEW POKEMON (previously missing from shop) ===
 	'bidoof', 'cacnea', 'greavard', 'stakataka', 'luvdisc', 'chatot',
 	'munna', 'hoothoot', 'wingull', 'archen', 'inkay', 'vulpix',
 	'tarountula', 'carbink',
 ]"""
-    
+
     if old_egg_list in content:
         content = content.replace(old_egg_list, new_egg_list)
         write_file(path, content)
         log_success("pokemonData.js: Egg list expanded (+17 Pokemon)")
         return True
-    
+
     # Try a more flexible match - just find and replace the eggListData export
     pattern = r"export const eggListData = \[[^\]]+\]"
     match = re.search(pattern, content, re.DOTALL)
@@ -2260,7 +2260,7 @@ def apply_expanded_egg_list():
         write_file(path, content)
         log_success("pokemonData.js: Egg list expanded (+17 Pokemon) (regex)")
         return True
-    
+
     log_fail("pokemonData.js: Could not find eggListData to expand")
     return False
 
@@ -2356,6 +2356,7 @@ def apply_gold_display_format_player():
     # Remove old Trillion/Billion format if present
     old_options = [
         "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;",
+        "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(Math.min(99999999999, this.gold))}`;",
     ]
     # Also match the previously patched version
     for marker in ['const g = this.main.player.gold;']:
@@ -2374,7 +2375,8 @@ def apply_gold_display_format_player():
 
     for old in old_options:
         if old in content:
-            content = content.replace(old, new)
+            replacement = "this.main.UI.updatePlayer();" if "Math.min(99999999999, this.gold)" in old else new
+            content = content.replace(old, replacement)
             write_file(path, content)
             log_success("Player.js: Gold display abbreviated (BILLION/TRILLION/QUADRILLION)")
             return True
@@ -2550,7 +2552,7 @@ def apply_pokemon_sprite_isolation_fix():
 def apply_challenge_levelcap_fix():
     """
     Fix vanilla bug: level cap should cap high-level Pokemon, not boost low-level ones.
-    
+
     Two locations need fixing:
     1. Pokemon.js updateStats(): unconditionally sets level = lvlCap (should use Math.min)
     2. ChallengeScene.js: calls setStatsLevel(capLevel) which boosts low-level Pokemon
@@ -2559,27 +2561,27 @@ def apply_challenge_levelcap_fix():
     # --- Fix 1: Pokemon.js updateStats() ---
     path = JS_ROOT / "game" / "component" / "Pokemon.js"
     content = read_file(path)
-    
+
     if 'Math.min(this.lvl' in content and 'inChallenge.lvlCap' in content:
         log_skip("Pokemon.js: Challenge level cap fix")
     else:
         old_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = this.main.area.inChallenge.lvlCap;"
         new_cap = "if (typeof this.main?.area?.inChallenge.lvlCap === 'number') level = Math.min(this.lvl, this.main.area.inChallenge.lvlCap);"
-        
+
         if old_cap in content:
             content = content.replace(old_cap, new_cap)
             write_file(path, content)
             log_success("Pokemon.js: Challenge level cap fix (cap down only, never boost up)")
         else:
             log_fail("Pokemon.js: Challenge level cap fix", "inChallenge.lvlCap pattern not found")
-    
+
     # --- Fix 2: ChallengeScene.js setStatsLevel(capLevel) ---
     path_cs = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
     content_cs = read_file(path_cs)
-    
+
     old_scene = "pokemon.forEach(poke => poke.setStatsLevel(capLevel))"
     new_scene = "pokemon.forEach(poke => poke.setStatsLevel(Math.min(poke.lvl, capLevel)))"
-    
+
     if new_scene in content_cs:
         log_skip("ChallengeScene.js: Challenge level cap fix")
     elif old_scene in content_cs:
@@ -2588,14 +2590,14 @@ def apply_challenge_levelcap_fix():
         log_success("ChallengeScene.js: Challenge level cap fix (cap down only)")
     else:
         log_fail("ChallengeScene.js: Challenge level cap fix", "setStatsLevel(capLevel) pattern not found")
-    
+
     # --- Fix 3: UI.js team sidebar display shows cap instead of Math.min ---
     path_ui = JS_ROOT / "game" / "UI.js"
     content_ui = read_file(path_ui)
-    
+
     old_ui_display = "this.pokemon[i].level.innerText = `Lv ${this.main.area.inChallenge.lvlCap}`;"
     new_ui_display = "this.pokemon[i].level.innerText = `Lv ${Math.min(pokemon.lvl, this.main.area.inChallenge.lvlCap)}`;"
-    
+
     if new_ui_display in content_ui:
         log_skip("UI.js: Challenge level cap display fix")
     elif old_ui_display in content_ui:
@@ -2604,11 +2606,11 @@ def apply_challenge_levelcap_fix():
         log_success("UI.js: Challenge level cap display fix (show actual capped level)")
     else:
         log_fail("UI.js: Challenge level cap display fix", "lvlCap display pattern not found")
-    
+
     # --- Fix 4: PokemonScene.js detail view shows cap instead of Math.min ---
     path_ps = JS_ROOT / "game" / "scenes" / "PokemonScene.js"
     content_ps = read_file(path_ps)
-    
+
     # The vanilla code shows [lvlCap] for ALL pokemon instead of [Math.min(lvl, cap)]
     old_ps = "else this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${this.main.area.inChallenge.lvlCap}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${this.main.area.inChallenge.lvlCap}]`;"
     new_ps = "else { const displayLvl = Math.min(this.pokemon.lvl, this.main.area.inChallenge.lvlCap); this.name.innerHTML = (this.pokemon.alias != undefined) ? `${this.pokemon.alias.toUpperCase()} [${displayLvl}]` : `${this.pokemon.name[this.main.lang].toUpperCase()} [${displayLvl}]`; }"
@@ -2639,7 +2641,7 @@ def apply_challenge_levelcap_fix():
         else:
             # Non-fatal: this display string varies across builds and may already be handled elsewhere.
             log_skip("PokemonScene.js: Challenge level cap display fix (pattern variant not present)")
-    
+
     # --- Fix 5: PokemonScene.js level-up buttons disabled during challenge ---
     # Vanilla completely disables +1/+5/+10 buttons when lvlCap is set.
     # Fix: remove the early return so players can still level up Pokemon.
@@ -2647,7 +2649,7 @@ def apply_challenge_levelcap_fix():
     # Without endless mode, vanilla level 100 cap still applies from the existing button logic.
     # With endless mode, PokemonScene.modded.js replaces this file entirely (no cap).
     content_ps = read_file(path_ps)  # re-read in case Fix 4 wrote
-    
+
     old_btn_block = """if (typeof this.main.area.inChallenge.lvlCap == 'number') {
 			this.levelUp.innerHTML = `-`;
 			this.levelUp.style.filter = 'brightness(0.8)';
@@ -2665,7 +2667,7 @@ def apply_challenge_levelcap_fix():
 			this.levelUpTen.style.lineHeight = '28px';
 			return;
 		}"""
-    
+
     if old_btn_block in content_ps:
         # Remove the entire block — level-up works normally, stats are capped by updateStats()
         content_ps = content_ps.replace(old_btn_block, '// MOD: Level-up allowed during challenge (stats capped by updateStats)')
@@ -2676,7 +2678,7 @@ def apply_challenge_levelcap_fix():
         log_skip("PokemonScene.js: Level-up buttons during challenge")
     else:
         log_fail("PokemonScene.js: Level-up buttons during challenge", "lvlCap button-disable block not found")
-    
+
     return True
 
 
@@ -2737,7 +2739,7 @@ def apply_attacktype_sort():
 
 def apply_challenge_party_preserve():
     """Preserve team lineup, items, and tile positions when starting a challenge.
-    
+
     Vanilla ChallengeScene.startChallenge() strips all items and moves all team
     Pokemon to the box before loading the area. This QoL patch saves the team state
     before the wipe and restores it after loadArea, so players keep their party
@@ -2745,14 +2747,14 @@ def apply_challenge_party_preserve():
     """
     path = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
     content = read_file(path)
-    
+
     if '// MOD: Save team state before challenge wipe' in content:
         log_skip("ChallengeScene.js: Challenge party preserve")
         return True
-    
+
     old_start = """this.main.boxScene.removeAllItems();
 		this.main.boxScene.removeAllButton();"""
-    
+
     new_start = """// MOD: Save team state before challenge wipe (QoL)
 		this._savedTeamForChallenge = this.main.team.pokemon.map(p => ({
 			pokemon: p,
@@ -2762,13 +2764,13 @@ def apply_challenge_party_preserve():
 
 		this.main.boxScene.removeAllItems();
 		this.main.boxScene.removeAllButton();"""
-    
+
     if old_start not in content:
         log_fail("ChallengeScene.js: Challenge party preserve", "removeAllItems/removeAllButton pattern not found")
         return False
-    
+
     content = content.replace(old_start, new_start)
-    
+
     # After loadArea + UI.update + getHealed, restore team (but not for draft)
     old_post = """this.main.player.getHealed(14);
 		this.main.teamManager.teamChallenge = [[], [], [], [], []];
@@ -2776,7 +2778,7 @@ def apply_challenge_party_preserve():
     old_post_156 = """this.main.player.getHealed(14);
 		if (this.challenges.draft) this.main.teamManager.clearDraftTeams();
 		if (this.challenges.draft) this.main.draftScene.open();"""
-    
+
     new_post = """this.main.player.getHealed(14);
 		this.main.teamManager.teamChallenge = [[], [], [], [], []];
 
@@ -2810,7 +2812,7 @@ def apply_challenge_party_preserve():
 		}
 
 		if (this.challenges.draft) this.main.draftScene.open();"""
-    
+
     if old_post in content:
         content = content.replace(old_post, new_post)
     elif old_post_156 in content:
@@ -2822,7 +2824,7 @@ def apply_challenge_party_preserve():
     else:
         log_fail("ChallengeScene.js: Challenge party preserve", "post-loadArea pattern not found")
         return False
-    
+
     # Patch cancelChallenge (surrender) to also restore team
     old_cancel = """this.main.boxScene.removeAllItems();
 		this.main.boxScene.removeAllButton();
@@ -2831,7 +2833,7 @@ def apply_challenge_party_preserve():
 		this.main.UI.update();
 
 		this.main.game.cancelDeployUnit();"""
-    
+
     new_cancel = """this.main.boxScene.removeAllItems();
 		this.main.boxScene.removeAllButton();
 
@@ -2865,7 +2867,7 @@ def apply_challenge_party_preserve():
 		this.main.UI.update();
 
 		this.main.game.cancelDeployUnit();"""
-    
+
     if old_cancel in content:
         content = content.replace(old_cancel, new_cancel)
     elif '// MOD: Restore team lineup after surrender' in content:
@@ -2873,14 +2875,14 @@ def apply_challenge_party_preserve():
     else:
         log_fail("ChallengeScene.js: Challenge party preserve (surrender)", "cancelChallenge pattern not found")
         return False
-    
+
     # Add Tower import for programmatic deployment
     if "import { Tower }" not in content:
         old_import = "import { Pokemon } from '../component/Pokemon.js';"
         new_import = "import { Pokemon } from '../component/Pokemon.js';\nimport { Tower } from '../component/Tower.js';"
         if old_import in content:
             content = content.replace(old_import, new_import)
-    
+
     write_file(path, content)
     log_success("ChallengeScene.js: Challenge party preserve (team + items + positions)")
     return True
@@ -2893,12 +2895,9 @@ def apply_projectile_retarget_fix():
     """
     path = JS_ROOT / "game" / "component" / "Projectile.js"
     content = read_file(path)
-    
+
     # Check if already fixed (modded file or already patched)
-    if (
-        ('this.tower.range' in content and 'findClosestEnemy(this.tower' in content)
-        or 'this.findClosestEnemy(this.tower, this.tower.range || 100, this.enemy)' in content
-    ):
+    if 'const towerRange = this.tower.range || 100;' in content and 'findClosestEnemy(this.tower, towerRange)' in content:
         log_skip("Projectile.js: Retarget fix")
         return True
 
@@ -2907,29 +2906,16 @@ def apply_projectile_retarget_fix():
     # Vanilla pattern: retargets from projectile position with 200px range
     old = "const fallbackSource = { center: this.position || { x: this.position?.x ?? 0, y: this.position?.y ?? 0 } };\n            const newTarget = this.tower.findClosestEnemy(fallbackSource, 200);"
     new = "// MOD: Retarget from tower position within tower's actual range\n            const towerRange = this.tower.range || 100;\n            const newTarget = this.tower.findClosestEnemy(this.tower, towerRange);"
-    
+
     if old in content:
         content = content.replace(old, new)
-        changed = True
-
-    # Full Projectile.modded.js has its own ricochet helper; keep it range-bound too.
-    ricochet_old = "const next = this.findClosestEnemy(this.enemy, 200);"
-    ricochet_new = "const next = this.findClosestEnemy(this.tower, this.tower.range || 100, this.enemy);"
-    if ricochet_old in content:
-        content = content.replace(ricochet_old, ricochet_new)
-        changed = True
-
-    helper_old = "findClosestEnemy(fromEnemy, maxDist = 200) {\n        let closest = null;\n        let minDist = maxDist;\n        for (const e of this.tower.main.area.enemies) {\n            if (!e || e === fromEnemy || e.hp <= 0 || e.invisible) continue;"
-    helper_new = "findClosestEnemy(fromEnemy, maxDist = 200, excludeEnemy = null) {\n        let closest = null;\n        let minDist = maxDist;\n        for (const e of this.tower.main.area.enemies) {\n            if (!e || e === fromEnemy || e === excludeEnemy || e.hp <= 0 || e.invisible) continue;"
-    if helper_old in content:
-        content = content.replace(helper_old, helper_new)
         changed = True
 
     if changed:
         write_file(path, content)
         log_success("Projectile.js: Retarget fix (tower position + tower range)")
         return True
-    
+
     log_fail("Projectile.js: Retarget fix", "fallbackSource pattern not found")
     return False
 
@@ -2941,15 +2927,15 @@ def apply_offscreen_target_fix():
     """
     path = JS_ROOT / "game" / "component" / "Projectile.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'off-screen' in content.lower() or 'offscreen' in content.lower():
         log_skip("Projectile.js: Off-screen target fix")
         return True
-    
+
     # Insert after the retarget block, before the "if (!this.enemy" check
     marker = "if (!this.enemy || this.enemy.hp <= 0) {\n            this.markedForDeletion = true;\n            return;\n        }\n\n        this.age"
-    
+
     offscreen_check = """if (!this.enemy || this.enemy.hp <= 0) {
             this.markedForDeletion = true;
             return;
@@ -2967,13 +2953,13 @@ def apply_offscreen_target_fix():
         }
 
         this.age"""
-    
+
     if marker in content:
         content = content.replace(marker, offscreen_check)
         write_file(path, content)
         log_success("Projectile.js: Off-screen target fix")
         return True
-    
+
     log_fail("Projectile.js: Off-screen target fix", "insertion marker not found")
     return False
 
@@ -3007,6 +2993,42 @@ def apply_shellbell_fix():
 
     log_fail("Enemy.js: Shell Bell fix", "damageDealt pattern not found")
     return False
+
+
+def apply_v161_published_balance_fixes():
+    """Apply published 1.6.1 values missing from the supplied Windows build."""
+    changes = 0
+
+    projectile_path = JS_ROOT / "game" / "component" / "Projectile.js"
+    projectile_content = read_file(projectile_path)
+    old_make_it_rain = "let goldPerDigit = (this.tower?.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.05"
+    new_make_it_rain = "let goldPerDigit = (this.tower?.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.075"
+    if old_make_it_rain in projectile_content:
+        projectile_content = projectile_content.replace(old_make_it_rain, new_make_it_rain, 1)
+        write_file(projectile_path, projectile_content)
+        changes += 1
+
+    enemy_path = JS_ROOT / "game" / "data" / "enemyData.js"
+    enemy_content = read_file(enemy_path)
+    for key, old_hp, new_hp in (("stunky", 43000, 40000), ("skuntank", 55000, 50000)):
+        pattern = re.compile(rf"(\t{key}: \{{.*?\n\t\thp: ){old_hp}(,)", re.DOTALL)
+        enemy_content, count = pattern.subn(rf"\g<1>{new_hp}\2", enemy_content, count=1)
+        changes += count
+    write_file(enemy_path, enemy_content)
+
+    complete = new_make_it_rain in projectile_content and all(
+        re.search(rf"\t{key}: \{{.*?\n\t\thp: {hp},", enemy_content, re.DOTALL)
+        for key, hp in (("stunky", 40000), ("skuntank", 50000))
+    )
+    if not complete:
+        log_fail("1.6.1 published balance corrections", "expected Make It Rain or enemy HP patterns not found")
+        return False
+
+    if changes:
+        log_success(f"1.6.1 published balance corrections ({changes} patches)")
+    else:
+        log_skip("1.6.1 published balance corrections")
+    return True
 
 
 # ============================================================================
@@ -3055,10 +3077,10 @@ def apply_ui_emoji_font_fix():
     """Add emoji font-family to .lock and .ui-speed-wave so ?? and ?? render correctly."""
     path = APP_EXTRACTED / "src" / "css" / "ui.css"
     content = read_file(path)
-    
+
     emoji_font = "font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;"
     changes = 0
-    
+
     # Fix .lock class
     if '.lock {' in content and "'Segoe UI Emoji'" not in content.split('.lock {')[1].split('}')[0]:
         old_lock = ".lock {\n\tfilter: grayscale(50%);\n\topacity: 0.8;\n\tline-height: 66px;\n\tfont-size: 30px;\n}"
@@ -3073,7 +3095,7 @@ def apply_ui_emoji_font_fix():
             if match and "'Segoe UI Emoji'" not in match.group(1):
                 content = content[:match.end(1)] + f"\n\t{emoji_font}\n" + content[match.start(2):]
                 changes += 1
-    
+
     # Fix .ui-speed-wave class
     speed_section = content.split('.ui-speed-wave,')[0] if '.ui-speed-wave,' in content else ''
     # The speed-wave shares a rule with pause-wave, then has its own. Add to shared rule.
@@ -3082,16 +3104,16 @@ def apply_ui_emoji_font_fix():
     if match and "'Segoe UI Emoji'" not in match.group(1):
         content = content[:match.end(1)] + f"\n\t{emoji_font}\n" + content[match.start(2):]
         changes += 1
-    
+
     if changes > 0:
         write_file(path, content)
         log_success(f"ui.css: Emoji font fix ({changes} rules)")
         return True
-    
+
     if "'Segoe UI Emoji'" in content:
         log_skip("ui.css: Emoji font fix")
         return True
-    
+
     log_fail("ui.css: Emoji font fix")
     return False
 
@@ -3101,7 +3123,7 @@ def apply_ui_emoji_font_fix():
 def apply_star_display_cap():
     """
     Surgically patch UI.js to cap the star display when Endless Mode is not installed.
-    
+
     Without Endless, each route's record should count as at most 100 for the displayed star total.
     The raw player.stars (sum of all records) may be inflated from previous endless play.
     This replaces the star display line to compute a capped total from records.
@@ -3109,25 +3131,25 @@ def apply_star_display_cap():
     # Try UI.modded.js first, fall back to vanilla UI.js
     path = JS_ROOT / "game" / "UI.js"
     content = read_file(path)
-    
+
     # Check if already applied
     if 'cappedStars' in content:
         log_skip("UI.js: Star display cap")
         return True
-    
+
     # Find and replace the star display line.
     # Vanilla caps changed over time (1200 in older builds, 2000 in 1.5, 2100 in 1.5.6),
     # so match any Math.min(<number>, this.main.player.stars) form.
     old_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{Math\.min\(\d+,\s*this\.main\.player\.stars\)\}`;'
     match = re.search(old_pattern, content)
-    
+
     if match:
         new_line = 'const cappedStars = this.main.player.records.reduce((sum, r) => sum + Math.min(100, r), 0); this.playerStars.innerHTML = `<span class="msrre">\u2b50</span>${cappedStars}`;'
         content = content.replace(match.group(0), new_line)
         write_file(path, content)
         log_success("UI.js: Star display capped (100 per route without Endless)")
         return True
-    
+
     # Try matching the modded UI.js pattern (shows raw stars without Math.min)
     modded_pattern = r'this\.playerStars\.innerHTML\s*=\s*`<span class="msrre">.*?</span>\$\{this\.main\.player\.stars\}`;'
     match2 = re.search(modded_pattern, content)
@@ -3137,7 +3159,7 @@ def apply_star_display_cap():
         write_file(path, content)
         log_success("UI.js: Star display capped (100 per route without Endless)")
         return True
-    
+
     # Fallback: handle newer vanilla caps without depending on the exact number
     fallback_match = re.search(r'Math\.min\(\d+,\s*this\.main\.player\.stars\)', content)
     if fallback_match and 'playerStars' in content:
@@ -3149,39 +3171,39 @@ def apply_star_display_cap():
         write_file(path, content)
         log_success("UI.js: Star display capped (100 per route without Endless)")
         return True
-    
+
     log_fail("UI.js: Star display cap (player panel)", "star display pattern not found")
     return False
 
 
 def apply_star_record_cap():
     """Cap the per-route record star display (mapRecord) at 100 when Endless isn't installed.
-    
+
     UI.modded.js has 'ENDLESS MODE: No cap on star display' showing raw records.
     Without Endless, records past 100 should display as 100.
     """
     path = JS_ROOT / "game" / "UI.js"
     content = read_file(path)
-    
+
     if 'Math.min(100, this.main.player.records[this.main.area.map.id])' in content:
         log_skip("UI.js: Map record star cap")
         return True
-    
+
     # Match the modded line
     old_record = 'this.mapRecord.innerHTML = `<span class="msrre">\u2b50</span>${this.main.player.records[this.main.area.map.id]}`;'
     new_record = 'this.mapRecord.innerHTML = `<span class="msrre">\u2b50</span>${Math.min(100, this.main.player.records[this.main.area.map.id])}`;'
-    
+
     if old_record in content:
         content = content.replace(old_record, new_record)
         write_file(path, content)
         log_success("UI.js: Map record star capped at 100")
         return True
-    
+
     # Try vanilla pattern (has Math.min(100, ...))
     if 'Math.min(100' in content and 'mapRecord' in content:
         log_skip("UI.js: Map record star cap (vanilla already caps)")
         return True
-    
+
     log_skip("UI.js: Map record star cap (pattern not found)")
     return True
 
@@ -3189,34 +3211,34 @@ def apply_star_record_cap():
 def apply_wave_clamp():
     """
     Surgically patch Area.js to clamp waveNumber to 100.
-    
+
     This prevents crashes when a save has wave > 100 but Endless Mode is not installed.
     The clamp applies to both waveNumber and routeWaves so the clamped value persists.
     Also patches spawnEnemies and other methods that access waves[waveNumber] directly.
-    
+
     Only runs when Endless Mode is NOT selected — if Endless is installed, Area.modded.js
     handles waves > 100 natively.
     """
     path = JS_ROOT / "game" / "core" / "Area.js"
-    
+
     if not path.exists():
         log_skip("Area.js: Wave clamp (file not found)")
         return True
-    
+
     content = read_file(path)
-    
+
     # If this is Area.modded.js (has ENDLESS MODE markers), don't clamp
     if 'ENDLESS MODE' in content or 'endlessMode' in content or 'spawnEndlessWave' in content:
         log_skip("Area.js: Wave clamp (Endless Mode detected, not needed)")
         return True
-    
+
     # Check if already applied
     if '// MOD: WAVE CLAMP' in content:
         log_skip("Area.js: Wave clamp")
         return True
-    
+
     changes = 0
-    
+
     # 1. Clamp waveNumber after it's read from routeWaves in loadArea
     old_wave_assign = 'this.waveNumber = this.routeWaves[routeNumber];\n\t\tthis.waveActive = false;'
     new_wave_assign = ('this.waveNumber = this.routeWaves[routeNumber];\n'
@@ -3226,39 +3248,39 @@ def apply_wave_clamp():
                        '\t\t\tthis.routeWaves[routeNumber] = 100;\n'
                        '\t\t}\n'
                        '\t\tthis.waveActive = false;')
-    
+
     if old_wave_assign in content:
         content = content.replace(old_wave_assign, new_wave_assign)
         changes += 1
-    
+
     # 2. Clamp in changeWave (wave selector) — prevent jumping past 100
     old_change = 'this.waveNumber = nextWave;\n\t\tthis.routeWaves[this.routeNumber] = nextWave;'
     new_change = ('// MOD: WAVE CLAMP\n'
                   '\t\tthis.waveNumber = Math.min(100, nextWave);\n'
                   '\t\tthis.routeWaves[this.routeNumber] = Math.min(100, nextWave);')
-    
+
     if old_change in content:
         content = content.replace(old_change, new_change)
         changes += 1
-    
+
     # 3. Guard waves[waveNumber] accesses with optional chaining where possible
     # Pattern: this.waves[this.waveNumber].preview[0]
     content = content.replace(
         'this.waves[this.waveNumber].preview[0]',
         '(this.waves[this.waveNumber]?.preview?.[0] || this.waves[1]?.preview?.[0])'
     )
-    
+
     # Pattern: this.waves[this.waveNumber].offSet
     content = content.replace(
         "this.waves[this.waveNumber].offSet || 50",
         "(this.waves[this.waveNumber]?.offSet || this.waves[((this.waveNumber - 1) % 100) + 1]?.offSet || 50)"
     )
-    
+
     if changes > 0:
         write_file(path, content)
         log_success(f"Area.js: Wave clamp to 100 ({changes} clamp points + safe accessors)")
         return True
-    
+
     log_fail("Area.js: Wave clamp", "patterns not found")
     return False
 
@@ -3267,11 +3289,11 @@ def apply_wave_clamp():
 # ============================================================================
 def apply_hidden_items():
     """Uncomment Magma Stone in itemData.js and add it to the shop.
-    
+
     IMPORTANT: Uses brace-depth tracking to handle nested objects (e.g. restriction: {}).
     Do NOT simplify to 'stop at first }' -- that breaks nested blocks and causes gray screen.
     See commit 0be5a3c for the bug this fixed.
-    
+
     DEFENSIVE: Validates output before writing to prevent syntax errors (e.g. missing comma
     before next item). If uncomment produces invalid JS, the original file is preserved.
     """
@@ -3338,7 +3360,7 @@ def apply_hidden_items():
             # Next line is an identifier (like 'tinyMushroom:') -- verify our block ends with },
             final_closing = new_lines[magma_end_idx].strip()
             if not final_closing.endswith('},'):
-                log_fail("itemData.js: Hidden items", 
+                log_fail("itemData.js: Hidden items",
                          f"Uncommented block doesn't end with '}},', would break next item '{next_line[:30]}...'")
                 return False
 
@@ -3373,12 +3395,12 @@ def apply_modded_userdata_redirect():
     """Inject app.setPath('userData', ...) into Electron main.js to redirect saves to modded location."""
     path = APP_EXTRACTED / "main.js"
     content = read_file(path)
-    
+
     # Idempotency check
     if 'pokePathTD_Electron_modded' in content:
         log_skip("main.js: userData redirect (already applied)")
         return True
-    
+
     # Inject after app import / at the top of the file, after require statements
     # Find the first app.on or app.whenReady or BrowserWindow creation
     inject_code = """
@@ -3389,7 +3411,7 @@ const moddedPath = require('path').join(app.getPath('appData'), 'pokePathTD_Elec
 app.setPath('userData', moddedPath);
 // === END REDIRECT ===
 """
-    
+
     # Insert after the first line (shebang or 'use strict' or first require)
     # Find a safe insertion point - after existing require('electron') or at top
     if "require('electron')" in content or 'require("electron")' in content:
@@ -3401,22 +3423,22 @@ app.setPath('userData', moddedPath);
             if 'require' in line and 'electron' in line:
                 insert_idx = i + 1
                 break
-        
+
         # Just inject the setPath line (electron already imported)
         redirect_line = "\n// === MODDED USERDATA REDIRECT ===\nconst __moddedPath = require('path').join(app.getPath('appData'), 'pokePathTD_Electron_modded');\napp.setPath('userData', __moddedPath);\n// === END REDIRECT ===\n"
-        
+
         # Check if 'app' is destructured from require('electron')
         electron_line = lines[insert_idx - 1]
         if 'app' not in electron_line:
             # app might be accessed differently, use full require
             redirect_line = "\n// === MODDED USERDATA REDIRECT ===\nconst { app: __modApp } = require('electron');\nconst __moddedPath = require('path').join(__modApp.getPath('appData'), 'pokePathTD_Electron_modded');\n__modApp.setPath('userData', __moddedPath);\n// === END REDIRECT ===\n"
-        
+
         lines.insert(insert_idx, redirect_line)
         content = '\n'.join(lines)
     else:
         # No electron require found, prepend the full injection
         content = inject_code + "\n" + content
-    
+
     write_file(path, content)
     log_success("main.js: userData redirect to pokePathTD_Electron_modded")
     return True
@@ -3459,42 +3481,42 @@ def apply_devtools_shortcut():
 def apply_selected_mods(selected_features: list, progress_callback=None):
     """
     Apply only selected mod features.
-    
+
     Flow:
     1. Ensure vanilla backup exists (create from app.asar if needed)
     2. Extract fresh from vanilla backup (clean slate every time)
     3. Apply selected mod features
     4. Repack into app.asar
-    
+
     Args:
         selected_features: List of feature keys from MOD_FEATURES
         progress_callback: Optional callback(current, total, message) for GUI progress
-    
+
     Returns:
         tuple: (success: bool, applied: list, failed: list)
     """
     global applied_mods, failed_mods
     applied_mods = []
     failed_mods = []
-    
+
     # Step 1: Ensure vanilla backup
     print("\n[*] Checking vanilla backup...")
     if progress_callback:
         progress_callback(0, 1, "Checking vanilla backup...")
-    
+
     backup_ok, backup_msg = ensure_vanilla_backup()
     if not backup_ok:
         return False, [], [backup_msg]
-    
+
     # Step 2: Extract fresh from vanilla
     print("\n[*] Extracting vanilla game files...")
     if progress_callback:
         progress_callback(0, 1, "Extracting vanilla game files...")
-    
+
     extract_ok, extract_msg = extract_from_vanilla(progress_callback)
     if not extract_ok:
         return False, [], [extract_msg]
-    
+
     # Step 2b: Verify game version compatibility
     compatible, mismatches = check_game_version_compatibility()
     if not compatible:
@@ -3506,7 +3528,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         failed_mods.append(f"VERSION WARNING: {warning}")
     else:
         print(f"  [OK] Game files match expected version ({GAME_VERSION})")
-    
+
     # Build list of functions to call in canonical feature order, not caller order.
     # Some features patch the same file (Enemy.js); full-file bases must land before
     # optional surgical add-ons so partial installs remain composable.
@@ -3515,7 +3537,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     for feature_key in MOD_FEATURES:
         if feature_key in selected_set:
             functions_to_call.extend(MOD_FEATURES[feature_key]['functions'])
-    
+
     # Remove duplicates while preserving order
     seen = set()
     unique_functions = []
@@ -3523,19 +3545,19 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         if f not in seen:
             seen.add(f)
             unique_functions.append(f)
-    
+
     total = len(unique_functions) + 1  # +1 for repack
     current = 0
-    
+
     # Step 3: Apply selected mods
     print("\n[*] Applying selected mods...")
-    
+
     # Get function references from globals
     for func_name in unique_functions:
         current += 1
         if progress_callback:
             progress_callback(current, total, f"Applying {func_name}...")
-        
+
         func = globals().get(func_name)
         if func and callable(func):
             try:
@@ -3544,7 +3566,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
                 failed_mods.append(f"{func_name}: {str(e)}")
         else:
             failed_mods.append(f"{func_name}: function not found")
-    
+
     # Step 4: Always apply userData redirect when any mod is selected
     if selected_features:
         if progress_callback:
@@ -3553,7 +3575,7 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             apply_modded_userdata_redirect()
         except Exception as e:
             failed_mods.append(f"userData redirect: {str(e)}")
-    
+
     # Step 4b: Enforce anti-duplicate behavior when Allow Duplicate Pokemon is NOT selected
     if 'allow_dupes' not in selected_features:
         try:
@@ -3584,13 +3606,13 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             apply_star_record_cap()
         except Exception as e:
             failed_mods.append(f"star record cap: {str(e)}")
-    
+
     # Step 5: Repack
     if progress_callback:
         progress_callback(total, total, "Repacking game...")
-    
+
     repack_success = _repack_game()
-    
+
     # Step 6: Set up modded saves (after repack, so game files are ready)
     if selected_features and repack_success:
         if progress_callback:
@@ -3616,13 +3638,13 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             import traceback
             print(f"  [WARN] Save manager error: {e}")
             traceback.print_exc()
-    
+
     return repack_success, applied_mods.copy(), failed_mods.copy()
 
 def _repack_game():
     """Repack the game asar. Returns True on success."""
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
-    
+
     # Try local repack script first (more reliable)
     repack_script = SCRIPT_DIR / "repack_game.js"
     if repack_script.exists():
@@ -3646,26 +3668,26 @@ def _repack_game():
                 print(f"  [WARN] Local repack failed, trying npx: {result.stderr}")
         except Exception as e:
             print(f"  [WARN] Local repack error, trying npx: {e}")
-    
+
     # Fallback to npx
     try:
         if sys.platform == 'win32':
-            cmd = ['cmd', '/c', 'npx', 'asar', 'pack', 
-                   str(APP_EXTRACTED), 
+            cmd = ['cmd', '/c', 'npx', 'asar', 'pack',
+                   str(APP_EXTRACTED),
                    str(GAME_ROOT / 'resources' / 'app.asar')]
         else:
-            cmd = ['npx', 'asar', 'pack', 
-                   str(APP_EXTRACTED), 
+            cmd = ['npx', 'asar', 'pack',
+                   str(APP_EXTRACTED),
                    str(GAME_ROOT / 'resources' / 'app.asar')]
-        
+
         result = subprocess.run(
             cmd,
-            capture_output=True, 
+            capture_output=True,
             text=True,
             timeout=300,
             creationflags=creationflags
         )
-        
+
         if 'cannot be loaded because running scripts is disabled' in result.stderr:
             print("  [ERROR] PowerShell is blocking scripts. Try running from Command Prompt (cmd.exe)")
             return False
@@ -3687,18 +3709,18 @@ def _repack_game():
 # ============================================================================
 def apply_allow_dupes():
     """Remove the team deduplication filter that prevents duplicate species IDs.
-    
+
     The vanilla game filters team members by specie.id, which means Pokemon that
     share an ID (e.g. Cherubi and Cherrim both have id:75) can't coexist on a team.
     This patch comments out the dedup filter.
     """
     path = JS_ROOT / "game" / "core" / "Team.js"
     content = read_file(path)
-    
+
     if '// MOD: Dedup filter removed' in content:
         log_skip("Team.js: Allow dupes (already applied)")
         return True
-    
+
     # Find and comment out the dedup filter block
     old_dedup = """		const seenIds = new Set();
 	    this.pokemon = this.pokemon.filter(p => {
@@ -3706,7 +3728,7 @@ def apply_allow_dupes():
 	        seenIds.add(p.id);
 	        return true;
 	    });"""
-    
+
     new_dedup = """		// MOD: Dedup filter removed — allow duplicate species IDs on team
 		// const seenIds = new Set();
 	    // this.pokemon = this.pokemon.filter(p => {
@@ -3714,7 +3736,7 @@ def apply_allow_dupes():
 	    //     seenIds.add(p.id);
 	    //     return true;
 	    // });"""
-    
+
     if old_dedup not in content:
         # Try alternate formatting (tabs vs spaces)
         old_dedup_alt = old_dedup.replace('	    ', '\t\t')
@@ -3725,31 +3747,33 @@ def apply_allow_dupes():
             return False
     else:
         content = content.replace(old_dedup, new_dedup)
-    
+
     write_file(path, content)
     log_success("Team.js: Allow duplicate Pokemon IDs")
 
     # Also remove Box.js dedup filter — it filters box Pokemon against team IDs,
     # which removes Pokemon like Cherubi (id:75) when Cherrim (id:75) is on team
     box_path = JS_ROOT / "game" / "core" / "Box.js"
-    box_content = read_file(box_path)
+    # The 1.6.1 file carries harmless trailing spaces in this block. Normalize
+    # them before matching so packaged/source formatting cannot break install.
+    box_content = re.sub(r"[ \t]+(?=\r?$)", "", read_file(box_path), flags=re.MULTILINE)
 
     if '// MOD: Box dedup filter removed' in box_content:
         log_skip("Box.js: Allow dupes (already applied)")
         return True
 
-    old_box_dedup = """        const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+    old_box_dedup = """        const seenIds = new Set(this.main.team.pokemon.map(p => p.id));
         this.pokemon = this.pokemon.filter(p => {
-            if (seenIds.has(p.id)) return false; 
-            seenIds.add(p.id); 
+            if (seenIds.has(p.id)) return false;
+            seenIds.add(p.id);
             return true;
         });"""
 
     new_box_dedup = """        // MOD: Box dedup filter removed — allow duplicate species IDs in box
-        // const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        // const seenIds = new Set(this.main.team.pokemon.map(p => p.id));
         // this.pokemon = this.pokemon.filter(p => {
-        //     if (seenIds.has(p.id)) return false; 
-        //     seenIds.add(p.id); 
+        //     if (seenIds.has(p.id)) return false;
+        //     seenIds.add(p.id);
         //     return true;
         // });"""
 
@@ -3769,7 +3793,9 @@ def apply_ditto_party_refresh():
     content = read_file(path)
 
     helper = """\trefreshDittoADN(reason = 'manual') {
-\t\tconst fossilIds = [58, 59, 63, 64, 65, 66, 94, 140, 136];
+\t\tconst fossilIds = [58, 59, 63, 64, 65, 66, 94, 140, 136, 151];
+\t\tconst pastIds = [179];
+\t\tconst futureIds = [178];
 \t\tlet changed = false;
 
 \t\tthis.pokemon.forEach(pokemon => {
@@ -3781,10 +3807,14 @@ def apply_ditto_party_refresh():
 \t\t\tconst nextKey = nextADN?.key || nextADN?.name?.[0] || nextADN?.id;
 \t\t\tif (!nextADN || currentKey === nextKey) return;
 
-\t\t\tif (this.main?.player && fossilIds.includes(pokemon.adn?.id)) this.main.player.fossilInTeam--;
+\t\t\tconst oldADN = pokemon.adn;
+\t\t\tconst oldTarget = pokemon.targetMode;
+\t\t\tif (this.main?.player && fossilIds.includes(oldADN?.id)) this.main.player.fossilInTeam--;
+\t\t\tif (this.main?.player && pastIds.includes(oldADN?.id)) this.main.player.pastInTeam--;
+\t\t\tif (this.main?.player && futureIds.includes(oldADN?.id)) this.main.player.futureInTeam--;
 \t\t\tpokemon.adn = nextADN;
 \t\t\tpokemon.adnPosition = 0;
-\t\t\tpokemon.transformADN();
+\t\t\tpokemon.transformADN(oldTarget);
 \t\t\tconst tower = this.main?.area?.towers?.find(t => t.pokemon === pokemon);
 \t\t\tif (tower) {
 \t\t\t\ttower.ability = pokemon.ability;
@@ -3805,6 +3835,8 @@ def apply_ditto_party_refresh():
 \t\t\t\tif (typeof tower.updateTowerSprite === 'function') tower.updateTowerSprite();
 \t\t\t}
 \t\t\tif (this.main?.player && fossilIds.includes(pokemon.adn?.id)) this.main.player.fossilInTeam++;
+\t\t\tif (this.main?.player && pastIds.includes(pokemon.adn?.id)) this.main.player.pastInTeam++;
+\t\t\tif (this.main?.player && futureIds.includes(pokemon.adn?.id)) this.main.player.futureInTeam++;
 \t\t\tchanged = true;
 \t\t});
 
@@ -3813,7 +3845,7 @@ def apply_ditto_party_refresh():
 
 """
 
-    if "refreshDittoADN()" not in content:
+    if "\trefreshDittoADN(" not in content:
         marker = "\taddPokemon(pokemon) {"
         if marker not in content:
             log_fail("Team.js: Ditto party refresh - addPokemon marker not found")
@@ -3833,7 +3865,10 @@ def apply_ditto_party_refresh():
 
     constructor_transform_old = """\t    this.pokemon.forEach(pokemon => {
 \t        pokemon.inGroup = true;
-\t        if (pokemon.adn != undefined) pokemon.transformADN();
+\t        if (pokemon.adn != undefined) {
+\t        \tconst oldTarget = pokemon.targetMode;
+\t        \tpokemon.transformADN(oldTarget);
+\t        }
 \t    });"""
     constructor_transform_new = """\t    this.pokemon.forEach(pokemon => {
 \t        pokemon.inGroup = true;
@@ -3960,8 +3995,12 @@ def apply_force_no_dupes():
 """
     if "if (this.pokemon.some(p => p.id === pokemon.id)) return false;" in team_content:
         log_skip("Team.js: Force no-dupes addPokemon guard")
-    elif team_add_old in team_content:
-        team_content = team_content.replace(team_add_old, team_add_new)
+    elif "\taddPokemon(pokemon) {" in team_content:
+        team_content = team_content.replace(
+            "\taddPokemon(pokemon) {",
+            "\taddPokemon(pokemon) {\n\t\t// MOD: Force no-dupes by shared specie.id (chain-level dedupe)\n\t\tif (this.pokemon.some(p => p.id === pokemon.id)) return false;",
+            1,
+        )
         write_file(team_path, team_content)
         log_success("Team.js: Runtime addPokemon no-dupe guard")
     else:
@@ -3969,26 +4008,27 @@ def apply_force_no_dupes():
         return False
 
     box_path = JS_ROOT / "game" / "core" / "Box.js"
-    box_content = read_file(box_path)
+    # Match regardless of the harmless trailing spaces in the 1.6.1 source.
+    box_content = re.sub(r"[ \t]+(?=\r?$)", "", read_file(box_path), flags=re.MULTILINE)
 
-    box_old = """        const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+    box_old = """        const seenIds = new Set(this.main.team.pokemon.map(p => p.id));
         this.pokemon = this.pokemon.filter(p => {
-            if (seenIds.has(p.id)) return false; 
-            seenIds.add(p.id); 
+            if (seenIds.has(p.id)) return false;
+            seenIds.add(p.id);
             return true;
         });"""
     box_old_allow = """        // MOD: Box dedup filter removed — allow duplicate species IDs in box
-        // const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        // const seenIds = new Set(this.main.team.pokemon.map(p => p.id));
         // this.pokemon = this.pokemon.filter(p => {
-        //     if (seenIds.has(p.id)) return false; 
-        //     seenIds.add(p.id); 
+        //     if (seenIds.has(p.id)) return false;
+        //     seenIds.add(p.id);
         //     return true;
         // });"""
     box_new = """        // MOD: Force no-dupes by shared specie.id (chain-level dedupe)
-        const seenIds = new Set(this.main.team.pokemon.map(p => p.id)); 
+        const seenIds = new Set(this.main.team.pokemon.map(p => p.id));
         this.pokemon = this.pokemon.filter(p => {
-            if (seenIds.has(p.id)) return false; 
-            seenIds.add(p.id); 
+            if (seenIds.has(p.id)) return false;
+            seenIds.add(p.id);
             return true;
         });"""
 
@@ -4021,8 +4061,12 @@ def apply_force_no_dupes():
 """
     if "if (this.main.team.pokemon.some(p => p !== pokemon && p.id === pokemon.id)) return false;" in box_content and "if (this.pokemon.some(p => p.id === pokemon.id)) return false;" in box_content:
         log_skip("Box.js: Force no-dupes addPokemon guard")
-    elif box_add_old in box_content:
-        box_content = box_content.replace(box_add_old, box_add_new)
+    elif "\taddPokemon(pokemon) {" in box_content:
+        box_content = box_content.replace(
+            "\taddPokemon(pokemon) {",
+            "\taddPokemon(pokemon) {\n\t\t// MOD: Force no-dupes by shared specie.id (chain-level dedupe)\n\t\tif (this.main.team.pokemon.some(p => p !== pokemon && p.id === pokemon.id)) return false;\n\t\tif (this.pokemon.some(p => p.id === pokemon.id)) return false;",
+            1,
+        )
         write_file(box_path, box_content)
         log_success("Box.js: Runtime addPokemon no-dupe guard")
     else:
@@ -4054,7 +4098,7 @@ def apply_force_no_dupes():
 \t\tthis.main.player.stats.pokemonOwned++;
 
 \t\tthis.main.player.stats.totalPokemonLevel++;
-\t\tthis.main.player.achievementProgress.evolutionCount++;
+\t\t// this.main.player.achievementProgress.evolutionCount++;
 """
         shop_new = """\t\tlet added = false;
 \t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
@@ -4080,7 +4124,6 @@ def apply_force_no_dupes():
 \t\tif (added) {
 \t\t\tthis.main.player.stats.pokemonOwned++;
 \t\t\tthis.main.player.stats.totalPokemonLevel++;
-\t\t\tthis.main.player.achievementProgress.evolutionCount++;
 \t\t}
 """
         shop_old_vanilla = """\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
@@ -4094,7 +4137,7 @@ def apply_force_no_dupes():
 \t\tthis.main.player.stats.pokemonOwned++;
 
 \t\tthis.main.player.stats.totalPokemonLevel++;
-\t\tthis.main.player.achievementProgress.evolutionCount++;
+\t\t// this.main.player.achievementProgress.evolutionCount++;
 """
         shop_new_vanilla = """\t\tlet added = false;
 \t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
@@ -4112,7 +4155,6 @@ def apply_force_no_dupes():
 \t\tif (added) {
 \t\t\tthis.main.player.stats.pokemonOwned++;
 \t\t\tthis.main.player.stats.totalPokemonLevel++;
-\t\t\tthis.main.player.achievementProgress.evolutionCount++;
 \t\t}
 """
         if shop_old in shop_content:
@@ -4139,7 +4181,7 @@ def main():
     print("\n" + "=" * 50)
     print(f"    PokePath TD Mod Applier v{MOD_VERSION}")
     print("=" * 50 + "\n")
-    
+
     # Check for patches folder
     patches_dir = MODS_DIR / "patches"
     if not patches_dir.exists():
@@ -4147,21 +4189,21 @@ def main():
         print(f"Expected: {patches_dir}")
         print("\nThe patches folder contains the modded game files.")
         return
-    
+
     # Step 1: Ensure vanilla backup
     print("[*] Checking vanilla backup...")
     backup_ok, backup_msg = ensure_vanilla_backup()
     if not backup_ok:
         print(f"\nERROR: {backup_msg}")
         return
-    
+
     # Step 2: Extract fresh from vanilla
     print("\n[*] Extracting vanilla game files...")
     extract_ok, extract_msg = extract_from_vanilla()
     if not extract_ok:
         print(f"\nERROR: {extract_msg}")
         return
-    
+
     # Step 3: Verify game version compatibility
     print("\n[*] Checking game version compatibility...")
     compatible, mismatches = check_game_version_compatibility()
@@ -4183,7 +4225,7 @@ def main():
             return
 
     print("\n[*] Applying all mods...\n")
-    
+
     # Apply all mods in order
     _ensure_game_modded()  # Install Game.modded.js base
     apply_speed_mod()  # Patch in 10x speed options
@@ -4209,81 +4251,81 @@ def main():
     apply_box_expansion()
     apply_profile_endless_stats()
     # apply_expanded_egg_list()  # REMOVED v1.4.4b -- all 17 were vanilla-obtainable
-    
+
     # Copy pre-generated shiny sprites for non-max evolutions
     apply_shiny_sprites()
-    
+
     # Patch secret/hidden Pokemon with 1/30 shiny chance
     apply_secret_shiny()
-    
+
     # Fix challenge level cap bug
     apply_challenge_levelcap_fix()
-    
+
     # QoL: Preserve party lineup when starting challenges
     apply_challenge_party_preserve()
-    
+
     # QoL: Attack type sort in box
     apply_attacktype_sort()
-    
+
     # QoL: Gold cap and display
     apply_gold_cap_increase()
     apply_gold_display_format_player()
     apply_gold_display_format_ui()
-    
+
     # QoL: Live profile stats
     apply_profile_live_update()
 
     # QoL: Map hover star counts
     apply_map_hover_stars()
-    
+
     # Fix emoji rendering in pixel font
     apply_emoji_font_fix()
     apply_ui_emoji_font_fix()
-    
+
     # Hidden-items legacy patch intentionally disabled for 1.5.x
-    
+
     # Allow duplicate Pokemon IDs on team (Cherubi/Cherrim etc.)
     apply_allow_dupes()
     apply_ditto_party_refresh()
-    
+
     # Apply userData redirect (modded saves isolation)
     apply_modded_userdata_redirect()
     apply_devtools_shortcut()
-    
+
     print()
     print("=" * 50)
     print(f"  Applied: {len(applied_mods)}")
     print(f"  Failed:  {len(failed_mods)}")
     print("=" * 50)
-    
+
     if failed_mods:
         print("\nFailed mods:")
         for mod in failed_mods:
             print(f"  - {mod}")
-    
+
     # Repack
     print("\n[*] Repacking game...")
     creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
-    
+
     try:
         # Use cmd.exe on Windows to bypass PowerShell execution policy issues
         if sys.platform == 'win32':
-            cmd = ['cmd', '/c', 'npx', 'asar', 'pack', 
-                   str(APP_EXTRACTED), 
+            cmd = ['cmd', '/c', 'npx', 'asar', 'pack',
+                   str(APP_EXTRACTED),
                    str(GAME_ROOT / 'resources' / 'app.asar')]
         else:
-            cmd = ['npx', 'asar', 'pack', 
-                   str(APP_EXTRACTED), 
+            cmd = ['npx', 'asar', 'pack',
+                   str(APP_EXTRACTED),
                    str(GAME_ROOT / 'resources' / 'app.asar')]
-        
+
         result = subprocess.run(
             cmd,
-            capture_output=True, 
+            capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout
             creationflags=creationflags
         )
-        
+
         # Check for PowerShell execution policy error
         if 'cannot be loaded because running scripts is disabled' in result.stderr:
             print("  [ERROR] PowerShell is blocking scripts. Try running from Command Prompt (cmd.exe)")
@@ -4310,7 +4352,7 @@ def main():
         print("  [ERROR] Repack timed out after 5 minutes")
     except FileNotFoundError:
         print("  [ERROR] npx/asar not found - make sure Node.js is installed")
-    
+
     print("\n=== All done! Launch the game. ===")
 
 if __name__ == "__main__":
@@ -4320,7 +4362,7 @@ if __name__ == "__main__":
     parser.add_argument('--reset', action='store_true', help='Reset game to vanilla')
     parser.add_argument('--list', action='store_true', help='List available feature keys')
     args = parser.parse_args()
-    
+
     if args.list:
         print("Available features:")
         for key, feat in MOD_FEATURES.items():

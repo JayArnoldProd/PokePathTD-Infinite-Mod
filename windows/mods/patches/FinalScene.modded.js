@@ -5,16 +5,20 @@ import { saveData } from '../../file/data.js';
 import { playSound } from '../../file/audio.js';
 import { enemyData } from '../data/enemyData.js';
 
-const CHALLENGES_LIST = ['lvlCap', 'slotLimit', 'toughEnemies', 'draft', 'noItems', 'permadeath'];
+const CHALLENGES_LIST = ['lvlCap', 'slotLimit', 'toughEnemies', 'draft', 'noItems', 'permadeath', 'mirror'];
 
 const BOSS = [
 	enemyData['shaymin'], enemyData['celebi'], enemyData['lunala'],
-	enemyData['moltres'], enemyData['regirock'], enemyData['groudon'], 
-	enemyData['registeel'], enemyData['regice'], enemyData['regigigas'], 
-	enemyData['zapdos'], enemyData['hooh'], enemyData['articuno'], 
-	enemyData['kyogre'], enemyData['thundurus'], enemyData['tapuFini'], enemyData['nihilego'], 
-	enemyData['tapuKoko'], enemyData['tapuBulu'], enemyData['tapuLele'], enemyData['keldeo'], 
-	enemyData['manaphy'], enemyData['heatran'], 
+	enemyData['moltres'], enemyData['regirock'], enemyData['groudon'],
+	enemyData['registeel'], enemyData['regice'], enemyData['regigigas'],
+	enemyData['zapdos'], enemyData['hooh'], enemyData['articuno'],
+	enemyData['kyogre'], enemyData['thundurus'], enemyData['tapuFini'], enemyData['nihilego'],
+	enemyData['tapuKoko'], enemyData['tapuBulu'], enemyData['tapuLele'], enemyData['keldeo'],
+	enemyData['manaphy'],
+	enemyData['heatran'], enemyData['landorus'], enemyData['volcanion'], enemyData['pheromosa'],
+	enemyData['cobalion'], enemyData['tornadus'], enemyData['stakataka'], enemyData['terrakion'],
+	enemyData['magearna'],
+	enemyData['mew'], enemyData['victini'], enemyData['marshadow'], enemyData['sirfetchd'],
 ]
 
 export class FinalScene extends GameScene {
@@ -31,7 +35,7 @@ export class FinalScene extends GameScene {
 
 		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
 		this.image = new Element(this.container, { className: 'final-scene-image' }).element;
-		
+
 		this.hofContainer = new Element(this.container, { className: 'final-hof-container' }).element;
 		this.hof = [];
 
@@ -45,18 +49,18 @@ export class FinalScene extends GameScene {
 		this.buttonContainer.style.cssText = 'position:absolute;bottom:45px;left:0;right:0;display:flex;gap:15px;justify-content:center;';
 
 		// Continue button (green - endless mode)
-		this.continueButton = new Element(this.buttonContainer, { 
-			className: 'final-scene-button', 
-			text: 'CONTINUE' 
+		this.continueButton = new Element(this.buttonContainer, {
+			className: 'final-scene-button',
+			text: 'CONTINUE'
 		}).element;
 		this.continueButton.style.cssText = 'padding:12px 25px;cursor:pointer;font-weight:bold;border:none;border-radius:5px;background:linear-gradient(180deg,#70ac4c 0%,#5a8c3c 100%);color:white;font-size:14px;';
 		this.continueButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui'); });
 		this.continueButton.addEventListener('click', () => this.continueEndless());
 
 		// Restart button (red - back to wave 1)
-		this.restartButton = new Element(this.buttonContainer, { 
-			className: 'final-scene-button', 
-			text: 'RESTART' 
+		this.restartButton = new Element(this.buttonContainer, {
+			className: 'final-scene-button',
+			text: 'RESTART'
 		}).element;
 		this.restartButton.style.cssText = 'padding:12px 25px;cursor:pointer;font-weight:bold;border:none;border-radius:5px;background:linear-gradient(180deg,#e06666 0%,#b33333 100%);color:white;font-size:14px;';
 		this.restartButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui'); });
@@ -108,7 +112,7 @@ export class FinalScene extends GameScene {
 		        let display = "";
 
 		        if (value === false) display = text.challenge.off[this.main.lang].toUpperCase();
-		        
+
 		        else if (key === 'lvlCap' && typeof value === 'number') {
 		            display = `LEVEL ${value}`;
 		        } else if (key === 'slotLimit' && typeof value === 'number') {
@@ -117,7 +121,7 @@ export class FinalScene extends GameScene {
 		            display = `+${value}%`;
 		        }
 
-		        else if (key === 'draft' || key === 'noItems' || key === 'permadeath') {
+		        else if (key === 'draft' || key === 'noItems' || key === 'permadeath' || key === 'mirror') {
 		            display = value
 		                ? text.challenge.on[this.main.lang].toUpperCase()
 		                : text.challenge.off[this.main.lang].toUpperCase();
@@ -129,7 +133,7 @@ export class FinalScene extends GameScene {
 		            `${text.challenge[key].title[this.main.lang].toUpperCase()} ΓÇö ${display}`;
 
 		        this.challenge[i].style.color = (value && value !== false) ? '#ebbe35' : '#666';
-	    	});	
+		});
 		}
 	}
 
@@ -144,7 +148,7 @@ export class FinalScene extends GameScene {
 			this.main.pokemonScene,
 			this.main.shopScene,
 			this.main.editorScene,
-			this.main.shopScene.displayPokemon,
+			//this.main.shopScene.displayPokemon,
 			this.main.profileScene,
 			this.main.challengeScene,
 			this.main.menuScene,
@@ -154,7 +158,7 @@ export class FinalScene extends GameScene {
 			this.main.profileScene.deleteRecord,
 			this.main.UI.fastScene,
 		]
-		
+
 		scenes.forEach(scene => {
 			if (scene.isOpen) scene.close();
 		})
@@ -177,7 +181,7 @@ export class FinalScene extends GameScene {
 		this.main.area.endlessMode = true;
 		this.main.area.waveNumber = 101;
 		this.main.area.routeWaves[this.main.area.routeNumber] = 101;
-		
+
 		this.main.player.getHealed(14);
 
 		this.main.UI.nextWave.style.filter = `revert-layer`;
@@ -185,7 +189,7 @@ export class FinalScene extends GameScene {
 
 		this.main.area.autoWave = false;
 		this.main.UI.autoWave.style.background = '#2c70e3';
-		
+
 		this.main.UI.update();
 		this.main.UI.revertUI();
 		this.main.game.resume();
@@ -215,7 +219,7 @@ export class FinalScene extends GameScene {
 
 		//this.main.UI.saveTeamButton.style.display = 'revert-layer';
 		//this.main.UI.importTeamButton.style.display = 'revert-layer';
-		
+
 		this.main.UI.update();
 		this.main.UI.revertUI();
 		this.main.game.resume();
@@ -224,6 +228,26 @@ export class FinalScene extends GameScene {
 		if (this.boss == enemyData['manaphy'] && !this.main.player.secrets['manaphy']) {
 			this.main.player.secrets.manaphy = true;
 			this.main.UI.getSecret('manaphy')
+		}
+
+		if (this.boss == enemyData['mew'] && !this.main.player.secrets['mew']) {
+			this.main.player.secrets.mew = true;
+			this.main.UI.getSecret('mew')
+		}
+
+		if (this.boss == enemyData['victini'] && !this.main.player.secrets['victini']) {
+			this.main.player.secrets.victini = true;
+			this.main.UI.getSecret('victini')
+		}
+
+		if (this.boss == enemyData['marshadow'] && !this.main.player.secrets['marshadow']) {
+			this.main.player.secrets.marshadow = true;
+			this.main.UI.getSecret('marshadow')
+		}
+
+		if (this.boss == enemyData['sirfetchd'] && !this.main.player.secrets['farfetchdGalar']) {
+			this.main.player.secrets.farfetchdGalar = true;
+			this.main.UI.getSecret('farfetchdGalar')
 		}
 
 		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);

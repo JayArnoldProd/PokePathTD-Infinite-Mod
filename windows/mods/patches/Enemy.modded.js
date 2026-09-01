@@ -37,6 +37,7 @@ export class Enemy extends Sprite {
 		this.passive = enemy.passive;
 		this.passiveTimer = 0;
 		this.passiveActivated = false;
+		this.passiveCharges = 0;
 
 		// passive (regenerator)
 		this.regeneratorUsed = false;
@@ -115,6 +116,13 @@ export class Enemy extends Sprite {
 			this.armorMax += Math.floor(this.armorMax * (this.main.area.inChallenge.toughEnemies / 100));
 		}
 
+		if (this.main.area.inChallenge.draft && wave === 100) {
+			this.hp -= Math.floor(this.hp * (25 / 100));
+			this.hpMax -= Math.floor(this.hpMax * (25 / 100));
+			this.armor -= Math.floor(this.armor * (25 / 100));
+			this.armorMax -= Math.floor(this.armorMax * (25 / 100));
+		}
+
 		if (this.main.area.isCustom) {
 			this.hp += Math.floor(this.hp * (this.main.area.customData.health / 100));
 			this.hpMax += Math.floor(this.hpMax * (this.main.area.customData.health / 100));
@@ -150,6 +158,10 @@ export class Enemy extends Sprite {
 			this.main.area.weather = 'rain';
 			this.main.UI.displayWeather();
 		}
+
+		// Achievement tracker
+		this.achievementTimer = 0;
+		this.achievementCount = 0;
 	}
 
 	draw() {
@@ -221,6 +233,71 @@ export class Enemy extends Sprite {
 				this.ctx.arc(px, py, size, 0, Math.PI * 2);
 				this.ctx.fill();
 			}
+		}
+
+		if (this.passive?.id === "ingrain") {
+		    const cx = this.position.x + this.width / 2;
+		    const cy = this.position.y + this.height / 2;
+
+		    const radius = 140;
+		    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 700);
+
+		    // Aura
+		    const grad = this.ctx.createRadialGradient(
+		        cx, cy, radius * 0.15,
+		        cx, cy, radius
+		    );
+
+		    grad.addColorStop(0, `rgba(80,255,120,${0.30 + pulse * 0.15})`);
+		    grad.addColorStop(0.65, `rgba(60,220,90,${0.18 + pulse * 0.08})`);
+		    grad.addColorStop(1, "rgba(60,220,90,0.03)");
+
+		    this.ctx.fillStyle = grad;
+		    this.ctx.beginPath();
+		    this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+		    this.ctx.fill();
+
+		    // Borde
+		    this.ctx.strokeStyle = `rgba(120,255,160,${0.55 + pulse * 0.2})`;
+		    this.ctx.lineWidth = 2;
+		    this.ctx.beginPath();
+		    this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+		    this.ctx.stroke();
+
+		    // Partículas flotando
+		    for (let i = 0; i < 40; i++) {
+		        const seed = i * 987.123;
+		        const t = Date.now() * 0.0015 + seed;
+
+		        const angle = (seed * 17) % (Math.PI * 2);
+		        const r = (seed * 53) % radius;
+
+		        const drift = Math.sin(t) * 6;
+
+		        const px = cx + Math.cos(angle) * r;
+		        const py = cy + Math.sin(angle) * r - drift;
+
+		        const size = 1.5 + ((seed * 13) % 2.5);
+
+		        this.ctx.fillStyle = `rgba(180,255,180,${0.45 + 0.35 * Math.sin(t * 2)})`;
+
+		        this.ctx.beginPath();
+		        this.ctx.arc(px, py, size, 0, Math.PI * 2);
+		        this.ctx.fill();
+		    }
+
+		    // Destellos sobre el borde
+		    for (let i = 0; i < 12; i++) {
+		        const angle = Date.now() / 1800 + i * (Math.PI * 2 / 12);
+
+		        const px = cx + Math.cos(angle) * radius;
+		        const py = cy + Math.sin(angle) * radius;
+
+		        this.ctx.fillStyle = "rgba(220,255,220,0.8)";
+		        this.ctx.beginPath();
+		        this.ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+		        this.ctx.fill();
+		    }
 		}
 
 		if (this.passive?.id === "static") {
@@ -344,7 +421,7 @@ export class Enemy extends Sprite {
 			this.ctx.textAlign = 'center';
 			this.ctx.textBaseline = 'middle';
 
-			const hpText = `${this.main.utility.numberDot(Math.max(0, Math.floor(this.hp)), this.main.lang)}`;
+			const hpText = (this.enemy.id === 'mew') ? '???' : `${this.main.utility.numberDot(Math.max(0, Math.floor(this.hp)), this.main.lang)}`;
 			const textX = barX + barWidth / 2;
 			const textY = barY + barHeight / 1.5;
 
@@ -460,7 +537,7 @@ export class Enemy extends Sprite {
                 }
 			}
 
-	    	if (!this.stunned) {
+		if (!this.stunned) {
 			    const waypoint = this.waypoints[this.waypointIndex];
 			    const yDistance = waypoint.y - this.center.y;
 			    const xDistance = waypoint.x - this.center.x;
@@ -475,19 +552,38 @@ export class Enemy extends Sprite {
 			        const wdy = wp.y - this.center.y;
 			        const distToWp = Math.hypot(wdx, wdy);
 
-			        if (distToWp <= remainingMove && this.waypointIndex < this.waypoints.length - 1) {
+			        // Wind current: x2 speed moving right, x0.6 speed moving left.
+			        // Sampled at the enemy's current position before this substep.
+			        let windFactor = this.main.area.getWindFactorAt
+			            ? this.main.area.getWindFactorAt(this.center.x, this.center.y, wdx)
+			            : 1;
+
+			        let slowFactor = this.main.area.getSlowFactorAt
+			            ? this.main.area.getSlowFactorAt(this.center.x, this.center.y)
+			            : 1;
+
+
+			        if (this.passive?.id == 'gust' && windFactor === 0.6) windFactor = 2;
+			        if (this.passive?.id == 'windRider' && windFactor === 0.6) windFactor = 0.3;
+			        if (this.passive?.id == 'windRider' && windFactor === 2) windFactor = 4;
+			        if (this.passive?.id == 'hustle' && slowFactor === 0.3) slowFactor = 2;
+
+			        const windedMove = remainingMove * windFactor * slowFactor;
+
+			        if (distToWp <= windedMove && this.waypointIndex < this.waypoints.length - 1) {
 			            // llegar exactamente al waypoint y continuar
 			            this.position.x = wp.x - this.width / 2;
 			            this.position.y = wp.y - this.height / 2;
 			            this.center.x = wp.x;
 			            this.center.y = wp.y;
-			            remainingMove -= distToWp;
+			            // Consume remainingMove proportionally to the distance actually covered
+			            remainingMove -= windFactor > 0 ? distToWp / windFactor : distToWp;
 			            this.waypointIndex++;
 			        } else {
 			            // mover lo que queda en dirección al waypoint actual
 			            const wAngle = Math.atan2(wdy, wdx);
-			            const stepX = Math.cos(wAngle) * remainingMove;
-			            const stepY = Math.sin(wAngle) * remainingMove;
+			            const stepX = Math.cos(wAngle) * windedMove;
+			            const stepY = Math.sin(wAngle) * windedMove;
 			            this.position.x += stepX;
 			            this.position.y += stepY;
 			            remainingMove = 0;
@@ -498,7 +594,7 @@ export class Enemy extends Sprite {
 			        if (
 			            this.position.x >= 0 &&
 			            this.position.x <= this.main.game.canvas.width &&
-			            this.position.y >= 0 &&
+			            this.position.y >= -12 &&
 			            this.position.y <= this.main.game.canvas.height
 			        ) this.hasEnteredCanvas = true;
 			    }
@@ -526,6 +622,36 @@ export class Enemy extends Sprite {
 			    };
 			}
 
+			if (this.passive?.id === 'ingrain') {
+			    this.passiveTimer += simDelta;
+
+			    if (this.passiveTimer >= 250) { // cada 250 ms
+			        this.passiveTimer = 0;
+
+			        const enemyX = this.center.x;
+				    const nearbyTiles = this.main.area.placementTiles.filter(tile => {
+				    if (tile.land !== 2) return false;
+				    if (tile.tower) return false;
+
+				    return Math.hypot(
+				        tile.center.x - this.center.x,
+				        tile.center.y - this.center.y
+				    ) <= 150;
+				});
+			        if (nearbyTiles) this.regeneration = (nearbyTiles.length * 2000);
+			        else this.regeneration = 0;
+			    }
+			}
+
+			if (this.passive?.id === 'steamEngine' && this.passiveTimer > 0) {
+				this.passiveTimer -= simDelta;
+				if (this.passiveTimer <= 0) {
+					this.passiveTimer = 0;
+					this.speed -= 1;
+					this.baseSpeed -= 1;
+				}
+			}
+
 			if (this.regeneration > 0) {
                 this.regenTimer += simDelta;
                 while (this.regenTimer >= 1000) {
@@ -540,6 +666,11 @@ export class Enemy extends Sprite {
 				} else {
 					this.speed = this.baseSpeed;
 				}
+			}
+
+			if (this.passive?.id === 'luchadoro' && this.armor === 0) {
+				this.baseSpeed = 3.6;
+				this.speed = this.baseSpeed;
 			}
 
 			if (this.passive?.id == 'slowStart') {
@@ -560,12 +691,28 @@ export class Enemy extends Sprite {
 				}
 			}
 
+			// if (this.regeneratorUsed && !this.dying) this.achievementTimer += simDelta;
+			if (this.enemy.id === 'heatran' && this.achievementTimer < 6500) this.achievementTimer += simDelta;
+
+			if (this.passive?.id === 'soulHeart' && !this.dying) {
+				this.passiveTimer += simDelta;
+				this.achievementTimer += simDelta;
+
+				if (this.passiveTimer > 5100) {
+					this.passiveTimer = 0;
+					playSound('hit2', 'effect');
+		            this.main.area.hitsReceived++;
+		            this.main.player.getDamaged(1);
+				}
+			}
+
 			if (
                 this.passive?.id === 'timeTravel' &&
                 !this.dying &&
                 this.waypointIndex > 0
 			) {
-                this.passiveTimer += simDelta;
+			    this.passiveTimer += simDelta;
+				this.achievementTimer += simDelta;
 
 				if (this.timeTravelSpeedTimer > 0) {
 					this.timeTravelSpeedTimer -= simDelta;
@@ -712,61 +859,73 @@ export class Enemy extends Sprite {
 
 	getDamaged(amount, source = 'physical', ability = null, isCritical = false, alreadyCursed = new Set(), pokemon, tower) {
 	    if (this.hp <= 0 || this.invulnerable) return;
-	   	if (this.passive?.id == 'herbogenesis' && (
-	   		['heal', 'bitterBlade', 'takeHeart'].includes(ability?.id) ||
-	   		['leftovers', 'shellBell', 'clefairyDoll'].includes(pokemon?.item?.id)
-	   	)) {
-	   		this.regeneration = Math.max(0, this.regeneration - 500);
-	   	}
+		if (this.passive?.id == 'herbogenesis' && (
+			['heal', 'bitterBlade', 'takeHeart'].includes(ability?.id) ||
+			['leftovers', 'shellBell', 'clefairyDoll'].includes(pokemon?.item?.id)
+		)) {
+			this.regeneration = Math.max(0, this.regeneration - 1000);
+			this.achievementCount++;
+		}
 
-	   	if (this.passive?.id == 'electrogenesis' && !this.stunned && (this.hp > (this.hpMax * 0.5))) return;
+		if (this.passive?.id == 'electrogenesis' && !this.stunned && (this.hp > (this.hpMax * 0.5))) return;
 	    if (this.passive?.id == 'nebulogenesis' && source == 'physical') {
-	    	this.passiveTimer += 1;
-	    	if (this.passiveTimer > 8) {
-	    		if (this.passiveTimer == 11) this.passiveTimer = 0;
-	    		this.floatingTexts.push({
+		this.passiveTimer += 1;
+		if (this.passiveTimer > 8) {
+			if (this.passiveTimer == 11) this.passiveTimer = 0;
+			this.achievementCount++;
+			this.floatingTexts.push({
 		            text: `MISS`,
 		            timer: 0,
 		            duration: 1000,
-		            y: this.position.y,     
-		            vy: -60,       
+		            y: this.position.y,
+		            vy: -60,
 		            alpha: 1,
 		            color: '#b9c9e0'
 		        });
 		        return;
-	    	}
+		}
 	    }
+
+	    if (this.enemy.id == 'shaymin' && pokemon?.item != undefined) this.achievementCount++;
+	    if (this.enemy.id == 'groudon' && tower?.tile?.land === 2) this.achievementCount++;
+	    if (this.enemy.id == 'tapuLele' && pokemon.power > 100) this.achievementCount++;
 
 	    if (this.passive?.id == 'prankster' && ['burn', 'poison',' nightmare'].includes(source)) amount = Math.floor(amount/2);
 	    if (this.passive?.id == 'psychogenesis') amount = (pokemon.item != null) ? Math.floor(amount * 0.65) : Math.floor(amount * 1.15);
 	    if (this.passive?.id == 'abyssalBound' && !(tower?.tile?.land == 3 || pokemon?.item?.id == 'squirtBottle')) return;
 
-	   	let cursedDamageSpread = amount;
+	    if (this.enemy.id == 'nihilego' && this.achievementCount <= 0) {
+		if (pokemon.tiles[0] == 3 && pokemon.tiles.length == 1) {
+		} else this.achievementCount++;
+	    }
+
+		let cursedDamageSpread = amount;
 
 	    if (pokemon?.item?.id == 'strangeIdol' && ['physical', 'link'].includes(source)) {
-	    	let strangeIdolBuff = 50;
-	    	this.main.area.enemies.forEach(e => {
+		let strangeIdolBuff = 50;
+		this.main.area.enemies.forEach(e => {
 	            if (e !== this && e.cursed && e.hp > 0) {
-	            	strangeIdolBuff -= 1;
-	        	}
+		strangeIdolBuff -= 1;
+		}
 		    });
 		    if (strangeIdolBuff > 0) amount += Math.ceil(amount * strangeIdolBuff/100);
 		}
 
 		if (pokemon?.ability?.id == 'heatCrash' && ['physical', 'link'].includes(source)) amount = Math.ceil(amount * this.speed)
+		if (pokemon?.ability?.id == 'honeyGather') this.main.area.honeyGather++;
 
         if (pokemon?.item?.id == 'spellTag' && this.statusEffects.length > 0) {
             let spellTagBonus = 0
 			this.statusEffects.forEach((effect) => {
 				if (effect.type != 'nightmare') spellTagBonus += 0.15;
-				if (pokemon?.ability?.id == 'simple') spellTagBonus += 0.075;
+				if (pokemon?.ability?.id == 'simple') spellTagBonus += (0.15 * 0.75);
 			})
 			amount = Math.ceil(amount * Math.min(1.5, (1 + spellTagBonus)));
 		}
 
 		if (pokemon?.item?.id == 'stickyBarb' && this.statusEffects.length > 0) {
 			this.statusEffects.forEach((effect) => {
-				if ((effect.type == 'stun' || effect.type == 'slow') && ['physical', 'link'].includes(source)) amount = (pokemon?.ability?.id == 'simple') ? Math.ceil(amount * 1.375) : Math.ceil(amount * 1.25);
+				if ((effect.type == 'stun' || effect.type == 'slow') && ['physical', 'link'].includes(source)) amount = (pokemon?.ability?.id == 'simple') ? Math.ceil(amount * 2.1875) : Math.ceil(amount * 1.25);
 			})
 		}
 
@@ -788,20 +947,42 @@ export class Enemy extends Sprite {
 			})
 		}
 
+		if (pokemon?.ability?.id == 'venomDrench' && this.statusEffects.length > 0) {
+			this.statusEffects.forEach((effect) => {
+				if (effect.type == 'poison' && ['physical', 'link'].includes(source)) amount = Math.ceil(amount * 2);
+			})
+		}
+
 		if (pokemon?.item?.id == 'badgeOfHonor' && ['physical', 'link'].includes(source)) {
-			let badgeMult = Math.min(30, (this.main.player.stars / 30));
-			if (pokemon?.ability?.id == 'simple') badgeMult = Math.ceil(badgeMult * 1.5);
+			let maxCap = (pokemon?.ability?.id == 'simple') ? 52.5 : 30;
+			let badgeMult = Math.min(maxCap, (this.main.player.stars / 30));
 			amount += Math.ceil(amount * (badgeMult / 100));
 		}
 
 		if ((
-			ability?.id === 'armorBreak' || ability?.id === 'rageFist' || 
+			ability?.id === 'armorBreak' || ability?.id === 'rageFist' ||
 			ability?.id === 'armorBreakSplash' ||
-			ability?.id === 'armorBreakDoubleShot' || 
-			pokemon?.item?.id == 'shieldBreakerBullet') && 
-			this.enemy?.armor > 0 && source == 'physical' &&
+			ability?.id === 'armorBreakDoubleShot' ||
+			pokemon?.item?.id == 'shieldBreakerBullet') &&
+			this.armorMax > 0 && source == 'physical' &&
 			this.passive?.id !== 'rockHead'
 	    ) amount *= 2;
+
+		if (ability?.id == 'strongJaw' && this.armorMax > 0) {
+			if (this.armor > 0) isCritical = true;
+			else amount *= 2;
+		}
+
+		if (ability?.id == 'secretSword' && this.regeneration > 0) {
+			this.regeneration = Math.max(0, this.regeneration - 10);
+			if (this.passive?.id == 'herbogenesis') this.achievementCount++;
+		}
+
+		if (
+			ability?.id === 'ancientPower' &&
+			this.armorMax > 0 && source == 'physical' &&
+			this.passive?.id !== 'rockHead'
+	    ) amount += Math.floor(amount * (this.main.player.fossilInTeam * 0.15));
 
 		if (pokemon?.ability?.id === 'corrosion' && this.armor > 0 && source == 'physical') {
             amount += Math.ceil(Math.min(this.armor, this.armorMax * 0.05))
@@ -812,6 +993,8 @@ export class Enemy extends Sprite {
 		if (pokemon?.ability?.id == 'technician' && amount <= 1000 && source == 'physical') amount = Math.ceil(amount * 1.5);
 
 		if (this.passive?.id === 'lightMetal' && amount > 1000) amount = 1000;
+		if (this.passive?.id === 'lightMetal' && amount > 500) this.achievementCount++;
+
 		if (this.passive?.id === 'shellSmash' && isCritical) {
 			this.baseSpeed += 0.5;
             this.speed += 0.5;
@@ -830,10 +1013,40 @@ export class Enemy extends Sprite {
 		if (this.passive?.id === 'disguise' && source == 'physical' && this.armor > 0) amount = 0;
 
 		if (this.passive?.id === 'sturdy') amount = Math.max(0, amount - 200);
-		if (this.passive?.id === 'iceBody' && isCritical) amount = 0;
+		if (this.passive?.id === 'iceBody' && isCritical) {
+			this.achievementCount++;
+			amount = 0;
+		}
+
+		if (this.passive?.id === 'steamEngine' && tower?.tile?.land === 3 && this.passiveTimer == 0) {
+			this.speed += 1;
+			this.baseSpeed += 1;
+			this.passiveTimer = 1000;
+		}
+
+		if (this.enemy.id == 'volcanion' && tower?.tile?.land === 3) this.achievementCount += amount;
+
+		if (this.passive?.id === 'sheerForce' && amount < 1000) amount = 0;
+
+		if (this.passive?.id === 'pheromoneRush' && this.poisonedBy) {
+			this.achievementCount++;
+			this.statusEffects.forEach(effect => {
+				if (effect.type === 'poison') amount = Math.floor(amount + (amount * 0.02 * effect.stacks))
+			})
+		}
+
+		if (this.passive?.id === 'criticalLearning') amount = (isCritical) ? 1 : 0;
+
+		if (this.passive?.id === 'ironDefense') {
+			amount = Math.floor(amount - (amount * 0.01 * this.passiveCharges))
+			this.passiveCharges = Math.min(100, this.passiveCharges + 1);
+			if (this.passiveCharges > 26) this.achievementCount++;
+		}
 
 		if (this.passive?.id === 'remoaid' && source == 'physical' && Math.random() < 0.2) {
-			const waypointEnemy = this.main.area.waypoints[Math.floor(Math.random() * this.main.area.waypoints.length)];
+			const waypointEnemy = (this.main.area.inChallenge.mirror) ?
+				this.main.area.map.waypointsMirror[Math.floor(Math.random() * this.main.area.map.waypointsMirror.length)] :
+				this.main.area.waypoints[Math.floor(Math.random() * this.main.area.waypoints.length)]
 
 			this.main.area.enemies.push(
 				new Enemy(
@@ -853,11 +1066,14 @@ export class Enemy extends Sprite {
 			const dx = this.center.x - tower.center.x;
 			const dy = this.center.y - tower.center.y;
 			const distance = Math.hypot(dx, dy);
-			if (distance < 120) amount = Math.floor(amount / 2);
+			if (distance < 120) {
+				amount = Math.floor(amount / 2);
+				this.achievementCount += amount;
+			}
 		}
-
-		if (amount >= 9999 && source == 'physical') this.main.player.unlockAchievement(18)
-        if (amount > this.main.player.stats.highestHit && source == 'physical') this.main.player.stats.highestHit = amount;
+		if (this.passive?.id === 'luchadoro' && source == 'physical' && this.armor > 0) amount = Math.floor(amount / 2);
+		// if (amount >= 9999 && source == 'physical') this.main.player.unlockAchievement(18)
+	    if (amount > this.main.player.stats.highestHit && source == 'physical') this.main.player.stats.highestHit = amount;
 
         let cursedDamage = amount;
         let armorDamage = amount;
@@ -868,8 +1084,8 @@ export class Enemy extends Sprite {
         this.main.area.totalTrueDamageDealt += Math.min((this.hp + this.armor), amount);
         pokemon.trueDamageDealt	+= Math.min((this.hp + this.armor), amount);
 
-        let litCoalChance = Math.random();
-        if (pokemon?.item?.id == 'litCoal' && this.canBurn && (litCoalChance < 0.1 || pokemon?.ability?.id == 'simple' && litCoalChance < 0.15)) {
+	    let litCoalChance = Math.random();
+	    if (pokemon?.item?.id == 'litCoal' && this.canBurn && (litCoalChance < 0.1 || pokemon?.ability?.id == 'simple' && litCoalChance < 0.175)) {
 			this.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon);
 		}
 
@@ -880,8 +1096,8 @@ export class Enemy extends Sprite {
 			if (pokemon?.item?.id == 'leftovers' && Math.random() < 0.01 && !this.main.area.leftoversWaveUsed) {
 				playSound('hit3', 'effect');
 				this.main.player.getHealed(1);
-				this.main.player.achievementProgress.heartRestore++;
-				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				// this.main.player.achievementProgress.heartRestore++;
+				// if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 				this.main.area.leftoversWaveUsed = true;
 				this.main.area.heartScale++;
 			}
@@ -889,8 +1105,8 @@ export class Enemy extends Sprite {
 			if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000 && !this.main.area.shellBellWaveUsed) {
 				playSound('hit3', 'effect');
 				this.main.player.getHealed(1);
-				this.main.player.achievementProgress.heartRestore++;
-				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				// this.main.player.achievementProgress.heartRestore++;
+				// if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 				this.main.area.shellBellWaveUsed = true;
 				this.main.area.heartScale++;
 			}
@@ -898,8 +1114,8 @@ export class Enemy extends Sprite {
 			if (pokemon?.item?.id == 'clefairyDoll' && pokemon.trueDamageDealt > 25000 && !this.main.area.clefairyDollUsed) {
 				playSound('hit3', 'effect');
 				this.main.player.getHealed(1);
-				this.main.player.achievementProgress.heartRestore++;
-				if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				// this.main.player.achievementProgress.heartRestore++;
+				// if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
 				this.main.area.clefairyDollUsed = true;
 				this.main.area.heartScale++;
 			}
@@ -917,64 +1133,76 @@ export class Enemy extends Sprite {
                 uses < 3 &&
                 Math.random() < healChance
 			) {
-                playSound('hit3', 'effect');
+				const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
+				playSound('hit3', 'effect');
 
-                const healValue = (pokemon?.item?.id == 'bigRoot') ? 2 : 1;
-                this.main.player.getHealed(healValue);
-                this.main.player.achievementProgress.heartRestore += healValue;
+				if (pokemon?.item?.id == 'propCase') {
+					if (this.main.player.health[this.main.area.routeNumber] > 1) {
+						this.main.player.getDamaged(1);
+						this.main.area.hitsReceived++;
+					}
+					this.main.area.pendingHeal++;
+				} else {
+			        this.main.player.getHealed(healValue);
+			        // this.main.player.achievementProgress.heartRestore += healValue;
+				// if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+				}
 
-                if (this.main.player.achievementProgress.heartRestore > 10) this.main.player.unlockAchievement(19);
+			if (ability?.id === 'bitterBlade' || pokemon?.item?.id === 'auspiciousArmor') this.main.area.healUsed[pokemon.id] = 3
+			else if (ability?.id === 'takeHeart') this.main.area.healUsed[pokemon.id] = uses + 1.5;
+			else this.main.area.healUsed[pokemon.id] = uses + 1;
 
-                if (ability?.id === 'bitterBlade' || pokemon?.item?.id === 'auspiciousArmor') this.main.area.healUsed[pokemon.id] = 3
-                else if (ability?.id === 'takeHeart') this.main.area.healUsed[pokemon.id] = uses + 1.5;
-                else this.main.area.healUsed[pokemon.id] = uses + 1;
+				this.main.area.heartScale += healValue;
+		    }
+	    }
 
-                   this.main.area.heartScale += healValue;
-            }
-        }
+	    if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000) this.main.area.shellBellWaveUsed = true;
 
-        if (pokemon?.item?.id == 'shellBell' && pokemon.trueDamageDealt > 50000) this.main.area.shellBellWaveUsed = true;
+	    if (ability?.id === 'greed') {
+		let g = Math.ceil(this.gold * 0.1);
+		this.main.player.achievementProgress.stolenGold += g;
+		// if (this.main.player.achievementProgress.stolenGold >= 100000) this.main.player.unlockAchievement(21);
+		this.main.area.goldWave += g;
+		this.main.player.changeGold(g);
+	    }
 
-        if (ability?.id === 'greed') {
-            let g = Math.ceil(this.gold * 0.1);
-            this.main.player.achievementProgress.stolenGold += g;
-            if (this.main.player.achievementProgress.stolenGold >= 100000) this.main.player.unlockAchievement(21);
-            this.main.area.goldWave += g;
-            this.main.player.changeGold(g);
-        }
+	    let armorHit = 0;
 
-        let armorHit = 0;
+	    if (this.invisible && source == 'physical') {
+		this.invisible = false;
+		if (this.enemy.id === 'lunala') this.achievementCount++;
+	    }
 
-        if (this.invisible && source == 'physical') this.invisible = false;
+	    // daño a armadura
+	    if (this.armor && this.armor > 0) {
+	        const remainingArmor = this.armor - armorDamage;
+	        if (remainingArmor >= 0) {
+	            this.armor = remainingArmor;
+	            armorHit = armorDamage;
+	            amount = 0;
+	        } else {
+	            armorHit = this.armor;
+	            amount = -remainingArmor;
+	            this.armor = 0;
+	        }
+	    }
 
-        // daño a armadura
-        if (this.armor && this.armor > 0) {
-            const remainingArmor = this.armor - armorDamage;
-            if (remainingArmor >= 0) {
-                this.armor = remainingArmor;
-                armorHit = armorDamage;
-                amount = 0;
-            } else {
-                armorHit = this.armor;
-                amount = -remainingArmor;
-                this.armor = 0;
-            }
-        }
+	    if (this.passive?.id === 'anchorShot' && this.armor === 0) this.main.area.anchorShot = true;
 
-        this.hp -= amount;
+	    this.hp -= amount;
 
-        if (this.hp < this.hpMax * 0.5 && ['groudon', 'kyogre'].includes(this.enemy.id) && !this.passiveActivated) {
-            this.passiveActivated = true;
-            this.armorMax = 75000;
-            this.armor = 75000;
-            this.sprite.src = this.enemy.sprite.primal;
+	    if (this.hp < this.hpMax * 0.5 && ['groudon', 'kyogre'].includes(this.enemy.id) && !this.passiveActivated) {
+		this.passiveActivated = true;
+		this.armorMax = 75000;
+		this.armor = 75000;
+		this.sprite.src = this.enemy.sprite.primal;
 
-            if (this.statusEffects['stun']) {
-                this.stunned = false;
-                this.statusEffects['stun'].duration = 0;
-            }
+		if (this.statusEffects['stun']) {
+			this.stunned = false;
+			this.statusEffects['stun'].duration = 0;
+		}
 
-            this.passiveTimer = 3000;
+		this.passiveTimer = 3000;
 			this.stunned = true;
 			this.invulnerable = true;
 
@@ -988,11 +1216,11 @@ export class Enemy extends Sprite {
 	    if (this.passive?.id === 'magmaStorm' && this.hp <= 0 && this.burnedBy === null) this.hp = 1;
 
 	    if (this.hp <= 0 && !this.dying) {
-	    	if (this.passive?.id === 'regenerator' && !this.regeneratorUsed) {
+		if (this.passive?.id === 'regenerator' && !this.regeneratorUsed) {
 			    this.regeneratorUsed = true;
 			    this.hp = 1;
 			    this.armorMax = 50000;
-	    		this.armor = 50000;
+			this.armor = 50000;
 			    // preparar resurrección
 			    this.isRegeneratorReviving = true;
 			    this.regeneratorReviveTimer = 5000 / this.main.game.speedFactor;
@@ -1024,88 +1252,89 @@ export class Enemy extends Sprite {
 							this.main.game.ctx,
 						)
 					)
-                }
+			}
+
+		    }
+
+		if (ability?.id === 'moxie') {
+			//tower.moxieBuff++;
+			if (this.main.area.moxieUsers[pokemon.id] == undefined) this.main.area.moxieUsers[pokemon.id] = 1;
+			else this.main.area.moxieUsers[pokemon.id] += 1;
+		}
+
+		this.main.player.stats.defeatedEnemies++;
+		this.main.player.stats.defeatedSpecies.add(this.enemy.id);
+		// if (this.enemy.id == 'delibird') {
+		// 	this.main.player.achievementProgress.delibirdCount++;
+			// 	if (this.main.player.achievementProgress.delibirdCount >= 225) this.main.player.unlockAchievement(10);
+		// }
+		// if (this.main.player.stats.defeatedEnemies == 100000) this.main.player.unlockAchievement(8);
+		// if (this.main.player.stats.defeatedSpecies.size === 100) this.main.player.unlockAchievement(9);
+		this.main.area.goldWave += this.gold;
+	        this.main.player.changeGold(this.gold);
+	        this.dying = true;
+	        this.hp = 0;
+	        if (this.enemy.id == 'kyogre' && tower?.tile?.land === 1) this.achievementCount++;
+	        if (this.enemy.id == 'thundurus' && this.stunned) this.achievementCount++;
+	        this.tryAchievementUnlock();
+	    }
+
+	    const minSpacing = 12;
+	    const startYOffset = 12;
 
             }
 
-            if (ability?.id === 'moxie') tower.moxieBuff++;
-            this.main.player.stats.defeatedEnemies++;
-            this.main.player.stats.defeatedSpecies.add(this.enemy.id);
-            if (this.enemy.id == 'delibird') {
-                this.main.player.achievementProgress.delibirdCount++;
-				if (this.main.player.achievementProgress.delibirdCount >= 225) this.main.player.unlockAchievement(10);
-            }
-            if (this.main.player.stats.defeatedEnemies == 100000) this.main.player.unlockAchievement(8);
-            if (this.main.player.stats.defeatedSpecies.size === 100) this.main.player.unlockAchievement(9);
-            this.main.area.goldWave += this.gold;
-            this.main.player.changeGold(this.gold);
-            this.dying = true;
-            this.hp = 0;
-        }
+	        let startY = this.position.y - 10 + startYOffset;
 
-        const minSpacing = 12;
-        const startYOffset = 12;
+	        for (const ft of this.floatingTexts) {
+	            if (Math.abs(startY - ft.y) < minSpacing) {
+	                startY = Math.min(startY, ft.y - minSpacing);
+	            }
+	        }
 
-        if (amount > 0) {
-            const color = isCritical
-                ? '#ffeb3b'
-                : source === 'burn'
-                ? '#c96937'
-                : source === 'poison'
-                ? '#70ac4c'
-                : '#e06666';
+	        this.floatingTexts.push({
+	            text: `-${amount}${isCritical ? '!' : ''}`,
+	            timer: 0,
+	            duration: 1000,
+	            y: startY,
+	            vy: -60,
+	            alpha: 1,
+	            color
+	        });
+	    }
 
-            let startY = this.position.y - 10 + startYOffset;
+	    if (armorHit > 0) {
+	        let startY = this.position.y - 10 + startYOffset;
+	        for (const ft of this.floatingTexts) {
+	            if (Math.abs(startY - ft.y) < minSpacing) {
+	                startY = Math.min(startY, ft.y - minSpacing);
+	            }
+	        }
 
-            for (const ft of this.floatingTexts) {
-                if (Math.abs(startY - ft.y) < minSpacing) {
-                    startY = Math.min(startY, ft.y - minSpacing);
-                }
-            }
+	        this.floatingTexts.push({
+	            text: `-${armorHit}${isCritical ? '!' : ''}`,
+	            timer: 0,
+	            duration: 1000,
+	            y: startY,
+	            vy: -60,
+	            alpha: 1,
+	            color: isCritical ? '#ffeb3b' : '#66ccff'
+	        });
+	    }
 
-            this.floatingTexts.push({
-                text: `-${amount}${isCritical ? '!' : ''}`,
-                timer: 0,
-                duration: 1000,
-                y: startY,
-                vy: -60,
-                alpha: 1,
-                color
-            });
-        }
-
-        if (armorHit > 0) {
-            let startY = this.position.y - 10 + startYOffset;
-            for (const ft of this.floatingTexts) {
-                if (Math.abs(startY - ft.y) < minSpacing) {
-                    startY = Math.min(startY, ft.y - minSpacing);
-                }
-            }
-
-            this.floatingTexts.push({
-                text: `-${armorHit}${isCritical ? '!' : ''}`,
-                timer: 0,
-                duration: 1000,
-                y: startY,
-                vy: -60,
-                alpha: 1,
-                color: isCritical ? '#ffeb3b' : '#66ccff'
-            });
-        }
-
-        if ((ability?.id === 'curse' || ability?.id === 'magicBounce' || ability?.id === 'willOWisp' || ability?.id === 'curseDoubleShot') && this.cursed && cursedDamage > 0 && !alreadyCursed.has(this)) {
-            alreadyCursed.add(this);
-            this.main.area.enemies.forEach(e => {
-                if (e !== this && e.cursed && e.hp > 0 && !alreadyCursed.has(e)) {
-                    e.getDamaged(cursedDamageSpread, source, ability, false, alreadyCursed, pokemon);
-                    if (pokemon?.item?.id === 'amuletCoin') {
-                        let cursedGold = Math.ceil(cursedDamageSpread * 0.001 * (Math.min(1200, this.main.player.stars)));
-                        this.main.area.goldWave += cursedGold;
-                        this.main.player.changeGold(cursedGold);
-                    }
-                }
-                if (ability?.id === 'willOWisp' && e.canBurn && e.cursed) {
-                    if (pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, pokemon);
+	    if ((ability?.id === 'curse' || ability?.id === 'curseSplash' || ability?.id === 'magicBounce' || ability?.id === 'willOWisp' || ability?.id === 'curseDoubleShot') && this.cursed && cursedDamage > 0 && !alreadyCursed.has(this)) {
+	        alreadyCursed.add(this);
+	        this.main.area.enemies.forEach(e => {
+	            if (e !== this && e.cursed && e.hp > 0 && !alreadyCursed.has(e)) {
+	                e.getDamaged(cursedDamageSpread, source, ability, false, alreadyCursed, pokemon);
+	                if (pokemon?.item?.id === 'amuletCoin') {
+			            let cursedGold = Math.ceil(cursedDamageSpread * 0.001 * (Math.min(1200, this.main.player.stars)));
+			            this.main.area.goldWave += cursedGold;
+			            this.main.player.changeGold(cursedGold);
+			        }
+	            }
+	            if (ability?.id === 'willOWisp' && e.canBurn && e.cursed) {
+		if (pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, pokemon);
                     else e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon);
                 }
             });
@@ -1113,69 +1342,74 @@ export class Enemy extends Sprite {
 	}
 
 	updateStatusEffects(deltaTime) {
-        if (this.statusEffects.length === 0) return;
+	    if (this.statusEffects.length === 0) return;
 
-        this.statusEffects.forEach(effect => {
-            effect.timer += deltaTime;
-            const interval = 1000;
+	    this.statusEffects.forEach(effect => {
+	        effect.timer += deltaTime;
+	        const interval = 1000;
 
-            if (effect.type === 'burn') {
-                while (effect.timer >= interval && effect.duration > 0) {
-                    this.getDamaged(Math.ceil(this.hpMax * effect.damagePercent), 'burn', null, false, new Set(), this.burnedBy);
-                    effect.timer -= interval;
-                    if (typeof effect.duration === 'number') effect.duration -= 1;
-                }
-            }
+	        if (effect.type === 'burn') {
+	            while (effect.timer >= interval && effect.duration > 0) {
+		if (this.passive?.id == 'flashFire') {
+			this.hp = Math.min(this.hp + (this.hpMax * 0.01), this.hpMax);
+		} else {
+			this.getDamaged(Math.ceil(this.hpMax * effect.damagePercent), 'burn', null, false, new Set(), this.burnedBy);
+		}
 
-            if (effect.type === 'poison') {
-                while (effect.timer >= interval) {
-                    const stacks = effect.stacks || 1;
-                    const poisonDamage = Math.ceil(this.hpMax * effect.damagePercent * stacks);
-                    this.getDamaged(poisonDamage, 'poison', null, false, new Set(), this.poisonedBy);
-                    effect.timer -= interval;
-                }
-            }
+	                effect.timer -= interval;
+	                if (typeof effect.duration === 'number') effect.duration -= 1;
+	            }
+	        }
 
-            if (effect.type === 'nightmare') {
-                while (effect.timer >= interval) {
-                    const stacks = effect.stacks || 1;
-                    const nightmareDamage = Math.ceil(this.nightmaredBy.power * 0.2 * stacks);
-                    this.getDamaged(nightmareDamage, 'nightmare', null, false, new Set(), this.nightmaredBy);
-                    effect.timer -= interval;
-                }
-            }
+	        if (effect.type === 'poison' && this.passive?.id != 'pheromoneRush') {
+	            while (effect.timer >= interval) {
+	                const stacks = effect.stacks || 1;
+	                const poisonDamage = Math.ceil(this.hpMax * effect.damagePercent * stacks);
+	                this.getDamaged(poisonDamage, 'poison', null, false, new Set(), this.poisonedBy);
+	                effect.timer -= interval;
+	            }
+	        }
 
-            if (effect.type === 'slow') {
-                if (!effect.applied) {
-                    effect.applied = true;
-                }
-                if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
-                    effect.duration = 0;
-                }
-            }
+	        if (effect.type === 'nightmare') {
+	            while (effect.timer >= interval) {
+	                const stacks = effect.stacks || 1;
+	                const nightmareDamage = Math.ceil(this.nightmaredBy.power * 0.2 * stacks);
+	                this.getDamaged(nightmareDamage, 'nightmare', null, false, new Set(), this.nightmaredBy);
+	                effect.timer -= interval;
+	            }
+	        }
 
-            if (effect.type === 'stun') {
-                this.stunned = true;
-                if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
-                    this.stunned = false;
-                    effect.duration = 0;
-                }
-            }
-        });
+	        if (effect.type === 'slow') {
+	            if (!effect.applied) {
+	                effect.applied = true;
+	            }
+	            if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
+	                effect.duration = 0;
+	            }
+	        }
 
-        // Filtrar efectos terminados
-        this.statusEffects = this.statusEffects.filter(e => e.duration === undefined || e.duration > 0);
+	        if (effect.type === 'stun') {
+	            this.stunned = true;
+	            if (effect.duration !== undefined && effect.timer >= effect.duration * 1000) {
+	                this.stunned = false;
+	                effect.duration = 0;
+	            }
+	        }
+	    });
 
-        // RECOMPUTAR velocidad según slows activos
-        const slowEffects = this.statusEffects.filter(e => e.type === 'slow' && e.duration !== 0);
-        if (slowEffects.length === 0) {
-            this.speed = this.baseSpeed;
-        } else {
-            // multiplicar factores de slow
-            let factor = 1;
-            slowEffects.forEach(e => factor *= (e.slowPercent ?? 1));
-            this.speed = this.baseSpeed * factor;
-        }
+	    // Filtrar efectos terminados
+	    this.statusEffects = this.statusEffects.filter(e => e.duration === undefined || e.duration > 0);
+
+	    // RECOMPUTAR velocidad según slows activos
+	    const slowEffects = this.statusEffects.filter(e => e.type === 'slow' && e.duration !== 0);
+	    if (slowEffects.length === 0) {
+	        this.speed = this.baseSpeed;
+	    } else {
+	        // multiplicar factores de slow
+	        let factor = 1;
+	        slowEffects.forEach(e => factor *= (e.slowPercent ?? 1));
+	        this.speed = this.baseSpeed * factor;
+	    }
 	}
 
 	updateWeatherEffects(deltaTime) {
@@ -1243,14 +1477,16 @@ export class Enemy extends Sprite {
 	    const existing = this.statusEffects.find(e => e.type === effect.type);
 	    if (existing) {
 	        if (effect.type === 'poison') {
-	        	this.poisonedBy = pokemon;
-	        	this.main.player.stats.appliedPoisons++;
-	        	if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
+		this.poisonedBy = pokemon;
+		this.main.player.stats.appliedPoisons++;
+		//if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
 	            existing.stacks = (existing.stacks || 1) + 1;
+	            if (this.enemy.id === 'regirock') this.achievementCount++;
 	        } else if (effect.type === 'nightmare') {
-	        	this.nightmaredBy = pokemon;
+		this.nightmaredBy = pokemon;
 	            existing.stacks = (existing.stacks || 1) + 1;
-	        } 
+	            if (this.enemy.id === 'regirock') this.achievementCount++;
+	        }
 	        // else if (effect.type === 'slow' && this.main.slowRefreshFix == 1) {
 	        // 	const currentStrength = existing.slowPercent ?? 1;
 	        // 	const incomingStrength = effect.slowPercent ?? 1;
@@ -1268,50 +1504,68 @@ export class Enemy extends Sprite {
 	        // 	} else {
 	        // 		return;
 	        // 	}
-	        // } 
+	        // }
 	    } else {
-	    	if (effect.type === 'stun' && this.passive?.id == 'electrogenesis') effect.duration *= 2;
+		if (effect.type === 'stun' && this.passive?.id == 'electrogenesis') {
+			effect.duration *= 2;
+			this.achievementCount++;
+		}
+		if ((effect.type === 'stun' || effect.type === 'slow') && this.passive?.id == 'vCrate') {
+			this.baseSpeed -= 0.4;
+			return this.speed -= 0.4;
+		}
+
 	        this.statusEffects.push({
 	            ...effect,
 	            timer: 0,
 	            stacks: effect.type === 'poison' ? 1 : undefined
 	        });
 	        if (effect.type === 'stun') {
-	        	//this.lightningRodSearch();
-	        	this.main.player.stats.appliedStuns++;
-	        	if (this.main.player.stats.appliedStuns >= 10000) this.main.player.unlockAchievement(13);
+		//this.lightningRodSearch();
+		this.main.player.stats.appliedStuns++;
+		// if (this.main.player.stats.appliedStuns >= 10000) this.main.player.unlockAchievement(13);
+		if (this.passive?.id === 'spectralThief') this.invisible = true;
+		if (this.enemy.id == 'tornadus') this.achievementCount++;
 	        }
 	        if (effect.type === 'slow') {
-	        	this.main.player.stats.appliedSlows++;
-	        	if (this.main.player.stats.appliedSlows >= 10000) this.main.player.unlockAchievement(14);
+		this.main.player.stats.appliedSlows++;
+		// if (this.main.player.stats.appliedSlows >= 10000) this.main.player.unlockAchievement(14);
+		if (this.passive?.id === 'spectralThief') this.invisible = true;
+		if (this.enemy.id == 'tornadus') this.achievementCount++;
 	        }
 	        if (effect.type === 'poison') {
-	        	this.poisonedBy = pokemon;
-	        	this.main.player.stats.appliedPoisons++;
-	        	if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
+		this.poisonedBy = pokemon;
+		this.main.player.stats.appliedPoisons++;
+		// if (this.main.player.stats.appliedPoisons >= 10000) this.main.player.unlockAchievement(16);
+		if (this.enemy.id === 'regirock') this.achievementCount++;
 	        }
 	        if (effect.type === 'nightmare') {
-	        	this.nightmaredBy = pokemon;
+		this.nightmaredBy = pokemon;
+		if (this.enemy.id === 'regirock') this.achievementCount++;
 	        }
 	        if (effect.type === 'burn') {
-	        	this.burnedBy = pokemon;
-	        	this.main.player.stats.appliedBurns++;
-	        	if (this.main.player.stats.appliedBurns >= 10000) this.main.player.unlockAchievement(15);
-	        	if (this.passive?.id === 'magmaStorm') {
-	        		this.hpMax += this.armor;
-	        		this.hp += this.armor;
-	        	}
+		this.burnedBy = pokemon;
+		this.main.player.stats.appliedBurns++;
+		// if (this.main.player.stats.appliedBurns >= 10000) this.main.player.unlockAchievement(15);
+		if (this.passive?.id === 'spectralThief') this.invisible = true;
+		if (this.passive?.id === 'magmaStorm') {
+			if (this.achievementTimer < 6000) this.achievementCount++;
+			this.hpMax += this.armor;
+			this.hp += this.armor;
+		}
+		if (this.enemy.id === 'regirock') this.achievementCount++;
 	        }
 	        if (effect.type === 'curse') {
-	        	this.main.player.stats.appliedCurses++;
-	        	if (this.main.player.stats.appliedCurses >= 10000) this.main.player.unlockAchievement(17);
+		this.main.player.stats.appliedCurses++;
+		// if (this.main.player.stats.appliedCurses >= 10000) this.main.player.unlockAchievement(17);
 	            this.cursed = true;
 	        }
 	    }
 
 	    if (this.passive?.id === 'justified' && !['curse', 'nightmare'].includes(effect.type)) {
 	        this.armorMax += 5000;
-	    	this.armor += 5000;
+		this.armor += 5000;
+		this.passiveActivated = true;
 	    }
 	}
 
@@ -1323,27 +1577,27 @@ export class Enemy extends Sprite {
 	    const centerY = this.position.y + this.height / 2;
 
 	    if (this.main.durationCC) {
-	    	 this.drawSlowIndicator(centerX);
-	    	this.drawStunIndicator(centerX);	
+		this.drawSlowIndicator(centerX);
+		this.drawStunIndicator(centerX);
 	    }
-	   
+
 	    this.statusEffects.forEach((effect, index) => {
 	        let r, g, b;
 	        const numParticles = 6;
-	        
+
 	        const effectOffset = (index - (this.statusEffects.length - 1) / 2) * (this.width * 0.15);
 
 	        if (effect.type === 'burn') [r, g, b] = [255, 80, 0];
-	        else if (effect.type === 'poison') [r, g, b] = [180, 50, 255]; 
+	        else if (effect.type === 'poison') [r, g, b] = [180, 50, 255];
 	        else if (effect.type === 'nightmare') [r, g, b] = [80, 20, 120];
 	        else return;
 
 	        for (let i = 0; i < numParticles; i++) {
 	            const seed = i * 400;
-	            const progress = ((now + seed) % 1500) / 1500; 
-	            
+	            const progress = ((now + seed) % 1500) / 1500;
+
 	            const py = (centerY + this.height * 0.2) - (progress * this.height * 1.6);
-	            
+
 	            const drift = Math.sin(now / 400 + i) * (this.width * 0.12);
 	            const px = centerX + effectOffset + drift;
 
@@ -1353,7 +1607,7 @@ export class Enemy extends Sprite {
 	            this.ctx.save();
 	            this.ctx.beginPath();
 	            this.ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-	            
+
 	            this.ctx.shadowBlur = 5;
 	            this.ctx.shadowColor = `rgba(${r},${g},${b},${alpha})`;
 
@@ -1403,13 +1657,13 @@ export class Enemy extends Sprite {
 	    this.ctx.textBaseline = 'middle';
 	    this.ctx.lineWidth = 2;
 	    this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
-	    
+
 	    // Dibujado del texto (ajustado +1px hacia abajo)
-	    const textY = y + barHeight / 2 + 1; 
+	    const textY = y + barHeight / 2 + 1;
 	    this.ctx.strokeText(label, centerX, textY);
 	    this.ctx.fillStyle = '#d6fbff';
 	    this.ctx.fillText(label, centerX, textY);
-	    
+
 	    this.ctx.restore();
 	}
 
@@ -1452,13 +1706,13 @@ export class Enemy extends Sprite {
 	    this.ctx.textBaseline = 'middle';
 	    this.ctx.lineWidth = 2;
 	    this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
-	    
+
 	    // Dibujado del texto (ajustado +1px hacia abajo)
-	    const textY = y + barHeight / 2 + 1; 
+	    const textY = y + barHeight / 2 + 1;
 	    this.ctx.strokeText(label, centerX, textY);
 	    this.ctx.fillStyle = '#fff9d6'; // Texto (Blanco amarillento)
 	    this.ctx.fillText(label, centerX, textY);
-	    
+
 	    this.ctx.restore();
 	}
 
@@ -1478,5 +1732,164 @@ export class Enemy extends Sprite {
                 break;
             }
         }
+	}
+
+	tryAchievementUnlock() {
+		if (this.main.area.isCustom) return;
+		switch (this.enemy?.id) {
+			case 'shaymin':
+				if (this.achievementCount === 0) {
+			this.main.player.unlockAchievement(0);
+		        }
+			break;
+			case 'celebi':
+				if (this.achievementTimer <= 7500) {
+			this.main.player.unlockAchievement(1);
+		        }
+			break;
+			case 'lunala':
+				if (this.achievementCount <= 5) {
+			this.main.player.unlockAchievement(2);
+		        }
+			break;
+			case 'zapdos':
+				if (this.achievementCount <= 3) {
+			this.main.player.unlockAchievement(3);
+		        }
+			break;
+			case 'moltres':
+				if (this.achievementCount >= (this.hpMax * 0.88)) {
+			this.main.player.unlockAchievement(4);
+		        }
+			break;
+			case 'regirock':
+				if (this.achievementCount === 0) {
+			this.main.player.unlockAchievement(5);
+		        }
+			break;
+			case 'groudon':
+				if (this.achievementCount === 0) {
+			this.main.player.unlockAchievement(6);
+		        }
+			break;
+			case 'hooh':
+				if (this.isRegeneratorReviving) {
+			this.main.player.unlockAchievement(7);
+		        }
+			break;
+			case 'registeel':
+				if (this.achievementCount === 0) {
+			this.main.player.unlockAchievement(8);
+		        }
+			break;
+			case 'regice':
+				if (this.achievementCount >= 50) {
+					this.main.player.unlockAchievement(9);
+				}
+			break;
+			case 'regigigas':
+				if (this.main.area?.inChallenge?.toughEnemies == 50) {
+					this.main.player.unlockAchievement(10);
+				}
+			break;
+			case 'articuno':
+				if (this.main.area.weather == 'hail') {
+					this.main.player.unlockAchievement(11);
+				}
+			break;
+			case 'kyogre':
+				if (this.achievementCount === 1) {
+					this.main.player.unlockAchievement(12);
+				}
+			break;
+			case 'thundurus':
+				if (this.achievementCount === 1) {
+					this.main.player.unlockAchievement(13);
+				}
+			break;
+			case 'tapuFini':
+				if (this.achievementCount < 11) {
+					this.main.player.unlockAchievement(14);
+				}
+			break;
+			case 'nihilego':
+				if (this.achievementCount === 0) {
+					this.main.player.unlockAchievement(15);
+				}
+			break;
+			case 'tapuKoko':
+				if (this.achievementCount < 4) {
+					this.main.player.unlockAchievement(16);
+				}
+			break;
+			case 'tapuBulu':
+				if (this.achievementCount === 0) {
+					this.main.player.unlockAchievement(17);
+				}
+			break;
+			case 'tapuLele':
+				if (this.achievementCount === 0) {
+					this.main.player.unlockAchievement(18);
+				}
+			break;
+			case 'keldeo':
+				if (!this.passiveActivated) {
+			this.main.player.unlockAchievement(19);
+			if (!this.main.player.secrets.keldeo) {
+				this.main.player.secrets.keldeo = true;
+				this.main.UI.getSecret('keldeo');
+			}
+		        }
+			break;
+			case 'heatran':
+				if (this.achievementCount > 0) {
+					this.main.player.unlockAchievement(20);
+				}
+			break;
+			case 'volcanion':
+				if (this.achievementCount >= (this.hpMax * 0.74)) {
+			this.main.player.unlockAchievement(21);
+		        }
+			break;
+			case 'pheromosa':
+				if (this.achievementCount == 0) {
+					this.main.player.unlockAchievement(22);
+				}
+			break;
+			case 'cobalion':
+				if (!this.passiveActivated) {
+			this.main.player.unlockAchievement(23);
+			if (!this.main.player.secrets.cobalion) {
+				this.main.player.secrets.cobalion = true;
+				this.main.UI.getSecret('cobalion');
+			}
+		        }
+			break;
+			case 'tornadus':
+				if (this.achievementCount === 0) {
+					this.main.player.unlockAchievement(24);
+				}
+			break;
+			case 'stakataka':
+				if (this.achievementCount > 0) {
+					this.main.player.unlockAchievement(25);
+				}
+			break;
+			case 'terrakion':
+				if (!this.passiveActivated) {
+			this.main.player.unlockAchievement(26);
+			if (!this.main.player.secrets.terrakion) {
+				this.main.player.secrets.terrakion = true;
+				this.main.UI.getSecret('terrakion');
+			}
+		        }
+			break;
+			case 'magearna':
+				if (this.achievementTimer > 59500) {
+					this.main.player.unlockAchievement(27);
+				}
+			break;
+		}
+
 	}
 }

@@ -4,14 +4,14 @@ import { Element } from '../../utils/Element.js';
 import { text } from '../../file/text.js';
 import { playSound, setVolume } from '../../file/audio.js';
 import { Input } from '../../utils/Input.js';
-import { featureRequiresPlayerCode, resolveRedeemCodeFeature, validateRedeemCode } from '../../utils/Redeem.js';
+import { featureRequiresPlayerCode, getRedeemFeature, resolveRedeemCodeFeature, validateRedeemCode } from '../../utils/Redeem.js';
 import { pokemonData } from '../data/pokemonData.js';
 import { isSaveExportDisabled } from '../../config.js';
 
 const OPTION = {
 	language: ['English', 'Español', 'Français', 'Português', 'Italiano', 'Deutsch', '日本語', '한국어', '繁體中文', 'Polski'],
- 	audio: Array.from({ length: 21 }, (_, i) => (i * 5).toString()),
- 	reset: [0, 1, 2]
+	audio: Array.from({ length: 21 }, (_, i) => (i * 5).toString()),
+	reset: [0, 1, 2]
 }
 
 const CREDITS = {
@@ -51,9 +51,9 @@ const CREDITS = {
 			"游戏平衡性",
 			"balans rozgrywki"
 		],
-		content: `Mitsue <br> Sabry <br> Khaotik <br> Quinn <br> Roses <br> TaejaMyungsik <br> 
-				<a href="https://github.com/innerthunder" target="_blank" class="link-red">Innerthunder</a> <br> 
-				Skrubboi 
+		content: `Mitsue <br> Sabry <br> Khaotik <br> Quinn <br> Roses <br> TaejaMyungsik <br>
+				<a href="https://github.com/innerthunder" target="_blank" class="link-red">Innerthunder</a> <br>
+				Skrubboi
 		`
 	},
 	testers: {
@@ -108,7 +108,7 @@ const CREDITS = {
 			1: '<a href="https://discord.com/invite/PjuyEjGp7r" target="_blank" class="link-red">PokéPath TD</a>',
 			2: '<a href="https://khydra98.itch.io/pokepath" target="_blank" class="link-red">khydra98</a>'
 		}
-		
+
 	},
 	assets: {
 		title: ['Assets', 'Recursos', 'Ressources', 'Recursos', 'Risorse', 'Assets', 'アセット', '자산', '资源', 'Zasoby'],
@@ -127,36 +127,36 @@ const CREDITS = {
 			2: '<a href="https://www.flaticon.com/authors/freepik" target="_blank" class="link-red">FREEPIK</a>',
 			3: '<a href="https://downloads.khinsider.com/game-soundtracks/album/pokemon-firered-leafgreen-music-super-complete" target="_blank" class="link-red">MEDIA FACTORY</a>',
 			4: '<a href="https://msikma.github.io/pokesprite/overview/inventory.html" target="_blank" class="link-red">PokéSprite</a>',
-			5: `Anonalpaca<br> Aveontrainer<br> Beta-SP<br> Ekat<br> Elinthind<br> Farore<br> Heartlessdragoon<br> Idilio<br> KingTapir<br> LunaMaddalena<br> Noelle<br> Pokémon Alexandrite<br> 
+			5: `Anonalpaca<br> Aveontrainer<br> Beta-SP<br> Ekat<br> Elinthind<br> Farore<br> Heartlessdragoon<br> Idilio<br> KingTapir<br> LunaMaddalena<br> Noelle<br> Pokémon Alexandrite<br>
 				Pokémon Halcyon<br> Pokémon Nightshade<br> Ross-Hawkins<br> Shyinn<br> Skidmarc25<br> TheDeadHeroAlistair<br> Vurtax<br> Zein<br> Zeo`,
 			6: ` Sokudo <br> <a href="https://sprites.pmdcollab.org/" target="_blank" class="link-red">PMD COLLAB</a><br>
-				◥θ┴θ◤ <br> 0palite <br> 3Monika4 <br> 3P1C <br> A_Lettuce <br> Adrian <br> AikoMaiko 
-				<br> Akai <br> AlexGroeger <br> AllPatchedUp <br> Angels-Snack <br> Anon <br> Anonymous <br> Ariakyu 
-				<br> Atwer <br> Audino <br> avalancheman <br> Avery <br> Aviivix <br> Axcel <br> Azifel <br> baronessfaron 
-				<br> Blanca <br> Blanky <br> Bluetails_the_Buizel <br> brookriver <br> bwappi <br> C_Pariah <br> Caitemis 
-				<br> CamusZekeSirius <br> CeleryGuy <br> Chesyon <br> Chi <br> chikorene <br> Child-Of-Hades <br> chime 
-				<br> CHUNSOFT <br> CinderedPhoenix <br> Cloudy <br> Cocosquid. <br> Coksi <br> Colistan <br> cosmosully <br> cyboy_bit 
-				<br> dariosparks <br> Darkrai <br> Dasawkem <br> DasK <br> Davilos <br> DavKriz <br> Ddragon <br> dede6giu 
-				<br> Deeshura <br> Dejais <br> Deleca7755 <br> deltaflare <br> DeltaL <br> Deltex12 <br> distress <br> dmDash 
-				<br> drawsstuff <br> Dutch-Spaniard <br>EeveeandVulpix2000<br> El_Pangoro_Parse <br> electronvolt <br>ElGian <br> Eliza   
-				<br> Emboarger <br> Emitone <br> Emmuffin <br> eon <br> ErrantWitch <br> estelstarlight <br> EzerArt <br> Fable 
-				<br> FalafelPorpoise <br> Fearless-Quit <br> Felis-Licht <br> FerMrack <br> Fingernails <br> Fire_Scyther <br> FissionCube 
-				<br> fledermaus <br> FlowerSnek <br> FrivolousAqua <br> Frostdrop1 <br> G〜 <br> Gayschlatt <br> Gelius <br> Ginnie 
+				◥θ┴θ◤ <br> 0palite <br> 3Monika4 <br> 3P1C <br> A_Lettuce <br> Adrian <br> AikoMaiko
+				<br> Akai <br> AlexGroeger <br> AllPatchedUp <br> Angels-Snack <br> Anon <br> Anonymous <br> Ariakyu
+				<br> Atwer <br> Audino <br> avalancheman <br> Avery <br> Aviivix <br> Axcel <br> Azifel <br> baronessfaron
+				<br> Blanca <br> Blanky <br> Bluetails_the_Buizel <br> brookriver <br> bwappi <br> C_Pariah <br> Caitemis
+				<br> CamusZekeSirius <br> CeleryGuy <br> Chesyon <br> Chi <br> chikorene <br> Child-Of-Hades <br> chime
+				<br> CHUNSOFT <br> CinderedPhoenix <br> Cloudy <br> Cocosquid. <br> Coksi <br> Colistan <br> cosmosully <br> cyboy_bit
+				<br> dariosparks <br> Darkrai <br> Dasawkem <br> DasK <br> Davilos <br> DavKriz <br> Ddragon <br> dede6giu
+				<br> Deeshura <br> Dejais <br> Deleca7755 <br> deltaflare <br> DeltaL <br> Deltex12 <br> distress <br> dmDash
+				<br> drawsstuff <br> Dutch-Spaniard <br>EeveeandVulpix2000<br> El_Pangoro_Parse <br> electronvolt <br>ElGian <br> Eliza
+				<br> Emboarger <br> Emitone <br> Emmuffin <br> eon <br> ErrantWitch <br> estelstarlight <br> EzerArt <br> Fable
+				<br> FalafelPorpoise <br> Fearless-Quit <br> Felis-Licht <br> FerMrack <br> Fingernails <br> Fire_Scyther <br> FissionCube
+				<br> fledermaus <br> FlowerSnek <br> FrivolousAqua <br> Frostdrop1 <br> G〜 <br> Gayschlatt <br> Gelius <br> Ginnie
 				<br> Giru <br> Grimlin <br> gromchurch <br> Gust <br> GustavoMusinTG <br> Hanbei <br> Hemlock <br> HopeBurnsBright2008
-				<br> Ichor <br> Inv3rse <br> jackolanternjackalope <br> Jarleypeño <br> Jelly <br> JemDragons <br> JFain <br> Jhony-Rex 
-				<br> JkKU　(Jenrikku) <br> JuanmaSG <br> JustAGunk <br> Katach314 <br> Kawaiitron <br> KCN015 <br> Keldaan <br> Kevin0itachi 
-				<br> LazerBlitz <br> leafia_barrett <br> LegendaryPhoenix <br> Leif <br> lemongrass <br> LightBlueBlaze <br> Limomon <br> lokatts 
-				<br> LornaWR <br> lovefulpup <br> Lovi <br> LT <br> Luca <br> LuchuIsASquirrel <br> Luna-Alex <br> Magu <br> Maruvert 
-				<br> MeepTheMareep02 <br> Meganai <br> metalbear <br> Michael12 <br> Miju <br> MilesFarber <br> mixy:3 <br> Mojo <br> Mond 
-				<br> MonochromeKirby <br> Moo <br> Mooncaller <br> Morei <br> mothbeanie <br> motherhenna Helen <br> Mr_L <br> mucrush <br> namu 
-				<br> nataniel-sama <br> Neat_Neato <br> NeonCityRain <br> NeroIntruder <br> NikolaP <br> Noivern <br> NOLASMOR <br> Noo <br> Novie 
+				<br> Ichor <br> Inv3rse <br> jackolanternjackalope <br> Jarleypeño <br> Jelly <br> JemDragons <br> JFain <br> Jhony-Rex
+				<br> JkKU　(Jenrikku) <br> JuanmaSG <br> JustAGunk <br> Katach314 <br> Kawaiitron <br> KCN015 <br> Keldaan <br> Kevin0itachi
+				<br> LazerBlitz <br> leafia_barrett <br> LegendaryPhoenix <br> Leif <br> lemongrass <br> LightBlueBlaze <br> Limomon <br> lokatts
+				<br> LornaWR <br> lovefulpup <br> Lovi <br> LT <br> Luca <br> LuchuIsASquirrel <br> Luna-Alex <br> Magu <br> Maruvert
+				<br> MeepTheMareep02 <br> Meganai <br> metalbear <br> Michael12 <br> Miju <br> MilesFarber <br> mixy:3 <br> Mojo <br> Mond
+				<br> MonochromeKirby <br> Moo <br> Mooncaller <br> Morei <br> mothbeanie <br> motherhenna Helen <br> Mr_L <br> mucrush <br> namu
+				<br> nataniel-sama <br> Neat_Neato <br> NeonCityRain <br> NeroIntruder <br> NikolaP <br> Noivern <br> NOLASMOR <br> Noo <br> Novie
 				<br> Okami <br> Orange <br> Palika <br> Pencil <br> PhillipsYoung <br> pi3.14 <br> PikaNiko <br> Pink_no_tori <br> PinkKecleon <br>
-				PixlHoopa <br> Pokejavi. <br> Pokenoice <br> PoliteHoppip <br> powercristal <br> Precascer <br> Prismatic <br> programmedsleepstate 
-				<br> RacieB <br> RaoKurai <br> Ray2064 <br> Reimu_needs_$$$ <br> RelicCipher <br> Reppamon <br> rhys <br> RibbonDove <br> 
-				Richelieu <br> Riodise <br> RoyalRust <br> Rudy <br> Rustnuttie <br> Sceptile <br> Scizivire <br> Semilia <br> SethY <br> 
-				Shadowcrafts <br> Sharpen <br> shimx <br> Shitpost_Sunkern <br> ShyStarryRain <br> SilverDeoxys563 <br> silverfox88 <br> 
-				SingingMudkip <br> SirViolet <br> SkeleJ64 <br> SKREE <br> skygummi <br> Smalusion <br> smartini <br> smbmaster99 <br> Smingle <br> 
-				snarbs <br> Sonikku_A <br> Soulja <br> SpectrumStars <br> Spikey-Valentine <br> stressparticles <br> Sugi <br> Sunny <br> 
+				PixlHoopa <br> Pokejavi. <br> Pokenoice <br> PoliteHoppip <br> powercristal <br> Precascer <br> Prismatic <br> programmedsleepstate
+				<br> RacieB <br> RaoKurai <br> Ray2064 <br> Reimu_needs_$$$ <br> RelicCipher <br> Reppamon <br> rhys <br> RibbonDove <br>
+				Richelieu <br> Riodise <br> RoyalRust <br> Rudy <br> Rustnuttie <br> Sceptile <br> Scizivire <br> Semilia <br> SethY <br>
+				Shadowcrafts <br> Sharpen <br> shimx <br> Shitpost_Sunkern <br> ShyStarryRain <br> SilverDeoxys563 <br> silverfox88 <br>
+				SingingMudkip <br> SirViolet <br> SkeleJ64 <br> SKREE <br> skygummi <br> Smalusion <br> smartini <br> smbmaster99 <br> Smingle <br>
+				snarbs <br> Sonikku_A <br> Soulja <br> SpectrumStars <br> Spikey-Valentine <br> stressparticles <br> Sugi <br> Sunny <br>
 				SuperFabbioGuy <br> SuperLean23 <br> Tacocoa <br> Tainted#3886 <br> TawnySoup <br> TaylorTrap622 <br> teddg <br> Top_Kec <br>
 				Uni <br> Vendily <br> VersuS <br> CelestialDrago <br> Vex <br> VOID <br> Vynnyal <br> Waffluffe <br> Wyvernagon <br> XModxGodX <br>
 				Xrit63 <br> XxWindpawxX <br> Yari <br> YoukaiMinori <br> ZacianSword <br> ZoroarkDX <br> ZoZoBab <br>
@@ -168,7 +168,7 @@ const CREDITS = {
 		This is a non-profit fangame created by a single person, and it is not affiliated with, sponsored by, or approved by Nintendo, Game Freak, or The Pokémon Company. <br><br>
 		All characters, items, sprites, music, and other materials related to Pokémon are the property of their respective owners: © Nintendo, Game Freak, Creatures Inc.`,
 		`
-		Este es un juego fangame sin fines de lucro creado por una sola persona, y no está afiliado, patrocinado ni aprobado por Nintendo, Game Freak o The Pokémon Company. <br><br> 
+		Este es un juego fangame sin fines de lucro creado por una sola persona, y no está afiliado, patrocinado ni aprobado por Nintendo, Game Freak o The Pokémon Company. <br><br>
 		Todos los personajes, objetos, sprites, música y demás materiales relacionados con Pokémon son propiedad de sus respectivos dueños: © Nintendo, Game Freak, Creatures Inc.`,
 		`
 		Ceci est un fangame à but non lucratif créé par une seule personne, et il n’est affilié, parrainé ni approuvé par Nintendo, Game Freak ou The Pokémon Company. <br><br>
@@ -198,7 +198,7 @@ const SHORTCUTS = {
 	key: {
 		0: ['0–9', '0–9', '0–9', '0–9', '0–9', '0–9', '0-9', '0–9', '0–9', '0-9'],
 		1: ['Q', 'Q', 'A', 'Q', 'Q', 'Q', 'Q', 'Q', 'Q', 'Q'],
-		2: ['W', 'W', 'Z', 'W', 'W', 'W', 'W', 'W', 'W', 'W'], 
+		2: ['W', 'W', 'Z', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
 		3: ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
 		4: ['S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S'],
 		5: ['Z', 'Z', 'W', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z'],
@@ -411,7 +411,7 @@ export class MenuScene extends SectionScene {
 		this.importData = this.makeButton(content, 'menu-scene-import-data', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.5.9` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.6.1` }).element;
 	}
 
 	syncExportDataButtonState() {
@@ -605,12 +605,12 @@ export class MenuScene extends SectionScene {
         data.config.language = pos;
         window.localStorage.setItem("data", JSON.stringify(data));
         playSound('option', 'ui');
-  	}
+	}
 
-  	updateAudio = (key, dir) => {
-  		let value = this.getConfig().audio[key] += dir;
-       	if (value < 0) value = 0;
-  		else if (value > 20 ) value = 20;
+	updateAudio = (key, dir) => {
+		let value = this.getConfig().audio[key] += dir;
+	if (value < 0) value = 0;
+		else if (value > 20 ) value = 20;
 
         let config = this.getConfig();
         config.audio[key] = value;
@@ -620,20 +620,20 @@ export class MenuScene extends SectionScene {
         playSound('option', 'ui');
 
         if (
-        	!this.main.player.secrets.chatot &&
+	!this.main.player.secrets.chatot &&
 			!this.main.area.inChallenge
         ) {
-        	if (config.audio['master'] == 0 && config.audio['music'] == 4 && config.audio['ui'] == 4 && config.audio['effects'] == 1) {
-        		this.main.player.secrets.chatot = true;
-        		this.main.UI.getSecret('chatot');
-        	}
+	if (config.audio['master'] == 0 && config.audio['music'] == 4 && config.audio['ui'] == 4 && config.audio['effects'] == 1) {
+		this.main.player.secrets.chatot = true;
+		this.main.UI.getSecret('chatot');
+	}
         }
     };
 
     muteAudio = (pos) => {
-    	this.main.mute[pos] = !this.main.mute[pos];
+	this.main.mute[pos] = !this.main.mute[pos];
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.mute = this.main.mute;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -642,12 +642,12 @@ export class MenuScene extends SectionScene {
     }
 
     updateAutoReset = (dir) => {
-    	let pos = Number(this.main.autoReset) + dir;
+	let pos = Number(this.main.autoReset) + dir;
 		if (pos < 0) pos = 3;
 		else if (pos == 4) pos = 0;
 		this.main.autoReset = pos;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.autoReset = this.main.autoReset;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -656,12 +656,12 @@ export class MenuScene extends SectionScene {
     };
 
     updateDisplayHealth = (dir) => {
-    	let pos = Number(this.main.displayHealth) + dir;
+	let pos = Number(this.main.displayHealth) + dir;
 		if (pos < 0) pos = 3;
 		else if (pos == 4) pos = 0;
 		this.main.displayHealth = pos;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.displayHealth = this.main.displayHealth;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -670,12 +670,12 @@ export class MenuScene extends SectionScene {
     };
 
     updateMapEffects = (dir) => {
-    	let pos = Number(this.main.mapEffects) + dir;
+	let pos = Number(this.main.mapEffects) + dir;
 		if (pos < 0) pos = 3;
 		else if (pos == 4) pos = 0;
 		this.main.mapEffects = pos;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.mapEffects = this.main.mapEffects;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -684,9 +684,9 @@ export class MenuScene extends SectionScene {
     };
 
     updateIndicatorShape = () => {
-    	this.main.indicatorShape = this.main.indicatorShape == 1 ? 0 : 1;
+	this.main.indicatorShape = this.main.indicatorShape == 1 ? 0 : 1;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.indicatorShape = this.main.indicatorShape;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -696,9 +696,9 @@ export class MenuScene extends SectionScene {
     };
 
     updateIndicatorField = () => {
-    	this.main.indicatorField = this.main.indicatorField == 1 ? 0 : 1;
+	this.main.indicatorField = this.main.indicatorField == 1 ? 0 : 1;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.indicatorField = this.main.indicatorField;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -708,9 +708,9 @@ export class MenuScene extends SectionScene {
     };
 
     updateFastTarget = () => {
-    	this.main.fastTarget = this.main.fastTarget == 1 ? 0 : 1;
+	this.main.fastTarget = this.main.fastTarget == 1 ? 0 : 1;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.fastTarget = this.main.fastTarget;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -720,9 +720,9 @@ export class MenuScene extends SectionScene {
     };
 
     updateDurationCC = () => {
-    	this.main.durationCC = this.main.durationCC == 1 ? 0 : 1;
+	this.main.durationCC = this.main.durationCC == 1 ? 0 : 1;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.durationCC = this.main.durationCC;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -733,7 +733,7 @@ export class MenuScene extends SectionScene {
     // updateSlowRefreshFix = () => {
     // 	this.main.slowRefreshFix = this.main.slowRefreshFix == 1 ? 0 : 1;
 
-  	// 	const data = JSON.parse(window.localStorage.getItem("data"));
+	// 	const data = JSON.parse(window.localStorage.getItem("data"));
     //     data.config.slowRefreshFix = this.main.slowRefreshFix;
     //     window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -742,31 +742,31 @@ export class MenuScene extends SectionScene {
     // };
 
     updateAutoStop = () => {
-    	this.main.autoStop = !this.main.autoStop;
+	this.main.autoStop = !this.main.autoStop;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.autoStop = this.main.autoStop;
         window.localStorage.setItem("data", JSON.stringify(data));
 
         this.update();
         playSound('option', 'ui');
-    }	
+    }
 
     updateAutoStopBoss = () => {
-    	this.main.autoStopBoss = !this.main.autoStopBoss;
+	this.main.autoStopBoss = !this.main.autoStopBoss;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.autoStopBoss = this.main.autoStopBoss;
         window.localStorage.setItem("data", JSON.stringify(data));
 
         this.update();
         playSound('option', 'ui');
-    }	
+    }
 
     updateShowDamage = () => {
-    	this.main.showDamage = !this.main.showDamage;
+	this.main.showDamage = !this.main.showDamage;
 
-  		const data = JSON.parse(window.localStorage.getItem("data"));
+		const data = JSON.parse(window.localStorage.getItem("data"));
         data.config.showDamage = this.main.showDamage;
         window.localStorage.setItem("data", JSON.stringify(data));
 
@@ -776,10 +776,10 @@ export class MenuScene extends SectionScene {
 
 	open() {
 		if (this.isOpen) return this.close();
-		this.main.sections.forEach(section => {
-			if (section.isOpen && section != this) section.close();
+		this.main?.sections.forEach(section => {
+			if (section?.isOpen && section != this) section.close();
 		})
-		
+
 		super.open();
 		this.update();
 		this.main.UI.section['menu'].classList.add('is-selected');
@@ -830,41 +830,56 @@ export class MenuScene extends SectionScene {
 		}, 1200);
 	}
 
-	playerHasMissingNo() {
-		const missingNoSpecie = pokemonData.missingNo;
-		if (!missingNoSpecie) return false;
-		const missingNoId = missingNoSpecie?.id;
-		if (typeof missingNoId !== 'number') return false;
-		const playerPokemon = [...this.main.team.pokemon, ...this.main.box.pokemon];
-		return playerPokemon.some((poke) => poke?.id === missingNoId || poke?.specie?.id === missingNoId);
-	}
 
+	playerHasPokemon(pokemonKey) {
+	    const specie = pokemonData[pokemonKey];
+	    if (!specie) return false;
+
+	    const pokemonId = specie.id;
+	    if (typeof pokemonId !== "number") return false;
+
+	    const playerPokemon = [
+	        ...this.main.team.pokemon,
+	        ...this.main.box.pokemon
+	    ];
+
+	    return playerPokemon.some(poke =>
+	        poke?.id === pokemonId ||
+	        poke?.specie?.id === pokemonId
+	    );
+	}
 	setRedeemMessage(message, ok = false) {
 		this.redeemCodeMessage.style.color = ok ? 'var(--green)' : 'var(--red)';
 		this.redeemCodeMessage.innerText = message.toUpperCase();
 	}
 
-	redeemMissingNo() {
-		if (this.playerHasMissingNo()) {
-			return { ok: false, message: text.menu.data.redeemAlreadyOwned[this.main.lang] };
-		}
-
-		if (!pokemonData.missingNo) {
+	redeemReward(featureId) {
+		const feature = getRedeemFeature(featureId);
+		if (!feature) {
 			return { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
 		}
 
-		this.main.UI.getSecret('missingNo');
-		return { ok: true, message: text.menu.data.redeemSuccess[this.main.lang] };
-	}
-
-	redeemGold25k() {
-		const rewardId = 'gold25k';
-		if (this.main.player.hasRedeemedReward(rewardId)) {
+		if (this.main.player.hasRedeemedReward(feature.id)) {
 			return { ok: false, message: text.menu.data.redeemAlreadyOwned[this.main.lang] };
 		}
 
-		this.main.player.changeGold(25000);
-		this.main.player.markRewardAsRedeemed(rewardId);
+		const reward = feature.reward;
+		if (reward.kind === 'pokemon') {
+			if (!pokemonData[reward.key]) {
+				return { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
+			}
+			if (this.playerHasPokemon(reward.key)) {
+				this.main.player.markRewardAsRedeemed(feature.id);
+				return { ok: false, message: text.menu.data.redeemAlreadyOwned[this.main.lang] };
+			}
+			this.main.UI.getSecret(reward.key);
+		} else if (reward.kind === 'currency' && reward.currency === 'gold') {
+			this.main.player.changeGold(reward.amount);
+		} else {
+			return { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
+		}
+
+		this.main.player.markRewardAsRedeemed(feature.id);
 		return { ok: true, message: text.menu.data.redeemSuccess[this.main.lang] };
 	}
 
@@ -911,12 +926,7 @@ export class MenuScene extends SectionScene {
 			return;
 		}
 
-		let redeemResult = { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
-		if (featureId === 'missingno') {
-			redeemResult = this.redeemMissingNo();
-		} else if (featureId === 'gold25k') {
-			redeemResult = this.redeemGold25k();
-		}
+		const redeemResult = this.redeemReward(featureId);
 
 		if (!redeemResult.ok) {
 			playSound('pop0', 'ui');
@@ -934,14 +944,14 @@ export class DeleteData extends GameScene {
 	constructor(main) {
 		super(400, 130);
 		this.main = main;
-		
+
 		this.header.removeChild(this.closeButton);
 		this.render();
 	}
 
 	render() {
 		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
-		
+
 		this.yesButton = new Element(this.container, { className: 'delete-scene-yes-button' }).element;
 		this.noButton = new Element(this.container, { className: 'delete-scene-no-button' }).element;
 
@@ -979,7 +989,7 @@ export class ImportData extends GameScene {
 		const input = document.createElement("input");
 	    input.type = "file";
 	    input.accept = ".txt";
-	    input.style.display = "none"; 
+	    input.style.display = "none";
 
 	    this.uploadButton = document.createElement("button");
 	    this.uploadButton.className = 'export-scene-button';
@@ -1011,10 +1021,10 @@ export class ImportData extends GameScene {
 		this.importButton = new Element(this.container, { className: 'export-scene-button' }).element;
 		this.importMessage = new Element(this.container, { className: 'export-scene-message' }).element;
 		this.codeInput = new Input(
-			this.container, 
-			"text", 
-			{ 
-				className: "import-export-code",  
+			this.container,
+			"text",
+			{
+				className: "import-export-code",
 			}
 		);
 
@@ -1068,13 +1078,13 @@ export class ExportData extends GameScene {
 	render() {
 		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
 		this.exportButton = new Element(this.container, { className: 'export-scene-button' }).element;
-		this.downloadButton = new Element(this.container, { className: 'export-scene-button' }).element; 
+		this.downloadButton = new Element(this.container, { className: 'export-scene-button' }).element;
 
 		this.codeInput = new Input(
-			this.container, 
-			"text", 
-			{ 
-				className: "import-export-code",  
+			this.container,
+			"text",
+			{
+				className: "import-export-code",
 				readonly: true
 			}
 		);
@@ -1090,25 +1100,25 @@ export class ExportData extends GameScene {
 		    tempInput.select();
 
 		    try {
-		        document.execCommand('copy'); 
+		        document.execCommand('copy');
 		        this.exportMessage.innerHTML = text.menu.data.codeCopied[this.main.lang].toUpperCase();
 		    } catch (err) {
 		        this.exportMessage.innerHTML = 'COPY FAILED, TRY CLICK -> CTRL + A -> CTRL + C';
 		    }
 
-		    document.body.removeChild(tempInput); 
+		    document.body.removeChild(tempInput);
 		});
 
 		this.downloadButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') });
 	    this.downloadButton.addEventListener('click', () => {
-	    	if (isSaveExportDisabled()) return;
+		if (isSaveExportDisabled()) return;
 	        playSound('key1', 'ui');
 
 	        const blob = new Blob([this.code], { type: 'text/plain' });
 	        const url = URL.createObjectURL(blob);
 	        const a = document.createElement('a');
 	        a.href = url;
-	        a.download = 'PokePathSave.txt'; 
+	        a.download = 'PokePathSave.txt';
 	        document.body.appendChild(a);
 	        a.click();
 	        document.body.removeChild(a);
@@ -1144,7 +1154,7 @@ function encode(data) {
             return value;
         }
     );
-    return btoa(unescape(encodeURIComponent(json))); 
+    return btoa(unescape(encodeURIComponent(json)));
 }
 
 function decode(code) {
@@ -1155,6 +1165,6 @@ function decode(code) {
             return value;
         });
     } catch (err) {
-        return null; 
+        return null;
     }
 }

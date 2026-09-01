@@ -56,7 +56,7 @@ export class BoxScene extends SectionScene {
 		this.removeAll = new Element(this.buttonContainer, { className: 'box-scene-button' }).element;
 
 		this.dataUnit.addEventListener('click', () => { this.main.pokemonScene.open(this.selected, this.selectedPos, this.searchPokemon) });
-		this.addUnit.addEventListener('click', () => { 
+		this.addUnit.addEventListener('click', () => {
 			playSound('equip', 'ui');
 			this.addButton();
 			this.applyTabEffect(this.tabSelected);
@@ -84,7 +84,7 @@ export class BoxScene extends SectionScene {
 			this.units[i].itemBadge = new Element(this.units[i], { className: 'box-scene-unit-item-badge' }).element;
 			this.units[i].addEventListener('click', () => {
 			    playSound('click1', 'ui');
-			    
+
 			    this.units.forEach(unit => unit.classList.remove('is-selected'));
 			    this.units[i].classList.add('is-selected');
 
@@ -137,7 +137,7 @@ export class BoxScene extends SectionScene {
 
 		this.sortArrowLeft.addEventListener('click', () => { this.changesort(-1) })
 		this.sortArrowRight.addEventListener('click', () => { this.changesort(1) })
-		
+
 		this.sortArrowLeft.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 		this.sortArrowRight.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 
@@ -155,12 +155,15 @@ export class BoxScene extends SectionScene {
 		}
 
 		this.search = new Input(
-			this.container, 
-			"text", 
-			{ 
-				className: "box-scene-search", 
-				maxlength: 10, 
-				cb: () => { this.searchByName() } 
+			this.container,
+			"text",
+			{
+				className: "box-scene-search",
+				maxlength: 10,
+				cb: () => {
+					this.searchByName()
+					this.update();
+				}
 			}
 		);
 
@@ -181,21 +184,21 @@ export class BoxScene extends SectionScene {
 		this.sortValue.innerHTML = sortLabel.toUpperCase();
 
 	    this.tabs.forEach((tab, i) => {
-	        tab.innerHTML = text.box[TAB_CONTENT[i]][this.main.lang].toUpperCase();  
+	        tab.innerHTML = text.box[TAB_CONTENT[i]][this.main.lang].toUpperCase();
 	        (this.tabSelected === i) ? tab.classList.add('is-active') : tab.classList.remove('is-active');
 	    });
 	    this.applyTabEffect(this.tabSelected);
 	}
 
 	searchByName() {
-		const searchValue = this.search.value.value.toLowerCase(); 
+		const searchValue = this.search.value.value.toLowerCase();
 
 		this.searchPokemon = this.pokemon.filter(poke => {
 	        const normalizedName =
 	            poke.name && poke.name[this.main.lang]
 	                ? poke.name[this.main.lang]
 	                      .toLowerCase()
-	                      .replace(/^m-/, '') 
+	                      .replace(/^m-/, '')
 	                : '';
 
 	        return (
@@ -205,13 +208,25 @@ export class BoxScene extends SectionScene {
 	            (searchValue === "shiny" && poke.isShiny === true) ||
 	            ((searchValue === "area" || searchValue === "aoe") && poke.attackType === 'area') ||
 	            (searchValue === "x" && poke.rangeType === 'xShape') ||
+	            (searchValue === "v" && poke.rangeType === 'vShape') ||
 	            ((searchValue === "cross" || searchValue === "+") && poke.rangeType === 'cross') ||
-	            (searchValue === "stun" && (poke.id === 72 || poke.id === 13)) ||
-	            (searchValue === "slow" && (poke.id === 80 || poke.id === 64)) ||
-	            (searchValue === "curse" && poke.id === 16)
+	            (searchValue === "-" && poke.rangeType === 'horizontalLine') ||
+	            ("bombardment".includes(searchValue) && poke.attackType === 'bombardment') ||
+	            ("orbital".includes(searchValue) && poke.attackType === 'orbital') ||
+	            ("stun".includes(searchValue) && ([13, 72, 133, 136, 162].includes(poke.id))) ||
+	            ("slow".includes(searchValue) && ([54, 64, 80, 128, 170].includes(poke.id))) ||
+	            ("aura".includes(searchValue) && ([83, 111, 144, 172, 175, 176].includes(poke.id))) ||
+	            ("heal".includes(searchValue) && ([83, 103, 109].includes(poke.id))) ||
+	            ("curse".includes(searchValue) && ([16, 180, 73].includes(poke.id))) ||
+	            ("burn".includes(searchValue) && ([0, 73, 74, 107, 120, 181].includes(poke.id))) ||
+	            ("poison".includes(searchValue) && ([169].includes(poke.id))) ||
+	            ("armor".includes(searchValue) && ([8, 151, 138].includes(poke.id))) ||
+	            ("splash".includes(searchValue) && ([54, 109].includes(poke.id))) ||
+	            ("nightmare".includes(searchValue) && ([69, 91, 154].includes(poke.id))) ||
+	            ("iron thorns".includes(searchValue) && poke.id === 178) ||
+				("sandy shocks".includes(searchValue) && poke.id === 179)
 	        );
 	    });
-
 	    this.displayUnits();
 	}
 
@@ -226,8 +241,8 @@ export class BoxScene extends SectionScene {
 
 			if (poke) {
 				if (this.selected && poke === this.selected) unit.classList.add('is-selected');
-           
-				if (poke.favorite) this.units[i].fav.innerHTML = "⭐"; 
+
+				if (poke.favorite) this.units[i].fav.innerHTML = "⭐";
 				else this.units[i].fav.innerHTML = "";
 
 				if (poke?.item?.id == 'inverter') this.units[i].style.transform = `scale(1, -1)`;
@@ -292,7 +307,7 @@ export class BoxScene extends SectionScene {
 				if (this.sorted == 8) this.units[i].text.innerHTML = `${(poke.speed/ 1000).toFixed(2)}`;
 				if (this.sorted == 9) this.units[i].text.innerHTML = `${poke.critical.toFixed(1)}%`
 				if (this.sorted == 10) this.units[i].text.innerHTML = poke.range
-					
+
 				unit.style.display = 'revert-layer';
 				unit.style.backgroundImage = `url("${poke.sprite.base}")`;
 				unit.style.pointerEvents = 'all';
@@ -317,7 +332,7 @@ export class BoxScene extends SectionScene {
 							if (!poke.tiles.includes(4)) unit.style.filter = 'brightness(0.3)';
 							break;
 						case 4:
-							if (![58, 59, 63, 64, 65, 66, 94, 140, 136].includes(poke.id)) unit.style.filter = 'brightness(0.3)';
+							if (![58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(poke.id)) unit.style.filter = 'brightness(0.3)';
 							break;
 					}
 				}
@@ -340,15 +355,15 @@ export class BoxScene extends SectionScene {
 	    if (!this.searchPokemon) return;
 
 	    for (let i = 0; i < this.units.length; i++) {
-	        const poke = this.searchPokemon[i]; 
+	        const poke = this.searchPokemon[i];
 	        if (!poke) {
-	            this.units[i].style.filter = 'brightness(0.5)'; 
+	            this.units[i].style.filter = 'brightness(0.5)';
 	            continue;
 	        }
 
 	        this.units[i].style.filter = 'revert-layer';
 	        switch (tab) {
-	        	case 1:
+		case 1:
 	                if (!poke.tiles.includes(1)) this.units[i].style.filter = 'brightness(0.3)';
 	                break;
 	            case 2:
@@ -361,12 +376,12 @@ export class BoxScene extends SectionScene {
 	                if (!poke.tiles.includes(4)) this.units[i].style.filter = 'brightness(0.3)';
 	                break;
 	            case 5:
-	                if (![58, 59, 63, 64, 65, 66, 94, 140, 136].includes(poke.id)) this.units[i].style.filter = 'brightness(0.3)';
+	                if (![58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(poke.id)) this.units[i].style.filter = 'brightness(0.3)';
 	                break;
 	        }
 	    }
 	}
-	
+
 	displayPokemon() {
 		this.unitSelectedName.innerText = (this.selected.alias != undefined) ? this.selected.alias.toUpperCase() : this.selected.name[this.main.lang].toUpperCase();
 		this.unitSelectedName.innerText += (this.main.area.inChallenge.lvlCap === 'number') ? ` [${this.main.area.inChallenge.lvlCap}]` : ` [${this.selected.lvl}]`;
@@ -490,7 +505,7 @@ export class BoxScene extends SectionScene {
 		        this.searchPokemon.sort((a, b) => {
 		            if (a.favorite && !b.favorite) return -1;
 		            if (!a.favorite && b.favorite) return 1;
-		            const aHas = a.tiles.includes(2) ? 0 : 1; 
+		            const aHas = a.tiles.includes(2) ? 0 : 1;
 		            const bHas = b.tiles.includes(2) ? 0 : 1;
 		            return aHas - bHas;
 		        });
@@ -499,7 +514,7 @@ export class BoxScene extends SectionScene {
 		        this.searchPokemon.sort((a, b) => {
 		            if (a.favorite && !b.favorite) return -1;
 		            if (!a.favorite && b.favorite) return 1;
-		            const aHas = a.tiles.includes(3) ? 0 : 1; 
+		            const aHas = a.tiles.includes(3) ? 0 : 1;
 		            const bHas = b.tiles.includes(3) ? 0 : 1;
 		            return aHas - bHas;
 		        });
@@ -508,7 +523,7 @@ export class BoxScene extends SectionScene {
 		        this.searchPokemon.sort((a, b) => {
 		            if (a.favorite && !b.favorite) return -1;
 		            if (!a.favorite && b.favorite) return 1;
-		            const aHas = a.tiles.includes(4) ? 0 : 1; 
+		            const aHas = a.tiles.includes(4) ? 0 : 1;
 		            const bHas = b.tiles.includes(4) ? 0 : 1;
 		            return aHas - bHas;
 		        });
@@ -584,7 +599,7 @@ export class BoxScene extends SectionScene {
 		if (this.main.area.inChallenge.draft) return;
 		if (this.main.game.stopped) return playSound('pop0', 'ui');
 		if (this.isOpen) return this.close();
-		
+
 		this.main.sections.forEach(section => {
 			if (section.isOpen && section != this) section.close();
 		})
@@ -598,7 +613,7 @@ export class BoxScene extends SectionScene {
 		this.searchPokemon = this.pokemon;
 		this.update();
 		this.main.UI.section['box'].classList.add('is-selected');
-		
+
 		if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
 	}
 
@@ -619,7 +634,7 @@ export class BoxScene extends SectionScene {
 	    this._unitDragSetup = true;
 	    this.isDragging = false;
 
-	    const THRESHOLD = 6; 
+	    const THRESHOLD = 6;
 	    let draggedIndex = null;
 	    let clone = null;
 	    let activePointerId = null;
@@ -637,7 +652,7 @@ export class BoxScene extends SectionScene {
 	        }
 
 	        if (originatingUnit) {
-	        	originatingUnit.classList.remove('is-dragging');
+		originatingUnit.classList.remove('is-dragging');
 			    if (originBgSaved !== null) {
 
 			        originatingUnit.style.backgroundImage = originBgSaved;
@@ -758,7 +773,7 @@ export class BoxScene extends SectionScene {
 	            if (clickedPokemon === this.main.game.deployingUnit) {
 	                this.main.game.cancelDeployUnit();
 	            } else {
-	                const canPlace = tile?.canPlacePokemonHere 
+	                const canPlace = tile?.canPlacePokemonHere
 	                    ? tile.canPlacePokemonHere(this.main.game.deployingUnit)
 	                    : (
 	                        this.main.game.deployingUnit.tiles.includes(tile.land) ||
@@ -885,6 +900,7 @@ export class BoxScene extends SectionScene {
 	    };
 
 	    const startDragActual = (e, index, originatingSlot) => {
+		    if (!this.isOpen) return;
 		    if (this.main.game.stopped) return playSound('pop0', 'ui');
 		    if (!this.searchPokemon || !this.searchPokemon[index]) { clearDragState(); return; }
 
@@ -902,7 +918,7 @@ export class BoxScene extends SectionScene {
 		    clone.className = 'box-drag-sprite-clone';
 		    clone.style.position = 'absolute';
 		    clone.style.zIndex = '10000';
-		    clone.style.pointerEvents = 'none'; 
+		    clone.style.pointerEvents = 'none';
 
 		    const spriteUrl = pokemon?.sprite?.base || '';
 		    clone.style.backgroundImage = `url("${spriteUrl}")`;
@@ -918,7 +934,7 @@ export class BoxScene extends SectionScene {
 
 		    originatingSlot.classList.add('is-dragging');
 		    this.isDragging = true;
-		    
+
 		    const setClonePos = (pageX, pageY) => {
 		        clone.style.left = `${pageX - clone.offsetWidth / 2}px`;
 		        clone.style.top = `${pageY - clone.offsetHeight / 2}px`;
@@ -989,9 +1005,12 @@ export class BoxScene extends SectionScene {
 	getBoxAttackShapeSymbol(pokemon) {
 		if (pokemon?.attackType === 'area') return 'A';
 		if (pokemon?.attackType === 'aura') return '~';
+		if (pokemon?.attackType === 'bombardment') return 'B';
+
 		switch (pokemon?.rangeType) {
 			case 'cross': return '+';
 			case 'xShape': return 'X';
+			case 'vShape': return 'V';
 			case 'horizontalLine': return '-';
 			case 'donut':
 			case 'circle':
@@ -1015,22 +1034,9 @@ export class BoxScene extends SectionScene {
 	}
 
 	updateCollectionStats() {
-		const owned = [...this.main.team.pokemon, ...this.main.box.pokemon];
-		const ownedSpecies = new Set();
-		const shinyOwnedSpecies = new Set();
 
-		for (const pokemon of owned) {
-			if (!pokemon || typeof pokemon.id !== 'number') continue;
-			ownedSpecies.add(pokemon.id);
-			if (pokemon.isShiny) shinyOwnedSpecies.add(pokemon.id);
-		}
-
-		const totalSpecies = allPokemon.length;
-		const ownedCount = ownedSpecies.size;
-		const shinyOwnedCount = shinyOwnedSpecies.size;
-
-		this.pokedexStats.innerText = `POKEDEX: ${ownedCount}/${totalSpecies - 1}`;
-		this.shinyStats.innerText = `SHINYDEX: ${shinyOwnedCount}/${totalSpecies - 1}`;
+		this.pokedexStats.innerText = `POKEDEX: ${this.main.player.stats.pokemonOwned}/${allPokemon.length-1}`;
+		this.shinyStats.innerText = `SHINYDEX: ${this.main.player.shinyAmount}/${allPokemon.length-1}`;
 
 		// this.main.player.stats.pokemonOwned
 		// this.main.player.shinyAmount

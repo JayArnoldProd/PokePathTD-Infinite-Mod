@@ -1,18 +1,18 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.5
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.6.1
 
-**Compatible with PokePath TD v1.5.9 on Windows** ✅
+**Compatible with PokePath TD v1.6.1 on Windows** ✅
 
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
-> **v1.5 status:** Windows compatibility rebase is now the active target. macOS support is pending a dedicated 1.5 validation pass.
+> **v1.6.1 status:** Windows compatibility is current. macOS support remains on its older release track pending a dedicated validation pass.
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
-> **Windows v1.5.9 refresh (2026-06-04):**
-> - Updated Windows compatibility for PokePath TD 1.5.9
-> - No new mod features; this release carries forward the existing feature set on the latest vanilla game build
+> **Windows v1.6.1 refresh (2026-09-01):**
+> - Rebases the full mod onto PokePath TD 1.6.1, including all 1.6.0 content and the 1.6.1 balance and bug fixes
+> - Updates installer checks, save-editor data, route progress, sprites, and high-speed tower behavior
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -46,7 +46,7 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs (~3.3%)
 - **Shiny Starters** - 1 in 30 chance when selecting starter
-- **Pre-Packaged Shiny Sprites** - 800+ custom shinies for non-max-evolution Pokemon
+- **Pre-Packaged Shiny Sprites** - 1,300+ shiny sprite assets, including 1.6.1 species and non-max evolutions
 - **Shiny Reveal** - ⭐ SHINY! ⭐ prompt with sparkle animation
 - **Shinies Have No Level Cap** - Can level to infinity unlike regular Pokemon
 
@@ -56,8 +56,8 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Profile Tracking** - Records shiny enemies defeated in the Profile screen
 
 ### 🔧 Quality of Life
-- **Save/Load Button Labels** - Quick labels for team save/load buttons; vanilla 1.5.9 also shows saved-team Pokémon/item tooltips
-- **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.5.9 also includes its own attack/field indicators and target-mode guards
+- **Save/Load Button Labels** - Quick labels for team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.6.1
+- **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.6.1 provides its own attack/field indicators and target-mode guards
 - **Unlockables Profile Tab** - Profile screen now includes a scrollable unlockables view with verified secrets and challenge rewards
 - **Live Profile Updates** - Profile stats refresh while the menu is open, including shiny enemy defeat tracking
 
@@ -73,10 +73,8 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 - **Squared Distance Checks** - Replaces expensive sqrt calculations in range detection, targeting, and aura checks
 - **Optimized Game Loop** - Cached references, batch enemy removal, and eliminated redundant array scans
 - **Reduced Garbage Collection** - Object reuse for enemy/projectile positions instead of creating new objects every frame
-- **Single-Pass Aura Detection** - Tower aura checks consolidated from multiple passes to one
 - **Throttled UI Updates** - Damage display updates every 5 frames instead of every frame
 - **Sub-Step Draw Skipping** - Enemies only draw on the final sub-step, not every physics tick
-- **Cached Tower Rendering** - Reuses temp canvases for tinted tower sprites instead of creating new ones each frame
 - **Power Recalculation Throttling** - Tower stats recalculate once per frame instead of every sub-step
 
 ---
@@ -88,14 +86,14 @@ A graphical save editor with full control over your game:
 ### Global Actions
 - **Unlock All Pokemon** - Adds all base forms (Lv1)
 - **Max All Levels** - Evolves all and sets to Lv100
-- **Complete All Stages** - Grants 2100 stars
-- **Max Gold** - Sets gold to 99,999,999
+- **Complete All Stages** - Grants 2900 stars across the 29 normal routes
+- **Max Gold** - Sets gold to the selected ruleset's cap (about 9 quadrillion with QoL enabled)
 - **Reset Egg Shop** - Restocks all eggs
 - **Delete All Pokemon** - Clears team and box
 
 ### Individual Pokemon
 - **Edit Level** - Set any level (1-9999+)
-- **Change Species** - Swap to any Pokemon (1.5 roster synced, including newer added species)
+- **Change Species** - Swap to any Pokemon in the complete 1.6.1 roster
 - **Evolve / Devolve** - Advance or revert evolution
 - **Toggle Shiny** - Make any Pokemon shiny
 - **Add / Delete** - Manage roster
@@ -128,7 +126,8 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.5.9** (Latest) | Windows | PokePath TD 1.5.9 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.9) |
+| **v1.6.1** (Latest) | Windows | PokePath TD 1.6.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.6.1) |
+| v1.5.9 | Windows | PokePath TD 1.5.9 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.9) |
 | v1.5.6 | Windows | PokePath TD 1.5.6 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.6) |
 | v1.5.5 | Windows | PokePath TD 1.5.5 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.5) |
 | v1.5.4 | Windows | PokePath TD 1.5.4 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.4) |
@@ -154,7 +153,7 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.5.9) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.6.1) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```
@@ -210,12 +209,12 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > See `README.md` inside the Mac mod folder for detailed macOS instructions, save editor usage, and troubleshooting.
 
-## 📋 Release Notes (Windows v1.5.9)
+## 📋 Release Notes (Windows v1.6.1)
 
-Windows v1.5.9 is a compatibility refresh for PokePath TD 1.5.9.
+Windows v1.6.1 is a compatibility refresh for PokePath TD 1.6.1.
 
 - No new mod features were added.
-- Updated installer compatibility fingerprints and diagnostics metadata for vanilla 1.5.9.
+- Updated installer compatibility fingerprints and diagnostics metadata for vanilla 1.6.1.
 - Rebased the Windows mod package so the existing feature set works on the latest vanilla game build.
 
 ---

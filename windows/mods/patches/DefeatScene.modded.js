@@ -10,11 +10,12 @@ export class DefeatScene extends GameScene {
 	constructor(main) {
 		super(340, 300);
 		this.main = main;
-		
+
 		this.header.removeChild(this.closeButton);
 		this.render();
 		// MOD: Endless checkpoints - checkpoints every 50 waves after 100
 		this.saveWaveRetry = [25, 50, 75];
+		//this.saveWaveRetryExtra = [25, 50, 51, 75];
 		this.savedWave = 0;
 	}
 
@@ -44,12 +45,12 @@ export class DefeatScene extends GameScene {
 		this.challengeContainer.style.display = 'none';
 
 		this.title.innerHTML = text.defeat.title[this.main.lang].toUpperCase();
-		this.prompt.innerHTML = `${text.defeat.prompt[this.main.lang].toUpperCase()} ${this.main.area.waveNumber - 1} ${text.map.waves[this.main.lang].toUpperCase()}`;
+		this.prompt.innerHTML = `${text.defeat.prompt[this.main.lang].toUpperCase()} ${this.main.area.waveNumber} ${text.map.waves[this.main.lang].toUpperCase()}`;
 		this.restartButton.innerText = text.defeat.restart[this.main.lang].toUpperCase();
 		this.retryButton.innerText = text.defeat.retry[this.main.lang].toUpperCase();
 		this.image.className = 'defeat-scene-image';
 
-		if (this.main.area.waveNumber > 25) {
+		if (this.main.area.waveNumber > 24) {
 			this.getRetryWave();
 			this.retryButton.style.filter = 'revert-layer';
 			this.retryButton.style.pointerEvents = 'revert-layer';
@@ -88,7 +89,7 @@ export class DefeatScene extends GameScene {
 			        let display = "";
 
 			        if (value === false)  display = text.challenge.off[this.main.lang].toUpperCase();
-			        
+
 			        else if (key === 'lvlCap' && typeof value === 'number') {
 			            display = `LEVEL ${value}`;
 			        } else if (key === 'slotLimit' && typeof value === 'number') {
@@ -109,7 +110,7 @@ export class DefeatScene extends GameScene {
 			            `${text.challenge[key].title[this.main.lang].toUpperCase()} ΓÇö ${display}`;
 
 			        this.challenge[i].style.color = (value && value !== false) ? '#ebbe35' : '#666';
-		    	});
+			});
 			}
 		}
 	}
@@ -127,7 +128,7 @@ export class DefeatScene extends GameScene {
 	        this.main.area.waveElapsedTime = (performance.now() - this.main.area.waveStartTime) / 1000;
 	        this.main.area.waveStartTime = null;
 	    }
-	    
+
 	    let goldPerSecond = this.main.area.waveElapsedTime > 0 ? Math.round((this.main.area.goldWave / this.main.area.waveElapsedTime) * 100) / 100 : 0;
 		if (goldPerSecond > this.main.player.stats.maxGoldPerTime[0]) {
 			this.main.player.stats.maxGoldPerTime[0] = goldPerSecond;
@@ -151,21 +152,21 @@ export class DefeatScene extends GameScene {
 			this.main.profileScene.deleteRecord,
 			this.main.UI.fastScene,
 		]
-		
+
 		if (this.main.autoReset == 0) {
 			scenes.forEach(scene => {
 				if (scene.isOpen) scene.close();
 			})
 		}
-		
+
 		playSound('results', 'ui');
 
 		// MOD: Auto-reset options - 0=Off, 1=Restart, 2=Retry, 3=Continue
-		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) { 
-			this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor}) 
-		} 
-		if (this.main.autoReset == 2 && !this.main.area.inChallenge.permadeath) { 
-			if (this.main.area.waveNumber > 25) {
+		if (this.main.autoReset == 1 && !this.main.area.inChallenge.permadeath) {
+			this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor})
+		}
+		if (this.main.autoReset == 2 && !this.main.area.inChallenge.permadeath) {
+			if (this.main.area.waveNumber > 24) {
 				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
 			} else {
 				this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
@@ -177,7 +178,7 @@ export class DefeatScene extends GameScene {
 			if (this.main.area.waveNumber > 100) {
 				this.getRetryWave();
 				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
-			} else if (this.main.area.waveNumber > 25) {
+			} else if (this.main.area.waveNumber > 24) {
 				this.retry({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
 			} else {
 				this.restart({autoWave: this.main.area.autoWave, speedBuff: this.main.game.speedFactor});
@@ -189,7 +190,7 @@ export class DefeatScene extends GameScene {
 		if (this.main.area.inChallenge.permadeath) this.main.challengeScene.cancelChallenge();
 		if (!this.main.area.isCustom) this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge);
 		else this.main.area.loadArea(this.main.area.map.id, 1, true, this.main.area.inChallenge, true, this.main.area.customData);
-		
+
 		if (!this.main.area.isCustom) this.main.player.getHealed(14);
 		else this.main.player.getHealed(this.main.area.customData.hearts);
 
@@ -207,7 +208,7 @@ export class DefeatScene extends GameScene {
 		if (this.main.area.waveNumber >= 100) {
 			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
 		}
-		
+
 		if (!this.main.area.isCustom) this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge);
 		else this.main.area.loadArea(this.main.area.map.id, this.savedWave, true, this.main.area.inChallenge, true, this.main.area.customData);
 		this.main.player.getHealed(lives);
@@ -230,8 +231,8 @@ export class DefeatScene extends GameScene {
 		this.main.UI.revertUI();
 		this.main.game.resume();
 		this.main.player.stats.resets++;
-		if (this.main.player.stats.resets == 100) this.main.player.unlockAchievement(11);
-		
+		// if (this.main.player.stats.resets == 100) this.main.player.unlockAchievement(11);
+
 		playSound('button2', 'ui');
 		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
@@ -240,29 +241,29 @@ export class DefeatScene extends GameScene {
 	getRetryWave() {
 		// Generate dynamic checkpoints for endless mode
 		const wave = this.main.area.waveNumber;
-		
+
 		// Build checkpoint list dynamically
 		let checkpoints = [25, 50, 75];
-		
+
 		// MOD: Add checkpoints every 50 waves for endless mode (100, 150, 200, etc.)
 		if (wave > 100) {
 			// Add checkpoint at 100
 			checkpoints.push(100);
 			// Add checkpoints every 50 waves after 100
 			let checkpoint = 150;
-			while (checkpoint < wave) {
+			while (checkpoint <= wave) {
 				checkpoints.push(checkpoint);
 				checkpoint += 50;
 			}
 		}
-		
+
 		this.savedWave = 0;
-	  	for (let i = 0; i < checkpoints.length; i++) {
-		    if (checkpoints[i] < wave) {
-		      	this.savedWave = checkpoints[i];
+		for (let i = 0; i < checkpoints.length; i++) {
+		    if (checkpoints[i] <= wave) {
+			this.savedWave = checkpoints[i];
 		    } else {
-		      	break;
-	    	}
+			break;
+		}
 	    }
 	}
 
@@ -271,7 +272,7 @@ export class DefeatScene extends GameScene {
 		if (this.main.player.stars >= 150) lives++;
 		if (this.main.player.stars >= 300) lives++;
 		if (this.main.player.stars >= 450) lives++;
-		
+
 		// MOD: Special handling for endless mode (wave >= 100)
 		if (this.main.area.waveNumber >= 100) {
 			lives = Math.max(1, 10 - Math.floor((this.main.area.waveNumber - 100) / 50));
