@@ -47,10 +47,12 @@ Use this for every PokePath TD vanilla update before touching mod files.
    - Compare vanilla `src/js/file/text.js` keys against `windows/mods/patches/text.modded.js`.
    - Any mod-added text, unlockable labels, settings labels, save-editor-facing labels, or new vanilla labels preserved in full-file patches must have all 10 language slots.
    - Challenge rewards, routes, Pokémon, and items can use vanilla localized data arrays, but verify new entries are reachable through the modded UI.
+   - Run `node windows/mods/dev/check_unlockables.cjs <path-to-extracted-src/js>` to compare all secret Pokémon, secret maps, Profile rows, and ten-language fallback/shared text.
 10. Install into the local game and run diagnostics.
    - Copy the release `mods` folder into the clean game directory.
    - Run the installer with all features enabled.
    - Run `diagnose.py`.
+   - Launch Electron with a temporary remote-debugging port and run `node windows/mods/dev/smoke_profile_unlockables.cjs <port> <expected-row-count>` to force a renderer reload and exercise Profile → Unlockables.
    - Confirm no debug/devtools hooks are included in release files.
 11. Package the Windows zip with the same structure as prior releases.
    - Zip root contains `mods/`.

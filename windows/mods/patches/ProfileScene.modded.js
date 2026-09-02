@@ -13,7 +13,15 @@ import { achievementReworkData } from '../data/achievementReworkData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
-const SECRET_POKEMON_KEYS = ['greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot', 'shedinja', 'gholdengo', 'stakataka', 'manaphy', 'phione', 'missingNo'];
+// Every obtainable secret line in the 1.6.1 pokemonData secretPokemon export.
+// Cacturne is represented by its unlock-time base form, Cacnea.
+const SECRET_POKEMON_KEYS = [
+	'greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot',
+	'shedinja', 'gholdengo', 'stakataka', 'manaphy', 'phione', 'missingNo',
+	'spiritomb', 'bronzor', 'minior', 'corsolaGalar', 'keldeo', 'victini',
+	'mew', 'marshadow', 'terrakion', 'cobalion', 'farfetchdGalar',
+	'ironThorns', 'sandyShocks', 'dhelmise',
+];
 
 const PROFILE_STAT_FALLBACK_TEXT = {
 	19: [
@@ -74,6 +82,14 @@ const PROFILE_UNLOCKABLE_TEXT = {
 	defeatManaphyInSecretMap: ['Defeat Manaphy in {route}', 'Derrota a Manaphy en {route}', 'Battez Manaphy dans {route}', 'Derrote Manaphy em {route}', 'Sconfiggi Manaphy in {route}', 'Besiege Manaphy in {route}', '{route}でマナフィを倒す', '{route}에서 마나피를 쓰러뜨리기', '在{route}击败玛纳霏', 'Pokonaj Manaphy w {route}'],
 	deployTwoManaphyOrDittoInSecretMap: ['On {route}, deploy exactly two Manaphy or Ditto', 'En {route}, despliega exactamente dos Manaphy o Ditto', 'Dans {route}, déployez exactement deux Manaphy ou Ditto', 'Em {route}, posicione exatamente dois Manaphy ou Ditto', 'In {route}, schiera esattamente due Manaphy o Ditto', 'Platziere in {route} genau zwei Manaphy oder Ditto', '{route}でマナフィまたはメタモンをちょうど2体配置', '{route}에서 마나피 또는 메타몽을 정확히 2마리 배치', '在{route}部署正好两只玛纳霏或百变怪', 'Na {route} rozstaw dokładnie dwa Manaphy lub Ditto'],
 	redeemSecretCodeFromMenu: ['Redeem a secret code from the Menu', 'Canjea un código secreto desde el menú', 'Utilisez un code secret depuis le menu', 'Resgate um código secreto no menu', 'Riscatta un codice segreto dal menu', 'Löse einen geheimen Code im Menü ein', 'メニューでシークレットコードを入力', '메뉴에서 비밀 코드를 입력', '在菜单中兑换秘密代码', 'Wpisz tajny kod w menu'],
+	deployPokemonNearPokemon: ['Deploy {pokemon1} near {pokemon2}', 'Despliega a {pokemon1} cerca de {pokemon2}', 'Déployez {pokemon1} près de {pokemon2}', 'Posicione {pokemon1} perto de {pokemon2}', 'Schiera {pokemon1} vicino a {pokemon2}', 'Platziere {pokemon1} in der Nähe von {pokemon2}', '{pokemon2}の近くに{pokemon1}を配置', '{pokemon2} 근처에 {pokemon1} 배치', '在{pokemon2}附近部署{pokemon1}', 'Rozstaw {pokemon1} w pobliżu {pokemon2}'],
+	equipItemToPokemon: ['Equip {item} to {pokemon}', 'Equipa {item} a {pokemon}', 'Équipez {pokemon} avec {item}', 'Equipe {item} em {pokemon}', 'Assegna {item} a {pokemon}', 'Rüste {pokemon} mit {item} aus', '{pokemon}に{item}を持たせる', '{pokemon}에게 {item} 장착', '给{pokemon}装备{item}', 'Wyposaż {pokemon} w {item}'],
+	ringBellRhythmOnWaveOutsideChallenge: ['On {route} at wave {wave}, click the bell in groups of {rhythm} outside Challenge', 'En {route}, en la oleada {wave}, toca la campana en grupos de {rhythm} fuera de Desafío', 'Sur {route}, à la vague {wave}, cliquez sur la cloche par groupes de {rhythm} hors Défi', 'Em {route}, na onda {wave}, toque o sino em grupos de {rhythm} fora do Desafio', 'Su {route}, all’ondata {wave}, suona la campana in gruppi di {rhythm} fuori dalla Sfida', 'Klicke auf {route} in Welle {wave} außerhalb der Herausforderung in Gruppen von {rhythm} auf die Glocke', '{route}のウェーブ{wave}で、チャレンジ外にベルを{rhythm}のまとまりで鳴らす', '{route} 웨이브 {wave}에서 챌린지 외부에 종을 {rhythm} 묶음으로 클릭', '在{route}第{wave}波时，于挑战外按{rhythm}的分组点击铃铛', 'Na {route}, podczas fali {wave}, klikaj dzwon grupami {rhythm} poza wyzwaniem'],
+	findAndVisitRandomMap: ['Open the Map until {route} appears (1% chance each time), then visit it', 'Abre el mapa hasta que aparezca {route} (1 % de probabilidad cada vez) y visítala', 'Ouvrez la carte jusqu’à ce que {route} apparaisse (1 % de chance à chaque fois), puis visitez-la', 'Abra o mapa até {route} aparecer (1% de chance a cada vez) e visite-a', 'Apri la mappa finché non appare {route} (1% di probabilità ogni volta), poi visitala', 'Öffne die Karte, bis {route} erscheint (jeweils 1 % Chance), und besuche sie', 'マップを開いて{route}を出現させ（毎回1%）、そこを訪れる', '지도를 열어 {route}이(가) 나타날 때까지 기다린 뒤(매번 1% 확률) 방문', '打开地图直到{route}出现（每次1%概率），然后前往', 'Otwieraj mapę, aż pojawi się {route} (za każdym razem 1% szans), a następnie ją odwiedź'],
+	defeatPokemonInMap: ['Defeat {pokemon} in {route}', 'Derrota a {pokemon} en {route}', 'Battez {pokemon} dans {route}', 'Derrote {pokemon} em {route}', 'Sconfiggi {pokemon} in {route}', 'Besiege {pokemon} in {route}', '{route}で{pokemon}を倒す', '{route}에서 {pokemon} 쓰러뜨리기', '在{route}击败{pokemon}', 'Pokonaj {pokemon} w {route}'],
+	unlockCastleRoom: ['On {route} wave 50, let Klefki reach the goal; then find the hidden room while no wave is active', 'En la oleada 50 de {route}, deja que Klefki llegue a la meta; después encuentra la sala oculta cuando no haya oleada activa', 'À la vague 50 de {route}, laissez Trousselin atteindre l’arrivée ; trouvez ensuite la salle cachée quand aucune vague n’est active', 'Na onda 50 de {route}, deixe Klefki chegar ao objetivo; depois encontre a sala escondida quando nenhuma onda estiver ativa', 'All’ondata 50 di {route}, lascia che Klefki raggiunga il traguardo; poi trova la stanza nascosta quando nessuna ondata è attiva', 'Lass Clavion in Welle 50 auf {route} das Ziel erreichen; finde danach den versteckten Raum, wenn keine Welle aktiv ist', '{route}のウェーブ50でクレッフィをゴールさせ、ウェーブがない時に隠し部屋を見つける', '{route} 웨이브 50에서 클레피가 목표에 도달하게 한 뒤, 웨이브가 없을 때 숨겨진 방 찾기', '在{route}第50波让钥圈儿到达终点；然后在无波次进行时找到隐藏房间', 'Na fali 50 na {route} pozwól Klefkiemu dotrzeć do celu; następnie znajdź ukryty pokój, gdy żadna fala nie jest aktywna'],
+	goldWelcomeGift: ['25,000 Gold Gift', 'Regalo de 25.000 de oro', 'Cadeau de 25 000 pièces d’or', 'Presente de 25.000 de ouro', 'Regalo di 25.000 oro', '25.000-Gold-Geschenk', '25,000ゴールドギフト', '25,000 골드 선물', '25,000金币礼物', 'Prezent: 25 000 złota'],
+	redeemWelcomeGiftCode: ['Redeem WELCOME_GIFT_25 from the Menu', 'Canjea WELCOME_GIFT_25 desde el menú', 'Utilisez WELCOME_GIFT_25 depuis le menu', 'Resgate WELCOME_GIFT_25 no menu', 'Riscatta WELCOME_GIFT_25 dal menu', 'Löse WELCOME_GIFT_25 im Menü ein', 'メニューでWELCOME_GIFT_25を入力', '메뉴에서 WELCOME_GIFT_25 입력', '在菜单中兑换WELCOME_GIFT_25', 'Wpisz WELCOME_GIFT_25 w menu'],
 };
 
 function localized(arr, lang = 0) {
@@ -575,7 +591,25 @@ export class ProfileScene extends SectionScene {
 		const secretRoute8 = this.getRouteName(8);
 		const secretRoute4 = this.getRouteName(4);
 		const secretRoute2 = this.getRouteName(2);
+		const secretRoute15 = this.getRouteName(15);
+		const secretRoute26 = this.getRouteName(26);
+		const secretRoute27 = this.getRouteName(27);
+		const secretRoute28 = this.getRouteName(28);
+		const secretRoute29 = this.getRouteName(29);
 		const manaphyCaveRoute = this.getRouteName(20);
+		const mirageIslandRoute = this.getRouteName(30);
+		const victiniCaveRoute = this.getRouteName(31);
+		const marshadowCaveRoute = this.getRouteName(32);
+		const castleRoomRoute = this.getRouteName(33);
+		const lang = clampLang(this.main.lang);
+		const achievementRequirement = (id, fallback) => localized(
+			achievementReworkData.find((achievement) => achievement?.id === id)?.description,
+			lang
+		) || fallback;
+		const defeatPokemonInMap = (pokemonKey, routeName) => formatTemplate(
+			getProfileUnlockableText('defeatPokemonInMap', lang, 'Defeat {pokemon} in {route}'),
+			{ pokemon: localized(pokemonData?.[pokemonKey]?.name, lang), route: routeName }
+		);
 
 		entries.push(
 			{
@@ -700,13 +734,213 @@ export class ProfileScene extends SectionScene {
 			},
 			{
 				id: 'secret-missingno',
-				order: 10150,
+				order: 10999,
 				name: localized(pokemonData.missingNo?.name, clampLang(this.main.lang)),
 				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
 				unlockText: getProfileUnlockableText('redeemSecretCodeFromMenu', clampLang(this.main.lang), 'Redeem a secret code from the Menu'),
 				icon: pokemonData.missingNo?.sprite?.base,
 				secretLevel: 'normal',
-				isUnlocked: () => this.hasPokemonKey('missingNo'),
+				isUnlocked: () => this.hasPokemonKey('missingNo') || !!this.main.player?.hasRedeemedReward?.('missingno'),
+			},
+			{
+				id: 'secret-dhelmise',
+				order: 10200,
+				name: localized(pokemonData.dhelmise?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenSecretOnRouteOutsideChallenge', lang, 'Find the hidden secret on {route} outside Challenge'), { route: secretRoute11 }),
+				icon: pokemonData.dhelmise?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.dhelmise || this.hasPokemonKey('dhelmise'),
+			},
+			{
+				id: 'secret-spiritomb',
+				order: 10210,
+				name: localized(pokemonData.spiritomb?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenSecretOnRouteOutsideChallenge', lang, 'Find the hidden secret on {route} outside Challenge'), { route: secretRoute28 }),
+				icon: pokemonData.spiritomb?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.spiritomb || this.hasPokemonKey('spiritomb'),
+			},
+			{
+				id: 'secret-bronzor',
+				order: 10220,
+				name: localized(pokemonData.bronzor?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('ringBellRhythmOnWaveOutsideChallenge', lang, 'On {route} at wave {wave}, click the bell in groups of {rhythm} outside Challenge'), {
+					route: secretRoute27,
+					wave: 50,
+					rhythm: '1-3-1-2-1-4-2-4-1',
+				}),
+				icon: pokemonData.bronzor?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.bronzor || this.hasPokemonKey('bronzor'),
+			},
+			{
+				id: 'secret-minior',
+				order: 10230,
+				name: localized(pokemonData.minior?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('deployPokemonNearPokemon', lang, 'Deploy {pokemon1} near {pokemon2}'), {
+					pokemon1: localized(pokemonData.lunatone?.name, lang),
+					pokemon2: localized(pokemonData.solrock?.name, lang),
+				}),
+				icon: pokemonData.minior?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.minior || this.hasPokemonKey('minior'),
+			},
+			{
+				id: 'secret-corsola-galar',
+				order: 10240,
+				name: localized(pokemonData.corsolaGalar?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang, 'Equip {item} to {pokemon}'), {
+					item: localized(itemData.strangeIdol?.name, lang),
+					pokemon: localized(pokemonData.corsola?.name, lang),
+				}),
+				icon: pokemonData.corsolaGalar?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.corsolaGalar || this.hasPokemonKey('corsolaGalar'),
+			},
+			{
+				id: 'secret-keldeo',
+				order: 10250,
+				name: localized(pokemonData.keldeo?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: achievementRequirement(19, 'Defeat Keldeo without triggering Justified.'),
+				icon: pokemonData.keldeo?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.keldeo || this.hasPokemonKey('keldeo'),
+			},
+			{
+				id: 'secret-victini-cave',
+				order: 10260,
+				name: localized(routeData?.[31]?.name, lang) || getProfileUnlockableText('secretMap', lang, 'Secret Map'),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenCaveOnRouteWhileNoWave', lang, 'Find the hidden cave on {route} while no wave is active'), { route: secretRoute26 }),
+				icon: routeData?.[31]?.background,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secretMaps?.victiniCave,
+			},
+			{
+				id: 'secret-victini',
+				order: 10265,
+				name: localized(pokemonData.victini?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: defeatPokemonInMap('victini', victiniCaveRoute),
+				icon: pokemonData.victini?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.victini || this.hasPokemonKey('victini'),
+			},
+			{
+				id: 'secret-mirage-island',
+				order: 10270,
+				name: localized(routeData?.[30]?.name, lang) || getProfileUnlockableText('secretMap', lang, 'Secret Map'),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findAndVisitRandomMap', lang, 'Open the Map until {route} appears (1% chance each time), then visit it'), { route: mirageIslandRoute }),
+				icon: routeData?.[30]?.background,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.mirageIslandDiscovered,
+			},
+			{
+				id: 'secret-mew',
+				order: 10275,
+				name: localized(pokemonData.mew?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: defeatPokemonInMap('mew', mirageIslandRoute),
+				icon: pokemonData.mew?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.mew || this.hasPokemonKey('mew'),
+			},
+			{
+				id: 'secret-marshadow-cave',
+				order: 10280,
+				name: localized(routeData?.[32]?.name, lang) || getProfileUnlockableText('secretMap', lang, 'Secret Map'),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenCaveOnRouteWhileNoWave', lang, 'Find the hidden cave on {route} while no wave is active'), { route: secretRoute15 }),
+				icon: routeData?.[32]?.background,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secretMaps?.marshadowCave,
+			},
+			{
+				id: 'secret-marshadow',
+				order: 10285,
+				name: localized(pokemonData.marshadow?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: defeatPokemonInMap('marshadow', marshadowCaveRoute),
+				icon: pokemonData.marshadow?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.marshadow || this.hasPokemonKey('marshadow'),
+			},
+			{
+				id: 'secret-terrakion',
+				order: 10290,
+				name: localized(pokemonData.terrakion?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: achievementRequirement(26, 'Defeat Terrakion without triggering Justified.'),
+				icon: pokemonData.terrakion?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.terrakion || this.hasPokemonKey('terrakion'),
+			},
+			{
+				id: 'secret-cobalion',
+				order: 10300,
+				name: localized(pokemonData.cobalion?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: achievementRequirement(23, 'Defeat Cobalion without triggering Justified.'),
+				icon: pokemonData.cobalion?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.cobalion || this.hasPokemonKey('cobalion'),
+			},
+			{
+				id: 'secret-castle-room',
+				order: 10310,
+				name: localized(routeData?.[33]?.name, lang) || getProfileUnlockableText('secretMap', lang, 'Secret Map'),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('unlockCastleRoom', lang, 'On {route} wave 50, let Klefki reach the goal; then find the hidden room while no wave is active'), { route: secretRoute29 }),
+				icon: routeData?.[33]?.background,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secretMaps?.secretCastle,
+			},
+			{
+				id: 'secret-farfetchd-galar',
+				order: 10315,
+				name: localized(pokemonData.farfetchdGalar?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: defeatPokemonInMap('sirfetchd', castleRoomRoute),
+				icon: pokemonData.farfetchdGalar?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.farfetchdGalar || this.hasPokemonKey('farfetchdGalar'),
+			},
+			{
+				id: 'secret-sandy-shocks',
+				order: 10320,
+				name: localized(pokemonData.sandyShocks?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: getProfileUnlockableText('redeemSecretCodeFromMenu', lang, 'Redeem a secret code from the Menu'),
+				icon: pokemonData.sandyShocks?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => this.hasPokemonKey('sandyShocks') || !!this.main.player?.hasRedeemedReward?.('sandyShocks'),
+			},
+			{
+				id: 'secret-iron-thorns',
+				order: 10330,
+				name: localized(pokemonData.ironThorns?.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: getProfileUnlockableText('redeemSecretCodeFromMenu', lang, 'Redeem a secret code from the Menu'),
+				icon: pokemonData.ironThorns?.sprite?.base,
+				secretLevel: 'normal',
+				isUnlocked: () => this.hasPokemonKey('ironThorns') || !!this.main.player?.hasRedeemedReward?.('ironThorns'),
+			},
+			{
+				id: 'secret-gold25k',
+				order: 10340,
+				name: getProfileUnlockableText('goldWelcomeGift', lang, '25,000 Gold Gift'),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: getProfileUnlockableText('redeemWelcomeGiftCode', lang, 'Redeem WELCOME_GIFT_25 from the Menu'),
+				icon: itemData.nugget?.sprite,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('gold25k'),
 			}
 		);
 

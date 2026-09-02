@@ -43,6 +43,9 @@ The mod installer applies those three published values when **Vanilla Bug Fixes*
 - Updated route-completion logic for 29 normal routes and the 2,900-star total without treating secret maps as normal routes.
 - Synchronized 1.6.1 normal and shiny assets into the bundled sprite sets so the installer and save editor do not overwrite new or fixed vanilla art.
 - Updated public and packaged compatibility documentation to 1.6.1.
+- Audited the runtime's complete `secretPokemon` export, every secret-state write, every secret route, and every redeem reward. The Profile Unlockables tab now covers all 26 secret Pokémon, all 5 secret maps, and the hidden 25,000-gold welcome gift, including the 14 Pokémon and 4 maps added after the previous mod baseline.
+- Added exact instructions for the Route 7-3 bell rhythm, Lunatone/Solrock pairing, Strange Idol interaction, Justified boss conditions, Mirage Island roll, concealed caves/room, Klefki event, and player-bound redeem rewards.
+- Added every new Unlockables instruction to both the shared and fallback localization tables in all 10 built-in languages.
 
 ## Vanilla Feature Overlap Audit
 
@@ -63,6 +66,8 @@ The mod installer applies those three published values when **Vanilla Bug Fixes*
 - Python compilation passed for `apply_mods.py`, `diagnose.py`, and `save_editor.py`.
 - JavaScript syntax validation passed for every distributed patch and every JavaScript file in the final extracted install, including `main.js`.
 - Strict ES-module parsing now uses `dev/check_js_modules.cjs` with Node's `SourceTextModule`; this catches malformed method boundaries that `node --check` can accept through automatic semicolon insertion.
+- `dev/check_unlockables.cjs` cross-checks the mod against the clean runtime's canonical secret Pokémon and secret-map lists and verifies that every referenced Unlockables string has identical ten-language shared and fallback translations.
+- The final installed-game Electron smoke test forced a renderer reload, opened Profile → Unlockables, and verified all 148 rows, the `11/148` save-specific counter, non-empty conditions, and zero parser, runtime, log, or network errors.
 - A real Electron/Chromium startup smoke test passed with zero `Runtime.exceptionThrown`, `Debugger.scriptFailedToParse`, `Log.entryAdded`, or `Network.loadingFailed` events during a forced renderer reload.
 - The installed GUI loaded the existing save on Route 2-4, displayed level-5,000+ Pokémon, and the pause control successfully entered `GAME PAUSED` state.
 - Localization validation found zero missing vanilla keys and zero malformed ten-language string arrays.
@@ -80,6 +85,6 @@ The mod installer applies those three published values when **Vanilla Bug Fixes*
 ## Release ZIP
 
 - Path: `releases\PokePath-TD-INFINITE-Windows-v1.6.1.zip`
-- File count: `2575`
+- File count: `2577`
 - Required archive shape: one top-level `mods` folder.
 - Exclusions: `node_modules`, `__pycache__`, `installed_features.json`, `package-lock.json`, `current_save.json`, sprite caches, and `.pyc` files.

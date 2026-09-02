@@ -10,9 +10,10 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
-> **Windows v1.6.1 refresh (2026-09-01):**
+> **Windows v1.6.1 refresh (2026-09-02):**
 > - Rebases the full mod onto PokePath TD 1.6.1, including all 1.6.0 content and the 1.6.1 balance and bug fixes
 > - Updates installer checks, save-editor data, route progress, sprites, and high-speed tower behavior
+> - Audits all 26 secret Pokémon, 5 secret maps, and the hidden welcome gift, with exact Unlockables instructions in all 10 built-in languages
 
 > ### 🚨 Updating from a previous mod version? READ THIS!
 > **You must install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do NOT install over a previously modded game — new features like save isolation and vanilla restore depend on starting from clean game files. Your save data will be preserved automatically.
@@ -58,7 +59,7 @@ A comprehensive mod for PokePath TD that adds endless mode, removes caps, and in
 ### 🔧 Quality of Life
 - **Save/Load Button Labels** - Quick labels for team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.6.1
 - **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.6.1 provides its own attack/field indicators and target-mode guards
-- **Unlockables Profile Tab** - Profile screen now includes a scrollable unlockables view with verified secrets and challenge rewards
+- **Unlockables Profile Tab** - Profile screen tracks every challenge reward, all 26 secret Pokémon, all 5 secret maps, and the hidden welcome gift with verified unlock conditions
 - **Live Profile Updates** - Profile stats refresh while the menu is open, including shiny enemy defeat tracking
 
 ### 🐛 Vanilla Bug Fixes
@@ -213,10 +214,10 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 Windows v1.6.1 is a compatibility refresh for PokePath TD 1.6.1.
 
-- No new mod features were added.
 - Updated installer compatibility fingerprints and diagnostics metadata for vanilla 1.6.1.
 - Rebased the Windows mod package so the existing feature set works on the latest vanilla game build.
 - Hotfix: corrected renderer merge boundaries that could cause a gray screen with `Unexpected token` errors, and added strict ES-module parsing to the update checks.
+- Completed a source-level secrets audit and expanded the Profile Unlockables tab to cover all 26 secret Pokémon, all 5 secret maps, and the hidden 25,000-gold welcome gift, including exact conditions translated into every built-in language.
 
 ---
 

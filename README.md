@@ -10,10 +10,11 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
-> **Windows v1.6.1 refresh (2026-09-01):**
+> **Windows v1.6.1 refresh (2026-09-02):**
 > - Rebases the full mod onto PokePath TD 1.6.1, including all 1.6.0 content and the 1.6.1 balance and bug fixes
 > - Updates installer compatibility checks, save-editor data, route progress, sprites, and high-speed tower behavior
 > - Includes the renderer gray-screen hotfix and strict ES-module startup validation
+> - Audits all 26 secret Pokémon, 5 secret maps, and the hidden welcome gift, with exact Unlockables instructions in all 10 built-in languages
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
@@ -59,7 +60,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 ### 🔧 Quality of Life
 - **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.6.1
 - **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.6.1 provides its own attack/field indicators and target-mode guards
-- **Unlockables Profile Tab** - See what hidden content can be unlocked and how; keep track of progress
+- **Unlockables Profile Tab** - Track every challenge reward, all 26 secret Pokémon, all 5 secret maps, and the hidden welcome gift with verified unlock conditions
 - **Live Profile Updates** - Stats in profile update while the menu is open
 - **Built-in Language Support** - Mod-added UI text supports all built-in game languages
 - **Tower Placement Persistence** - When you close and open the game, your Tower Placement and Party Remains
