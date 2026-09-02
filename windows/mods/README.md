@@ -216,6 +216,7 @@ Windows v1.6.1 is a compatibility refresh for PokePath TD 1.6.1.
 - No new mod features were added.
 - Updated installer compatibility fingerprints and diagnostics metadata for vanilla 1.6.1.
 - Rebased the Windows mod package so the existing feature set works on the latest vanilla game build.
+- Hotfix: corrected renderer merge boundaries that could cause a gray screen with `Unexpected token` errors, and added strict ES-module parsing to the update checks.
 
 ---
 

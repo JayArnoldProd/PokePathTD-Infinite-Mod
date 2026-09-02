@@ -723,29 +723,68 @@ export class PokemonScene extends GameScene {
 		}
 	}
 
-	formatPanelStat(value, significantDigits = 2) {
-		const numericValue = Number(value);
-		if (!Number.isFinite(numericValue) || numericValue === 0) return '0';
+	displaySkins() {
+		this.skinContainer.style.display = 'none';
+		for (let i = 0; i < 3; i++) {
+			this.skinSlot[i].style.display = 'none';
+			this.skinSlot[i].style.backgroundImage = "";
+		}
 
 		if ([70, 75, 76, 80, 163].includes(this.pokemon.id)) return;
 		if (this.pokemon.isMega) return;
 		if (!this.main.player.hasSkinator) return;
 		if (this.pokemon.lvl < 100 && !this.pokemon.isReset) return;
 
-		if (Math.abs(roundedValue) >= 1000 && this.main?.utility?.numberDot) {
-			return this.main.utility.numberDot(Math.round(roundedValue));
-		}
+		this.skinContainer.style.display = 'flex';
 
 		var indx = 0;
 
 		Object.entries(pokemonData).forEach((entries) => {
 			if (entries[1].id === this.pokemon.id && entries[1].base === undefined) {
-
 				this.skinSlot[indx].style.display = 'block';
 				this.skinSlot[indx].style.backgroundImage = `url("${entries[1].sprite.base}")`;
 				indx++;
 			}
 		})
+
+		if (indx === 1) this.skinContainer.style.display = 'none';
+	}
+
+	changeSkin(pos) {
+		var indx = 0;
+
+		Object.entries(pokemonData).forEach((entries) => {
+			if (entries[1].id === this.pokemon.id && entries[1].base === undefined) {
+				if (indx === pos) {
+					this.pokemon.sprite = entries[1].sprite;
+					this.pokemon.skin = entries[1].sprite;
+				}
+				indx++;
+			}
+		})
+
+		if (this.pokemon.isShiny && !this.pokemon.hideShiny) this.pokemon.setShiny();
+
+		playSound('teleport', 'effect');
+		this.main.UI.updatePokemon();
+		this.update();
+	}
+
+	formatPanelStat(value, significantDigits = 2) {
+		const numericValue = Number(value);
+		if (!Number.isFinite(numericValue) || numericValue === 0) return '0';
+
+		const absValue = Math.abs(numericValue);
+		const factor = Math.pow(10, significantDigits - Math.ceil(Math.log10(absValue)));
+		const roundedValue = Math.round(numericValue * factor) / factor;
+		if (!Number.isFinite(roundedValue) || roundedValue === 0) return '0';
+
+		if (Math.abs(roundedValue) >= 1000 && this.main?.utility?.numberDot) {
+			return this.main.utility.numberDot(Math.round(roundedValue));
+		}
+
+		return roundedValue.toString();
+	}
 
 	formatSpeedValue(pokemon) {
 		if (pokemon.attackType === 'orbital') {
@@ -1519,141 +1558,59 @@ export class PokemonScene extends GameScene {
 
 class ItemWindow {
 	constructor(main) {
-	    this.main = main;
-	    this.isOpen = false;
-	    this.pokemon = null;
-	    this.render();
+		this.main = main;
+		this.isOpen = false;
+		this.pokemon = null;
+		this.render();
 	}
-
-	render() {
-	    this.window = document.createElement('div');
-	    this.window.className = 'item-scene-window';
-	    this.window.style.zIndex = '10001';
-
-	    this.container = new Element(this.window, { className: 'item-scene-container' }).element;
-	    this.slot = [];
-
-	    for (let i = 0; i < 120; i++) {
-		this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
-
-		this.slot[i].addEventListener('click', () => {
-		if (this.slot[i].itemIndex !== undefined && this.slot[i].itemIndex !== null) {
-		this.equipItem(this.slot[i].itemIndex);
-		}
-		});
-
-		this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: 'E' }).element;
-		this.slot[i].favorite = new Element(this.slot[i], { className: 'item-scene-slot-favorite stroke', text: '★' }).element;
-	    }
 
 	render() {
 		this.window = document.createElement('div');
 		this.window.className = 'item-scene-window';
-		this.window.style.overflow = 'hidden';
+		this.window.style.zIndex = '10001';
 
 		this.container = new Element(this.window, { className: 'item-scene-container' }).element;
-
 		this.slot = [];
-		for (let i = 0; i < 100; i++) {
+
+		for (let i = 0; i < 120; i++) {
 			this.slot[i] = new Element(this.container, { className: 'item-scene-slot' }).element;
-			this.slot[i].itemRef = undefined;
-			this.slot[i].addEventListener('click', () => { this.equipItem(i); });
-			this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: '' }).element;
+
+			this.slot[i].addEventListener('click', () => {
+				if (this.slot[i].itemIndex !== undefined && this.slot[i].itemIndex !== null) {
+					this.equipItem(this.slot[i].itemIndex);
+				}
+			});
+
+			this.slot[i].equiped = new Element(this.slot[i], { className: 'item-scene-slot-equiped stroke', text: 'E' }).element;
+			this.slot[i].favorite = new Element(this.slot[i], { className: 'item-scene-slot-favorite stroke', text: '★' }).element;
 		}
 
 		this.removeItem = new Element(this.container, { className: 'item-scene-slot item-scene-slot-x', text: 'X' }).element;
 		this.removeItem.addEventListener('click', () => {
-			if (!this.pokemon?.item) return;
 			this.pokemon.retireItem();
 			this.main.UI.update();
 			this.main.pokemonScene.update();
-			if (this.main.boxScene.isOpen) this.main.boxScene.update();
-			this.update();
 			playSound('equip', 'ui');
 		});
 	}
 
 	open(pokemon) {
-	if (this.main.area.inChallenge.noItems) {
-		playSound('pop0', 'ui');
-		return;
-	}
-
-	if (!this.isOpen) {
-		    playSound('open', 'ui');
-		    this.isOpen = true;
-		    this.pokemon = pokemon;
-
-		    this.main.pokemonScene.window.appendChild(this.window);
-		    this.window.style.display = 'block';
-		this.update();
-	    } else {
-		this.close();
-	    }
-	}
-
-	close() {
-	this.isOpen = false;
-	playSound('close', 'ui');
-	this.window.style.display = 'none';
-	this.main.tooltip.hide();
-    }
-
-	update() {
-	    this.slot.forEach(slot => {
-		slot.style.display = 'none';
-		slot.style.backgroundImage = "";
-		slot.style.pointerEvents = 'none';
-		slot.equiped.innerHTML = "";
-		slot.favorite.innerHTML = "";
-		slot.style.filter = '';
-		slot.itemIndex = null;
-	    });
-
-	    const originalItems = this.main.itemController.getItems();
-		const items = [...originalItems]; // copia: ya no se toca el array de Player
-
-		const favorites = new Set(
-		    this.main.player.favoriteItems[this.pokemon.specie.id] ?? []
-		);
-
-		items.sort((a, b) => {
-		    const af = favorites.has(a.id);
-		    const bf = favorites.has(b.id);
-
-		    if (af !== bf) return bf - af;
-
-		    return 0;
-		});
-
-	    let slotIndex = 0;
-
-	    items.forEach((item, i) => {
-		    const able = this.main.itemController.canEquip(item, this.pokemon);
-
-		    if (!able) return;
-		    if (slotIndex >= this.slot.length) return;
-
-		    const slotEl = this.slot[slotIndex];
-		    slotEl.style.display = '';
-		    slotEl.itemIndex = originalItems.indexOf(item); // índice real, no el de la copia ordenada
-
-
-		slotEl.style.backgroundImage = `url(${item.sprite})`;
-		slotEl.style.pointerEvents = 'revert-layer';
-		this.main.tooltip.bindTo(slotEl, item, 'item');
-
-		if (this.main.itemController.isEquipped(item)) {
-		slotEl.equiped.innerHTML = 'E';
-		slotEl.style.filter = 'drop-shadow(0 0 2px var(--yellow))';
-		} else slotEl.style.filter = 'drop-shadow(0 0 2px var(--white))';
-
-		if (this.main.player.isFavoriteItem(this.pokemon.specie.id, item.id)) {
-			slotEl.style.filter = 'drop-shadow(0 0 2px var(--red))';
-			slotEl.favorite.innerHTML = '★';
+		if (this.main.area.inChallenge.noItems) {
+			playSound('pop0', 'ui');
+			return;
 		}
-		slotIndex++;
-	    });
+
+		if (!this.isOpen) {
+			playSound('open', 'ui');
+			this.isOpen = true;
+			this.pokemon = pokemon;
+
+			this.main.pokemonScene.window.appendChild(this.window);
+			this.window.style.display = 'block';
+			this.update();
+		} else {
+			this.close();
+		}
 	}
 
 	close() {
@@ -1663,71 +1620,73 @@ class ItemWindow {
 		this.main.tooltip.hide();
 	}
 
-	getAvailableItems() {
-		const itemController = this.main.itemController;
-		if (itemController?.getItems && itemController?.canEquip) {
-			return itemController.getItems().filter(item => itemController.canEquip(item, this.pokemon));
-		}
-
-		// Legacy fallback if itemController is unavailable.
-		return this.main.player.items || [];
-	}
-
-	isItemEquipped(item) {
-		const itemController = this.main.itemController;
-		if (itemController?.isEquipped) return itemController.isEquipped(item);
-		return item?.equipedBy != undefined;
-	}
-
 	update() {
 		this.slot.forEach(slot => {
-			slot.itemRef = undefined;
 			slot.style.display = 'none';
-			slot.style.backgroundImage = '';
+			slot.style.backgroundImage = "";
 			slot.style.pointerEvents = 'none';
-			slot.style.filter = 'none';
-			slot.equiped.innerHTML = '';
+			slot.equiped.innerHTML = "";
+			slot.favorite.innerHTML = "";
+			slot.style.filter = '';
+			slot.itemIndex = null;
 		});
 
-		this.itemArray = this.getAvailableItems();
+		const originalItems = this.main.itemController.getItems();
+		const items = [...originalItems];
 
-		this.itemArray.forEach((item, i) => {
-			if (!this.slot[i]) return;
-			this.slot[i].itemRef = item;
-			this.slot[i].style.display = 'block';
-			this.slot[i].style.backgroundImage = `url(${item.sprite})`;
-			this.slot[i].style.pointerEvents = 'revert-layer';
-			this.main.tooltip.bindTo(this.slot[i], item, 'item');
+		const favorites = new Set(
+			this.main.player.favoriteItems[this.pokemon.specie.id] ?? []
+		);
 
-			if (this.isItemEquipped(item)) {
-				this.slot[i].equiped.innerHTML = 'E';
-				this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--yellow))';
-			} else {
-				this.slot[i].style.filter = 'drop-shadow(0 0 2px var(--white))';
+		items.sort((a, b) => {
+			const af = favorites.has(a.id);
+			const bf = favorites.has(b.id);
+
+			if (af !== bf) return bf - af;
+
+			return 0;
+		});
+
+		let slotIndex = 0;
+
+		items.forEach((item) => {
+			const able = this.main.itemController.canEquip(item, this.pokemon);
+
+			if (!able) return;
+			if (slotIndex >= this.slot.length) return;
+
+			const slotEl = this.slot[slotIndex];
+			slotEl.style.display = '';
+			slotEl.itemIndex = originalItems.indexOf(item);
+
+			slotEl.style.backgroundImage = `url(${item.sprite})`;
+			slotEl.style.pointerEvents = 'revert-layer';
+			this.main.tooltip.bindTo(slotEl, item, 'item');
+
+			if (this.main.itemController.isEquipped(item)) {
+				slotEl.equiped.innerHTML = 'E';
+				slotEl.style.filter = 'drop-shadow(0 0 2px var(--yellow))';
+			} else slotEl.style.filter = 'drop-shadow(0 0 2px var(--white))';
+
+			if (this.main.player.isFavoriteItem(this.pokemon.specie.id, item.id)) {
+				slotEl.style.filter = 'drop-shadow(0 0 2px var(--red))';
+				slotEl.favorite.innerHTML = '★';
 			}
+			slotIndex++;
 		});
-
-		if (this.pokemon?.item) {
-			this.removeItem.style.pointerEvents = 'revert-layer';
-			this.removeItem.style.filter = 'none';
-		} else {
-			this.removeItem.style.pointerEvents = 'none';
-			this.removeItem.style.filter = 'brightness(0.45)';
-		}
 	}
 
 	equipItem(pos) {
-		const item = this.slot[pos]?.itemRef;
+		const item = this.main.itemController.getItems()[pos];
 		if (!item) return;
 
-		const itemController = this.main.itemController;
-		if (itemController?.equip) itemController.equip(item, this.pokemon);
-		else this.pokemon.equipItem(item);
+		if (!this.main.itemController.canEquip(item, this.pokemon)) return;
+
+		this.main.itemController.equip(item, this.pokemon);
 
 		this.main.UI.update();
 		this.main.pokemonScene.update();
 		if (this.main.boxScene.isOpen) this.main.boxScene.update();
-		this.update();
 		playSound('equip', 'ui');
 	}
 }

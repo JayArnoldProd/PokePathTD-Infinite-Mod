@@ -11,7 +11,7 @@
   - Size: `83481525`
   - SHA-256: `A439708293821D0DFDCCED834D77F398E96D3BB7763F24D7381C57B6E27E4B01`
 - Rebase workspace: `context\rebase_161_20260901`
-- The existing local installation was not overwritten during the rebase or automated tests. Its known 1.5.9 vanilla backup and modded ASAR were left untouched.
+- The rebase and automated install passes used isolated copies first. After verification, the local installation was upgraded to 1.6.1, its previous 1.5.9 install and save were backed up, and the full selected mod set was installed for personal testing.
 
 ## Changelog Inputs
 
@@ -62,15 +62,24 @@ The mod installer applies those three published values when **Vanilla Bug Fixes*
 - `diagnose.py`: all checks passed against the 83,481,525-byte vanilla backup.
 - Python compilation passed for `apply_mods.py`, `diagnose.py`, and `save_editor.py`.
 - JavaScript syntax validation passed for every distributed patch and every JavaScript file in the final extracted install, including `main.js`.
+- Strict ES-module parsing now uses `dev/check_js_modules.cjs` with Node's `SourceTextModule`; this catches malformed method boundaries that `node --check` can accept through automatic semicolon insertion.
+- A real Electron/Chromium startup smoke test passed with zero `Runtime.exceptionThrown`, `Debugger.scriptFailedToParse`, `Log.entryAdded`, or `Network.loadingFailed` events during a forced renderer reload.
+- The installed GUI loaded the existing save on Route 2-4, displayed level-5,000+ Pokémon, and the pause control successfully entered `GAME PAUSED` state.
 - Localization validation found zero missing vanilla keys and zero malformed ten-language string arrays.
 - Generated metadata was checked against the 1.6.1 runtime and sprite coverage was checked for evolving species.
 - Direct final-runtime checks confirmed Make It Rain uses `0.075`, Stunky has 40,000 health, and Skuntank has 50,000 health.
 
+## Renderer Startup Hotfix
+
+- The first published 1.6.1 archive contained malformed merge boundaries in `PokemonScene.modded.js` and `Enemy.modded.js`, which produced a gray window and Chromium syntax errors.
+- Restored the missing 1.6.1 skin-selection methods and stat formatter boundary in `PokemonScene.modded.js`.
+- Restored the official 1.6.1 `ItemWindow` implementation instead of retaining duplicated old and new method bodies.
+- Restored the missing floating-damage conditional in `Enemy.modded.js`.
+- Rebuilt the local installation from the clean 83,481,525-byte vanilla backup and repeated strict module, diagnostics, CDP, visual-load, and pause-control checks before replacing the release archive.
+
 ## Release ZIP
 
 - Path: `releases\PokePath-TD-INFINITE-Windows-v1.6.1.zip`
-- Size: `15336587`
-- File count: `2574`
-- SHA-256: `DB3F9E840C29561F4A320C985943C7D90E1EFE6BF2B2EB3EEAC26E09EC3F6DCC`
+- File count: `2575`
 - Required archive shape: one top-level `mods` folder.
 - Exclusions: `node_modules`, `__pycache__`, `installed_features.json`, `package-lock.json`, `current_save.json`, sprite caches, and `.pyc` files.

@@ -13,6 +13,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 > **Windows v1.6.1 refresh (2026-09-01):**
 > - Rebases the full mod onto PokePath TD 1.6.1, including all 1.6.0 content and the 1.6.1 balance and bug fixes
 > - Updates installer compatibility checks, save-editor data, route progress, sprites, and high-speed tower behavior
+> - Includes the renderer gray-screen hotfix and strict ES-module startup validation
 
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.

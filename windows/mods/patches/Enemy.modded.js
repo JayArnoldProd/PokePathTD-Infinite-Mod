@@ -1282,7 +1282,14 @@ export class Enemy extends Sprite {
 	    const minSpacing = 12;
 	    const startYOffset = 12;
 
-            }
+	    if (amount > 0) {
+	        const color = isCritical
+	            ? '#ffeb3b'
+	            : source === 'burn'
+	            ? '#c96937'
+	            : source === 'poison'
+	            ? '#70ac4c'
+	            : '#e06666';
 
 	        let startY = this.position.y - 10 + startYOffset;
 
