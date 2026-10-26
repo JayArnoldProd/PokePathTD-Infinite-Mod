@@ -80,14 +80,14 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  67645,
-    "src/js/game/component/Pokemon.js":     28057,
-    "src/js/game/scenes/PokemonScene.js":   73144,
-    "src/js/game/core/Area.js":             25697,
-    "src/js/game/core/Team.js":             2725,
-    "src/js/game/core/Box.js":              787,
-    "src/js/game/component/Tower.js":       174707,
-    "src/js/game/component/Enemy.js":        67130,
+    "src/js/game/Game.js":                  69495,
+    "src/js/game/component/Pokemon.js":     28680,
+    "src/js/game/scenes/PokemonScene.js":   75915,
+    "src/js/game/core/Area.js":             33465,
+    "src/js/game/core/Team.js":             2789,
+    "src/js/game/core/Box.js":              859,
+    "src/js/game/component/Tower.js":       190519,
+    "src/js/game/component/Enemy.js":        74672,
     "src/js/game/scenes/MenuScene.js":       54339,
 }
 
@@ -1321,7 +1321,7 @@ def _ensure_game_modded():
     content = read_file(path)
 
     # Check if already modded (has sub-stepping loop)
-    if 'SUB-STEPPING' in content:
+    if 'MOD: INFINITE GAME BASE' in content:
         return True
 
     modded_file = MODS_DIR / "patches" / "Game.modded.js"
@@ -1411,8 +1411,8 @@ def apply_speed_mod():
         changes += 1
     elif 'toggleSpeed()' in content:
         content2, replacements = re.subn(
-            r"\t[ \t]*toggleSpeed\(\) \{.*?\n\t[ \t]*\}\n\n\t[ \t]*switchPause\(",
-            new_toggle + "\n\n\tswitchPause(",
+            r"(?m)^([ \t]*)toggleSpeed\(\) \{.*?^\1\}",
+            lambda _: new_toggle,
             content,
             count=1,
             flags=re.DOTALL,
@@ -1427,7 +1427,7 @@ def apply_speed_mod():
     if old_restore in content:
         content = content.replace(old_restore, new_restore)
         changes += 1
-    elif 'restoreSpeed()' in content and "this.main.UI.speedWave.innerText = '1x';" not in content:
+    elif 'restoreSpeed()' in content:
         content2, replacements = re.subn(
             r"(restoreSpeed\(\) \{\s*)this\.speedFactor = 0\.8;",
             r"\1this.speedFactor = 1;\n        this.main.UI.speedWave.innerText = '1x';",
@@ -1441,7 +1441,7 @@ def apply_speed_mod():
     # 3. Change initial speedFactor from 0.8 to 1 (do this LAST to avoid breaking other patterns)
     content = content.replace('this.speedFactor = 0.8;', 'this.speedFactor = 1;')
 
-    if changes > 0:
+    if changes > 0 and "speedWave.innerText = '10x'" in content:
         write_file(path, content)
         log_success(f"Game.js: 10x speed options ({changes} patches)")
         return True
@@ -3715,7 +3715,7 @@ def apply_allow_dupes():
     This patch comments out the dedup filter.
     """
     path = JS_ROOT / "game" / "core" / "Team.js"
-    content = read_file(path)
+    content = re.sub(r"[ \t]+(?=\r?$)", "", read_file(path), flags=re.MULTILINE)
 
     if '// MOD: Dedup filter removed' in content:
         log_skip("Team.js: Allow dupes (already applied)")
@@ -3724,7 +3724,7 @@ def apply_allow_dupes():
     # Find and comment out the dedup filter block
     old_dedup = """		const seenIds = new Set();
 	    this.pokemon = this.pokemon.filter(p => {
-	        if (seenIds.has(p.id)) return false; // duplicado
+	        if (seenIds.has(p.id)) return false;
 	        seenIds.add(p.id);
 	        return true;
 	    });"""
@@ -3852,10 +3852,8 @@ def apply_ditto_party_refresh():
             return False
         content = content.replace(marker, helper + marker, 1)
 
-    constructor_attach_old = """\t\tthis.main = main;
-\t\tthis.pokemon = teamData.map(data => Pokemon.fromOriginalData(data, this.main));"""
-    constructor_attach_new = """\t\tthis.main = main;
-\t\tthis.pokemon = teamData.map(data => Pokemon.fromOriginalData(data, this.main));
+    constructor_attach_old = """\t\tthis.pokemon = teamData.map(data => Pokemon.fromOriginalData(data, this.main));"""
+    constructor_attach_new = """\t\tthis.pokemon = teamData.map(data => Pokemon.fromOriginalData(data, this.main));
 \t\tthis.main.team = this;"""
     if constructor_attach_new not in content:
         if constructor_attach_old not in content:
@@ -3915,11 +3913,11 @@ def apply_force_no_dupes():
     Also guards runtime additions so duplicate eggs vanish instead of persisting.
     """
     team_path = JS_ROOT / "game" / "core" / "Team.js"
-    team_content = read_file(team_path)
+    team_content = re.sub(r"[ \t]+(?=\r?$)", "", read_file(team_path), flags=re.MULTILINE)
 
     team_old = """		const seenIds = new Set();
 	    this.pokemon = this.pokemon.filter(p => {
-	        if (seenIds.has(p.id)) return false; // duplicado
+	        if (seenIds.has(p.id)) return false;
 	        seenIds.add(p.id);
 	        return true;
 	    });"""

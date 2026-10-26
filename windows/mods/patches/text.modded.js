@@ -196,6 +196,7 @@ export const text = {
 		cross: ['Cross', 'Cruz', 'Croix', 'Cruz', 'Croce', 'Plus-Form', '十字', '십자형', '十字', 'Krzyż'],
 		xShape: ['X Shape', 'X', 'X', 'X', 'X', 'X-Form', 'Ｘ形', 'X자형', 'X形', 'X'],
 		vShape: ['V Shape', 'V', 'V', 'V', 'V', 'V-Form', 'V形', 'V자형', 'V形', 'V'],
+		star: ['Star', 'Estrella', 'Étoile', 'Estrela', 'Stella', 'Stern', 'スター', '별', '星星', 'Gwiazda'],
 		horizontalLine: ['Horizontal Line', 'Línea Horizontal', 'Ligne Horizontale', 'Linha Horizontal', 'Linea Orizzontale', 'Horizontale Linie', '横線', '가로선', '横线', 'Linia Pozioma'],
 		verticalLine: ['Vertical Line', 'Línea Vertical', 'Ligne Verticale', 'Linha Vertical', 'Linea Verticale', 'Vertikale Linie', '縦線', '세로선', '竖线', 'Linia Pionowa'],
 		lvlUp: ['Level Up', '+ Nivel', 'Niveau +', '+ Nível', '+ Livello', 'Level Up', 'レベルアップ', '레벨업', '升级', 'Poziom +'],
@@ -352,6 +353,10 @@ export const text = {
 			],
 		},
 		unlockables: {
+	findHiddenBoardRoom: ["Find the hidden Board Room entrance on {route}, outside challenges with no wave active.", "Encuentra la entrada oculta a la sala del tablero en {route}, fuera de desafíos y sin oleadas activas.", "Trouvez l’entrée cachée de la salle du plateau sur {route}, hors défi et sans vague active.", "Encontre a entrada escondida da sala do tabuleiro em {route}, fora dos desafios e sem onda ativa.", "Trova l’ingresso nascosto della stanza della scacchiera su {route}, fuori dalle sfide e senza ondate attive.", "Finde den versteckten Eingang zum Schachraum auf {route}, außerhalb von Herausforderungen und ohne aktive Welle.", "チャレンジ外でウェーブがない時に、{route}の隠されたボードルーム入口を見つける。", "챌린지 밖에서 웨이브가 진행 중이 아닐 때 {route}의 숨겨진 보드 룸 입구를 찾으세요.", "在非挑战模式且没有波次进行时，找到{route}隐藏的棋盘房间入口。", "Znajdź ukryte wejście do pokoju z planszą na {route}, poza wyzwaniem i bez aktywnej fali."],
+	unlockCalyrex: ["In {map}, deploy {pieces} on squares that light up chess pieces. More active pieces increase damage. Defeat {pokemon}.", "En {map}, coloca {pieces} en casillas que activen las piezas. Más piezas activas aumentan el daño. Derrota a {pokemon}.", "Dans {map}, placez {pieces} sur les cases qui activent les pièces. Plus de pièces actives augmentent les dégâts. Battez {pokemon}.", "Em {map}, posicione {pieces} nas casas que ativam as peças. Mais peças ativas aumentam o dano. Derrote {pokemon}.", "In {map}, schiera {pieces} sulle caselle che attivano i pezzi. Più pezzi attivi aumentano i danni. Sconfiggi {pokemon}.", "Platziere in {map} {pieces} auf Feldern, die Schachfiguren aktivieren. Mehr aktive Figuren erhöhen den Schaden. Besiege {pokemon}.", "{map}で{pieces}を駒が光るマスに配置する。有効な駒が多いほどダメージが増える。{pokemon}を倒す。", "{map}에서 {pieces}를 체스 말이 활성화되는 칸에 배치하세요. 활성화된 말이 많을수록 피해가 증가합니다. {pokemon}를 쓰러뜨리세요.", "在{map}将{pieces}部署到能点亮棋子的格子上。激活的棋子越多，伤害越高。击败{pokemon}。", "W {map} rozstaw {pieces} na polach aktywujących figury. Więcej aktywnych figur zwiększa obrażenia. Pokonaj {pokemon}."],
+	chessProgress: ["Current board: {count}/{total} active pieces.", "Tablero actual: {count}/{total} piezas activas.", "Plateau actuel : {count}/{total} pièces actives.", "Tabuleiro atual: {count}/{total} peças ativas.", "Scacchiera attuale: {count}/{total} pezzi attivi.", "Aktuelles Brett: {count}/{total} aktive Figuren.", "現在の盤面：有効な駒 {count}/{total}。", "현재 보드: 활성화된 말 {count}/{total}.", "当前棋盘：已激活{count}/{total}个棋子。", "Bieżąca plansza: {count}/{total} aktywnych figur."],
+
 			statsTab: ['Stats', 'Estadísticas', 'Statistiques', 'Estatísticas', 'Statistiche', 'Statistiken', '統計', '통계', '统计', 'Statystyki'],
 			unlockablesTab: ['Unlockables', 'Desbloqueables', 'Déblocables', 'Desbloqueáveis', 'Sbloccabili', 'Freischaltbares', 'アンロック要素', '잠금 해제', '可解锁内容', 'Odblokowania'],
 			locked: ['Locked', 'Bloqueado', 'Verrouillé', 'Bloqueado', 'Bloccato', 'Gesperrt', 'ロック中', '잠김', '已锁定', 'Zablokowane'],
@@ -401,6 +406,18 @@ export const text = {
 		removeAll: ['Remove All', 'Ret. Todo', 'Tout ret.', 'Rem. Tudo', 'Rim. Tutto', 'Alle entf.', 'すべて削除', '모두 제거', '全部移除', 'Usuń wszystkie'],
 		team: ['In team', 'En grupo', 'Dans l’équipe', 'Na equipe', 'In squadra', 'Im Team', 'チームにいる', '팀에 있음', '队伍中', 'W drużynie'],
 		alphabetical: ['Alphabetical', 'Alfabético', 'Alphabétique', 'Alfabético', 'Alfabetico', 'Alphabetisch', 'アルファベット順', '알파벳순', '按字母排序', 'Alfabetycznie'],
+		acquisition: [
+			'Acquisition', // inglés
+			'Adquisición', // español
+			'Acquisition', // francés
+			'Aquisição', // portugués
+			'Acquisizione', // italiano
+			'Erwerb', // alemán
+			'入手', // japonés
+			'획득', // coreano
+			'获取', // chino
+			'Pozyskanie' // polaco
+		],
 		level: ['By Level', 'Nivel', 'Par niveau', 'Por Nível', 'Per Livello', 'Nach Level', 'レベル順', '레벨순', '按等级', 'Według poziomu'],
 		ability: ['Ability', 'Habilidad', 'Talent', 'Habilidade', 'Abilità', 'Fähigkeit', 'とくせい', '특성', '特性', 'Umiejętności'],
 		grass: ['First Grass', 'Primera Hierba', 'Première Herbe', 'Primeira Grama', 'Prima Erba', 'Gras zuerst', '最初の草', '첫 번째 풀', '最初的草', 'Najpierw Trawa'],
@@ -515,6 +532,42 @@ export const text = {
 		waves: ['Waves', 'Oleadas', 'Vagues', 'Ondas', 'Ondate', 'Wellen', 'ウェーブ数', '웨이브 수', '波次数', 'Liczba fal'],
 		select: ['Route Selection', 'Selección de Ruta', 'Sélection de route', 'Seleção de Rota', 'Selezione zona', 'Routenauswahl', 'ルート選択', '경로 선택', '路线选择', 'Wybór drogi'],
 		waveCompleted: ['Wave Completed', 'Oleada Completada', 'Vague terminée', 'Onda Concluída', 'Ondata completata', 'Welle abgeschlossen', 'ウェーブ完了', '웨이브 완료', '波次完成', 'Fala Ukończona'],
+		secretRoutes: [
+			'Secret Routes', // inglés
+			'Rutas Secretas', // español
+			'Routes Secrètes', // francés
+			'Rotas Secretas', // portugués
+			'Percorsi Segreti', // italiano
+			'Geheime Routen', // alemán
+			'秘密のルート', // japonés
+			'비밀 루트', // coreano
+			'秘密路线', // chino
+			'Tajne Trasy' // polaco
+		],
+		routeView: [
+			'Route View', // inglés
+			'Vista de Ruta', // español
+			'Vue de la Route', // francés
+			'Visão da Rota', // portugués
+			'Vista del Percorso', // italiano
+			'Routenansicht', // alemán
+			'ルートビュー', // japonés
+			'루트 보기', // coreano
+			'路线视图', // chino
+			'Widok Trasy' // polaco
+		],
+		globalView: [
+			'Global View', // inglés
+			'Vista Global', // español
+			'Vue Globale', // francés
+			'Visão Global', // portugués
+			'Vista Globale', // italiano
+			'Globale Ansicht', // alemán
+			'全体表示', // japonés
+			'전체 보기', // coreano
+			'全局视图', // chino
+			'Widok Globalny' // polaco
+		]
 	},
 	challenge: {
 		title: ["Challenges", "Desafíos", "Défis", "Desafios", "Sfide", "Herausforderungen", "チャレンジ", "도전", "挑戰", "Wyzwania"],
@@ -571,19 +624,19 @@ export const text = {
 			'To wyzwanie może być niezwykle trudne i nie jest zalecane, dopóki nie odblokujesz większości dostępnych opcji. Nie zaleca się również łączenia go z innymi wyzwaniami, chyba że jesteś doświadczonym graczem.'
 		],
 		bossDebuff: [
-			'Bosses are 25% weaker in this mode.',
-			'Los jefes son un 25% más débiles en este modo.',
-			'Les boss sont 25 % plus faibles dans ce mode.',
-			'Os chefes são 25% mais fracos neste modo.',
-			'I boss sono il 25% più deboli in questa modalità.',
-			'Bosse sind in diesem Modus um 25 % schwächer.',
-			'このモードではボスが25%弱くなります。',
-			'이 모드에서는 보스가 25% 더 약해집니다.',
-			'在此模式下，首领会弱25%。',
-			'Bossowie są w tym trybie o 25% słabsi.'
+			'Enemies are 10% weaker in this mode. <br>Bosses are 25% weaker in this mode.', // inglés
+			'Los enemigos son un 10% más débiles en este modo. <br>Los jefes son un 25% más débiles en este modo.', // español
+			'Les ennemis sont 10 % plus faibles dans ce mode. <br>Les boss sont 25 % plus faibles dans ce mode.', // francés
+			'Os inimigos são 10% mais fracos neste modo. <br>Os chefes são 25% mais fracos neste modo.', // portugués
+			'I nemici sono del 10% più deboli in questa modalità. <br>I boss sono del 25% più deboli in questa modalità.', // italiano
+			'Gegner sind in diesem Modus 10 % schwächer. <br>Bosse sind in diesem Modus 25 % schwächer.', // alemán
+			'このモードでは敵が10%弱くなる。<br>ボスは25%弱くなる。', // japonés
+			'이 모드에서는 적이 10% 약해진다. <br>보스는 25% 약해진다.', // coreano
+			'在此模式下，敌人弱10%。<br>首领弱25%。', // chino
+			'Wrogowie są o 10% słabsi w tym trybie. <br>Bossowie są o 25% słabsi w tym trybie.' // polaco
 		],
 		egg: [
-			"Contains a Pokémon.",
+            "Contains a Pokémon.",
 			"Contiene un Pokémon.",
 			"Contient un Pokémon.",
 			"Contém um Pokémon.",

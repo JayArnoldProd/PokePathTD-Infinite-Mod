@@ -19,6 +19,8 @@ const BOSS = [
 	enemyData['cobalion'], enemyData['tornadus'], enemyData['stakataka'], enemyData['terrakion'],
 	enemyData['magearna'],
 	enemyData['mew'], enemyData['victini'], enemyData['marshadow'], enemyData['sirfetchd'],
+	enemyData['diancie'], enemyData['calyrex'],
+	enemyData['zamazenta'], enemyData['zacian'],
 ]
 
 export class FinalScene extends GameScene {
@@ -248,6 +250,11 @@ export class FinalScene extends GameScene {
 		if (this.boss == enemyData['sirfetchd'] && !this.main.player.secrets['farfetchdGalar']) {
 			this.main.player.secrets.farfetchdGalar = true;
 			this.main.UI.getSecret('farfetchdGalar')
+		}
+
+		if (this.boss == enemyData['calyrex'] && !this.main.player.secrets['calyrex']) {
+			this.main.player.secrets.calyrex = true;
+			this.main.UI.getSecret('calyrex')
 		}
 
 		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);

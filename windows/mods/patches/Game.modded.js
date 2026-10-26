@@ -1,3 +1,4 @@
+// MOD: INFINITE GAME BASE — shared by speed, pause and delta-time features.
 import { Tower } from './component/Tower.js';
 import { text } from '../file/text.js';
 import { playSound } from '../file/audio.js';
@@ -320,7 +321,8 @@ export class Game {
         // ── FIN SUBSTEPS ────────────────────────────────────────────────────
 
         this.main.area.placementTiles.forEach(tile => tile.update(this.mouse));
-		this.drawWindCurrents(time);
+		this.main.area.chessPieces?.forEach(piece => piece.draw());
+        this.drawWindCurrents(time);
 
         if (this.main?.area?.updateLinkBeams) {
             this.main.area.updateLinkBeams(safeDelta);
@@ -715,8 +717,14 @@ export class Game {
 
                     // 2. Limpiar al pasajero ANTES que a la base
                     if (pIndex !== -1) this.main.area.towers.splice(pIndex, 1);
-					if (tile.tower.ability.id === 'icePlatform') this.main.UI.tilesCountNum[2]--;
-					else if (tile.tower.ability.id === 'grassPlatform') this.main.UI.tilesCountNum[1]--;
+			        if (tile.tower.ability.id === 'icePlatform') {
+                        if (!tile.tower.isPassenger) this.main.area.addTiles[2]--;
+                        this.main.UI.tilesCountNum[2]--;
+			        }
+                    else if (tile.tower.ability.id === 'grassPlatform') {
+                        if (!tile.tower.isPassenger) this.main.area.addTiles[1]--;
+                        this.main.UI.tilesCountNum[1]--;
+                    }
 					else this.main.UI.tilesCountNum[tile.land - 1]--;
 
                     // 3. Resetear flags del Pokémon pasajero
@@ -919,18 +927,20 @@ export class Game {
 				return pointInTriangle(p, p0, p1, p2) || pointInTriangle(p, p0, p2, p3);
 			  }
               case 'xShape':
-                if (tower.pokemon?.item?.id == 'condensedBlizzard') {
-                  return distance <= r;
-                } else if (tower.pokemon?.item?.id == 'starPiece') {
-                  return ( (Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r) || ((Math.abs(dx) <= valueSmall && Math.abs(dy) <= r) || (Math.abs(dy) <= valueSmall && Math.abs(dx) <= r)))
-                } else if (tower.pokemon?.item?.id == 'wideLens') {
-                  return (Math.abs(Math.abs(dx) - Math.abs(dy)) < (valueSmall + 24) && distance <= r);
-                } else {
-                  return (Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r);
-                }
-              case 'horizontalLine':
-				return ( Math.abs(dy) <= valueSmall && Math.abs(dx) <= r );
-              case 'verticalLine':
+		        if (tower.pokemon?.item?.id == 'condensedBlizzard') {
+		          return distance <= r;
+		        } else if (tower.pokemon?.item?.id == 'starPiece') {
+		          return ((Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r) || ((Math.abs(dx) <= valueSmall && Math.abs(dy) <= r) || (Math.abs(dy) <= valueSmall && Math.abs(dx) <= r)))
+		        } else if (tower.pokemon?.item?.id == 'wideLens') {
+		          return (Math.abs(Math.abs(dx) - Math.abs(dy)) < (valueSmall + 24) && distance <= r);
+		        } else {
+		          return (Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r);
+		        }
+		    case 'star':
+                return ((Math.abs(Math.abs(dx) - Math.abs(dy)) < valueSmall && distance <= r) || ((Math.abs(dx) <= valueSmall && Math.abs(dy) <= r) || (Math.abs(dy) <= valueSmall && Math.abs(dx) <= r)))
+            case 'horizontalLine':
+                return ( Math.abs(dy) <= valueSmall && Math.abs(dx) <= r );
+            case 'verticalLine':
 				return ( Math.abs(dx) <= valueSmall && Math.abs(dy) <= r );
               default:
                 return distance <= r;
@@ -1058,7 +1068,7 @@ export class Game {
 						pendingBomber.center.y +
 						bestAxis.y * clamped +
 						perpY * scale;
-				}else {
+				} else {
 				    const dist = Math.hypot(dx, dy);
 				    zoneX = clickX;
 				    zoneY = clickY;
@@ -1077,6 +1087,22 @@ export class Game {
 				pendingBomber.bombardCooldown = 0;
 				pendingBomber.awaitingBombardZone = false;
 			    return;
+			}
+
+			const clickX = this._clientToCanvasX(event.clientX);
+			const clickY = this._clientToCanvasY(event.clientY);
+
+			// Buscar torre con pokeSkates cerca del punto de clic (radio generoso, el límite real lo pone nudgeToClick)
+			const skateTower = this.main.area.towers.find(t => {
+			    if (t.pokemon?.item?.id !== 'pokeSkates') return false;
+			    const dx = clickX - t.center.x;
+			    const dy = clickY - t.center.y;
+			    return Math.hypot(dx, dy) <= 70;
+			});
+
+			if (skateTower) {
+			    skateTower.nudgeToClick(clickX, clickY);
+			    return; // no seguir con el resto de la lógica de click (deploy, etc.)
 			}
 
 		    if (!this.activeTile) return;
@@ -1228,6 +1254,22 @@ export class Game {
 		        t.pokemon?.item?.id === 'blimpKeys' &&
 		        t.isWandering
 		    );
+
+		    const clickX = this._clientToCanvasX(event.clientX);
+			const clickY = this._clientToCanvasY(event.clientY);
+
+			// Buscar torre con pokeSkates cerca del punto de clic (radio generoso, el límite real lo pone nudgeToClick)
+			// const skateTower = this.main.area.towers.find(t => {
+			//     if (t.pokemon?.item?.id !== 'pokeSkates') return false;
+			//     const dx = clickX - t.center.x;
+			//     const dy = clickY - t.center.y;
+			//     return Math.hypot(dx, dy) <= 90;
+			// });
+
+			// if (skateTower) {
+			//     skateTower.nudgeToClick(clickX, clickY);
+			//     return; // no abrir la ficha del Pokémon
+			// }
 
 		    if (follower) {
 		        if (follower.anchored) {

@@ -8,7 +8,7 @@ import { ChangePokemonName } from './ChangePokemonName.js';
 import { abilityData } from '../data/abilityData.js';
 import { allPokemon } from '../data/pokemonData.js';
 
-const sort = ['team', 'alphabetical', 'level', 'ability', 'grass', 'water', 'mountain', 'power', 'speed', 'critical', 'range', 'shiny', 'attackType', 'attackShape']
+const sort = ['team', 'alphabetical', 'level', 'ability', 'grass', 'water', 'mountain', 'power', 'speed', 'critical', 'range', 'shiny', 'attackType', 'attackShape', 'acquisition']
 const TAB_CONTENT = ['allTab', 'fieldTab', 'grassTab', 'waterTab', 'mountainTab', 'fossilTab'];
 
 export class BoxScene extends SectionScene {
@@ -209,12 +209,13 @@ export class BoxScene extends SectionScene {
 	            ((searchValue === "area" || searchValue === "aoe") && poke.attackType === 'area') ||
 	            (searchValue === "x" && poke.rangeType === 'xShape') ||
 	            (searchValue === "v" && poke.rangeType === 'vShape') ||
+	            (searchValue === "star" && poke.rangeType === 'star') ||
 	            ((searchValue === "cross" || searchValue === "+") && poke.rangeType === 'cross') ||
 	            (searchValue === "-" && poke.rangeType === 'horizontalLine') ||
 	            ("bombardment".includes(searchValue) && poke.attackType === 'bombardment') ||
 	            ("orbital".includes(searchValue) && poke.attackType === 'orbital') ||
-	            ("stun".includes(searchValue) && ([13, 72, 133, 136, 162].includes(poke.id))) ||
-	            ("slow".includes(searchValue) && ([54, 64, 80, 128, 170].includes(poke.id))) ||
+	            ("stun".includes(searchValue) && (([13, 72, 133, 136, 162].includes(poke.id)) || ['vikavolt'].includes(poke.specie.key))) ||
+	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170].includes(poke.id)) || ['grubbin', 'charjabug'].includes(poke.specie.key))) ||
 	            ("aura".includes(searchValue) && ([83, 111, 144, 172, 175, 176].includes(poke.id))) ||
 	            ("heal".includes(searchValue) && ([83, 103, 109].includes(poke.id))) ||
 	            ("curse".includes(searchValue) && ([16, 180, 73].includes(poke.id))) ||
@@ -230,6 +231,7 @@ export class BoxScene extends SectionScene {
 	    this.displayUnits();
 	}
 
+
 	displayUnits() {
 		this.sortUnits();
 
@@ -237,7 +239,7 @@ export class BoxScene extends SectionScene {
 			const unit = this.units[i];
 			const poke = this.searchPokemon[i];
 			unit.classList.remove('is-selected');
-			unit.classList.remove('shape-circle', 'shape-donut', 'shape-cross', 'shape-x-shape', 'shape-line', 'has-held-item');
+			unit.classList.remove('shape-circle', 'shape-donut', 'shape-cross', 'shape-x-shape', 'shape-v-shape', 'shape-star','shape-line', 'has-held-item');
 
 			if (poke) {
 				if (this.selected && poke === this.selected) unit.classList.add('is-selected');
@@ -267,6 +269,8 @@ export class BoxScene extends SectionScene {
 				unit.classList.toggle('shape-donut', poke.rangeType === 'donut');
 				unit.classList.toggle('shape-cross', poke.rangeType === 'cross');
 				unit.classList.toggle('shape-x-shape', poke.rangeType === 'xShape');
+				unit.classList.toggle('shape-v-shape', poke.rangeType === 'vShape');
+				unit.classList.toggle('shape-star', poke.rangeType === 'star');
 				unit.classList.toggle('shape-line', poke.rangeType === 'horizontalLine');
 				this.units[i].itemBadge.style.display = (poke.item && !poke.isCatalogPlaceholder) ? 'revert-layer' : 'none';
 				this.units[i].itemBadge.style.backgroundImage = poke.item ? `url("${poke.item.sprite}")` : '';
@@ -274,7 +278,7 @@ export class BoxScene extends SectionScene {
 
 				this.units[i].shiny.style.display = (poke.isShiny) ? 'revert-layer' : 'none';
 				this.units[i].text.innerHTML = "";
-				if (this.sorted <= 1 || this.sorted == 11) this.units[i].text.innerHTML = poke.name[this.main.lang];
+				if (this.sorted <= 1 || this.sorted == 11 || sort[this.sorted] === 'acquisition') this.units[i].text.innerHTML = poke.name[this.main.lang];
 				else if (this.sorted == 12) {
 					const typeLabels = {
 						'area': text.box.area?.[this.main.lang] ?? 'AOE',
@@ -561,7 +565,10 @@ export class BoxScene extends SectionScene {
 		            return b.isShiny - a.isShiny;
 		        });
 		        break;
-		    case 'attackType':
+		    case 'acquisition':
+                this.searchPokemon.sort((a, b) => Number(b.favorite) - Number(a.favorite) || b.acquisitionDate - a.acquisitionDate);
+                break;
+            case 'attackType':
 		        {
 		            const typeOrder = { 'area': 0, 'aura': 1, 'single': 2, 'orbital': 3 };
 		            this.searchPokemon.sort((a, b) => {
@@ -573,7 +580,7 @@ export class BoxScene extends SectionScene {
 		        break;
 		    case 'attackShape':
 		        {
-		            const shapeOrder = { 'circle': 0, 'donut': 1, 'cross': 2, 'xShape': 3, 'horizontalLine': 4 };
+		            const shapeOrder = { 'circle': 0, 'donut': 1, 'cross': 2, 'xShape': 3, 'horizontalLine': 4, 'vShape': 5, 'star': 6 };
 		            this.searchPokemon.sort((a, b) => {
 		                if (a.favorite && !b.favorite) return -1;
 		                if (!a.favorite && b.favorite) return 1;
@@ -1010,6 +1017,7 @@ export class BoxScene extends SectionScene {
 		switch (pokemon?.rangeType) {
 			case 'cross': return '+';
 			case 'xShape': return 'X';
+			case 'star': return '*';
 			case 'vShape': return 'V';
 			case 'horizontalLine': return '-';
 			case 'donut':

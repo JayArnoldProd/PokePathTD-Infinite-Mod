@@ -2614,7 +2614,7 @@ class App(tk.Tk):
         star_routes = self.get_star_route_options()
         if star_routes:
             return len(star_routes) * 100
-        return 2900
+        return 3200
 
     def get_complete_all_stages_label(self):
         return f"Complete All Stages ({self.get_complete_all_stages_star_count()} Stars)"

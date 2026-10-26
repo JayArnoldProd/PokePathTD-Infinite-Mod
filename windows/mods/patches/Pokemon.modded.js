@@ -2,7 +2,10 @@ import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Pokemon {
-	constructor(specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false, hideShiny = false, isMega = false, isReset = false, skin = null, extra = false) {
+	constructor(
+		specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false,
+		hideShiny = false, isMega = false, isReset = false, skin = null, extra = false, acquisitionDate = Date.now()
+	) {
 		this.main = main;
 
 		this.specie = specie;
@@ -16,6 +19,7 @@ export class Pokemon {
 		this.isShiny = isShiny;
 		this.isMega = isMega;
 		this.isReset = isReset;
+		this.acquisitionDate = acquisitionDate;
 
 		this.skin = skin;
 		this.extra = extra;
@@ -253,6 +257,7 @@ export class Pokemon {
 	            isReset: this.isReset,
 	            skin: this.skin,
 	            extra: this.extra,
+	            acquisitionDate: this.acquisitionDate,
 	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    } else {
@@ -270,6 +275,7 @@ export class Pokemon {
 	            isReset: this.isReset,
 	            skin: this.skin,
 	            extra: this.extra,
+	            acquisitionDate: this.acquisitionDate,
 	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    }
@@ -306,7 +312,8 @@ export class Pokemon {
 	        data.isMega,
 	        data.isReset,
 	        data.skin,
-	        data.extra
+	        data.extra,
+	        data.acquisitionDate ?? Date.now()
 	    );
 	    // MOD: Restore saved tower placement position
 	    pokemon.tilePosition = data.tilePosition ?? -1;
@@ -369,6 +376,7 @@ export class Pokemon {
 
         // if (this.lvl == 100) this.main.player.unlockAchievement(2);
 
+        if (this.item?.id === 'wacanBerry' && this.specie.key !== 'charjabug') this.retireItem();
         if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
     }
 
@@ -502,7 +510,8 @@ export class Pokemon {
 		this.updateStats();
 		this.setCost();
 		if (this.isShiny) this.setShiny();
-		if (this.main.boxScene.isOpen) this.main.boxScene.update()
+		if (this.main.boxScene.isOpen) this.main.boxScene.update();
+		if (this.main.area.map.id === 35) this.main.area.updateChessPieces()
 	}
 
 	transformADN(targetModeOld = 'first') {
@@ -574,7 +583,7 @@ export class Pokemon {
 				[
 					'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon',
 					'subwoofer', 'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY',
-					'jadeOrb', 'lustrousOrb', 'mitsuesCocktail', 'blimpKeys'
+					'jadeOrb', 'lustrousOrb', 'mitsuesCocktail', 'blimpKeys', 'pokeSkates'
 				].includes(item?.id)
 			) {
 				playSound('pop0', 'ui')
@@ -618,7 +627,7 @@ export class Pokemon {
 
 		if (
 			this.isDeployed &&
-			['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY'].includes(this.item.id)
+			['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY', 'roomService'].includes(this.item.id)
 		) {
 			this.main.area.checkWeather()
 		}
@@ -635,11 +644,14 @@ export class Pokemon {
 		if (item?.megaStone) this.addMegaStone(item?.megaPos);
 		if (this.item?.id == 'silphScope') this.targetMode = 'invisible';
 		this.main.UI.update();
-		if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
+		if (this.item?.id === 'wacanBerry' && this.specie.key !== 'charjabug') this.retireItem();
+        if (this.lvl > 50 && this.item?.id === 'eviolite' && this.main?.area?.inChallenge?.lvlCap !== 50) this.retireItem();
 	}
 
 	retireItem() {
 		if (this.item != null) {
+			let oldItemID = this.item.id;
+
 			if (this.ability.id != 'magician') this.item.equipedBy = undefined;
 
 			if (
@@ -672,6 +684,8 @@ export class Pokemon {
 			if (this.item.id === 'silphScope') this.targetMode = 'first';
 			if (this.item.id === 'ringTarget' || this.id == 53) this.targetMode = 'random';
 			this.item = null;
+
+			if (oldItemID === 'roomService') this.main.area.checkWeather()
 			this.main.UI.update();
 		}
 	}
@@ -717,9 +731,10 @@ export class Pokemon {
 						this.isDeployed = false;
 						this.tilePosition = -1;
 					}
-	}
+                }
 
-	tower.updateStatsFromPokemon();
+                tower.updateStatsFromPokemon();
+                if (tower?.pokemon?.id == 145) this.main.area.checkWeather();
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
                 }

@@ -116,9 +116,9 @@ This document lists all mod features that MUST be present in the modded files. U
 
 ## Tower.modded.js
 - [ ] Delta-time catch-up loops for area and normal attacks, capped at 50 attacks per frame
-- [ ] 1.6.1 bombardment, beam, platform, passenger, and projectile cleanup behavior preserved
+- [ ] 1.6.3 bombardment, beam, platform, passenger, and projectile cleanup behavior preserved
 - [ ] Orbital tower guard plus level-scaled `orbitalSpeed` and `refreshOrbitalProjectiles()`
-- [ ] Projectile retargeting uses the 1.6.1 fallback path without allowing orbital towers to fire normal projectiles
+- [ ] Projectile retargeting uses the 1.6.3 fallback path without allowing orbital towers to fire normal projectiles
 - [ ] `findClosestEnemy()` method on Tower: searches from given position within maxDist
 - [ ] **PERF**: `recalculatePower()` only runs on `_isFirstStep` (not every sub-step)
 - [ ] **PERF**: Squared-distance snowCloak checks
@@ -286,8 +286,8 @@ Vanilla 1.5.6 fixed Pokémon attacking enemies outside the map. Keep this mod cl
   - Max Gold: 9 quadrillion only with `qol`, else vanilla 99.9B
   - Shiny toggle for non-max-evo: only with `shiny` feature (not generic is_modded)
 
-## Feature: Save Editor 1.6.1 Species + Sprite Coverage
-- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (378 keys / 183 obtainable entries for 1.6.1)
+## Feature: Save Editor 1.6.3 Species + Sprite Coverage
+- [ ] `mods/dev/pokemon_data.json` regenerated from runtime `pokemonData.js` (394 keys / 190 obtainable entries for 1.6.3)
 - [ ] Save editor species dropdown sources `allKeys` from regenerated metadata
 - [ ] Normal sprite lookup falls back from bundled `patches/normal_sprites` to extracted runtime `src/assets/images/pokemon/normal`
 - [ ] New 1.6 species (including the Dreepy line) render correctly in save editor UI
@@ -320,3 +320,12 @@ When updating to a new vanilla version:
 - **File encoding**: apply_mods.py MUST be valid UTF-8. Game strings contain Japanese/Korean/accented characters — never roundtrip through Windows-1252. If editing string literals with international chars, verify with `py_compile.compile(path, doraise=True)`.
 - **Internal scripts location**: Internal scripts live in `mods/lib/`. User-facing files stay in `mods/` root. See `UPDATE_GUIDE.md` for full file structure.
 - **Wide maps**: 1.5.6 introduced XL maps (`routeData.xl`) with 60-column placement grids. Preserve `Game.resizeCanvas`, scroll helpers, and `Area` tile-column logic when rebasing.
+
+## 1.6.3 regression checks
+
+- [ ] All 32 normal-route wave-100 and endless boss identities come from current route data, not a legacy 12-route list.
+- [ ] Board Room and Calyrex are listed; live puzzle progress and requirements support all ten languages.
+- [ ] Acquisition sorting coexists with Attack Type/Shape, including Star and V shapes.
+- [ ] Partial +5/+10 purchases reach level 100 for ordinary Pokémon; shiny batches remain uncapped.
+- [ ] Speed installation does not overwrite pause micromanagement.
+- [ ] All 394 species keys have normal/shiny assets and Appletun counts toward the Applin line.

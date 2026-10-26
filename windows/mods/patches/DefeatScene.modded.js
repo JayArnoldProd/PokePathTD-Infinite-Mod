@@ -214,7 +214,13 @@ export class DefeatScene extends GameScene {
 		this.main.player.getHealed(lives);
 		this.close();
 
-		if (autoReset.autoWave) this.main.area.switchAutoWave();
+		// if (autoReset.autoWave) this.main.area.switchAutoWave();
+
+		if (!autoReset.autoWave) return;
+		if (this.main.autoStopBoss && this.main.area.waveNumber == 100) return;
+		if (this.main.autoStopBoss && this.main.area.waveNumber == 50 && this.main.area.map.id >= 12) return;
+
+		this.main.area.switchAutoWave();
 	}
 
 	close() {

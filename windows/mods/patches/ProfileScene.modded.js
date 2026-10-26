@@ -13,14 +13,14 @@ import { achievementReworkData } from '../data/achievementReworkData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
-// Every obtainable secret line in the 1.6.1 pokemonData secretPokemon export.
+// Every obtainable secret line in the 1.6.3 pokemonData secretPokemon export.
 // Cacturne is represented by its unlock-time base form, Cacnea.
 const SECRET_POKEMON_KEYS = [
 	'greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot',
 	'shedinja', 'gholdengo', 'stakataka', 'manaphy', 'phione', 'missingNo',
 	'spiritomb', 'bronzor', 'minior', 'corsolaGalar', 'keldeo', 'victini',
 	'mew', 'marshadow', 'terrakion', 'cobalion', 'farfetchdGalar',
-	'ironThorns', 'sandyShocks', 'dhelmise',
+	'ironThorns', 'sandyShocks', 'dhelmise', 'calyrex',
 ];
 
 const PROFILE_STAT_FALLBACK_TEXT = {
@@ -63,6 +63,10 @@ const PROFILE_STAT_FALLBACK_TEXT = {
 };
 
 const PROFILE_UNLOCKABLE_TEXT = {
+	findHiddenBoardRoom: ["Find the hidden Board Room entrance on {route}, outside challenges with no wave active.", "Encuentra la entrada oculta a la sala del tablero en {route}, fuera de desafíos y sin oleadas activas.", "Trouvez l’entrée cachée de la salle du plateau sur {route}, hors défi et sans vague active.", "Encontre a entrada escondida da sala do tabuleiro em {route}, fora dos desafios e sem onda ativa.", "Trova l’ingresso nascosto della stanza della scacchiera su {route}, fuori dalle sfide e senza ondate attive.", "Finde den versteckten Eingang zum Schachraum auf {route}, außerhalb von Herausforderungen und ohne aktive Welle.", "チャレンジ外でウェーブがない時に、{route}の隠されたボードルーム入口を見つける。", "챌린지 밖에서 웨이브가 진행 중이 아닐 때 {route}의 숨겨진 보드 룸 입구를 찾으세요.", "在非挑战模式且没有波次进行时，找到{route}隐藏的棋盘房间入口。", "Znajdź ukryte wejście do pokoju z planszą na {route}, poza wyzwaniem i bez aktywnej fali."],
+	unlockCalyrex: ["In {map}, deploy {pieces} on squares that light up chess pieces. More active pieces increase damage. Defeat {pokemon}.", "En {map}, coloca {pieces} en casillas que activen las piezas. Más piezas activas aumentan el daño. Derrota a {pokemon}.", "Dans {map}, placez {pieces} sur les cases qui activent les pièces. Plus de pièces actives augmentent les dégâts. Battez {pokemon}.", "Em {map}, posicione {pieces} nas casas que ativam as peças. Mais peças ativas aumentam o dano. Derrote {pokemon}.", "In {map}, schiera {pieces} sulle caselle che attivano i pezzi. Più pezzi attivi aumentano i danni. Sconfiggi {pokemon}.", "Platziere in {map} {pieces} auf Feldern, die Schachfiguren aktivieren. Mehr aktive Figuren erhöhen den Schaden. Besiege {pokemon}.", "{map}で{pieces}を駒が光るマスに配置する。有効な駒が多いほどダメージが増える。{pokemon}を倒す。", "{map}에서 {pieces}를 체스 말이 활성화되는 칸에 배치하세요. 활성화된 말이 많을수록 피해가 증가합니다. {pokemon}를 쓰러뜨리세요.", "在{map}将{pieces}部署到能点亮棋子的格子上。激活的棋子越多，伤害越高。击败{pokemon}。", "W {map} rozstaw {pieces} na polach aktywujących figury. Więcej aktywnych figur zwiększa obrażenia. Pokonaj {pokemon}."],
+	chessProgress: ["Current board: {count}/{total} active pieces.", "Tablero actual: {count}/{total} piezas activas.", "Plateau actuel : {count}/{total} pièces actives.", "Tabuleiro atual: {count}/{total} peças ativas.", "Scacchiera attuale: {count}/{total} pezzi attivi.", "Aktuelles Brett: {count}/{total} aktive Figuren.", "現在の盤面：有効な駒 {count}/{total}。", "현재 보드: 활성화된 말 {count}/{total}.", "当前棋盘：已激活{count}/{total}个棋子。", "Bieżąca plansza: {count}/{total} aktywnych figur."],
+
 	statsTab: ['Stats', 'Estadísticas', 'Statistiques', 'Estatísticas', 'Statistiche', 'Statistiken', '統計', '통계', '统计', 'Statystyki'],
 	unlockablesTab: ['Unlockables', 'Desbloqueables', 'Déblocables', 'Desbloqueáveis', 'Sbloccabili', 'Freischaltbares', 'アンロック要素', '잠금 해제', '可解锁内容', 'Odblokowania'],
 	locked: ['Locked', 'Bloqueado', 'Verrouillé', 'Bloqueado', 'Bloccato', 'Gesperrt', 'ロック中', '잠김', '已锁定', 'Zablokowane'],
@@ -163,7 +167,7 @@ export class ProfileScene extends SectionScene {
 
 		this.achievementsContainer = new Element(this.container, { className: 'profile-scene-achievements-container' }).element;
 		this.achievement = [];
-		for (let i = 0; i < 39; i++) {
+		for (let i = 0; i < achievementReworkData.length; i++) {
 			this.achievement[i] = new Element(this.achievementsContainer, { className: 'profile-scene-achievement' }).element;
 		}
 
@@ -458,6 +462,7 @@ export class ProfileScene extends SectionScene {
 		if (!key) return null;
 
 		const formToMain = {
+			appletun: 'flapple',
 			aegislashSword: 'aegislash',
 			lycanrocNight: 'lycanrocDay',
 			megaAbsol: 'absol',
@@ -612,6 +617,31 @@ export class ProfileScene extends SectionScene {
 		);
 
 		entries.push(
+			{
+				id: 'secret-board-room',
+				order: 10350,
+				name: this.getRouteName(35),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('findHiddenBoardRoom', lang), { route: this.getRouteName(34) }),
+				icon: routeData[35].background,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secretMaps?.secretChess,
+			},
+			{
+				id: 'secret-calyrex',
+				order: 10355,
+				name: localized(pokemonData.calyrex.name, lang),
+				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
+				unlockText: formatTemplate(getProfileUnlockableText('unlockCalyrex', lang), {
+					map: this.getRouteName(35), pokemon: localized(pokemonData.calyrex.name, lang),
+					pieces: ['kingdra', 'vespiquen', 'pawniard', 'bisharp', 'kingambit', 'stakataka'].map(key => localized(pokemonData[key].name, lang)).join(', '),
+				}) + (this.main.area?.map?.id === 35 ? ' ' + formatTemplate(getProfileUnlockableText('chessProgress', lang), {
+					count: this.main.area.activePieces || 0, total: this.main.area.chessPieces?.length || 0,
+				}) : ''),
+				icon: pokemonData.calyrex.sprite.base,
+				secretLevel: 'normal',
+				isUnlocked: () => !!this.main.player?.secrets?.calyrex || this.hasPokemonKey('calyrex'),
+			},
 			{
 				id: 'secret-greavard',
 				order: 10000,
@@ -1025,11 +1055,11 @@ export class ProfileScene extends SectionScene {
 		this.stats[4].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestPokemonLevel, this.main.lang)}`;
 		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}`;
 		this.stats[6].value.innerText = `$${this.main.utility.numberDot(this.main.player.stats.totalGold, this.main.lang)}`;
-		this.stats[7].value.innerText = `${this.main.player.itemAmount}/139`;
+		this.stats[7].value.innerText = `${this.main.player.itemAmount}/146`;
 		this.stats[8].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.wavesCompleted, this.main.lang)}`;
 		this.stats[9].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestHit, this.main.lang)}`;
 		this.stats[10].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.defeatedEnemies, this.main.lang)}`;
-		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/274`;
+		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/293`;
 		this.stats[12].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedStuns, this.main.lang)}`;
 		this.stats[13].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedSlows, this.main.lang)}`;
 		this.stats[14].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedBurns, this.main.lang)}`;

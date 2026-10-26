@@ -1,21 +1,25 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.6.1
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.6.3
 
-**Compatible with PokePath TD v1.6.1 on Windows** ✅
+**Compatible with PokePath TD v1.6.3 on Windows** ✅
 
 A comprehensive mod pack for **PokePath TD** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
 
-> **v1.6.1 status:** Windows compatibility is current. macOS support remains on its older release track pending a dedicated validation pass.
+> **v1.6.3 release:** Windows compatibility has been validated on a clean 1.6.3 installation. macOS support remains on its older release track pending a dedicated validation pass.
 >
 > **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
 >
-> **Windows v1.6.1 refresh (2026-09-02):**
-> - Rebases the full mod onto PokePath TD 1.6.1, including all 1.6.0 content and the 1.6.1 balance and bug fixes
+> **Windows v1.6.3 refresh (2026-10-26):**
+> - Rebases the full mod onto PokePath TD 1.6.3, including the 1.6.2 content expansion and 1.6.3 balance and bug fixes
 > - Updates installer compatibility checks, save-editor data, route progress, sprites, and high-speed tower behavior
-> - Includes the renderer gray-screen hotfix and strict ES-module startup validation
-> - Audits all 26 secret Pokémon, 5 secret maps, and the hidden welcome gift, with exact Unlockables instructions in all 10 built-in languages
+> - Validates renderer startup, pause + speed together, new route bosses, and all new species in real Electron tests
+> - Audits all 27 secret Pokémon, 6 secret maps, and the hidden welcome gift, with exact Unlockables instructions in all 10 built-in languages
 
+> **New hidden content:** the Board Room entrance is on Route 8-2, outside a challenge while no wave is active. Deploy Kingdra, Vespiquen, Pawniard/Bisharp/Kingambit, or Stakataka on qualifying squares to activate chess pieces and increase damage against Calyrex. Unlockables shows live active-piece progress while in the room.
+>
+> **Vanilla overlap:** retains both map views, Acquisition sorting, new range/filter indicators, draft restart and the corrected collection counters. The mod keeps its extra sorts, duplicate-aware collection counts, and partial +5/+10 purchases near level 100; shiny Pokémon retain infinite leveling. All new species already ship with official shiny art, which takes precedence over older bundled sprites.
+>
 > ### 🚨 Updating from a previous mod version?
 > **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
 
@@ -58,9 +62,9 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Profile Tracking** - Shiny enemy defeats are recorded in Profile
 
 ### 🔧 Quality of Life
-- **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.6.1
-- **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.6.1 provides its own attack/field indicators and target-mode guards
-- **Unlockables Profile Tab** - Track every challenge reward, all 26 secret Pokémon, all 5 secret maps, and the hidden welcome gift with verified unlock conditions
+- **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.6.3
+- **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.6.3 provides its own attack/field indicators and target-mode guards
+- **Unlockables Profile Tab** - Track every challenge reward, all 27 secret Pokémon, all 6 secret maps, and the hidden welcome gift with verified unlock conditions
 - **Live Profile Updates** - Stats in profile update while the menu is open
 - **Built-in Language Support** - Mod-added UI text supports all built-in game languages
 - **Tower Placement Persistence** - When you close and open the game, your Tower Placement and Party Remains
@@ -113,12 +117,13 @@ Your save data is kept separate and is not overwritten by the installer.
 ## 📥 Downloads
 
 **Latest + fallback releases:**
-- **Windows (latest):** [PokePath-TD-INFINITE-Windows-v1.6.1.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.6.1/PokePath-TD-INFINITE-Windows-v1.6.1.zip)
+- **Windows (latest 1.6.3):** [PokePath-TD-INFINITE-Windows-v1.6.3.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.6.3/PokePath-TD-INFINITE-Windows-v1.6.3.zip)
+- **Windows (older 1.6.1):** [PokePath-TD-INFINITE-Windows-v1.6.1.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.6.1/PokePath-TD-INFINITE-Windows-v1.6.1.zip)
 - **Windows (older):** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
 - **macOS ZIP (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
 - **macOS DMG (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
 
-> 💡 **Match your game version.** Windows v1.6.1 targets **PokePath TD 1.6.1**.
+> 💡 **Match your game version.** Windows v1.6.3 targets **PokePath TD 1.6.3**.
 > macOS is still on the older **1.4.4** release track for now.
 
 ---
@@ -142,7 +147,7 @@ Your save data is kept separate and is not overwritten by the installer.
 
 ### Windows
 
-1. Download **`PokePath-TD-INFINITE-Windows-v1.6.1.zip`** from the latest release.
+1. Download **`PokePath-TD-INFINITE-Windows-v1.6.3.zip`** from the [v1.6.3 release](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.6.3).
 2. Extract it anywhere.
 3. Copy the included **`mods`** folder into your game directory:
    ```
@@ -208,7 +213,7 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
   - `windows/mods/`
   - `mac/PokePath-TD-INFINITE-Mac/`
 - The Windows release intentionally includes a top-level **`mods`** folder so users can drop it directly into the game directory.
-- Recommended for Windows: **v1.6.1**.
+- Recommended for Windows: **v1.6.3**.
 - Older fallback release: **v1.4.4 (older)**.
 
 ---

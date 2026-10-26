@@ -27,7 +27,7 @@ export class Projectile extends Sprite {
 
         this.markedForDeletion = false;
 
-        this.lifeTime = 5000;
+        this.lifeTime = (this.tower?.ability?.id === 'electroBall') ? 40000 : 5000;
         this.age = 0;
 
         this.pulse = {
@@ -514,6 +514,7 @@ export class Projectile extends Sprite {
             finalDamage += Math.floor(finalDamage * mmBonus * 0.2);
         }
 
+        if (this.tower?.ability?.id === 'electroBall') finalDamage = Math.max(finalDamage, Math.floor(finalDamage * (this.age/1000)));
         if (this.tower?.pokemon?.item?.id == 'hardStone') finalDamage += Math.floor(finalDamage * 0.25);
         if (this.tower?.pokemon?.item?.id == 'clawFossil') finalDamage += Math.floor(finalDamage * (this.tower.main.player.fossilInTeam * 0.1));
         if (this.tower?.pokemon?.item?.id == 'cellBattery') finalDamage += Math.floor(finalDamage * 0.5);
@@ -522,9 +523,12 @@ export class Projectile extends Sprite {
             this.tower?.pokemon?.item?.id == 'thickClub' ||
             this.tower?.pokemon?.item?.id == 'lightBall' ||
             this.tower?.pokemon?.item?.id == 'metalPowder' ||
-            this.tower?.pokemon?.item?.id == 'lifeOrb' ||
-            this.tower?.pokemon?.item?.id ==  'nanabBerry'
-        ) finalDamage += Math.ceil(this.power / 2);
+            this.tower?.pokemon?.item?.id == 'lifeOrb'
+        ) finalDamage += Math.ceil(this.power * 0.5);
+
+        if (this.tower?.pokemon?.item?.id ==  'nanabBerry') {
+            finalDamage += (this.tower.main.area.unnerve) ? Math.ceil(this.power * 0.55) : Math.ceil(this.power * 0.5);
+        }
 
         if (this.tower?.pokemon?.item?.id == 'eviolite') finalDamage += Math.ceil(this.power / 5);
 
@@ -668,13 +672,25 @@ export class Projectile extends Sprite {
             finalDamage = (this.tower.main.area.weather == 'extremelyHarshSunlight') ? Math.ceil(finalDamage * 3) : Math.ceil(finalDamage * 2)
         }
 
+        if (this.tower?.pokemon?.ability.id === 'supremeOverlord') {
+            let soMultiplier = (10 - this.tower.main.team.pokemon.length) * 10;
+            finalDamage += Math.ceil((finalDamage * soMultiplier)/100);
+            critical += (10 - this.tower.main.team.pokemon.length) * 5;
+        }
+
         if (this.tower.criticalAura) critical += 20;
         if (this.tower.genesisAura) critical += 5;
 
         if (this.tower?.pokemon?.item?.id == 'direHit') critical += (this.tower?.ability?.id == 'simple') ? 43.8 : 25;
         if (this.tower?.pokemon?.item?.id == 'expertBelt') critical += (this.tower?.ability?.id == 'simple') ? 17.5 : 10;
-        if (this.tower?.pokemon?.item?.id == 'lansatBerry' && this.tower?.lansatBerryTimer > 0) {
-            critical += (this.tower?.ability?.id == 'simple') ? 105 : 60;
+        if ((this.tower?.pokemon?.item?.id == 'lansatBerry' || this.tower?.pokemon?.item?.id == 'berryPouch') && this.tower?.lansatBerryTimer > 0) {
+            if (this.tower?.ability?.id == 'simple') {
+                critical += (this.tower.main.area.unnerve) ? 116 : 105;
+            } else {
+                if (this.tower?.ability?.id == 'ripen') critical += (this.tower.main.area.unnerve) ? 132 : 120;
+                else critical += (this.tower.main.area.unnerve) ? 66 : 60;
+            }
+
         }
 
         if (this.tower?.ability?.id == 'chatter') {
@@ -863,6 +879,15 @@ export class Projectile extends Sprite {
             (this.tower?.pokemon?.item?.id == 'lightClay') ? this.enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2.2 }) : this.enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
         }
 
+        if (
+            (this.enemy.canStun || this.tower?.pokemon?.item?.id === 'bindingBand') &&
+            (
+                this.tower?.ability?.id === 'electroBall'
+            )
+        ) {
+            (this.tower?.pokemon?.item?.id == 'lightClay') ? this.enemy.applyStatusEffect({ type: 'stun', duration: 2.2 }) : this.enemy.applyStatusEffect({ type: 'stun',  duration: 2 });
+        }
+
         if (this.enemy.canStun && this.tower?.ability?.id === 'stunMono') {
             if (Math.random() < 0.3) {
                 (this.tower?.pokemon?.item?.id == 'lightClay') ? this.enemy.applyStatusEffect({ type: 'stun', duration: 2.2 }) : this.enemy.applyStatusEffect({ type: 'stun', duration: 2 });
@@ -889,9 +914,9 @@ export class Projectile extends Sprite {
         if ((
                 this.tower?.pokemon?.item?.id == "maliciousArmor" ||
                 (isCritical && this.tower?.pokemon?.item?.id == "crunchies") ||
-                this.tower?.ability?.id === 'splash' ||  this.tower?.ability?.id === 'auraSphere' ||
+                this.tower?.ability?.id === 'splash' ||  this.tower?.ability?.id === 'auraSphere' || this.tower?.ability?.id === 'pollenPuff' ||
                 this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||
-                this.tower?.ability?.id === 'burnSplash' ||
+                this.tower?.ability?.id === 'burnSplash' || this.tower?.ability?.id === 'electroBall' ||
                 this.tower?.ability?.id === 'armorBreakSplash' ||
                 this.tower?.ability?.id === 'synchronySplash' ||
                 this.tower?.ability?.id ==='curseSplash' ||
@@ -906,11 +931,14 @@ export class Projectile extends Sprite {
             if (this.tower?.pokemon?.item?.id == "dragonFang") splashRadius = 130;
             if (this.tower?.lightningRodCharge == 10) splashRadius = 150;
             if (this.tower?.ability?.id === 'auraSphere') splashRadius += 6.5 * (Math.abs(this.tower.main.player.health[this.tower.main.area.routeNumber] - 14));
+            if (this.tower?.ability?.id === 'pollenPuff')
+                splashRadius += (this.tower?.pokemon?.item?.id == 'nectar') ? this.tower.main.area.honeyGather * 3 : this.tower.main.area.honeyGather;
 
             this.tower.main.area.enemies.forEach(e => {
                 if (e !== this.enemy && e.hp > 0) {
                     const dist = Math.hypot(e.center.x - this.enemy.center.x, e.center.y - this.enemy.center.y);
                     if (dist <= splashRadius) {
+
                         let splashDamage = (this.tower?.pokemon?.item?.id == 'muscleBand' || this.tower?.ability?.id === 'auraSphere') ? finalDamage : Math.ceil(finalDamage * 0.5);
                         e.getDamaged(splashDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower);
                         if (e.canBurn && this.tower?.ability?.id === 'burnSplash') {
@@ -920,6 +948,10 @@ export class Projectile extends Sprite {
                         }
                         if (e.canSlow && (this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill')) {
                             (this.tower?.pokemon?.item?.id == 'lightClay') ? e.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2.2 }) : e.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
+                        }
+
+                        if (e.canStun && this.tower?.ability?.id === 'electroBall') {
+                            (this.tower?.pokemon?.item?.id == 'lightClay') ? e.applyStatusEffect({ type: 'stun', duration: 2.2 }) : e.applyStatusEffect({ type: 'stun', duration: 2 });
                         }
 
                         if (this.tower?.ability?.id === 'curseSplash') e.applyStatusEffect({ type: 'curse' });
@@ -952,6 +984,29 @@ export class Projectile extends Sprite {
                     dedupTime: 250
                 });
             } else this.tower.spikyShieldChance += 0.25;
+        }
+
+        // CREAR STICKY WEB
+        if (this.tower?.ability?.id === 'stickyWeb') {
+
+            const pos = { x: this.position.x+16, y: this.position.y+16 };
+
+            const web = this.tower.main.area.createSpikeZone(pos, this.tower, {
+                radius: 30,
+                duration: 4100,
+                tickRate: 500,
+                dedupDistance: 32,
+                dedupTime: 250,
+                slow: true,
+                slowFactor: 0.5
+            });
+
+            this.tower?.main?.area?.towers?.forEach(t => {
+                if (t.pokemon.id === 25) {
+                    t.lastStickyWeb = web;
+                    t.jumpToStickyWeb(pos);
+                }
+            });
         }
 
         if (this.tower?.pokemon?.item?.id == 'revysBook' && Math.random() < 0.01) {
@@ -997,9 +1052,10 @@ export class Projectile extends Sprite {
         if ((
             this.tower?.pokemon?.item?.id == "maliciousArmor" ||
             (isCritical && this.tower?.pokemon?.item?.id == "crunchies") ||
-            this.tower?.ability?.id === 'splash' || this.tower?.ability?.id === 'auraSphere' ||
+            this.tower?.ability?.id === 'splash' || this.tower?.ability?.id === 'auraSphere' || this.tower?.ability?.id === 'pollenPuff' ||
             this.tower?.ability?.id === 'slowSplash' || this.tower?.ability?.id === 'hyperDrill' ||
             this.tower?.ability?.id === 'burnSplash' ||
+            this.tower?.ability?.id === 'electroBall' ||
             this.tower?.ability?.id === 'armorBreakSplash' ||
             this.tower?.ability?.id === 'synchronySplash' ||
             this.tower?.ability?.id === 'curseSplash' ||
@@ -1017,6 +1073,9 @@ export class Projectile extends Sprite {
                 pulseRadius = 150;
                 this.tower.lightningRodCharge = 0;
             }
+
+            if (this.tower?.ability?.id === 'pollenPuff')
+                pulseRadius += (this.tower?.pokemon?.item?.id == 'nectar') ? this.tower.main.area.honeyGather * 3 : this.tower.main.area.honeyGather;
 
             this.pulse = {
                 active: true,

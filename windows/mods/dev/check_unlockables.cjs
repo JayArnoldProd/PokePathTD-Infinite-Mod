@@ -226,6 +226,7 @@ const mapEntryByRouteId = new Map([
     [31, 'secret-victini-cave'],
     [32, 'secret-marshadow-cave'],
     [33, 'secret-castle-room'],
+    [35, 'secret-board-room'],
 ]);
 for (const routeId of secretMapIds) {
     const entryId = mapEntryByRouteId.get(routeId);

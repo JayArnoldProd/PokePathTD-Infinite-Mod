@@ -16,6 +16,8 @@
     "ampharos",
     "annihilape",
     "anorith",
+    "appletun",
+    "applin",
     "araquanid",
     "arbok",
     "archen",
@@ -47,6 +49,7 @@
     "buneary",
     "cacnea",
     "cacturne",
+    "calyrex",
     "camerupt",
     "capsakid",
     "carbink",
@@ -56,6 +59,7 @@
     "ceruledge",
     "charcadet",
     "charizard",
+    "charjabug",
     "charmander",
     "charmeleon",
     "chatot",
@@ -88,6 +92,7 @@
     "cryogonal",
     "cubone",
     "cursola",
+    "cutiefly",
     "cyndaquil",
     "dartrix",
     "decidueye",
@@ -118,6 +123,7 @@
     "dudunsparce",
     "dunsparce",
     "ekans",
+    "eldegoss",
     "electrode",
     "emboar",
     "excadrill",
@@ -130,6 +136,7 @@
     "ferroseed",
     "ferrothorn",
     "flaaffy",
+    "flapple",
     "floragato",
     "flygon",
     "forretress",
@@ -145,10 +152,12 @@
     "girafarig",
     "golduck",
     "golisopod",
+    "gossifleur",
     "greavard",
     "greninja",
     "grotle",
     "grovyle",
+    "grubbin",
     "grumpig",
     "gulpin",
     "gyarados",
@@ -179,6 +188,7 @@
     "kabutops",
     "kadabra",
     "keldeo",
+    "kingambit",
     "kingdra",
     "kirlia",
     "klang",
@@ -276,6 +286,9 @@
     "pineco",
     "plusle",
     "popplio",
+    "porygon",
+    "porygon2",
+    "porygonZ",
     "primarina",
     "primeape",
     "psyduck",
@@ -286,6 +299,7 @@
     "ralts",
     "rampardos",
     "remoraid",
+    "ribombee",
     "riolu",
     "rockruff",
     "roselia",
@@ -357,12 +371,14 @@
     "totodile",
     "trapinch",
     "treecko",
+    "tropius",
     "turtwig",
     "typhlosion",
     "venusaur",
     "vespiquen",
     "vibrava",
     "victini",
+    "vikavolt",
     "volcarona",
     "voltorb",
     "vulpix",
@@ -396,6 +412,10 @@
       "evolves_to": "armaldo",
       "level": 40
     },
+    "applin": {
+      "evolves_to": "flapple",
+      "level": 60
+    },
     "archen": {
       "evolves_to": "archeops",
       "level": 37
@@ -427,6 +447,10 @@
     "binacle": {
       "evolves_to": "barbaracle",
       "level": 39
+    },
+    "bisharp": {
+      "evolves_to": "kingambit",
+      "level": 70
     },
     "braixen": {
       "evolves_to": "delphox",
@@ -467,6 +491,10 @@
     "charcadet": {
       "evolves_to": "armarouge",
       "level": 40
+    },
+    "charjabug": {
+      "evolves_to": "vikavolt",
+      "level": 55
     },
     "charmander": {
       "evolves_to": "charmeleon",
@@ -539,6 +567,10 @@
     "cubone": {
       "evolves_to": "marowak",
       "level": 28
+    },
+    "cutiefly": {
+      "evolves_to": "ribombee",
+      "level": 25
     },
     "cyndaquil": {
       "evolves_to": "quilava",
@@ -660,6 +692,10 @@
       "evolves_to": "farigiraf",
       "level": 60
     },
+    "gossifleur": {
+      "evolves_to": "eldegoss",
+      "level": 20
+    },
     "greavard": {
       "evolves_to": "houndstone",
       "level": 30
@@ -671,6 +707,10 @@
     "grovyle": {
       "evolves_to": "sceptile",
       "level": 36
+    },
+    "grubbin": {
+      "evolves_to": "charjabug",
+      "level": 20
     },
     "gulpin": {
       "evolves_to": "swalot",
@@ -879,6 +919,14 @@
     "popplio": {
       "evolves_to": "brionne",
       "level": 17
+    },
+    "porygon": {
+      "evolves_to": "porygon2",
+      "level": 40
+    },
+    "porygon2": {
+      "evolves_to": "porygonZ",
+      "level": 60
     },
     "primeape": {
       "evolves_to": "annihilape",
@@ -1102,6 +1150,8 @@
     "alomomola",
     "amaura",
     "anorith",
+    "appletun",
+    "applin",
     "archen",
     "aron",
     "barboach",
@@ -1114,6 +1164,7 @@
     "bulbasaur",
     "buneary",
     "cacnea",
+    "calyrex",
     "capsakid",
     "carbink",
     "carvanha",
@@ -1140,6 +1191,7 @@
     "cranidos",
     "cryogonal",
     "cubone",
+    "cutiefly",
     "cyndaquil",
     "deino",
     "dewpider",
@@ -1167,7 +1219,9 @@
     "gastly",
     "gholdengo",
     "girafarig",
+    "gossifleur",
     "greavard",
+    "grubbin",
     "gulpin",
     "hawlucha",
     "heracross",
@@ -1237,6 +1291,7 @@
     "pineco",
     "plusle",
     "popplio",
+    "porygon",
     "psyduck",
     "pyukumuku",
     "ralts",
@@ -1286,6 +1341,7 @@
     "totodile",
     "trapinch",
     "treecko",
+    "tropius",
     "turtwig",
     "victini",
     "voltorb",
@@ -1308,6 +1364,7 @@
     "ambipom",
     "ampharos",
     "annihilape",
+    "appletun",
     "araquanid",
     "arbok",
     "archeops",
@@ -1319,11 +1376,11 @@
     "barbaracle",
     "bastiodon",
     "bibarel",
-    "bisharp",
     "blastoise",
     "breloom",
     "bronzong",
     "cacturne",
+    "calyrex",
     "camerupt",
     "carbink",
     "carracosta",
@@ -1357,6 +1414,7 @@
     "drifblim",
     "drudiggon",
     "dudunsparce",
+    "eldegoss",
     "electrode",
     "emboar",
     "excadrill",
@@ -1364,6 +1422,7 @@
     "farigiraf",
     "feraligatr",
     "ferrothorn",
+    "flapple",
     "flygon",
     "forretress",
     "gardevoir",
@@ -1390,6 +1449,7 @@
     "jumpluff",
     "kabutops",
     "keldeo",
+    "kingambit",
     "kingdra",
     "klinklang",
     "krookodile",
@@ -1447,10 +1507,12 @@
     "phione",
     "pidgeot",
     "plusle",
+    "porygonZ",
     "primarina",
     "pyukumuku",
     "raichu",
     "rampardos",
+    "ribombee",
     "roserade",
     "sableye",
     "samurott",
@@ -1484,10 +1546,12 @@
     "thievul",
     "torkoal",
     "torterra",
+    "tropius",
     "typhlosion",
     "venusaur",
     "vespiquen",
     "victini",
+    "vikavolt",
     "volcarona",
     "watchog",
     "weavile",
@@ -1526,6 +1590,13 @@
     "anorith": [
       "anorith",
       "armaldo"
+    ],
+    "appletun": [
+      "appletun"
+    ],
+    "applin": [
+      "applin",
+      "flapple"
     ],
     "archen": [
       "archen",
@@ -1578,6 +1649,9 @@
     "cacnea": [
       "cacnea",
       "cacturne"
+    ],
+    "calyrex": [
+      "calyrex"
     ],
     "capsakid": [
       "capsakid",
@@ -1678,6 +1752,10 @@
     "cubone": [
       "cubone",
       "marowak"
+    ],
+    "cutiefly": [
+      "cutiefly",
+      "ribombee"
     ],
     "cyndaquil": [
       "cyndaquil",
@@ -1789,9 +1867,18 @@
       "girafarig",
       "farigiraf"
     ],
+    "gossifleur": [
+      "gossifleur",
+      "eldegoss"
+    ],
     "greavard": [
       "greavard",
       "houndstone"
+    ],
+    "grubbin": [
+      "grubbin",
+      "charjabug",
+      "vikavolt"
     ],
     "gulpin": [
       "gulpin",
@@ -2020,7 +2107,8 @@
     ],
     "pawniard": [
       "pawniard",
-      "bisharp"
+      "bisharp",
+      "kingambit"
     ],
     "petilil": [
       "petilil",
@@ -2049,6 +2137,11 @@
       "popplio",
       "brionne",
       "primarina"
+    ],
+    "porygon": [
+      "porygon",
+      "porygon2",
+      "porygonZ"
     ],
     "psyduck": [
       "psyduck",
@@ -2245,6 +2338,9 @@
       "grovyle",
       "sceptile"
     ],
+    "tropius": [
+      "tropius"
+    ],
     "turtwig": [
       "turtwig",
       "grotle",
@@ -2294,6 +2390,8 @@
     "ampharos": "ampharos.png",
     "annihilape": "annihilape.png",
     "anorith": "anorith.png",
+    "appletun": "appletun.png",
+    "applin": "applin.png",
     "araquanid": "araquanid.png",
     "arbok": "arbok.png",
     "archen": "archen.png",
@@ -2325,6 +2423,7 @@
     "buneary": "buneary.png",
     "cacnea": "cacnea.png",
     "cacturne": "cacturne.png",
+    "calyrex": "calyrex.png",
     "camerupt": "camerupt.png",
     "capsakid": "capsakid.png",
     "carbink": "carbink.png",
@@ -2334,6 +2433,7 @@
     "ceruledge": "ceruledge.png",
     "charcadet": "charcadet.png",
     "charizard": "charizard.png",
+    "charjabug": "charjabug.png",
     "charmander": "charmander.png",
     "charmeleon": "charmeleon.png",
     "chatot": "chatot.png",
@@ -2366,6 +2466,7 @@
     "cryogonal": "cryogonal.png",
     "cubone": "cubone.png",
     "cursola": "cursola.png",
+    "cutiefly": "cutiefly.png",
     "cyndaquil": "cyndaquil.png",
     "dartrix": "dartrix.png",
     "decidueye": "decidueye.png",
@@ -2396,6 +2497,7 @@
     "dudunsparce": "dudunsparce.png",
     "dunsparce": "dunsparce.png",
     "ekans": "ekans.png",
+    "eldegoss": "eldegoss.png",
     "electrode": "electrode.png",
     "emboar": "emboar.png",
     "excadrill": "excadrill.png",
@@ -2408,6 +2510,7 @@
     "ferroseed": "ferroseed.png",
     "ferrothorn": "ferrothorn.png",
     "flaaffy": "flaaffy.png",
+    "flapple": "flapple.png",
     "floragato": "floragato.png",
     "flygon": "flygon.png",
     "forretress": "forretress.png",
@@ -2423,10 +2526,12 @@
     "girafarig": "girafarig.png",
     "golduck": "golduck.png",
     "golisopod": "golisopod.png",
+    "gossifleur": "gossifleur.png",
     "greavard": "greavard.png",
     "greninja": "greninja.png",
     "grotle": "grotle.png",
     "grovyle": "grovyle.png",
+    "grubbin": "grubbin.png",
     "grumpig": "grumpig.png",
     "gulpin": "gulpin.png",
     "gyarados": "gyarados.png",
@@ -2457,6 +2562,7 @@
     "kabutops": "kabutops.png",
     "kadabra": "kadabra.png",
     "keldeo": "keldeo.png",
+    "kingambit": "kingambit.png",
     "kingdra": "kingdra.png",
     "kirlia": "kirlia.png",
     "klang": "klang.png",
@@ -2554,6 +2660,9 @@
     "pineco": "pineco.png",
     "plusle": "plusle.png",
     "popplio": "popplio.png",
+    "porygon": "porygon.png",
+    "porygon2": "porygon2.png",
+    "porygonZ": "porygonZ.png",
     "primarina": "primarina.png",
     "primeape": "primeape.png",
     "psyduck": "psyduck.png",
@@ -2564,6 +2673,7 @@
     "ralts": "ralts.png",
     "rampardos": "rampardos.png",
     "remoraid": "remoraid.png",
+    "ribombee": "ribombee.png",
     "riolu": "riolu.png",
     "rockruff": "rockruff.png",
     "roselia": "roselia.png",
@@ -2635,12 +2745,14 @@
     "totodile": "totodile.png",
     "trapinch": "trapinch.png",
     "treecko": "treecko.png",
+    "tropius": "tropius.png",
     "turtwig": "turtwig.png",
     "typhlosion": "typhlosion.png",
     "venusaur": "venusaur.png",
     "vespiquen": "vespiquen.png",
     "vibrava": "vibrava.png",
     "victini": "victini.png",
+    "vikavolt": "vikavolt.png",
     "volcarona": "volcarona.png",
     "voltorb": "voltorb.png",
     "vulpix": "vulpix.png",
@@ -2786,6 +2898,9 @@
     "feebas",
     "numel",
     "dreepy",
+    "grubbin",
+    "porygon",
+    "cutiefly",
     "chatot",
     "luvdisc",
     "cacturne",
@@ -2812,6 +2927,7 @@
     "ironThorns",
     "sandyShocks",
     "dhelmise",
+    "calyrex",
     "wingull",
     "inkay",
     "totodile",
@@ -2840,6 +2956,9 @@
     "beldum",
     "chingling",
     "heracross",
-    "combee"
+    "combee",
+    "applin",
+    "tropius",
+    "gossifleur"
   ]
 }

@@ -7,10 +7,14 @@ import { text } from '../../file/text.js'
 import { saveData } from '../../file/data.js';
 import { playMusic, playSound } from '../../file/audio.js';
 import { enemyData as e } from '../data/enemyData.js';
+import { LinkBeam, SpikeZone } from '../component/Tower.js';
+import { pokemonData } from '../data/pokemonData.js';
+import { Piece } from '../component/Piece.js';
 
 // ENDLESS MODE: Boss list for multi-boss spawns
-const BOSS_KEYS = ['shaymin', 'celebi', 'lunala', 'moltres', 'regirock', 'groudon',
-	'registeel', 'regice', 'regigigas', 'zapdos', 'hooh', 'articuno'];
+const BOSS_KEYS = Object.fromEntries(Object.values(routeData).map(route => [
+	route.id, (route.waves[100] || route.waves[1])?.preview?.[0]?.id,
+]));
 
 export class Area {
 	constructor(main, areaData) {
@@ -20,6 +24,7 @@ export class Area {
 		this.imposedWeather = false;
 		this.isCustom = false;
 		this.customData = {}
+		this.addTiles = [0, 0, 0, 0];
 
 		this.autoWave = false;
 		this.repeat = false;
@@ -37,6 +42,7 @@ export class Area {
 		this.placementTiles = [];
 		this.placementTile2D = [];
 		this.towers = [];
+		this.chessPieces = [];
 
 		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
@@ -46,6 +52,7 @@ export class Area {
 		this.leftoversWaveUsed = false;
 		this.healUsed = {};
 		this.heartScale = 0;
+		this.roomService = 0;
 		this.moxieUsers = {};
 		this.speedBoostUsers = {};
 		this.bulkUpUsers = {};
@@ -58,6 +65,8 @@ export class Area {
 		this.anchorShot = false;
 
 		this.shellSmashActive = false;
+		this.unnerve = false;
+		this.harvest = false;
 		this.cloudNine = false;
 		this.victoryStar = false;
 		this.swordsDance = false;
@@ -66,6 +75,7 @@ export class Area {
 		this.helpingHand = 0;
 		this.heavyMetal = false;
 		this.anchorShot = false;
+		this.activePieces = 0;
 
 		this.inChallenge = false;
 		this.music;
@@ -82,6 +92,7 @@ export class Area {
 
 		this.waveStartTime = null;
 	this.waveElapsedTime = 0;
+		this.stallTriggeredForDeath = new Set();
 	}
 
 	getSaveData() {
@@ -93,13 +104,17 @@ export class Area {
 	}
 
 	checkWeather() {
+		this.addTiles = [0, 0, 0, 0];
 		this.cloudNine = false;
 		this.victoryStar = false;
+		this.unnerve = false;
+		this.harvest = false;
 		this.swordsDance = false;
 		this.heartOfSteel = false;
 		this.airLock = false;
 		this.helpingHand = 0;
 		this.rivalryAmount = 0;
+		this.roomServiceActive = false;
 
 		this.towers.forEach(t => {
 			if (t.ability.id == 'cloudNine' && !this.airLock) this.cloudNine = true;
@@ -111,7 +126,15 @@ export class Area {
 			if (t.ability.id == 'victoryStar') this.victoryStar = true;
 			if (t.ability.id == 'swordsDance') this.swordsDance = true;
 			if (t.ability.id == 'heartOfSteel') this.heartOfSteel = true;
+			if (t.ability.id == 'unnerve') this.unnerve = true;
+			if (t.ability.id == 'harvest') this.harvest = true;
+			if (t?.pokemon?.item?.id == 'roomService') this.roomServiceActive = true;
 			if (['rivalryPower', 'rivalrySpeed'].includes(t.ability.id)) this.rivalryAmount++;
+
+			if (!t.isPassenger) {
+				if (t.ability.id == 'grassPlatform') this.addTiles[1]++;
+				if (t.ability.id == 'icePlatform') this.addTiles[2]++;
+			}
 		});
 
 		if (this.imposedWeather) return;
@@ -129,6 +152,7 @@ export class Area {
 		});
 
 		this.main.UI.displayWeather();
+		if (this.map.id === 35) this.updateChessPieces();
 	}
 
 	ensureRouteProgress(routeNumber) {
@@ -159,6 +183,7 @@ export class Area {
 		this._spawnBaseSpeed = 0;
 		this.waveStartTime = null;
 		this.waveElapsedTime = 0;
+		this.stallTriggeredForDeath = new Set();
 		this.goldWave = 0;
 		this.hitsReceived = 0;
 		this.totalDamageDealt = 0;
@@ -168,6 +193,7 @@ export class Area {
 		this.leftoversWaveUsed = false;
 		this.healUsed = {};
 		this.heartScale = 0;
+		this.roomService = 0;
 		this.shellSmashActive = false;
 		this.linkBeams = [];
 		this.moxieUsers = {};
@@ -215,6 +241,23 @@ export class Area {
 	    return 0.3
 	}
 
+	getSpikeZoneSlowFactorAt(x, y) {
+	    if (!Array.isArray(this.spikeZones) || this.spikeZones.length === 0) return 1;
+
+	    let factor = 1;
+	    for (const sz of this.spikeZones) {
+	        if (!sz || !sz.active || !sz.slow) continue;
+
+	        const dx = x - sz.x;
+	        const dy = y - sz.y;
+	        if (Math.hypot(dx, dy) > sz.radius) continue;
+
+	        const szFactor = sz.slowFactor ?? 0.5;
+	        if (szFactor < factor) factor = szFactor;
+	    }
+	    return factor;
+	}
+
 	loadArea(routeNumber, wave, keepTowers = false, challenge = false, custom = false, customData = {}) {
 		this.repeat = false;
 		this.isCustom = custom;
@@ -230,6 +273,8 @@ export class Area {
 		this.pendingHeal = 0;
 		this.anchorShot = false;
 
+		this.activePieces = 0;
+		this.addTiles = [0, 0, 0, 0];
 		this.main.UI.autoWave.style.background = 'revert-layer';
 		this.resetWaveRuntime();
 
@@ -318,6 +363,67 @@ export class Area {
 			        }
 			    })
 			})
+
+			this.chessPieces = [];
+
+			if (Array.isArray(this.map.chessTiles)) {
+			    const chessPiecesData = {
+			        h: pokemonData['kingdra'],
+			        q: pokemonData['vespiquen'],
+			        b: pokemonData['bisharp'],
+			        k: pokemonData['kingambit'],
+			        p: pokemonData['pawniard'],
+			        t: pokemonData['stakataka']
+			    };
+
+			    const chessTile2D = [];
+
+			    for (let i = 0; i < this.map.chessTiles.length; i += tileColumns) {
+			        chessTile2D.push(this.map.chessTiles.slice(i, i + tileColumns));
+			    }
+
+			    chessTile2D.forEach((row, y) => {
+			        row.forEach((symbol, x) => {
+
+			            if (typeof symbol !== 'string') return;
+
+			            const pieceType = symbol.charAt(0);
+
+			            const pokemon = chessPiecesData[pieceType];
+
+			            if (!pokemon) return;
+
+			            const chessTile = {
+			                id: `chess-${x}-${y}`,
+			                land: 1,
+			                position: {
+			                    x: x * 24,
+			                    y: y * 24
+			                },
+			                size: 24,
+			                center: {
+			                    x: x * 24 + 12,
+			                    y: y * 24 + 12
+			                },
+			                tower: false,
+			                passenger: false
+			            };
+
+			            const piece = new Piece(
+			                this.main,
+			                x * 24,
+			                y * 24,
+			                this.main.game.ctx,
+			                pokemon,
+			                chessTile
+			            );
+
+			            piece.chessType = symbol;
+
+			            this.chessPieces.push(piece);
+			        });
+			    });
+			}
 		}
 
 		this.enemies = [];
@@ -398,6 +504,8 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.heartScale = 0;
+		this.roomService = 0;
+		this.roomService = 0;
 		this.shellSmashActive = false;
 		this.healUsed = {};
 		this.moxieUsers = {};
@@ -408,13 +516,17 @@ export class Area {
 		this.main.UI.refreshDamageDealt();
 
 		this.waveStartTime = performance.now();
-	this.waveElapsedTime = 0;
+        this.waveElapsedTime = 0;
+		this.stallTriggeredForDeath = new Set();
 
 		this.waveActive = true;
+		this.stallTriggeredForDeath.clear();
+
 		this.spawnEnemies();
 		this.main.UI.update();
 
 		if (this.map.id == 29 && this.waveNumber === 100) this.main.player.getHealed(14);
+        if (this.map.id == 35) this.updateChessPieces();
 
 		this.towers.forEach(t => {
 			t.incenseBuff = 0;
@@ -441,6 +553,33 @@ export class Area {
 	            })
 			}
 
+			if (t.ability?.id == 'gluttony') {
+				this.towers.forEach(t => {
+					let berryField = null;
+
+			        if (t?.pokemon?.item?.id === 'salacBerry') {
+			            t.salacBerryTimer = (this.harvest) ? 30000 : 15000;
+			            berryField = 'salacBerryTimer';
+			        } else if (t?.pokemon?.item?.id === 'liechiBerry') {
+			            t.liechiBerryTimer = (this.harvest) ? 30000 : 15000;
+			            berryField = 'liechiBerryTimer';
+			        } else if (t?.pokemon?.item?.id === 'lansatBerry') {
+			            t.lansatBerryTimer = (this.harvest) ? 30000 : 15000;
+			            berryField = 'lansatBerryTimer';
+			        } else if (t?.pokemon?.item?.id === 'starfBerry') {
+			            t.starfBerryTimer = (this.harvest) ? 30000 : 15000;
+			            berryField = 'starfBerryTimer';
+			        }
+
+					if (berryField && t.isPassenger) {
+			            const baseTower = this.towers.find(bt => bt.tile === t.tile && !bt.isPassenger);
+			            if (baseTower?.pokemon?.item?.id === 'berryPouch') {
+			                baseTower[berryField] = t[berryField];
+			            }
+			        }
+				})
+			}
+
 			if (t.ability?.id == 'featherDance') {
 				t.feathers = (t.pokemon?.item?.id == 'boiledEgg') ? 30 : 20;
 			}
@@ -449,6 +588,45 @@ export class Area {
 		if (this.inChallenge) this.main.game.chrono.start();
 		if (this.main.mapScene.isOpen) this.main.mapScene.update();
 		if (this.main.editorScene.isOpen) this.main.editorScene.close();
+	}
+
+	triggerStall(deadEnemy) {
+	    if (!deadEnemy || this.stallTriggeredForDeath.has(deadEnemy)) return;
+
+	    const stall = this.enemies.find(enemy =>
+	        enemy !== deadEnemy &&
+	        !enemy.dying &&
+	        enemy.hp > 0 &&
+	        enemy.passive?.id === 'stall' &&
+	        !enemy.passiveActivated
+	    );
+
+	    if (!stall) return;
+
+	    this.stallTriggeredForDeath.add(deadEnemy);
+
+	    stall.position.x = deadEnemy.position.x;
+	    stall.position.y = deadEnemy.position.y;
+
+	    stall.center.x = deadEnemy.center.x;
+	    stall.center.y = deadEnemy.center.y;
+
+	    stall.waypoints = deadEnemy.waypoints.slice();
+	    stall.waypointIndex = deadEnemy.waypointIndex;
+
+	    stall.hasEnteredCanvas = deadEnemy.hasEnteredCanvas;
+	    stall.distanceTraveled = deadEnemy.distanceTraveled;
+
+	    stall.frames.direction = deadEnemy.frames.direction;
+
+	    stall.passiveActivated = true;
+
+	    stall.hasEnteredCanvas =
+	        stall.hasEnteredCanvas || deadEnemy.hasEnteredCanvas;
+
+	    if (!this.main.mute[1]) {
+	        playSound('teleport', 'effect');
+	    }
 	}
 
 	endWave() {
@@ -577,7 +755,7 @@ export class Area {
 			const futureWave = this.waves[displayWaveNum]?.preview || [];
 			const invisibles = [
 				e.ditto, e.kecleon, e.absol, e.lunala, e.froslass, e.mimikyu, e.huntail, e.octillery,
-				e.zorua, e.zoroark, e.mimeJr, e.mrMime, e.scraggy, e.scrafty, e.nickit, e.thievul,
+				e.zorua, e.zoroark, e.mimeJr, e.mrMime, e.scraggy, e.scrafty, e.nickit, e.thievul, e.sableye,
 			];
 
 			if (this.autoWave && this.main.autoStop && futureWave.some(poke => invisibles.includes(poke))) {
@@ -723,14 +901,16 @@ export class Area {
 		let falseWaveNumber = ((this.waveNumber - 1) % 100) + 1;
 
 		const wave = this.waves[falseWaveNumber].wave;
-		const waveOffset = this.inChallenge.mirror
+		const defaultOffset = this.inChallenge.mirror
 			? this.map.offsetMirror
 			: this.normalizeWaveOffset(this.waves[falseWaveNumber].offSet ?? this.map.offset);
 
 		wave.forEach((enemy, i) => {
+			const waveOffset = ['snivy', 'servine', 'serperior'].includes(enemy?.id)
+				? this.normalizeWaveOffset(this.inChallenge.mirror ? this.map.offset : this.map.offsetMirror) : defaultOffset;
 			const xOffset = (i + 1) * waveOffset.x;
 			const yOffset = (i + 1) * waveOffset.y;
-			const waypointEnemy = this.selectWaypoints();
+			const waypointEnemy = this.selectWaypoints(enemy);
 			const spawnPos = this.getSpawnPosition(waypointEnemy, xOffset, yOffset);
 			if (enemy) {
 				this.enemies.push(
@@ -757,8 +937,18 @@ export class Area {
 		return 900 + (wavesPast100 - 900) / 2;
 	}
 
-	selectWaypoints() {
-		const waypoints = (this.inChallenge.mirror) ? this.map.waypointsMirror : this.waypoints;
+	selectWaypoints(enemy) {
+		let waypoints;
+
+		if (enemy?.id === 'spinda') {
+			waypoints = (this.inChallenge.mirror) ? this.map.spindaWaypointsMirror : this.map.spindaWaypoints;
+		} else if (enemy?.id === 'superSpinda') {
+			waypoints = (this.inChallenge.mirror) ? this.map.superSpindaWaypointsMirror : this.map.superSpindaWaypoints;
+		} else if (['snivy', 'servine', 'serperior'].includes(enemy?.id)) {
+			waypoints = (this.inChallenge.mirror) ? this.map.waypoints : this.map.waypointsMirror;
+		} else {
+			waypoints = (this.inChallenge.mirror) ? this.map.waypointsMirror : this.waypoints;
+		}
 
 		if (this.waveNumber === 100 && this.map.id === 21) return waypoints[0];
 
@@ -1208,7 +1398,7 @@ export class Area {
 
 		if (!boss) {
 			console.warn('Boss not found:', bossKey, '- trying fallbacks');
-			for (const fallbackKey of BOSS_KEYS) {
+			for (const fallbackKey of Object.values(BOSS_KEYS)) {
 				if (e[fallbackKey]) {
 					boss = e[fallbackKey];
 					break;
@@ -1312,10 +1502,13 @@ export class Area {
 	}
 
 	getRouteTag(route, wave) {
-		if (route > 20) route--;
-		const r1 = Math.floor(route / 4) + 1;
-		const r2 = (route % 4) + 1;
-		return `R${r1}-${r2} W${wave}`;
+		if ([20, 30, 31, 33, 35].includes(route)) return "???";
+		if (route > 20) route -= 1;
+		if (route > 29) route -= 4;
+		if (route > 30) route -= 1;
+        const r1 = Math.floor(route / 4) + 1;
+        const r2 = (route % 4) + 1;
+        return `R${r1}-${r2} W${wave}`;
 	}
 
 	changeWave(i) {
@@ -1364,6 +1557,8 @@ export class Area {
 		this.clefairyDollUsed = false;
 		this.leftoversWaveUsed = false;
 		this.heartScale = 0;
+		this.roomService = 0;
+		this.roomService = 0;
 		this.healUsed = {};
 		this.moxieUsers = {};
 		this.speedBoostUsers = {};
@@ -1407,5 +1602,87 @@ export class Area {
 			});
 			}
 		}
+	}
+
+	updateChessPieces() {
+		setTimeout(() => {
+			this.chessPieces.forEach(piece => piece.setActive(false));
+
+			const rules = {
+				kingdra: {
+					17: ['h1', 'h2'],
+					23: ['h1'],
+					14: ['h1'],
+					26: ['h1'],
+					16: ['h2']
+				},
+
+				vespiquen: {
+					10: ['q1'],
+					13: ['q1']
+				},
+
+				pawniard: {
+					19: ['p4'],
+					23: ['p6'],
+					25: ['p6', 'p7']
+				},
+
+				bisharp: {
+					0: ['b1'],
+					8: ['b1'],
+					18: ['b1'],
+					21: ['b1'],
+					9: ['b2'],
+					14: ['b2'],
+					26: ['b1', 'b2'],
+					30: ['b1'],
+					2: ['b1', 'b2']
+				},
+
+				kingambit: {
+					24: ['k1'],
+					25: ['k1'],
+				},
+
+				stakataka: {
+					8: ['t1'],
+					9: ['t1'],
+					5: ['t2'],
+					14: ['t2'],
+					19: ['t2'],
+					21: ['t2'],
+					23: ['t2'],
+					24: ['t2'],
+					25: ['t2'],
+					26: ['t2'],
+					10: ['t1', 't2']
+				}
+			};
+
+			const allowedPieces = new Set();
+
+			this.towers.forEach(tower => {
+				const specie = (tower.pokemon?.specie?.key == 'ditto') ? tower.pokemon?.adn?.key :  tower.pokemon?.specie?.key;
+				const tileId = tower.tile?.id;
+
+				if (!specie || tileId == null || !rules[specie]) return;
+
+				const pieces = rules[specie][tileId];
+				if (!pieces) return;
+
+				pieces.forEach(piece => allowedPieces.add(piece));
+			});
+
+			this.activePieces = 0;
+
+			this.chessPieces.forEach(piece => {
+				if (allowedPieces.has(piece.chessType)) {
+					piece.setActive(true);
+					this.activePieces++;
+				}
+			});
+
+		}, 50);
 	}
 }

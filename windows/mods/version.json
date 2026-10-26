@@ -1,12 +1,11 @@
 {
-    "version": "1.6.1",
-    "game_version": "1.6.1",
-    "release_date": "2026-09-02",
+    "version": "1.6.3",
+    "game_version": "1.6.3",
+    "release_date": "2026-10-26",
     "changes": [
-        "Rebased Windows compatibility onto the PokePath TD 1.6.1 vanilla files",
-        "Preserved the 1.6.0 content expansion and the 1.6.1 balance and bug-fix changes",
-        "Reworked infinite-speed tower handling on the new bombardment, beam, platform, and orbital runtime",
-        "Updated installer fingerprints, diagnostics, save data, documentation, and release packaging for 1.6.1",
-        "Expanded Profile Unlockables to all 26 secret Pokemon, 5 secret maps, and the hidden welcome gift with verified instructions in all 10 languages"
+        "Rebased Windows mod onto clean PokePath TD 1.6.3, including 1.6.2 content",
+        "Preserved new map views, acquisition sorting, item mechanics and balance changes",
+        "Added Calyrex chess-puzzle progress in all ten languages",
+        "Updated save-editor metadata and normal/shiny sprite coverage"
     ]
 }

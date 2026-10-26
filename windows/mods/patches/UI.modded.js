@@ -8,6 +8,7 @@ import { Pokemon } from './component/Pokemon.js';
 import { weatherData } from './data/weatherData.js';
 import { saveData } from '../file/data.js';
 import { songData } from './data/songData.js';
+import { passiveData } from './data/passiveData.js';
 
 const SECTIONS = ['profile', 'box', 'inventory', 'shop', 'map', 'challenge', 'damageDealt', 'menu'];
 
@@ -429,7 +430,7 @@ export class UI {
 			        if (!tower) return playSound('pop0', 'ui');
 
 			        tower.awaitingBombardZone = true;
-			        playSound('select', 'ui'); // o el sonido que uses para "modo selección"
+			        playSound('select', 'ui');
 			        return;
 			    }
 
@@ -548,7 +549,7 @@ export class UI {
 						(this.main.team.pokemon.length + this.main.box.pokemon.length) < 30)
 					) {
 					tooltip = text.sectionTooltip["challengeLocked"];
-				} else tooltip = text.sectionTooltip[section];
+				} //else tooltip = text.sectionTooltip[section];
 				if (tooltip) this.main.tooltip.showItem(tooltip);
 			});
 			this.section[section].addEventListener('mouseleave', () => { this.main.tooltip.hide() });
@@ -698,6 +699,13 @@ export class UI {
 			this.getSecretMap(33);
 		});
 
+		this.secretChess = new Element(this.main.scene, { className: 'secret-chess' }).element;
+		this.secretChess.addEventListener('click', () => {
+			this.secretChess.style.pointerEvents = 'none';
+			this.main.player.secretMaps.secretChess = true;
+			this.getSecretMap(35);
+		});
+
 		this.secretBronzor = new Element(this.main.scene, { className: 'secret-bronzor' }).element;
 		this.secretBronzor.addEventListener('click', () => {
 			if (this.main.area.waveNumber === 50) {
@@ -736,7 +744,7 @@ export class UI {
 		}
 
 		if (!this.main.area.map.isSecret) this.mapRoute.innerHTML = `${this.main.area.map.name[this.main.lang].toUpperCase()} <br>${text.map.wave[this.main.lang].toUpperCase()} ${this.main.area.waveNumber}`;
-		this.tilesCount.forEach((tc, i) => { tc.innerHTML = `${this.tilesCountNum[i]}/${this.main.area.map.tilesNum[i]}`});
+		this.tilesCount.forEach((tc, i) => { tc.innerHTML = `${this.tilesCountNum[i]}/${this.main.area.map.tilesNum[i] + this.main.area.addTiles[i]}`});
 
 		if (
 			this.main.player.stars >= 540 &&
@@ -906,6 +914,16 @@ export class UI {
 			this.secretCastle.style.pointerEvents = 'none';
 		}
 
+		if (
+			this.main.area.routeNumber == 34 &&
+			!this.main.area.inChallenge &&
+			!this.main.area.waveActive
+		) {
+			this.secretChess.style.pointerEvents = 'revert-layer';
+		} else {
+			this.secretChess.style.pointerEvents = 'none';
+		}
+
 		if (this.main.area.routeNumber == 27) {
 			this.secretBronzor.style.pointerEvents = 'revert-layer';
 		} else {
@@ -969,6 +987,8 @@ export class UI {
 			this.weather.style.backgroundImage = `url("${weatherData[this.main.area.weather].sprite}")`;
 			this.main.tooltip.bindTo(this.weather, { name: weatherData[this.main.area.weather].name, description: weatherData[this.main.area.weather].description }, 'item');
 		}
+
+		this.tilesCount.forEach((tc, i) => { tc.innerHTML = `${this.tilesCountNum[i]}/${this.main.area.map.tilesNum[i] + this.main.area.addTiles[i]}`});
 	}
 
 	updatePlayer() {
@@ -1096,6 +1116,7 @@ export class UI {
 			case 'cross': return '+';
 			case 'xShape': return 'X';
 			case 'vShape': return 'V';
+			case 'star': return '*';
 			case 'horizontalLine': return '-';
 			case 'donut':
 			case 'circle':
@@ -1109,6 +1130,7 @@ export class UI {
 			donut: ['Ring range', 'En anillo', 'En anneau', 'Em anel', 'A anello', 'Ringbereich', 'ドーナツ型', '도넛형', '環状', 'Pierścieniowy'],
 			cross: ['Cross range', 'En cruz', 'En croix', 'Em cruz', 'A croce', 'Kreuzbereich', '十字', '십자', '十字', 'Krzyżowy'],
 			xShape: ['X-shaped', 'En X', 'En X', 'Em X', 'A forma di X', 'X-Form', 'X字', 'X자형', 'X字', 'W kształcie X'],
+			star: ['Star', 'Estrella', 'Étoile', 'Estrela', 'Stella', 'Stern', 'スター', '별', '星星', 'Gwiazda'],
 			vShape: ['V-shaped', 'En V', 'En V', 'Em V', 'A forma di V', 'V-Form', 'V字', 'V자형', 'V字', 'W kształcie V'],
 			horizontalLine: ['Line range', 'En horizontal', 'En ligne', 'Em linha', 'In linea', 'Linienbereich', '直線', '직선', '直線', 'Liniowy']
 		};
@@ -1354,7 +1376,7 @@ export class UI {
 
 			this.pokemon[i].stars.style.display = 'none';
 			this.pokemon[i].attackStyle.style.display = 'none';
-			this.pokemon[i].attackStyle.classList.remove('is-circle', 'is-donut', 'is-cross', 'is-x-shape', 'is-v-shape', 'is-line');
+			this.pokemon[i].attackStyle.classList.remove('is-circle', 'is-donut', 'is-cross', 'is-x-shape', 'is-v-shape', 'is-star','is-line');
 			this.pokemon[i].attackStyle.innerText = '';
 			this.pokemon[i].fieldStatus.style.display = 'none';
 			this.pokemon[i].fieldStatus.classList.remove('is-deployed', 'is-undeployed');
@@ -1429,6 +1451,7 @@ export class UI {
 			this.pokemon[i].attackStyle.classList.toggle('is-cross', pokemon.rangeType === 'cross');
 			this.pokemon[i].attackStyle.classList.toggle('is-x-shape', pokemon.rangeType === 'xShape');
 			this.pokemon[i].attackStyle.classList.toggle('is-v-shape', pokemon.rangeType === 'vShape');
+			this.pokemon[i].attackStyle.classList.toggle('is-star', pokemon.rangeType === 'star');
 			this.pokemon[i].attackStyle.classList.toggle('is-line', pokemon.rangeType === 'horizontalLine');
 			this.pokemon[i].fieldStatus.style.display = (this.main.indicatorField) ? 'revert-layer' : 'none';
 			this.pokemon[i].fieldStatus.innerText = pokemon.isDeployed ? '✓' : '✕';
@@ -1482,7 +1505,7 @@ export class UI {
 				if (
 					['silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
 					'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb', 'mitsuesCocktail',
-					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY', 'blimpKeys'].includes(pokemon?.item?.id)) {
+					'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY', 'blimpKeys', 'pokeSkates'].includes(pokemon?.item?.id)) {
 					this.pokemon[i].item.style.pointerEvents = 'none';
 					this.pokemon[i].item.style.filter = 'brightness(0.6)'
 				}
@@ -2014,9 +2037,10 @@ export class UI {
 
 		const scaledEnemy = this.scalePreviewEnemy(enemy, this.main.area.waveNumber);
 
-		if (this.main.area.inChallenge.draft && this.main.area.waveNumber === 100) {
-			scaledEnemy.hp -= Math.floor(scaledEnemy.hp * (25 / 100));
-			scaledEnemy.armor -= Math.floor(scaledEnemy.armor * (25 / 100));
+		if (this.main.area.inChallenge.draft) {
+			const reduction = this.main.area.waveNumber === 100 ? 0.25 : 0.1;
+			scaledEnemy.hp -= Math.floor(scaledEnemy.hp * reduction);
+			scaledEnemy.armor -= Math.floor(scaledEnemy.armor * reduction);
 		}
 
 		if (this.main.area.isCustom) {
@@ -2025,7 +2049,7 @@ export class UI {
 			scaledEnemy.armor += Math.floor(scaledEnemy.armor * (this.main.area.customData.armor / 100));
 		}
 
-		if (enemy.id !== 'mew') {
+		if (!['mew', 'calyrex'].includes(enemy.id)) {
 			this.infoName.innerHTML = enemy.name[this.main.lang].toUpperCase();
 			this.infoHealth.innerHTML = `${text.ui.health[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.hp)}</span>`;
 			this.infoArmor.innerHTML =`${text.ui.armor[this.main.lang].toUpperCase()} <span class="pos-right">${this.formatPreviewStat(scaledEnemy.armor || 0)}</span>`;
@@ -2062,7 +2086,10 @@ export class UI {
 		if (enemy.passive != undefined) {
 			this.infoPassive.style.display = 'block';
 			this.infoPassive.name.innerHTML = enemy.passive.name[this.main.lang].toUpperCase();
-			this.infoPassive.description .innerHTML= enemy.passive.description[this.main.lang].toUpperCase();
+			this.infoPassive.description.innerHTML = enemy.passive.description[this.main.lang].toUpperCase();
+
+			if (enemy?.passive?.id === 'healer' && (typeof this.main?.area?.inChallenge?.lvlCap === 'number' || this.main?.area?.inChallenge?.noItems))
+				this.infoPassive.description.innerHTML = passiveData['healerChallenge'].description[this.main.lang].toUpperCase();
 		} else {
 			this.infoPassive.style.display = 'none';
 		}
@@ -2198,7 +2225,7 @@ export class UI {
 			if (damageDealt > 0) {
 				const per = Math.ceil((damageDealt / totalDamageDealt) * 100)
 				this.damageDealtUnit[i].number.innerHTML = `
-					${this.main.utility.numberDot(damageDealt, this.main.lang)}
+					${this.main.utility.numberDot(Math.floor(damageDealt), this.main.lang)}
 					<span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">(${per}%)</span>
 				`;
 				this.damageDealtUnit[i].bar.style.width = `${per}%`;
@@ -2658,13 +2685,13 @@ class FastScene {
 		removeSlot.style.textShadow = '1px 1px black'
 
 		const deployedLockedItems = [
-			'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
-			'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
-			'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'mitsuesCocktail', 'charizarditeY',
-			'blimpKeys'
-		];
+            'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest',
+            'twistedSpoon', 'subwoofer', 'ejectButton', 'jadeOrb', 'lustrousOrb',
+            'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'mitsuesCocktail', 'charizarditeY',
+            'blimpKeys', 'pokeSkates'
+        ];
 
-		const cannotRemoveNow = !pokemon?.item || (pokemon.isDeployed && deployedLockedItems.includes(pokemon?.item?.id));
+        const cannotRemoveNow = !pokemon?.item || (pokemon.isDeployed && deployedLockedItems.includes(pokemon?.item?.id));
 		if (cannotRemoveNow) {
 			removeSlot.style.filter = 'brightness(0.6)';
 			removeSlot.style.pointerEvents = 'none';

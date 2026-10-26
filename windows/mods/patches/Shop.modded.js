@@ -68,7 +68,7 @@ export class Shop {
 
 		let index = Math.floor(Math.random() * this.eggList.length);
 
-		if (this.eggList.length == 108) index = Math.floor(Math.random() * 3) + 2;
+		if (this.eggList.length == 125) index = Math.floor(Math.random() * 3) + 2;
 
 		let egg = this.eggList[index];
 		let pokemon;

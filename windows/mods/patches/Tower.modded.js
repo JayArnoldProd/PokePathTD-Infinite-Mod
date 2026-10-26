@@ -41,6 +41,7 @@ export class Tower extends Sprite {
         this.carriedBy = null;
         this.passengerYOffset = -13;
 
+
         // HABILIDADES
         this.ricochet = pokemon.ricochet;
         this.orbital = pokemon.orbital;
@@ -54,6 +55,9 @@ export class Tower extends Sprite {
         this.secretSwordSide = 1;
         this.damageBoost = 0;
 
+        this.stickyWebTransition = null;
+        this.nudgeTransition = null;
+        this.lastStickyWeb = null;
         this.teleport = 0;
         this.teleportBuff = teleportBuff;
         this.feathers = 0;
@@ -138,9 +142,7 @@ export class Tower extends Sprite {
             this.lunatoneHomePosition = { x: this.position.x, y: this.position.y };
         }
 
-        if (this.attackType === 'orbital') {
-            this.spawnOrbitales();
-        }
+        if (this.attackType === 'orbital') this.spawnOrbitales();
     }
 
     castformTransform() {
@@ -286,9 +288,19 @@ export class Tower extends Sprite {
             this.power += (this.ability?.id == 'simple') ? 131 : 75;
             this.projectile.power += (this.ability?.id == 'simple') ? 131 : 75;
         }
-        if (this.pokemon?.item?.id == 'liechiBerry' && this.liechiBerryTimer > 0) {
-            this.power += (this.ability?.id == 'simple') ? 350 : 200;
-            this.projectile.power += (this.ability?.id == 'simple') ? 350 : 200;
+        if ((this.pokemon?.item?.id == 'liechiBerry' || this.pokemon?.item?.id == 'berryPouch') && this.liechiBerryTimer > 0) {
+            if (this.ability?.id == 'simple') {
+                this.power += (this.main.area.unnerve) ? 385 : 350;
+                this.projectile.power += (this.main.area.unnerve) ? 385 : 350;
+            } else {
+                if (this.ability?.id == 'ripen') {
+                    this.power += (this.main.area.unnerve) ? 440 : 400;
+                    this.projectile.power += (this.main.area.unnerve) ? 440 : 400;
+                } else {
+                    this.power += (this.main.area.unnerve) ? 220 : 200;
+                    this.projectile.power += (this.main.area.unnerve) ? 220 : 200;
+                }
+            }
         }
         if (this.pokemon?.item?.id == 'expertBelt') {
             this.power += (this.ability?.id == 'simple') ? 88 : 50;
@@ -303,6 +315,11 @@ export class Tower extends Sprite {
             this.power += (this.main.area.hitsReceived > 0) ? 75 : 25;
             this.projectile.power += (this.main.area.hitsReceived > 0) ? 75 : 25;
         }
+        if (this.main.area.roomServiceActive) {
+            this.power += this.main.area.roomService;
+            this.projectile.power += this.main.area.roomService;
+        }
+
 
         this.power += this.main.area.honeyGather;
         this.projectile.power += this.main.area.honeyGather;
@@ -386,8 +403,13 @@ export class Tower extends Sprite {
             (this.speed * 0.03 * this.main.UI.tilesCountNum[2]);
         }
 
-        if (this.pokemon?.item?.id == 'salacBerry' && this.salacBerryTimer > 0) {
-            this.speed *= (this.ability?.id == 'simple') ? 0.875 : 0.5;
+        if ((this.pokemon?.item?.id == 'salacBerry' || this.pokemon?.item?.id == 'berryPouch') && this.salacBerryTimer > 0) {
+            if (this.ability?.id == 'simple') {
+                this.speed *= (this.main.area.unnerve) ? 0.3375 : 0.375;
+            } else {
+                if (this.ability?.id == 'ripen') this.speed *= (this.main.area.unnerve) ? 0.225 : 0.25;
+                else this.speed *= (this.main.area.unnerve) ? 0.45 : 0.5;
+            }
         }
 
         if (this.carriedBy == 'grassPlatform' || this.carriedBy == 'icePlatform') this.speed -= (this.speed * 0.15);
@@ -457,8 +479,8 @@ export class Tower extends Sprite {
         }
 
         if (this.pokemon?.item?.id == 'nanabBerry') {
-            this.range = this.range * 1.3;
-            this.speed += (this.speed / 4);
+            this.range = (this.main.area.unnerve) ? this.range * 1.33 : this.range * 1.3;
+            this.speed += (this.main.area.unnerve) ? (this.speed * 0.275) : (this.speed * 0.25);
         }
 
         if (this.pokemon?.item?.id == 'eviolite') {
@@ -471,19 +493,21 @@ export class Tower extends Sprite {
         ) {
             if (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser') || this.carriedBy == 'grassPlatform') this.speed -= (this.speed * 0.15);
             if (this.pokemon.ability.id === 'chlorophyll') this.speed = this.speed / 2;
+            if (this.pokemon.ability.id === 'solarBeam') this.speed *= 0.9;
         }
 
         if (
             this.main.area.weather == 'extremelyHarshSunlight'
         ) {
             if (this.pokemon.ability.id === 'chlorophyll') this.speed = this.speed / 2;
+            if (this.pokemon.ability.id === 'solarBeam') this.speed *= 0.9;
         }
 
         if (
             this.main.area.weather == 'extremelyHarshSunlight' && !this.cherrimForm &&
             (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser') || this.carriedBy == 'grassPlatform')
         ) {
-            if (!this.main.area.airLock && this.pokemon?.item?.id != 'safetyGoggles' && this.pokemon.ability.id !== 'chlorophyll') {
+            if (!this.main.area.airLock && this.pokemon?.item?.id != 'safetyGoggles' && this.pokemon.ability.id !== 'chlorophyll' && this.pokemon.ability.id !== 'solarBeam') {
                 this.speed = (this.main.area.cloudNine) ? this.speed * 1.5 : this.speed * 4;
             }
         }
@@ -494,8 +518,13 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'helixFossil') this.range += this.main.player.fossilInTeam * 10;
         if (this.pokemon?.item?.id == 'oldRod') this.range += 75;
-        if (this.pokemon?.item?.id == 'starfBerry' && this.starfBerryTimer > 0) {
-            this.range += (this.ability?.id == 'simple') ? 140 : 80;
+        if ((this.pokemon?.item?.id == 'starfBerry' || this.pokemon?.item?.id == 'berryPouch') && this.starfBerryTimer > 0) {
+            if (this.ability?.id == 'simple') {
+                this.range += (this.main.area.unnerve) ? 154 : 140;
+            } else {
+                if (this.ability?.id == 'ripen') this.range += (this.main.area.unnerve) ? 176 : 160;
+                else this.range += (this.main.area.unnerve) ? 88 : 80;
+            }
         }
         if (this.pokemon?.item?.id == 'silphScope' && (
             this.pokemon.ability.id === 'illuminate' ||
@@ -525,6 +554,7 @@ export class Tower extends Sprite {
 
     recalculatePower() {
         // valores base
+        this.wacanAura = false;
         this.powerAura = false;
         this.criticalAura = false;
         this.criticalDamageAura = false;
@@ -586,9 +616,19 @@ export class Tower extends Sprite {
             this.power += (this.ability?.id == 'simple') ? 131 : 75;
             this.projectile.power += (this.ability?.id == 'simple') ? 131 : 75;
         }
-        if (this.pokemon?.item?.id == 'liechiBerry' && this.liechiBerryTimer > 0) {
-            this.power += (this.ability?.id == 'simple') ? 350 : 200;
-            this.projectile.power += (this.ability?.id == 'simple') ? 350 : 200;
+        if ((this.pokemon?.item?.id == 'liechiBerry' || this.pokemon?.item?.id == 'berryPouch') && this.liechiBerryTimer > 0) {
+            if (this.ability?.id == 'simple') {
+                this.power += (this.main.area.unnerve) ? 385 : 350;
+                this.projectile.power += (this.main.area.unnerve) ? 385 : 350;
+            } else {
+                if (this.ability?.id == 'ripen') {
+                    this.power += (this.main.area.unnerve) ? 440 : 400;
+                    this.projectile.power += (this.main.area.unnerve) ? 440 : 400;
+                } else {
+                    this.power += (this.main.area.unnerve) ? 220 : 200;
+                    this.projectile.power += (this.main.area.unnerve) ? 220 : 200;
+                }
+            }
         }
         if (this.pokemon?.item?.id == 'expertBelt') {
             this.power += (this.ability?.id == 'simple') ? 88 : 50;
@@ -603,6 +643,16 @@ export class Tower extends Sprite {
             this.power += (this.main.area.hitsReceived > 0) ? 75 : 25;
             this.projectile.power += (this.main.area.hitsReceived > 0) ? 75 : 25;
         }
+        if (this.isPassenger && this.tile?.tower?.item?.id === 'ridePager') {
+            this.power += 50;
+            this.projectile.power += 50;
+        }
+
+        if (this.main.area.roomServiceActive) {
+            this.power += this.main.area.roomService;
+            this.projectile.power += this.main.area.roomService;
+        }
+
 
         this.power += this.main.area.honeyGather;
         this.projectile.power += this.main.area.honeyGather;
@@ -661,8 +711,13 @@ export class Tower extends Sprite {
             (this.speed * 0.03 * this.main.UI.tilesCountNum[2]);
         }
 
-        if (this.pokemon?.item?.id == 'salacBerry' && this.salacBerryTimer > 0) {
-            this.speed *= (this.ability?.id == 'simple') ? 0.875 : 0.5;
+        if ((this.pokemon?.item?.id == 'salacBerry' || this.pokemon?.item?.id == 'berryPouch') && this.salacBerryTimer > 0) {
+            if (this.ability?.id == 'simple') {
+                this.speed *= (this.main.area.unnerve) ? 0.3375 : 0.375;
+            } else {
+                if (this.ability?.id == 'ripen') this.speed *= (this.main.area.unnerve) ? 0.225 : 0.25;
+                else this.speed *= (this.main.area.unnerve) ? 0.45 : 0.5;
+            }
         }
 
         if (this.carriedBy == 'grassPlatform' || this.carriedBy == 'icePlatform') this.speed -= (this.speed * 0.15);
@@ -700,7 +755,7 @@ export class Tower extends Sprite {
             this.range = this.pokemon.range * 2;
         if (this.tile && (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle') || this.carriedBy == 'icePlatform') && (this.pokemon.ability.id === 'swimmer' || this.pokemon.ability.id === 'castform'))
             this.speed /= 2;
-        if ([3,4,5,10].includes(this.main.area.routeNumber) && (this.pokemon.ability.id === 'doubleShotSand' || this.pokemon.ability.id === 'quadraShotSand')) {
+        if ([3,4,5,10,21,22,23,24].includes(this.main.area.routeNumber) && (this.pokemon.ability.id === 'doubleShotSand' || this.pokemon.ability.id === 'quadraShotSand')) {
             this.range = this.range * 2;
         }
         if (this.tile && this.tile.land === 4 && this.pokemon.ability.id === 'noGuard') this.range = this.pokemon.range * 10;
@@ -714,8 +769,8 @@ export class Tower extends Sprite {
         }
 
         if (this.pokemon?.item?.id == 'nanabBerry') {
-            this.range = this.range * 1.3;
-            this.speed += (this.speed / 4);
+            this.range = (this.main.area.unnerve) ? this.range * 1.33 : this.range * 1.3;
+            this.speed += (this.main.area.unnerve) ? (this.speed * 0.275) : (this.speed * 0.25);
         }
 
         if (this.pokemon?.item?.id == 'eviolite') {
@@ -728,19 +783,21 @@ export class Tower extends Sprite {
         ) {
             if (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser') || this.carriedBy == 'grassPlatform') this.speed -= (this.speed * 0.15);
             if (this.pokemon.ability.id === 'chlorophyll') this.speed = this.speed / 2;
+            if (this.pokemon.ability.id === 'solarBeam') this.speed *= 0.9;
         }
 
         if (
             this.main.area.weather == 'extremelyHarshSunlight'
         ) {
             if (this.pokemon.ability.id === 'chlorophyll') this.speed = this.speed / 2;
+            if (this.pokemon.ability.id === 'solarBeam') this.speed *= 0.9;
         }
 
         if (
             this.main.area.weather == 'extremelyHarshSunlight' && !this.cherrimForm &&
             (this.tile.land == 2 || (this.tile.land == 1 && this.pokemon?.item?.id == 'fertiliser') || this.carriedBy == 'grassPlatform')
         ) {
-            if (!this.main.area.airLock && this.pokemon?.item?.id != 'safetyGoggles' && this.pokemon.ability.id !== 'chlorophyll') {
+            if (!this.main.area.airLock && this.pokemon?.item?.id != 'safetyGoggles' && this.pokemon.ability.id !== 'chlorophyll' && this.pokemon.ability.id !== 'solarBeam') {
                 this.speed = (this.main.area.cloudNine) ? this.speed * 1.5 : this.speed * 4;
             }
         }
@@ -751,8 +808,13 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'helixFossil') this.range += this.main.player.fossilInTeam * 10;
         if (this.pokemon?.item?.id == 'oldRod') this.range += 75;
-        if (this.pokemon?.item?.id == 'starfBerry' && this.starfBerryTimer > 0) {
-            this.range += (this.ability?.id == 'simple') ? 140 : 80;
+        if ((this.pokemon?.item?.id == 'starfBerry' || this.pokemon?.item?.id == 'berryPouch') && this.starfBerryTimer > 0) {
+            if (this.ability?.id == 'simple') {
+                this.range += (this.main.area.unnerve) ? 154 : 140;
+            } else {
+                if (this.ability?.id == 'ripen') this.range += (this.main.area.unnerve) ? 176 : 160;
+                else this.range += (this.main.area.unnerve) ? 88 : 80;
+            }
         }
         if (this.pokemon?.item?.id == 'silphScope' && (
             this.pokemon.ability.id === 'illuminate' ||
@@ -779,6 +841,15 @@ export class Tower extends Sprite {
 
         const nearbyPowerAuras = this.main.area.towers.filter(t =>
             t.ability?.id === 'powerAura' &&
+            t !== this &&
+            Math.hypot(
+                t.center.x - this.center.x,
+                t.center.y - this.center.y
+            ) <= t.range + (t.pokemon?.item?.id === "revelationAroma" ? 25 : 0) + (t.pokemon?.item?.id === "sunflowerPetal" ? -40 : 0)
+        );
+
+        const nearbyWacanAuras = this.main.area.towers.filter(t =>
+            (t?.pokemon?.item?.id === 'wacanBerry' && t?.pokemon?.specie?.key == 'charjabug') &&
             t !== this &&
             Math.hypot(
                 t.center.x - this.center.x,
@@ -830,6 +901,13 @@ export class Tower extends Sprite {
                 this.cherrimForm = false;
                 this.updateTowerSprite(this.pokemon.sprite.image);
             }
+        }
+
+        if (nearbyWacanAuras.length > 0) {
+            this.wacanAura = (this.main.area.unnerve) ? 1.22 : 1.2;
+            this.power = Math.ceil(this.power * this.wacanAura);
+        } else {
+            this.wacanAura = false;
         }
 
         if (nearbyGenesisAuras.length > 0) {
@@ -974,6 +1052,24 @@ export class Tower extends Sprite {
             this.ctx.stroke();
 
             this.ctx.restore();
+        }
+
+        if (this.pokemon?.item?.id === 'pokeSkates') {
+            const mouse = this.main?.game?.mouse;
+            if (mouse?.x !== undefined && mouse?.y !== undefined) {
+                const dx = mouse.x - this.center.x;
+                const dy = mouse.y - this.center.y;
+                if (Math.hypot(dx, dy) <= 70) {
+                    this.ctx.save();
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    this.ctx.setLineDash([4, 4]);
+                    this.ctx.lineWidth = 1.5;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.tile.center.x, this.tile.center.y, 35, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.restore();
+                }
+            }
         }
 
         if (this.pokemon.attackType === 'bombardment' && this.bombardZone) {
@@ -1254,7 +1350,7 @@ export class Tower extends Sprite {
             this.ctx.restore();
         }
 
-        if (this.powerAura || this.criticalAura || this.criticalDamageAura || this.triageAura || this.genesisAura) {
+        if (this.powerAura || this.criticalAura || this.criticalDamageAura || this.triageAura || this.genesisAura || this.wacanAura) {
             const now = Date.now();
             const pulse = 1 + 0.08 * Math.sin(now / 180);
             const baseInner = 6;
@@ -1280,7 +1376,7 @@ export class Tower extends Sprite {
             };
 
             let key = [];
-            if (this.powerAura) key.push('power');
+            if (this.powerAura || this.wacanAura) key.push('power');
             if (this.criticalAura) key.push('critical');
             if (this.triageAura) key.push('triage');
             if (this.criticalDamageAura) key.push('criticalDamage');
@@ -1727,6 +1823,7 @@ export class Tower extends Sprite {
         if (this.salacBerryTimer > 0) this.salacBerryTimer -= simDelta
         if (this.liechiBerryTimer > 0) this.liechiBerryTimer -= simDelta
         if (this.lansatBerryTimer > 0) this.lansatBerryTimer -= simDelta
+        if (this.starfBerryTimer > 0) this.starfBerryTimer -= simDelta
 
         if (this.pokemon?.ability?.id === 'bulkUp' && this.main.area.waveActive && !this.main.area.bulkUpUsers[this.pokemon.id]?.paused) {
             this.bulkUpTimer += simDelta;
@@ -1784,6 +1881,69 @@ export class Tower extends Sprite {
             }
         }
 
+        if (this.stickyWebTransition) {
+            const cw = this.width || 24;
+            const ch = this.height || 24;
+
+            const transition = this.stickyWebTransition;
+            transition.elapsed += simDelta;
+
+            const t = Math.min(1, transition.elapsed / transition.duration);
+            const eased = t * t * (3 - 2 * t);
+
+            const finalX = transition.startX + (transition.targetX - transition.startX) * eased;
+            const finalY = transition.startY + (transition.targetY - transition.startY) * eased;
+
+            this.position.x = finalX - cw / 2;
+            this.position.y = finalY - ch / 2;
+
+            this.center = { x: finalX, y: finalY };
+
+            this.x = this.position.x;
+            this.y = this.position.y;
+
+            if (t >= 1) this.stickyWebTransition = null;
+        }
+
+        if (this.nudgeTransition) {
+            const cw = this.width || 24;
+            const ch = this.height || 24;
+
+            const transition = this.nudgeTransition;
+            transition.elapsed += simDelta;
+
+            const t = Math.min(1, transition.elapsed / transition.duration);
+            const eased = t * t * (3 - 2 * t);
+
+            const finalX = transition.startX + (transition.targetX - transition.startX) * eased;
+            const finalY = transition.startY + (transition.targetY - transition.startY) * eased;
+
+            this.position.x = finalX - cw / 2;
+            this.position.y = finalY - ch / 2;
+
+            this.center = { x: finalX, y: finalY };
+
+            this.x = this.position.x;
+            this.y = this.position.y;
+
+            if (t >= 1) this.nudgeTransition = null;
+        }
+
+        if (this.lastStickyWeb && !this.lastStickyWeb.active && !this.stickyWebTransition) {
+            this.lastStickyWeb = null;
+
+            this.stickyWebTransition = {
+                startX: this.center.x,
+                startY: this.center.y,
+                targetX: this.tile.center.x,
+                targetY: this.tile.center.y,
+                elapsed: 0,
+                duration: 300
+            };
+
+            if (!this.main.mute[1]) playSound('teleport', 'effect');
+        }
+
         if (['nocturnal', 'meteorBeam'].includes(this.pokemon.ability?.id)) {
             const cw = this.width || 24;
             const ch = this.height || 24;
@@ -1833,11 +1993,9 @@ export class Tower extends Sprite {
                 }
             }
 
-            const rangeNeeded =
-                (this.pokemon.ability?.id == 'nocturnal') ? 100 : 150;
+            const rangeNeeded = (this.pokemon.ability?.id == 'nocturnal') ? 100 : 150;
 
-            const inRange =
-                closestSolrock && closestDist <= rangeNeeded;
+            const inRange = closestSolrock && closestDist <= rangeNeeded;
 
             if (inRange) {
                 if (!this.isOrbitingSolrock) {
@@ -1857,8 +2015,9 @@ export class Tower extends Sprite {
                     this.castformTransform();
                 }
 
-                this.lunatoneOrbitAngle +=
-                    this.lunatoneOrbitSpeed * (simDelta / 1000);
+                this.lunatoneOrbitAngle += this.lunatoneOrbitSpeed * (simDelta / 1000);
+
+                if (this.lastSolrock?.item?.id === 'lustrousOrb') this.lunatoneOrbitAngle += this.lunatoneOrbitSpeed * (simDelta / 1000);
 
                 const orbitX =
                     closestSolrock.center.x +
@@ -1979,8 +2138,22 @@ export class Tower extends Sprite {
                     tower.auraBuffActive = true;
                 }
             });
-            if (numAllies === 9) this.main.player.unlockAchievement(20)
             return;
+        }
+
+        if (this.pokemon?.item?.id === 'wacanBerry' && this.pokemon.specie.key == 'charjabug') {
+            let auraRange = this.range;
+            let numAllies = 0;
+            this.main.area.towers.forEach(tower => {
+                if (tower === this) return;
+                const dx = tower.center.x - this.center.x;
+                const dy = tower.center.y - this.center.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance <= auraRange) {
+                    numAllies++;
+                    tower.auraBuffActive = true;
+                }
+            });
         }
 
         if (this.ability && this.ability.id === 'genesisAura') {
@@ -2208,7 +2381,10 @@ export class Tower extends Sprite {
                         if (this.genesisAura) critical += 5;
                         if (this.pokemon?.item?.id == 'direHit') critical += 25;
                         if (this.pokemon?.item?.id == 'expertBelt') critical += 10;
-                        if (this.pokemon?.item?.id == 'lansatBerry' && this.lansatBerryTimer > 0) critical += 60;
+                        if ((this.pokemon?.item?.id == 'lansatBerry' || this.pokemon?.item?.id == 'berryPouch') && this.lansatBerryTimer > 0) {
+                            if (this.ability?.id == 'ripen') critical += (this.main.area.unnerve) ? 132 : 120;
+                            else critical += (this.main.area.unnerve) ? 66 : 60;
+                        }
 
                         if ((Math.random() * 100) < critical && this.tower?.pokemon?.item?.id != 'blueBandana') {
                             isCritical = true;
@@ -2392,9 +2568,10 @@ export class Tower extends Sprite {
                     if (this.pokemon?.item?.id == 'direHit') critical += 25;
                     if (this.pokemon?.item?.id == 'expertBelt') critical += 10;
 
-                    if (this.pokemon?.item?.id == 'lansatBerry' && this.lansatBerryTimer > 0) {
-                       critical += 60;
-                    }
+                    if ((this.pokemon?.item?.id == 'lansatBerry' || this.pokemon?.item?.id == 'berryPouch') && this.lansatBerryTimer > 0) {
+                            if (this.ability?.id == 'ripen') critical += (this.main.area.unnerve) ? 132 : 120;
+                            else critical += (this.main.area.unnerve) ? 66 : 60;
+                        }
 
                     if ([165, 175, 176].includes(this.pokemon.id) && this.main.area.heartOfSteel) {
                         critical += (this.main.area.hitsReceived > 0) ? 15 : 5;
@@ -2608,7 +2785,7 @@ export class Tower extends Sprite {
                         const beamDuration = 260;
                         const beam = new Beam(from, to, this, { width: beamWidth, duration: beamDuration, hitCooldown: 140 });
                         this.beams.push(beam);
-                    } if (this.ability.id === 'hyperBeam' && this.hitCount === 4) {
+                    } if (this.ability.id === 'hyperBeam' && (this.hitCount === 4 || (this.pokemon?.item?.id === "powerHerb" && this.hitCount === 2))) {
                         if (!this.main.mute[0]) playSound('beam1', 'effect');
                         const spawnOffsetY = this.isPassenger ? this.passengerYOffset : 0;
                         const from = { x: this.center.x, y: this.center.y };
@@ -2731,7 +2908,9 @@ export class Tower extends Sprite {
                             this.beams.push(beam);
 
                         } else {
-                            if (this.pokemon?.ability?.id == 'hyperBeam') this.hitCount++;
+                            if (this.pokemon?.ability?.id == 'hyperBeam') {
+                                this.hitCount++;
+                            }
                             if (this.pokemon?.ability?.id == 'bulkUp') this.main.area.bulkUpUsers[this.pokemon.id].paused = true;
                             if (this.pokemon?.ability?.id === 'meteorMash' && (this.main.area.meteorMashUsers[this.pokemon.id] < 7 || this.main.area.meteorMashUsers[this.pokemon.id] == undefined)) {
                                 this.meteorMashCount++;
@@ -2913,8 +3092,9 @@ export class Tower extends Sprite {
         if (this.genesisAura) critical += 5;
         if (this.pokemon?.item?.id == 'direHit') critical += 25;
         if (this.pokemon?.item?.id == 'expertBelt') critical += 10;
-        if (this.pokemon?.item?.id == 'lansatBerry' && this.lansatBerryTimer > 0) {
-            critical += 60;
+        if ((this.pokemon?.item?.id == 'lansatBerry' || this.pokemon?.item?.id == 'berryPouch') && this.lansatBerryTimer > 0) {
+            if (this.ability?.id == 'ripen') critical += (this.main.area.unnerve) ? 132 : 120;
+            else critical += (this.main.area.unnerve) ? 66 : 60;
         }
 
         if ([165, 175, 176].includes(this.pokemon.id) && this.main.area.heartOfSteel) {
@@ -2974,6 +3154,26 @@ export class Tower extends Sprite {
             else enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);
         }
 
+        if (this.pokemon.ability?.id === 'triAttack' && Math.random() < 0.3) {
+            let triAttackStatus = Math.floor(Math.random()*3);
+
+            if (triAttackStatus === 0 && enemy.canBurn) {
+                if (this.pokemon?.item?.id == 'magmaStone') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
+                else if (this.pokemon?.item?.id == 'falmeOrb') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.pokemon);
+                else enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);
+            }
+
+            if (triAttackStatus === 1 && enemy.canSlow) {
+                if (this.pokemon?.item?.id == 'lightClay') enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2.2 })
+                else enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
+            }
+
+            if (triAttackStatus === 2 && enemy.canStun) {
+                if (this.pokemon?.item?.id == 'lightClay') enemy.applyStatusEffect({ type: 'stun', duration: 1.65 });
+                else enemy.applyStatusEffect({ type: 'stun', duration: 1.5 });
+            }
+        }
+
         if (enemy.canBurn && this.pokemon.ability?.id === 'lavaPlume') {
             if (this.pokemon?.item?.id == 'magmaStone') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
             else if (this.pokemon?.item?.id == 'falmeOrb') enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.pokemon);
@@ -2989,7 +3189,7 @@ export class Tower extends Sprite {
             else enemy.applyStatusEffect({ type: 'slow', slowPercent: 0.5, duration: 2 });
         }
 
-        if (enemy.canStun && this.pokemon.ability?.id  === 'zapCannon' && Math.random() < 0.2) {
+        if (enemy.canStun && this.pokemon.ability?.id === 'zapCannon' && Math.random() < 0.3) {
             if (this.pokemon?.item?.id == 'lightClay') enemy.applyStatusEffect({ type: 'stun', duration: 1.65 });
             else enemy.applyStatusEffect({ type: 'stun', duration: 1.5 });
         }
@@ -3333,6 +3533,55 @@ export class Tower extends Sprite {
             this.main.UI.updatePokemon();
             this.main.area.recalculateAuras();
         }
+    }
+
+    jumpToStickyWeb(pos) {
+        this.stickyWebTransition = {
+            startX: this.center.x,
+            startY: this.center.y,
+            targetX: pos.x,
+            targetY: pos.y,
+            elapsed: 0,
+            duration: 300
+        };
+
+        if (!this.main.mute[1]) playSound('teleport', 'effect');
+    }
+
+    nudgeToClick(clickX, clickY) {
+        const cw = this.width || 24;
+        const ch = this.height || 24;
+        const centerX = this.position.x + cw / 2;
+        const centerY = this.position.y + ch / 2;
+
+        const homeX = this.tile.position.x + cw / 2;
+        const homeY = this.tile.position.y + ch / 2;
+
+        const dx = clickX - homeX;
+        const dy = clickY - homeY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist === 0) return;
+
+        const maxOffset = 40;
+        const step = Math.min(dist, maxOffset);
+
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        const targetX = homeX + nx * step;
+        const targetY = homeY + ny * step;
+
+        this.nudgeTransition = {
+            startX: centerX,
+            startY: centerY,
+            targetX,
+            targetY,
+            elapsed: 0,
+            duration: 200
+        };
+
+        if (!this.main.mute[1]) playSound('equip', 'ui');
     }
 
     rerollBombardZone() {
@@ -3871,6 +4120,7 @@ export class LinkBeam {
     }
 }
 
+
 export class SpikeZone {
     constructor(position, tower, options = {}) {
         this.x = position.x;
@@ -3885,6 +4135,9 @@ export class SpikeZone {
 
         this.tickRate = options.tickRate ?? 400; // ms entre ticks de daño
         this.tickAccum = 0;
+        this.slow = options.slow ?? false;
+
+        this.slowFactor = options.slowFactor ?? 0.5;
 
         this.active = true;
     }
@@ -3909,7 +4162,6 @@ export class SpikeZone {
         this.tickAccum += dt;
         if (this.tickAccum < this.tickRate) return;
 
-        // consume solo un tick por frame; si prefieres recuperar ticks perdidos, cambia a while(...)
         this.tickAccum %= this.tickRate;
 
         const enemies = this.tower.main.area.enemies;
@@ -3938,6 +4190,16 @@ export class SpikeZone {
 
         this.ctx.rotate((now / 6000) % (Math.PI * 2));
 
+        if (this.slow) {
+            this._drawWeb(alpha, now);
+        } else {
+            this._drawSpikes(alpha, now);
+        }
+
+        this.ctx.restore();
+    }
+
+    _drawSpikes(alpha, now) {
         const numTriangles = 24;
         const spikeHeight = 6;
 
@@ -3979,8 +4241,117 @@ export class SpikeZone {
             this.ctx.lineTo(Math.cos(angle) * (this.radius * 0.4), Math.sin(angle) * (this.radius * 0.4));
             this.ctx.stroke();
         }
+    }
 
-        this.ctx.restore();
+    _drawWeb(alpha, now) {
+        const numRadials = 10;
+        const numRings = 4;
+
+        const bgGrad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+        bgGrad.addColorStop(0, `rgba(220, 225, 230, 0)`);
+        bgGrad.addColorStop(0.8, `rgba(200, 205, 215, ${alpha * 0.12})`);
+        bgGrad.addColorStop(1, `rgba(180, 185, 195, ${alpha * 0.2})`);
+
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        this.ctx.fillStyle = bgGrad;
+        this.ctx.fill();
+
+        const random = (seed) => {
+            const x = Math.sin(seed * 12.9898) * 43758.5453;
+            return x - Math.floor(x);
+        };
+
+        const radialAngles = [];
+        const anchorLengths = [];
+
+        for (let i = 0; i < numRadials; i++) {
+            const angle = (i * Math.PI * 2) / numRadials;
+
+            // Pequeña variación en el ángulo
+            const angleJitter = (random(i + 10) - 0.5) * 0.06;
+            radialAngles.push(angle + angleJitter);
+
+            // Pequeña variación en la longitud
+            const lengthJitter = (random(i + 20) - 0.5) * 0.25;
+            anchorLengths.push(this.radius * (1 + lengthJitter));
+        }
+
+        // Radios
+        for (let i = 0; i < numRadials; i++) {
+            const angle = radialAngles[i];
+            const len = anchorLengths[i];
+
+            const shimmer = 0.6 + 0.4 * Math.sin(angle * 3 + now / 500);
+
+            this.ctx.strokeStyle = `rgba(230, 235, 240, ${alpha * shimmer})`;
+            this.ctx.lineWidth = 1.2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 0);
+
+            // Pequeña curvatura aleatoria
+            const bend = (random(i + 30) - 0.5) * this.radius * 0.08;
+            const cx = Math.cos(angle) * len * 0.5 - Math.sin(angle) * bend;
+            const cy = Math.sin(angle) * len * 0.5 + Math.cos(angle) * bend;
+
+            this.ctx.quadraticCurveTo(
+                cx,
+                cy,
+                Math.cos(angle) * len,
+                Math.sin(angle) * len
+            );
+
+            this.ctx.stroke();
+        }
+
+        // Anillos
+        for (let r = 1; r <= numRings; r++) {
+            const ringAlpha = alpha * (0.35 + 0.15 * Math.sin(now / 600 + r));
+            const isOuter = r === numRings;
+
+            this.ctx.strokeStyle = isOuter
+                ? `rgba(200, 205, 215, ${alpha * 0.5})`
+                : `rgba(210, 215, 225, ${ringAlpha})`;
+
+            this.ctx.lineWidth = isOuter ? 1.5 : 1;
+            this.ctx.beginPath();
+
+            for (let i = 0; i <= numRadials; i++) {
+                const idx = i % numRadials;
+                const angle = radialAngles[idx];
+
+                // Cada punto del anillo tiene una distancia ligeramente diferente
+                const jitter = 1 + (random(r * 100 + idx) - 0.5) * 0.15;
+                const ringRadius = (anchorLengths[idx] * r / numRings) * jitter;
+
+                const x = Math.cos(angle) * ringRadius;
+                const y = Math.sin(angle) * ringRadius;
+
+                if (i === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    const prevIdx = (i - 1) % numRadials;
+                    const prevAngle = radialAngles[prevIdx];
+                    const prevRadius =
+                        (anchorLengths[prevIdx] * r / numRings) *
+                        (1 + (random(r * 100 + prevIdx) - 0.5) * 0.15);
+
+                    const px = Math.cos(prevAngle) * prevRadius;
+                    const py = Math.sin(prevAngle) * prevRadius;
+
+                    const midAngle = (prevAngle + angle) / 2;
+                    const midRadius = ((prevRadius + ringRadius) / 2) *
+                        (1 + (random(r * 200 + idx) - 0.5) * 0.12);
+
+                    const cx = Math.cos(midAngle) * midRadius;
+                    const cy = Math.sin(midAngle) * midRadius;
+
+                    this.ctx.quadraticCurveTo(cx, cy, x, y);
+                }
+            }
+
+            this.ctx.stroke();
+        }
     }
 }
 
