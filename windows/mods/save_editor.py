@@ -1222,7 +1222,6 @@ class App(tk.Tk):
             box_count = len([p for p in self.save.box if p])
             self.loaded_as_modded = use_modded
             self.source_label.config(text=f"Game Save ({mode_str}) - {team_count} team, {box_count} box")
-            self._inject_missing_eggs()
             self.refresh_grid()
             self.status.config(text="Loaded!")
         else:
@@ -1265,7 +1264,6 @@ class App(tk.Tk):
         path = filedialog.askopenfilename(filetypes=[("Save files", "*.json *.txt")])
         if path and self.save.load_from_file(Path(path)):
             self.source_label.config(text=f"File: {Path(path).name}")
-            self._inject_missing_eggs()
             self.refresh_grid()
 
     def save_game(self):
@@ -2492,113 +2490,31 @@ class App(tk.Tk):
             self.save.set_player('gold', amount)
             self.refresh_grid()
 
-    def _inject_missing_eggs(self):
-        """Auto-add missing eggs to shop without resetting progress or price."""
-        if not self.save.data:
-            return
-
-        # Runtime-obtainable list from pokemonData.js; must match reset_eggs.
-        all_eggs = [
-            # === Runtime eggListData ===
-            'charmander', 'treecko', 'froaki', 'natu', 'spoink', 'murkrow',
-            'voltorb', 'machop', 'mankey', 'chimchar', 'yamask', 'cryogonal',
-            'sableye', 'meowth', 'tangela', 'chikorita', 'spinarak', 'shroomish',
-            'barboach', 'drudiggon', 'remoraid', 'clauncher', 'seel', 'staryu',
-            'psyduck', 'gulpin', 'lapras', 'ferroseed', 'shuckle', 'maractus',
-            'sunkern', 'aron', 'hawlucha', 'cubone', 'binacle', 'absol',
-            'oshawott', 'sandshrew', 'sneasel', 'trapinch', 'pidgey', 'noibat',
-            'riolu', 'mareep', 'surskit', 'cottonee', 'petilil', 'hoppip',
-            'drilbur', 'ekans', 'girafarig', 'torkoal', 'spinda', 'dunsparce',
-            'ralts', 'koffing', 'farfetchd', 'omanyte', 'kabuto', 'corsola',
-            'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos',
-            'starly', 'abra', 'gastly', 'ditto', 'magikarp', 'pikachu',
-            'fuecoco', 'larvesta', 'cherubi', 'rockruff', 'pawniard', 'sandile',
-            'wimpod', 'honedge', 'sobble', 'rowlet', 'comfey', 'smeargle',
-            'carvanha', 'nickit', 'bulbasaur', 'cyndaquil', 'mawile', 'mudkip',
-            'patrat', 'snivy', 'drifloon', 'dondozo', 'plusle', 'minun',
-            'hippopotas', 'tepig', 'squirtle', 'tentacool', 'snover', 'nincada',
-            'chespin', 'dewpider', 'budew', 'sewaddle', 'sprigatito', 'magnemite',
-            'horsea', 'amaura', 'tirtouga', 'buneary', 'dratini',
-            # === Runtime secretPokemon ===
-            'chatot', 'luvdisc', 'cacturne', 'stakataka', 'greavard', 'gholdengo',
-            'missingNo', 'shedinja', 'sandygast', 'ducklett', 'manaphy', 'phione',
-            # === Runtime challengePokemon ===
-            'wingull', 'inkay', 'totodile', 'turtwig', 'hoothoot', 'tarountula',
-            'archen', 'carbink', 'vulpix', 'munna', 'bidoof', 'fennekin',
-            'skrelp', 'charcadet', 'capsakid', 'tatsugiri', 'klink', 'deino',
-            'houndour', 'pineco', 'chinchou',
-        ]
-        all_eggs = list(self.poke_data.data.get('allObtainable', all_eggs))
-
-        # Get current shop data
-        if 'save' in self.save.data:
-            shop = self.save.data['save'].get('shop', {})
-        else:
-            shop = self.save.data.get('shop', {})
-
-        current_eggs = shop.get('eggList', [])
-
-        # Find and append missing eggs (preserves order, adds new ones at end)
-        missing = [egg for egg in all_eggs if egg not in current_eggs]
-        if missing:
-            current_eggs.extend(missing)
-            if 'save' in self.save.data:
-                self.save.data['save']['shop']['eggList'] = current_eggs
-            else:
-                self.save.data['shop']['eggList'] = current_eggs
-            print(f"[Mod] Injected {len(missing)} missing eggs into shop")
-
     def reset_eggs(self):
-        """Reset egg shop to the runtime-obtainable Pokemon list."""
+        """Explicitly reset only unowned, ordinary vanilla eggs; never touch Pokemon."""
         if not self.save.data:
             return
-
-        # Runtime-obtainable list from pokemonData.js.
-        original_egg_list = [
-            # === Runtime eggListData ===
-            'charmander', 'treecko', 'froaki', 'natu', 'spoink', 'murkrow',
-            'voltorb', 'machop', 'mankey', 'chimchar', 'yamask', 'cryogonal',
-            'sableye', 'meowth', 'tangela', 'chikorita', 'spinarak', 'shroomish',
-            'barboach', 'drudiggon', 'remoraid', 'clauncher', 'seel', 'staryu',
-            'psyduck', 'gulpin', 'lapras', 'ferroseed', 'shuckle', 'maractus',
-            'sunkern', 'aron', 'hawlucha', 'cubone', 'binacle', 'absol',
-            'oshawott', 'sandshrew', 'sneasel', 'trapinch', 'pidgey', 'noibat',
-            'riolu', 'mareep', 'surskit', 'cottonee', 'petilil', 'hoppip',
-            'drilbur', 'ekans', 'girafarig', 'torkoal', 'spinda', 'dunsparce',
-            'ralts', 'koffing', 'farfetchd', 'omanyte', 'kabuto', 'corsola',
-            'castform', 'clefairy', 'anorith', 'lileep', 'shieldon', 'cranidos',
-            'starly', 'abra', 'gastly', 'ditto', 'magikarp', 'pikachu',
-            'fuecoco', 'larvesta', 'cherubi', 'rockruff', 'pawniard', 'sandile',
-            'wimpod', 'honedge', 'sobble', 'rowlet', 'comfey', 'smeargle',
-            'carvanha', 'nickit', 'bulbasaur', 'cyndaquil', 'mawile', 'mudkip',
-            'patrat', 'snivy', 'drifloon', 'dondozo', 'plusle', 'minun',
-            'hippopotas', 'tepig', 'squirtle', 'tentacool', 'snover', 'nincada',
-            'chespin', 'dewpider', 'budew', 'sewaddle', 'sprigatito', 'magnemite',
-            'horsea', 'amaura', 'tirtouga', 'buneary', 'dratini',
-            # === Runtime secretPokemon ===
-            'chatot', 'luvdisc', 'cacturne', 'stakataka', 'greavard', 'gholdengo',
-            'missingNo', 'shedinja', 'sandygast', 'ducklett', 'manaphy', 'phione',
-            # === Runtime challengePokemon ===
-            'wingull', 'inkay', 'totodile', 'turtwig', 'hoothoot', 'tarountula',
-            'archen', 'carbink', 'vulpix', 'munna', 'bidoof', 'fennekin',
-            'skrelp', 'charcadet', 'capsakid', 'tatsugiri', 'klink', 'deino',
-            'houndour', 'pineco', 'chinchou',
-        ]
-        original_egg_list = list(self.poke_data.data.get('allObtainable', original_egg_list))
-
-        # Starting egg price
-        starting_price = 10
-
-        # Update shop data
-        if 'save' in self.save.data:
-            self.save.data['save']['shop']['eggList'] = original_egg_list.copy()
-            self.save.data['save']['shop']['eggPrice'] = starting_price
-        else:
-            self.save.data['shop']['eggList'] = original_egg_list.copy()
-            self.save.data['shop']['eggPrice'] = starting_price
-
+        if not messagebox.askyesno(
+            "Reset Egg Shop",
+            "Restore unowned vanilla egg lines and reset the egg price to $10?\n\n"
+            "Owned evolution lines and secret/challenge rewards will not be added. "
+            "Your Pokemon are not changed. Use Save to Game to apply this change.",
+        ):
+            return
+        try:
+            from lib.egg_shop import remaining_eggs
+            catalog = json.loads((SCRIPT_DIR / 'dev' / 'egg_catalog.json').read_text(encoding='utf-8'))
+            original_egg_list = remaining_eggs(self.save.data, catalog, _load_egg_list_keys() or None)
+        except (OSError, ValueError, KeyError) as error:
+            messagebox.showerror("Reset Egg Shop", f"Cannot read the egg catalog: {error}")
+            return
+        save = self.save.data.get('save', self.save.data)
+        shop = save.setdefault('shop', {})
+        shop['eggList'] = original_egg_list
+        shop['eggPrice'] = 10
         self.refresh_grid()
-        messagebox.showinfo("Done", f"Egg shop reset!\n\nEgg list restored: {len(original_egg_list)} Pokemon\nEgg price reset to: ${starting_price}")
+        messagebox.showinfo("Done", f"Egg shop reset: {len(original_egg_list)} unowned vanilla egg lines.\n"
+                            "Egg price: $10. Pokemon unchanged. Save to Game to apply.")
 
     def get_star_route_options(self):
         """Return routes that contribute normal route stars."""

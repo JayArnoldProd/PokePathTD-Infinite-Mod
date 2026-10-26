@@ -1,5 +1,19 @@
 # Windows 1.6.3 compatibility audit
 
+## Same-version egg-shop hotfix — 2026-10-26
+
+An upgraded save exposed a pre-existing editor bug: loading a save appended all obtainable species to the egg list without ownership checks. Persisting that editor session could reintroduce evolved lines, secret Pokémon and challenge rewards. The vanilla shop's update method appended missing eggs but did not sanitize existing saved entries. Duplicate permission was enabled before and after the upgrade. The original compatibility checks missed this stale-pool scenario.
+
+The hotfix removes implicit editor restocking. Explicit Reset Egg Shop now requires confirmation and uses only unowned ordinary vanilla egg lines. A shared runtime helper reconciles stale queues at startup and before purchases, recognizes evolution/form IDs (including shiny and legacy save representations), preserves valid ordering, and never changes the roster or egg price. Duplicate permission does not make normal egg progression repeat.
+
+All mod selections now preserve existing team/box copies on load. Disabling duplicate acquisition blocks new duplicate objects but permits transfers of existing ones. The GUI remembers installed feature selections; fresh installs default duplicate permission to off. The version and release asset name remain 1.6.3.
+
+Added regression checks: `check_egg_shop.cjs` (1,576 ownership representations, stale queues, newly added eggs, depletion/costs, constructor preservation and transfers); `test_egg_hotfix.py` (1,182 Python ownership cases, editor load/save without mutation, confirmed reset, installer preferences); and `smoke_egg_hotfix.cjs` (real Electron startup with baseline roster comparison and isolated purchasing). Tests cover full-feature installs with both policies plus four partial configurations. Existing gameplay and localization tests remain applicable.
+
+Before local deployment, the complete installation and both save profiles were backed up to `C:\Users\jayar\clawd\backups\pokepath\before_163_egg_hotfix_20261026`. The original published ZIP is preserved there as `original_release.zip`. The copied current profile contained 187 Pokémon; Electron baseline comparison retained all 187 with their levels, shiny flags, held items and other checked properties, with no startup gold or egg-price changes. The stale 78-entry queue became 14 eligible egg lines. Purchase stress tests use a separate profile, never the live save.
+
+Final local deployment used the packaged ZIP and retained the existing feature manifest. All 64 installed JavaScript files parsed, and the actual installed game passed the 162-row Profile smoke and the 187-Pokémon baseline check. Persisted only the reconciled egg list; offline before/after comparisons verified the entire saved team and box records were identical, with gold and egg price unchanged. Both duplicate policies passed real Electron tests on separate copies of this same profile; each isolated purchase test drained 130 eligible lines without repurchasing the owned Pikachu/Raichu line. The full earlier gameplay regression also passed. Installer safety failures now abort before repacking; the CLI reports failure with a nonzero exit status.
+
 ## Source and recovery points
 
 - Input: `C:\Users\jayar\Downloads\PokéPath Setup 1.6 (1).zip` (191,090,414 bytes).
@@ -45,7 +59,7 @@ The supplied runtime already includes normal and shiny sprites for every newly a
 - Speed replacement no longer depends on adjacency to `switchPause`; pause injects a comment there. Verified the actual speed-button cycle, not just a manually assigned speed factor. Installation only reports success after the 10× branch exists.
 - An initial mechanical transplant exposed overlapping hunks. Reapplied complete, uniquely matching upstream hunks and resolved overlaps explicitly; no conflict markers or parse errors remain.
 
-## Verification
+## Initial compatibility verification (before the hotfix)
 
 - Strict ES-module parsing: all 20 distributed patches and all 63 installed JS files (including Electron main).
 - Python compilation: installer, diagnostic and save editor.

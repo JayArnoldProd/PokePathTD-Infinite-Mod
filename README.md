@@ -4,6 +4,10 @@
 
 **Compatible with PokePath TD v1.6.3 on Windows** ✅
 
+**1.6.3 egg-shop hotfix (October 26, 2026):** Save-editor loads no longer restock eggs. The egg shop now removes stale/owned evolution lines before purchases, while keeping every existing Pokémon—including duplicates. The installer remembers feature selections; new installs default duplicate acquisitions to off. Duplicate permission does not restock the egg shop.
+
+**Already running the 1.6.3 mod?** Close the game, back up your saves, replace the files in `mods/` with the current ZIP (keep `installed_features.json`), and rerun the installer. Keep the original **1.6.3** `resources/app.asar.vanilla` backup. No save reset or Pokémon deletion is needed. The version stays **1.6.3**.
+
 A comprehensive mod pack for **PokePath TD** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
 
 > **v1.6.3 release:** Windows compatibility has been validated on a clean 1.6.3 installation. macOS support remains on its older release track pending a dedicated validation pass.

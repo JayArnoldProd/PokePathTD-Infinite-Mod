@@ -4,6 +4,10 @@
 
 **Compatible with PokePath TD v1.6.3 on Windows** ✅
 
+**1.6.3 egg-shop hotfix (October 26, 2026):** Save-editor loads no longer restock eggs. The egg shop removes stale, non-egg and already-owned evolution lines before purchases. Existing Pokémon, shinies and duplicates are retained, including when duplicate acquisitions are disabled. Moving existing copies between team and box remains supported.
+
+**Same-version hotfix installation:** Close the game and back up your saves. Replace the files in `mods/` with the current ZIP, keeping `installed_features.json` and the original **1.6.3** `resources/app.asar.vanilla`, then rerun the installer. Feature selections are remembered. Fresh installs default duplicate acquisitions to off; this option never restocks the egg shop. The version remains **1.6.3**.
+
 A comprehensive mod for PokePath TD that adds endless mode, removes caps, and includes quality-of-life improvements.
 
 > **v1.6.3 release:** Windows compatibility has been validated on a clean 1.6.3 installation. macOS support remains on its older release track pending a dedicated validation pass.
@@ -93,7 +97,7 @@ A graphical save editor with full control over your game:
 - **Max All Levels** - Evolves all and sets to Lv100
 - **Complete All Stages** - Grants 3200 stars across the 32 normal routes
 - **Max Gold** - Sets gold to the selected ruleset's cap (about 9 quadrillion with QoL enabled)
-- **Reset Egg Shop** - Restocks all eggs
+- **Reset Egg Shop** - After confirmation, restores only unowned vanilla egg lines and resets the egg price; does not add secret/challenge rewards or change Pokémon
 - **Delete All Pokemon** - Clears team and box
 
 ### Individual Pokemon

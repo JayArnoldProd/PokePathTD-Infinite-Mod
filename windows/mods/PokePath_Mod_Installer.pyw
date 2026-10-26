@@ -180,6 +180,17 @@ def run_command(cmd, cwd=None, timeout=300):
     except Exception as e:
         return False, "", str(e)
 
+def initial_feature_selection(features, manifest_path):
+    """Preserve previous choices; use defaults only for a fresh installation."""
+    try:
+        installed = json.loads(manifest_path.read_text(encoding='utf-8'))
+        if isinstance(installed, list) and all(isinstance(key, str) for key in installed):
+            return {key: key in installed for key in features}
+    except (OSError, ValueError):
+        pass
+    return {key: info.get('default', True) for key, info in features.items()}
+
+
 class FeatureSelectionDialog(tk.Toplevel):
     """Dialog for selecting which mod features to install."""
     
@@ -275,8 +286,9 @@ class FeatureSelectionDialog(tk.Toplevel):
         canvas.bind_all('<MouseWheel>', on_mousewheel)
         
         # Create checkboxes for each feature
+        initial = initial_feature_selection(self.mod_features, SCRIPT_DIR / 'installed_features.json')
         for feature_key, feature_info in self.mod_features.items():
-            var = tk.BooleanVar(value=feature_info.get('default', True))
+            var = tk.BooleanVar(value=initial[feature_key])
             self.feature_vars[feature_key] = var
             
             frame = tk.Frame(self.features_frame, bg='#252540')

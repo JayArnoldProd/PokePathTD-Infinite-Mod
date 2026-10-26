@@ -2,7 +2,9 @@
     "version": "1.6.3",
     "game_version": "1.6.3",
     "release_date": "2026-10-26",
+    "hotfix": "egg-shop-2026-10-26",
     "changes": [
+        "Hotfix: stop implicit editor restocking, filter owned egg lines, preserve existing Pokemon and feature selections",
         "Rebased Windows mod onto clean PokePath TD 1.6.3, including 1.6.2 content",
         "Preserved new map views, acquisition sorting, item mechanics and balance changes",
         "Added Calyrex chess-puzzle progress in all ten languages",
