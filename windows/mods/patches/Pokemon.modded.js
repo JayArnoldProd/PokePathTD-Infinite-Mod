@@ -4,7 +4,7 @@ import { playSound } from '../../file/audio.js';
 export class Pokemon {
 	constructor(
 		specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false,
-		hideShiny = false, isMega = false, isReset = false, skin = null, extra = false, acquisitionDate = Date.now()
+		hideShiny = false, isMega = false, isReset = false, skin = null, extra = false, acquisitionDate = Date.now(), stadistics = {}, hasCustomSkin = false
 	) {
 		this.main = main;
 
@@ -20,10 +20,13 @@ export class Pokemon {
 		this.isMega = isMega;
 		this.isReset = isReset;
 		this.acquisitionDate = acquisitionDate;
+		this.stadistics = stadistics;
+		this.hasCustomSkin = hasCustomSkin;
 
 		this.skin = skin;
 		this.extra = extra;
-		this.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin)); // MOD: isolate per-Pokémon sprite paths
+		this.sprite = JSON.parse(JSON.stringify((this.skin == null || this.isMega) ? specie.sprite : this.skin));
+		if (this.hasCustomSkin) this.setCustomSkin();
 		this.name = specie.name;
 		this.alias = alias;
 		this.ability = specie.ability;
@@ -54,6 +57,7 @@ export class Pokemon {
 		//HABILIDADES
 		this.ricochet = this.specie.ricochet ?? 0;
 		this.orbital = this.calculateOrbitalCount(this.specie.orbital ?? 0, lvl);
+		this.streamAngle = this.specie.streamAngle ?? 0;
 		this.bombardmentArea = this.specie.bombardmentArea ?? 0;
 		this.bombardmentSplash = this.specie.bombardmentSplash ?? 0;
 
@@ -77,10 +81,10 @@ export class Pokemon {
 			// 	this.ability.id == 'armorBreakDoubleShot' || this.ability.id == 'octaShot'
 			// ) this.targetMode = 'available';
 			else if (this.attackType == 'aura') this.targetMode = 'aura';
-			else if (this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk') this.targetMode = 'invisible';
+			else if (this.ability.id == 'scrappy' || this.ability.id == 'frisk' || this.ability.id == 'vigilantFrisk' || this.ability.id == 'moongeistBeam' || this.ability.id == 'grimNeigh') this.targetMode = 'invisible';
 			else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
 			else if (this.ability.id == 'spinda') this.targetMode = 'random';
-			else if (this.ability.id == 'curse') this.targetMode = 'curseable';
+			else if (this.ability.id == 'curse' || this.ability.id == 'curseDoubleShot') this.targetMode = 'curseable';
 			else if (this.ability.id == 'willOWisp') this.targetMode = 'cursed';
 			else this.targetMode = 'first';
 		} else this.targetMode = targetMode;
@@ -101,6 +105,8 @@ export class Pokemon {
 		this.form = (this.specie.form) ? this.specie.key : false;
 		this.baseSprite = JSON.parse(JSON.stringify(this.sprite));
 		this.hideShiny = hideShiny;
+
+		if (this.specie?.key === 'unown')  this.updateUnownSprite();
 
 		if (this.isShiny) {
 			if (!this.hideShiny) this.setShiny();
@@ -258,6 +264,8 @@ export class Pokemon {
 	            skin: this.skin,
 	            extra: this.extra,
 	            acquisitionDate: this.acquisitionDate,
+	            stadistics: this.stadistics,
+	            hasCustomSkin: this.hasCustomSkin,
 	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    } else {
@@ -276,6 +284,8 @@ export class Pokemon {
 	            skin: this.skin,
 	            extra: this.extra,
 	            acquisitionDate: this.acquisitionDate,
+	            stadistics: this.stadistics,
+	            hasCustomSkin: this.hasCustomSkin,
 	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    }
@@ -313,7 +323,9 @@ export class Pokemon {
 	        data.isReset,
 	        data.skin,
 	        data.extra,
-	        data.acquisitionDate ?? Date.now()
+	        data.acquisitionDate ?? Date.now(),
+	        data.stadistics,
+	        data.hasCustomSkin ?? false
 	    );
 	    // MOD: Restore saved tower placement position
 	    pokemon.tilePosition = data.tilePosition ?? -1;
@@ -334,20 +346,17 @@ export class Pokemon {
         if (this.lvl >= this.specie.evolution?.level && this.id != 95) {
 	if (this.id != 76) this.updateSpecie(this.specie.evolution.pokemon);
 	else {
-		if (this.main.utility.isBetweenHours(8, 18)) this.updateSpecie('lycanrocDay');
-		else this.updateSpecie('lycanrocNight');
-	}
-	// this.main.player.achievementProgress.evolutionCount++;
-	// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
-	if (this.id === 124 && !this.isReset) {
-		this.main.UI.getSecret('shedinja');
-	}
+        		if (this.main.utility.isBetweenHours(8, 18)) this.updateSpecie('lycanrocDay');
+        		else this.updateSpecie('lycanrocNight');
+        	}
+
+        	if (this.id === 124 && !this.isReset) {
+        		this.main.UI.getSecret('shedinja');
+        	}
         }
 
         if (this.lvl >= this.specie.evolution?.level && this.id == 95 && (this.item?.id == 'inverter' || this.isReset)) {
-	this.updateSpecie(this.specie.evolution.pokemon);
-	// this.main.player.achievementProgress.evolutionCount++;
-	// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
+        	this.updateSpecie(this.specie.evolution.pokemon);
         }
 
         this.updateStats();
@@ -491,27 +500,64 @@ export class Pokemon {
 		if (specieName === undefined) return;
 		const newSpecie = pokemonData[specieName];
 		this.specie = newSpecie;
-		this.id = newSpecie.id;
 
 		this.ricochet = newSpecie?.ricochet ?? 0;
 		this.orbital = this.calculateOrbitalCount(newSpecie?.orbital ?? 0, this.lvl);
+		this.streamAngle = newSpecie?.streamAngle ?? 0;
+		
 		this.bombardmentArea = newSpecie?.bombardmentArea ?? 0;
 		this.bombardmentSplash = newSpecie?.bombardmentSplash ?? 0;
 
-		this.sprite = newSpecie.sprite;
+		this.sprite = JSON.parse(JSON.stringify(newSpecie.sprite));
+    
 		this.name = newSpecie.name;
 		this.ability = newSpecie.ability;
 		this.tiles = newSpecie.tiles;
 		this.projectile = newSpecie.projectile;
 		this.rangeType = newSpecie.rangeType;
 		this.attackType = newSpecie.attackType;
+		if (this.attackType === 'area') {
+		    this.changeTargetMode('area');
+		} else if (this.attackType === 'single' && this.targetMode === 'area') {
+		    this.changeTargetMode('first');
+		}
+
 		this.form = (this.specie.form) ? this.specie.key : false;
 
-		this.updateStats();
+		this.updateStats(); 
 		this.setCost();
+
+		if (this.item && !this.item?.megaStone && this.main?.itemController && !this.main.itemController.canEquip(this.item, this)) this.retireItem();
 		if (this.isShiny) this.setShiny();
+		if (this.hasCustomSkin) this.setCustomSkin();
 		if (this.main.boxScene.isOpen) this.main.boxScene.update();
-		if (this.main.area.map.id === 35) this.main.area.updateChessPieces()
+		if (this.main.area.map.id === 35) this.main.area.updateChessPieces();
+		if (this.isDeployed) {
+   		 	const tower = this.main.area.towers.find(t => t.pokemon === this);
+
+		    if (tower) {
+
+		        tower.updateStatsFromPokemon();
+
+		        tower.attackCooldown = tower.speed;
+
+		        if (tower.pulse) {
+		            tower.pulse.active = false;
+		        }
+
+		        tower.orbital = this.orbital;
+
+		        if (this.attackType === 'orbital') {
+		            tower.spawnOrbitales();
+		        } else {
+		            tower.projectiles = [];
+		        }
+
+		        if (typeof this.main.area.recalculateAuras === 'function') {
+		            this.main.area.recalculateAuras();
+		        }
+		    }
+		}
 	}
 
 	transformADN(targetModeOld = 'first') {
@@ -524,7 +570,9 @@ export class Pokemon {
 		if (this.adn?.base) this.adn = pokemonData[this.adn.base];
 
 		if (['aura', 'invisible', 'area', 'curseable', 'bombardment'].includes(targetModeOld)) targetModeOld = 'first';
-		this.sprite = this.adn.sprite;
+		this.sprite = JSON.parse(JSON.stringify(this.adn.sprite));
+		if (this.adn.id == 70 && this.isShiny) this.setShiny();
+		if (this.hasCustomSkin) this.setCustomSkin();
 
 		this.ability = this.adn.ability;
 		this.tiles = this.adn.tiles;
@@ -547,6 +595,7 @@ export class Pokemon {
 		//HABILIDADES
 		this.ricochet = this.adn.ricochet ?? 0;
 		this.orbital = this.calculateOrbitalCount(this.adn.orbital ?? 0, level);
+		this.streamAngle = this.adn.streamAngle ?? 0;
 		this.bombardmentArea = this.adn.bombardmentArea ?? 0;
 		this.bombardmentSplash = this.adn.bombardmentSplash ?? 0;
 
@@ -563,17 +612,50 @@ export class Pokemon {
 		// 	this.ability.id == 'curseDoubleShot' || this.ability.id == 'cradily' || this.ability.id == 'octaShot'
 		// ) this.targetMode = 'available';
 		else if (this.attackType == 'aura') this.targetMode = 'aura';
-		else if (['illuminate', 'illuminateBuff', 'frisk', 'vigilantFrisk'].includes(this.ability.id)) this.targetMode = 'invisible';
+		else if (['illuminate', 'illuminateBuff', 'frisk', 'vigilantFrisk', 'moongeistBeam', 'grimNeigh', 'scrappy'].includes(this.ability.id)) this.targetMode = 'invisible';
 		else if (this.ability.id == 'burn') this.targetMode = 'notBurned';
 		else if (this.ability.id == 'spinda') this.targetMode = 'random';
 		else if (this.ability.id == 'curse') this.targetMode = 'curseable';
 		else this.targetMode = targetModeOld;
-
-		if (this.adn.id == 70 && this.isShiny) this.setShiny();
 	}
 
 	equipItem(item) {
-		this.retireItem();
+    if (item?.equipedBy != undefined && this.main.game.stopped) {
+        console.log(item?.equipedBy);
+        playSound('pop0', 'ui');
+        return;
+    }
+
+    // Comprobar si el objeto puede equiparse en la forma base
+    // antes de retirar la megapiedra.
+    if (this.isMega && this.item?.megaStone && !item?.megaStone) {
+        const baseSpecie = this.baseSpecie ??  pokemonData[this.specie?.base];
+
+	        if (baseSpecie && this.main?.itemController) {
+	            // Crear una representación temporal del Pokémon
+	            // en su forma normal, sin modificar el Pokémon real.
+	            const basePokemon = Object.create(this);
+
+	            Object.assign(basePokemon, {
+	                specie: baseSpecie,
+	                ability: baseSpecie.ability,
+	                tiles: baseSpecie.tiles,
+	                projectile: baseSpecie.projectile,
+	                rangeType: baseSpecie.rangeType,
+	                attackType: baseSpecie.attackType,
+	                form: baseSpecie.form ? baseSpecie.key : false,
+	                isMega: false,
+	                item: null
+	            });
+
+	            if (!this.main.itemController.canEquip(item, basePokemon)) {
+	                playSound('pop0', 'ui');
+	                return this.retireItem();
+	            }
+	        }
+	    }
+
+	    this.retireItem();
 
 		if (item?.equipedBy != undefined && this.ability.id != 'magician') {
 			const pokes = [...this.main.team.pokemon, ...this.main.box.pokemon];
@@ -582,8 +664,7 @@ export class Pokemon {
 				pokeWhitItem.isDeployed &&
 				[
 					'silphScope', 'airBalloon', 'heavyDutyBoots', 'dampMulch', 'assaultVest', 'twistedSpoon',
-					'subwoofer', 'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather', 'charizarditeY',
-					'jadeOrb', 'lustrousOrb', 'mitsuesCocktail', 'blimpKeys', 'pokeSkates'
+					'subwoofer', 'mitsuesCocktail', 'blimpKeys', 'pokeSkates'
 				].includes(item?.id)
 			) {
 				playSound('pop0', 'ui')
@@ -601,16 +682,24 @@ export class Pokemon {
 			this.main.UI.getSecret('corsolaGalar');
 		}
 
-		if (item.id == 'inverter' && this.lvl > 30 && this.id == 95 && this.specie.evolution) {
+		if (item.id == 'poisonBarb' && this.specie.key === 'weavile' && !this.main.player.secrets.sneaselHisui) {
+			this.main.player.secrets.sneaselHisui = true;
+			this.main.UI.getSecret('sneaselHisui');
+		}
+
+		if (item.id == 'ancientSword' && this.specie.key === 'samurott' && !this.main.player.secrets.samurottHisui) {
+			this.main.player.secrets.samurottHisui = true;
+			this.main.UI.getSecret('samurottHisui');
+		}
+
+		if (item.id == 'inverter' && this.lvl >= 30 && this.id == 95 && this.specie.evolution) {
 			this.updateSpecie(this.specie.evolution.pokemon);
-	// this.main.player.achievementProgress.evolutionCount++;
-	// if (this.main.player.achievementProgress.evolutionCount >= 210) this.main.player.unlockAchievement(1);
 		}
 
 		if (
 			this.isDeployed &&
 			this.item.id == 'silphScope' &&
-			(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate' && this.ability.id !== 'illuminateBuff')
+			(this.ability.id !== 'scrappy' && this.ability.id !== 'frisk' && this.ability.id !== 'moongeistBeam' && this.ability.id !== 'grimNeigh' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate' && this.ability.id !== 'illuminateBuff')
 		) {
 			const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 			this.main.area.towers[index].revealInvisible = true;
@@ -657,7 +746,7 @@ export class Pokemon {
 			if (
 				this.isDeployed &&
 				this.item.id == 'silphScope' &&
-				(this.ability.id !== 'frisk' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate' && this.ability.id !== 'illuminateBuff')
+				(this.ability.id !== 'scrappy' && this.ability.id !== 'frisk' && this.ability.id !== 'moongeistBeam' && this.ability.id !== 'grimNeigh' && this.ability.id !== 'vigilantFrisk' && this.ability.id !== 'illuminate' && this.ability.id !== 'illuminateBuff')
 			) {
 				const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this);
 				this.main.area.towers[index].revealInvisible = false;
@@ -681,11 +770,17 @@ export class Pokemon {
 			}
 
 			if (this.isMega) this.removeMegaStone();
-			if (this.item.id === 'silphScope') this.targetMode = 'first';
+			if (this.item.id === 'silphScope') {
+				this.targetMode = 'first';
+				if (['frisk', 'vigilantFrisk', 'moongeistBeam', 'grimNeigh'].includes(this.ability.id)) this.targetMode = 'invisible';
+			}
 			if (this.item.id === 'ringTarget' || this.id == 53) this.targetMode = 'random';
 			this.item = null;
 
-			if (oldItemID === 'roomService') this.main.area.checkWeather()
+			if (['roomService', 'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(oldItemID)) {
+				this.main.area.checkWeather();
+			}
+
 			this.main.UI.update();
 		}
 	}
@@ -702,13 +797,17 @@ export class Pokemon {
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
 
-            if (tower.pokemon.id == 16) tower.ricochet = 2;
             if (tower) {
-	tower.updateStatsFromPokemon();
+            	if (tower.pokemon.id == 16) tower.ricochet = 2;
+            	if (tower.pokemon.id == 138) tower.abilityField = 'corrosionMega';
+            	tower.updateStatsFromPokemon();
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
                 }
+                if (tower.pokemon.id == 245) this.main.area.checkWeather();
             }
+
+            if (this.attackType === 'bombardment') tower.rerollBombardZone();
         }
 
         this.main.area.checkWeather();
@@ -722,22 +821,25 @@ export class Pokemon {
 		if (this.isDeployed) {
             const tower = this.main.area.towers.find(t => t.pokemon === this);
             if (tower) {
-	if (tower.pokemon.id == 16) tower.ricochet = 0;
-	if (tower.pokemon.id == 11 && tower.tile.land === 4) {
-		const index = this.main.area.towers.findIndex(tower => tower.pokemon === this);
-		if (index !== -1) {
+            	if (tower.pokemon.id == 16) tower.ricochet = 0;
+            	if (tower.pokemon.id == 138) tower.abilityField = false;
+            	if (tower.pokemon.id == 11 && tower.tile.land === 4) {
+            		const index = this.main.area.towers.findIndex(tower => tower.pokemon === this);
+            		if (index !== -1) {
 						this.main.area.towers[index].tile.tower = false;
 						this.main.area.towers.splice(index, 1);
 						this.isDeployed = false;
 						this.tilePosition = -1;
 					}
-                }
+            	}
 
-                tower.updateStatsFromPokemon();
-                if (tower?.pokemon?.id == 145) this.main.area.checkWeather();
+            	tower.updateStatsFromPokemon();
+            	if (tower?.pokemon?.id == 145 || tower?.pokemon?.id == 245 || tower?.pokemon?.id == 0) this.main.area.checkWeather();
                 if (typeof this.main.area.recalculateAuras === 'function') {
                     this.main.area.recalculateAuras();
                 }
+
+                if (this.attackType === 'bombardment') tower.rerollBombardZone();
             }
         }
 	}
@@ -794,6 +896,124 @@ export class Pokemon {
 	    }
 	}
 
+	setCustomSkin() {
+		//if (this.isMega) return;
+
+		const replacePath = (p) => {
+			if (typeof p !== 'string') return p;
+			return p.replace(/\/(?:skin\/)*(normal|shiny)\//, '/skin/$1/');
+		};
+
+		for (const key in this.sprite) {
+			if (!Object.prototype.hasOwnProperty.call(this.sprite, key)) continue;
+			if (typeof this.sprite[key] === 'string') this.sprite[key] = replacePath(this.sprite[key]);
+		}
+
+		if (this.isDeployed) {
+			const tower = this.main.area.towers.find(t => t.pokemon === this);
+
+			if (tower) {
+				tower.updateStatsFromPokemon();
+
+				if (this.id == 61) {
+					if (tower.tile.land == 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser')) {
+						tower.updateTowerSprite(this.sprite.imageGrass, this.sprite.framesGrass, this.specie.projectileGrass);
+					} else if (tower.tile.land == 3 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle')) {
+						tower.updateTowerSprite(this.sprite.imageWater, this.sprite.framesWater, this.specie.projectileWater);
+					} else if (tower.tile.land == 4 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit')) {
+						tower.updateTowerSprite(this.sprite.imageMountain, this.sprite.framesMountain, this.specie.projectileMountain);
+					}
+				}
+
+				if (typeof this.main.area.recalculateAuras === 'function') {
+					this.main.area.recalculateAuras();
+				}
+			}
+		}
+	}
+
+	removeCustomSkin() {
+		const replacePath = (p) => {
+			if (typeof p !== 'string') return p;
+			return p.replace(/\/(?:skin\/)+(normal|shiny)\//, '/$1/');
+		};
+
+		for (const key in this.sprite) {
+			if (!Object.prototype.hasOwnProperty.call(this.sprite, key)) continue;
+			if (typeof this.sprite[key] === 'string') this.sprite[key] = replacePath(this.sprite[key]);
+		}
+
+		if (this.isDeployed) {
+			const tower = this.main.area.towers.find(t => t.pokemon === this);
+
+			if (tower) {
+				tower.updateStatsFromPokemon();
+
+				if (this.id == 61) {
+					if (tower.tile.land == 2 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser')) {
+						tower.updateTowerSprite(this.sprite.imageGrass, this.sprite.framesGrass, this.specie.projectileGrass);
+					} else if (tower.tile.land == 3 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle')) {
+						tower.updateTowerSprite(this.sprite.imageWater, this.sprite.framesWater, this.specie.projectileWater);
+					} else if (tower.tile.land == 4 || (tower.tile.land == 1 && tower.pokemon?.item?.id == 'hikingKit')) {
+						tower.updateTowerSprite(this.sprite.imageMountain, this.sprite.framesMountain, this.specie.projectileMountain);
+					}
+				}
+
+				if (typeof this.main.area.recalculateAuras === 'function') {
+					this.main.area.recalculateAuras();
+				}
+			}
+		}
+	}
+
+	toggleCustomSkin() {
+	    if (this.hasCustomSkin) {
+	        this.removeCustomSkin();
+	        this.hasCustomSkin = false;
+	    } else {
+	        this.hasCustomSkin = true;
+	        this.setCustomSkin();
+	    }
+	}
+
+	updateUnownSprite() {
+	    if (this.specie?.key !== 'unown') return;
+
+	    const letter = String(
+	        this.main.player?.unownLetter || 'A'
+	    ).trim().toUpperCase();
+
+	    if (!/^[A-Z!?]$/.test(letter)) return;
+
+	    // Los símbolos necesitan nombres de archivo válidos en Windows.
+	    const form = letter === '!'
+	        ? 'exclamation'
+	        : letter === '?'
+	            ? 'question'
+	            : letter.toLowerCase();
+
+	    const updateSprite = sprite => {
+	        if (!sprite) return;
+
+	        if (typeof sprite.base === 'string') {
+	            sprite.base = sprite.base.replace(
+	                /unown-[a-z!?]+(?=\.png$)/i,
+	                `unown-${form}`
+	            );
+	        }
+
+	        if (typeof sprite.image === 'string') {
+	            sprite.image = sprite.image.replace(
+	                /unown-[a-z!?]+(?=-idle\.png$)/i,
+	                `unown-${form}`
+	            );
+	        }
+	    };
+
+	    updateSprite(this.sprite);
+	    updateSprite(this.baseSprite);
+	}
+
 	resetPokemon() {
 		const oldTarget = this.targetMode;
 
@@ -809,45 +1029,6 @@ export class Pokemon {
 		if (!this.main.itemController.canEquip(this.item, this)) this.retireItem();
 	}
 
-	// setDebugOverrides(overrides = {}) {
-	// 	if (!this.debugOverrides) this.debugOverrides = {};
-	// 	if (overrides.power !== undefined) {
-	// 		this.debugOverrides.power = Number(overrides.power);
-	// 		this.power = Math.round(this.debugOverrides.power);
-	// 	}
-	// 	if (overrides.speed !== undefined) {
-	// 		this.debugOverrides.speed = Math.round(overrides.speed);
-	// 		this.speed = Math.round(this.debugOverrides.speed);
-	// 	}
-	// 	if (overrides.critical !== undefined) {
-	// 		this.debugOverrides.critical = Number(overrides.critical);
-	// 		this.critical = Math.round(this.debugOverrides.critical * 10) / 10;
-	// 	}
-	// 	if (overrides.range !== undefined) {
-	// 		this.debugOverrides.range = Number(overrides.range);
-	// 		this.range = this.debugOverrides.range;
-	// 	}
-
-	// 	if (this.isDeployed) {
-	// 		const tower = this.main.area.towers.find(t => t.pokemon === this);
-	// 		if (tower) {
-	// 			try { tower.updateStatsFromPokemon(); } catch (e) { }
-	// 			if (this.id == 61 && tower.tile) {
-	// 				try {
-	// 					if (tower.tile.land == 2) tower.updateTowerSprite(this.sprite.imageGrass, this.sprite.framesGrass, this.specie.projectileGrass);
-	// 					else if (tower.tile.land == 3) tower.updateTowerSprite(this.sprite.imageWater, this.sprite.framesWater, this.specie.projectileWater);
-	// 					else if (tower.tile.land == 4) tower.updateTowerSprite(this.sprite.imageMountain, this.sprite.framesMountain, this.specie.projectileMountain);
-	// 				} catch (e) { }
-	// 			}
-	// 		}
-	// 		if (typeof this.main.area.recalculateAuras === 'function') {
-	// 			try { this.main.area.recalculateAuras(); } catch (e) {}
-	// 		}
-	// 	}
-
-	// 	try { this.main.UI.update(); } catch (e) {}
-	// 	try { this.main.UI.updatePokemon(); } catch (e) {}
-	// }
 }
 
 function arraysEqual(a, b) {

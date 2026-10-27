@@ -3,7 +3,7 @@ import { Element } from '../../utils/Element.js';
 import { Input } from '../../utils/Input.js';
 import { text } from '../../file/text.js';
 import { saveData } from '../../file/data.js';
-import { Pokemon } from '../component/Pokemon.js'; 
+import { Pokemon } from '../component/Pokemon.js';
 import { pokemonData } from '../data/pokemonData.js';
 import { playSound, playMusic } from '../../file/audio.js';
 
@@ -35,39 +35,39 @@ export class NewGameScene extends GameScene {
 		this.profileContainer = new Element(this.container, { className: 'new-game-starter-profile-container' }).element;
 
 		this.name = new Input(
-			this.profileContainer, 
-			"text", 
-			{ 
-				className: "profile-scene-name-ng", 
-				maxlength: 11, 
-				cb: () => { this.changeName() } 
+			this.profileContainer,
+			"text",
+			{
+				className: "profile-scene-name-ng stroke",
+				maxlength: 11,
+				cb: () => { this.changeName() }
 			}
 		);
 
 		this.portrait = new Element(this.profileContainer, { className: 'profile-scene-portrait-ng' }).element;
 
-		this.avatarPrev = new Element(this.profileContainer, { className: 'profile-scene-avatar-arrow-prev-ng', text: '<' }).element;
-		this.avatarNext = new Element(this.profileContainer, { className: 'profile-scene-avatar-arrow-next-ng', text: '>' }).element;
+		this.avatarPrev = new Element(this.profileContainer, { className: 'profile-scene-avatar-arrow-prev-ng stroke', text: '<' }).element;
+		this.avatarNext = new Element(this.profileContainer, { className: 'profile-scene-avatar-arrow-next-ng stroke', text: '>' }).element;
 		this.avatarPrev.addEventListener('click', () => { this.changePortrait(-1) });
 		this.avatarNext.addEventListener('click', () => { this.changePortrait(1) });
 		this.avatarPrev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 		this.avatarNext.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 
-		this.starterName = new Element(this.container, { className: 'new-game-starter-name' }).element;
-		this.starterDescription = new Element(this.container, { className: 'new-game-starter-description' }).element;
+		this.starterName = new Element(this.container, { className: 'new-game-starter-name stroke' }).element;
+		this.starterDescription = new Element(this.container, { className: 'new-game-starter-description stroke' }).element;
 		this.starterContainer = new Element(this.container, { className: 'new-game-starter-container' }).element;
 		this.starters = [];
 
 		STARTER.forEach((starter, i) => {
 			this.starters[i] = new Element(this.starterContainer, { className: 'new-game-starter', image: starter.sprite.base }).element;
 			this.starters[i].addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
-			this.starters[i].addEventListener('click', () => { 
+			this.starters[i].addEventListener('click', () => {
 				playSound('click1', 'ui');
-				this.selectStarter(i)} 
+				this.selectStarter(i)}
 			)
 		})
 
-		this.startButton = new Element(this.container, { className: 'new-game-start-button' }).element;
+		this.startButton = new Element(this.container, { className: 'new-game-start-button stroke' }).element;
 		this.startButton.addEventListener('click', () => this.close());
 		this.startButton.addEventListener('mouseenter', () => { playSound('open', 'ui') })
 	}
@@ -85,8 +85,12 @@ export class NewGameScene extends GameScene {
 		this.starterName.innerText = STARTER[this.starterSelected].name[this.main.lang].toUpperCase();
 		this.starterName.style.color = STARTER[this.starterSelected].color;
 
-		this.starterDescription.innerText = STARTER[this.starterSelected].ability.description[this.main.lang].toUpperCase();
-		this.starterDescription.style.color = STARTER[this.starterSelected].color;
+		// this.starterDescription.innerText = STARTER[this.starterSelected].ability.description[this.main.lang].toUpperCase();
+		// this.starterDescription.style.color = STARTER[this.starterSelected].color;
+
+		this.starterDescription.innerHTML = this.main.utility.parseText(
+	        STARTER[this.starterSelected].ability.description[this.main.lang] || ''
+	    );
 
 		STARTER.forEach((starter, i) => {
 			this.starters[i].style.filter = 'revert-layer';
@@ -121,8 +125,8 @@ export class NewGameScene extends GameScene {
 		let pos = this.main.player.portrait;
 		pos += dir;
 
-		if (pos < 0) pos = 19;
-		else if (pos > 19) pos = 0
+		if (pos < 0) pos = 79;
+		else if (pos > 79) pos = 0
 
 		this.main.player.portrait = pos;	
 
@@ -161,9 +165,9 @@ export class NewGameScene extends GameScene {
 		this.main.UI.update();
 		this.saveProfile();
 		saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
-		
+
 		this.main.tutorialScene.open();
 		playSound('button2', 'ui');
-		
+
 	}
 }

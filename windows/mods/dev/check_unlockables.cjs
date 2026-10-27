@@ -12,8 +12,8 @@ if (!gameJsRoot) {
     process.exit(2);
 }
 
-const profilePath = path.join(repoRoot, 'windows', 'mods', 'patches', 'ProfileScene.modded.js');
-const textPath = path.join(repoRoot, 'windows', 'mods', 'patches', 'text.modded.js');
+const profilePath = path.join(__dirname, '..', 'patches', 'ProfileScene.modded.js');
+const textPath = path.join(__dirname, '..', 'patches', 'text.modded.js');
 const pokemonDataPath = path.join(gameJsRoot, 'game', 'data', 'pokemonData.js');
 const itemDataPath = path.join(gameJsRoot, 'game', 'data', 'itemData.js');
 const routeDataPath = path.join(gameJsRoot, 'game', 'data', 'routeData.js');
@@ -201,7 +201,7 @@ for (const key of new Set([...routeRewardItems, 'strangeIdol'])) {
     }
 }
 
-for (const id of [19, 23, 26]) {
+for (const id of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,32,38]) {
     const match = new RegExp(`\\bid:\\s*${id},`).exec(achievementSource);
     if (!match) {
         fail(`achievementReworkData is missing id ${id}`);
@@ -227,6 +227,7 @@ const mapEntryByRouteId = new Map([
     [32, 'secret-marshadow-cave'],
     [33, 'secret-castle-room'],
     [35, 'secret-board-room'],
+    [46, 'secret-halloween-2026'],
 ]);
 for (const routeId of secretMapIds) {
     const entryId = mapEntryByRouteId.get(routeId);
@@ -244,6 +245,10 @@ const redeemEntryById = new Map([
     ['gold25k', 'secret-gold25k'],
     ['sandyShocks', 'secret-sandy-shocks'],
     ['ironThorns', 'secret-iron-thorns'],
+    ['ironBundle', 'secret-iron-bundle'],
+    ['flutterMane', 'secret-flutter-mane'],
+    ['halloweenMap2026', 'secret-halloween-2026'],
+    ['pumpkaboo', 'secret-pumpkaboo'],
 ]);
 for (const rewardId of redeemIds) {
     const entryId = redeemEntryById.get(rewardId);

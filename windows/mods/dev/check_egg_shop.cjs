@@ -5,7 +5,7 @@ const {pathToFileURL} = require('node:url');
 const root = path.resolve(process.argv[2]);
 const allowDupes = process.argv.includes('--allow-dupes');
 (async () => {
-    const {pokemonData:p, eggListData:eggs} = await import(pathToFileURL(path.join(root,'src/js/game/data/pokemonData.js')));
+    const {pokemonData:p, eggListData:eggs, forcedInitialPool, forcedSecondaryPool} = await import(pathToFileURL(path.join(root,'src/js/game/data/pokemonData.js')));
     function evaluate(file, expression, globals={}) {
         const code = fs.readFileSync(path.join(root,'src/js/game',file),'utf8')
             .replace(/^import [^\n]*$/gm,'').replace(/^export /gm,'');
@@ -28,9 +28,9 @@ const allowDupes = process.argv.includes('--allow-dupes');
             assert.equal(JSON.stringify(shop.eggList),stable,'not idempotent');checks++;
         }
     }
-    const oldOwned=eggs.filter(k=>!['grubbin','porygon','cutiefly'].includes(k)).map(k=>({specie:p[k]}));
+    const oldOwned=eggs.filter(k=>!['piplup','grookey','weedle'].includes(k)).map(k=>({specie:p[k]}));
     const upgrade=makeShop(oldOwned,[]);safety.reconcileEggList(upgrade);
-    assert.deepEqual([...upgrade.eggList].sort(),['cutiefly','grubbin','porygon']);
+    assert.deepEqual([...upgrade.eggList].sort(),['grookey','piplup','weedle']);
     class Pokemon {
         constructor(specie,lvl,item,main){Object.assign(this,{specie,id:specie.id,lvl,main});}
         static fromOriginalData(data,main){return Object.assign(new Pokemon(p[data.specieKey],data.lvl,null,main),data);}
@@ -50,7 +50,7 @@ const allowDupes = process.argv.includes('--allow-dupes');
     assert(main.box.pokemon.includes(existing),'return transfer rejected');
     main.team.addPokemon(new Pokemon(p.pikachu,1,null,main));
     assert.equal(main.team.pokemon.length,allowDupes?3:2,'new duplicate policy');
-    const Shop=evaluate('core/Shop.js','Shop',{Pokemon,...safety,playSound(){},saveData(){},findSpecieInCatalog:e=>safety.eggSpecies(e)});
+    const Shop=evaluate('core/Shop.js','Shop',{Pokemon,forcedInitialPool,forcedSecondaryPool,...safety,playSound(){},saveData(){},findSpecieInCatalog:e=>safety.eggSpecies(e)});
     const shop=Object.assign(Object.create(Shop.prototype),{main,eggList:['pikachu','missingNo','bogus'],eggPrice:50000});
     // Mark all vanilla egg lines owned: even a stale direct buy must cost nothing.
     main.team.pokemon=eggs.map(k=>new Pokemon(p[k],100,null,main));main.box.pokemon=[];

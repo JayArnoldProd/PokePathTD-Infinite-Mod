@@ -81,7 +81,7 @@ class EggHotfixTests(unittest.TestCase):
             self.assertFalse(initial(features,manifest)['allow_dupes'])
 
     def test_failed_safety_patch_never_repacks(self):
-        ns={'MOD_FEATURES':{}, 'GAME_VERSION':'1.6.3',
+        ns={'MOD_FEATURES':{}, 'copy_modded_file':Mock(), 'MODS_DIR':MODS, 'JS_ROOT':MODS, 'GAME_VERSION':'1.7.0',
             'ensure_vanilla_backup':lambda:(True,''), 'extract_from_vanilla':lambda callback:(True,''),
             'check_game_version_compatibility':lambda:(True,[]),
             'apply_modded_userdata_redirect':Mock(), 'apply_allow_dupes':lambda:False,

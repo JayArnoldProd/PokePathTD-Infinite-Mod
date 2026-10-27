@@ -107,7 +107,7 @@ const evaluation = await send('Runtime.evaluate', {
 });
 
 if (evaluation.exceptionDetails) {
-    failures.push(`Profile interaction failed: ${evaluation.exceptionDetails.text}`);
+    failures.push(`Profile interaction failed: ${evaluation.exceptionDetails.exception?.description || evaluation.exceptionDetails.text}`);
 }
 
 const result = evaluation.result?.value;
@@ -116,7 +116,7 @@ else {
     if (result.readyState !== 'complete') failures.push(`document.readyState is ${result.readyState}`);
     if (!result.visible) failures.push('Unlockables panel is not visible after clicking its tab');
     if (result.rowCount !== expectedRows) failures.push(`Unlockables row count is ${result.rowCount}, expected ${expectedRows}`);
-    if (!result.headerCount.endsWith(`/${expectedRows}`)) failures.push(`Unlockables header count is ${result.headerCount}, expected */${expectedRows}`);
+    if (!String(result.headerCount ?? "").endsWith(`/${expectedRows}`)) failures.push(`Unlockables header count is ${result.headerCount}, expected */${expectedRows}`);
     if (result.emptyConditions) failures.push(`${result.emptyConditions} Unlockables rows have empty conditions`);
     if (result.undefinedConditions) failures.push(`${result.undefinedConditions} Unlockables rows contain undefined/null text`);
 }

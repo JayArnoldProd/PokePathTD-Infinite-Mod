@@ -7,11 +7,14 @@ import { Input } from '../../utils/Input.js';
 import { featureRequiresPlayerCode, getRedeemFeature, resolveRedeemCodeFeature, validateRedeemCode } from '../../utils/Redeem.js';
 import { pokemonData } from '../data/pokemonData.js';
 import { isSaveExportDisabled } from '../../config.js';
+import { applyUITheme, getUIThemeName } from '../controller/ThemeController.js';
 
 const OPTION = {
-	language: ['English', 'Español', 'Français', 'Português', 'Italiano', 'Deutsch', '日本語', '한국어', '繁體中文', 'Polski'],
-	audio: Array.from({ length: 21 }, (_, i) => (i * 5).toString()),
-	reset: [0, 1, 2]
+    language: ['English', 'Español', 'Français', 'Português', 'Italiano', 'Deutsch', '日本語', '한국어', '繁體中文', 'Polski'],
+    theme: ['Original', 'Classic', 'Monochrome', 'Halloween'],
+    font: ['PressStart2P', 'Rubik', 'Lexend', 'DynaPuff', 'Unown'],
+    audio: Array.from({ length: 21 }, (_, i) => (i * 5).toString()),
+    reset: [0, 1, 2]
 }
 
 const CREDITS = {
@@ -36,7 +39,7 @@ const CREDITS = {
 			"贡献者",
 			"Współautorzy"
 		],
-		content: 'AncestralZ<br> Irec<br> Revy<br> Sokudo<br> Segmental'
+		content: 'AncestralZ<br> Irec<br> Revy<br> Sokudo<br> Segmental <br> Artemis'
 	},
 	balance: {
 		label: [
@@ -51,9 +54,9 @@ const CREDITS = {
 			"游戏平衡性",
 			"balans rozgrywki"
 		],
-		content: `Mitsue <br> Sabry <br> Khaotik <br> Quinn <br> Roses <br> TaejaMyungsik <br>
-				<a href="https://github.com/innerthunder" target="_blank" class="link-red">Innerthunder</a> <br>
-				Skrubboi
+		content: `Mitsue <br> Sabry <br> Khaotik <br> Quinn <br> Roses <br> TaejaMyungsik <br> 
+				<a href="https://github.com/innerthunder" target="_blank" class="link-red">Innerthunder</a> <br> 
+				Skrubboi 
 		`
 	},
 	testers: {
@@ -108,7 +111,7 @@ const CREDITS = {
 			1: '<a href="https://discord.com/invite/PjuyEjGp7r" target="_blank" class="link-red">PokéPath TD</a>',
 			2: '<a href="https://khydra98.itch.io/pokepath" target="_blank" class="link-red">khydra98</a>'
 		}
-
+		
 	},
 	assets: {
 		title: ['Assets', 'Recursos', 'Ressources', 'Recursos', 'Risorse', 'Assets', 'アセット', '자산', '资源', 'Zasoby'],
@@ -127,36 +130,36 @@ const CREDITS = {
 			2: '<a href="https://www.flaticon.com/authors/freepik" target="_blank" class="link-red">FREEPIK</a>',
 			3: '<a href="https://downloads.khinsider.com/game-soundtracks/album/pokemon-firered-leafgreen-music-super-complete" target="_blank" class="link-red">MEDIA FACTORY</a>',
 			4: '<a href="https://msikma.github.io/pokesprite/overview/inventory.html" target="_blank" class="link-red">PokéSprite</a>',
-			5: `Anonalpaca<br> Aveontrainer<br> Beta-SP<br> Ekat<br> Elinthind<br> Farore<br> Heartlessdragoon<br> Idilio<br> KingTapir<br> LunaMaddalena<br> Noelle<br> Pokémon Alexandrite<br>
+			5: `Anonalpaca<br> Aveontrainer<br> Beta-SP<br> Ekat<br> Elinthind<br> Farore<br> Heartlessdragoon<br> Idilio<br> KingTapir<br> LunaMaddalena<br> Noelle<br> Pokémon Alexandrite<br> 
 				Pokémon Halcyon<br> Pokémon Nightshade<br> Ross-Hawkins<br> Shyinn<br> Skidmarc25<br> TheDeadHeroAlistair<br> Vurtax<br> Zein<br> Zeo`,
 			6: ` Sokudo <br> <a href="https://sprites.pmdcollab.org/" target="_blank" class="link-red">PMD COLLAB</a><br>
-				◥θ┴θ◤ <br> 0palite <br> 3Monika4 <br> 3P1C <br> A_Lettuce <br> Adrian <br> AikoMaiko
-				<br> Akai <br> AlexGroeger <br> AllPatchedUp <br> Angels-Snack <br> Anon <br> Anonymous <br> Ariakyu
-				<br> Atwer <br> Audino <br> avalancheman <br> Avery <br> Aviivix <br> Axcel <br> Azifel <br> baronessfaron
-				<br> Blanca <br> Blanky <br> Bluetails_the_Buizel <br> brookriver <br> bwappi <br> C_Pariah <br> Caitemis
-				<br> CamusZekeSirius <br> CeleryGuy <br> Chesyon <br> Chi <br> chikorene <br> Child-Of-Hades <br> chime
-				<br> CHUNSOFT <br> CinderedPhoenix <br> Cloudy <br> Cocosquid. <br> Coksi <br> Colistan <br> cosmosully <br> cyboy_bit
-				<br> dariosparks <br> Darkrai <br> Dasawkem <br> DasK <br> Davilos <br> DavKriz <br> Ddragon <br> dede6giu
-				<br> Deeshura <br> Dejais <br> Deleca7755 <br> deltaflare <br> DeltaL <br> Deltex12 <br> distress <br> dmDash
-				<br> drawsstuff <br> Dutch-Spaniard <br>EeveeandVulpix2000<br> El_Pangoro_Parse <br> electronvolt <br>ElGian <br> Eliza
-				<br> Emboarger <br> Emitone <br> Emmuffin <br> eon <br> ErrantWitch <br> estelstarlight <br> EzerArt <br> Fable
-				<br> FalafelPorpoise <br> Fearless-Quit <br> Felis-Licht <br> FerMrack <br> Fingernails <br> Fire_Scyther <br> FissionCube
-				<br> fledermaus <br> FlowerSnek <br> FrivolousAqua <br> Frostdrop1 <br> G〜 <br> Gayschlatt <br> Gelius <br> Ginnie
+				◥θ┴θ◤ <br> 0palite <br> 3Monika4 <br> 3P1C <br> A_Lettuce <br> Adrian <br> AikoMaiko 
+				<br> Akai <br> AlexGroeger <br> AllPatchedUp <br> Angels-Snack <br> Anon <br> Anonymous <br> Ariakyu 
+				<br> Atwer <br> Audino <br> avalancheman <br> Avery <br> Aviivix <br> Axcel <br> Azifel <br> baronessfaron 
+				<br> Blanca <br> Blanky <br> Bluetails_the_Buizel <br> brookriver <br> bwappi <br> C_Pariah <br> Caitemis 
+				<br> CamusZekeSirius <br> CeleryGuy <br> Chesyon <br> Chi <br> chikorene <br> Child-Of-Hades <br> chime 
+				<br> CHUNSOFT <br> CinderedPhoenix <br> Cloudy <br> Cocosquid. <br> Coksi <br> Colistan <br> cosmosully <br> cyboy_bit 
+				<br> dariosparks <br> Darkrai <br> Dasawkem <br> DasK <br> Davilos <br> DavKriz <br> Ddragon <br> dede6giu 
+				<br> Deeshura <br> Dejais <br> Deleca7755 <br> deltaflare <br> DeltaL <br> Deltex12 <br> distress <br> dmDash 
+				<br> drawsstuff <br> Dutch-Spaniard <br>EeveeandVulpix2000<br> El_Pangoro_Parse <br> electronvolt <br>ElGian <br> Eliza   
+				<br> Emboarger <br> Emitone <br> Emmuffin <br> eon <br> ErrantWitch <br> estelstarlight <br> EzerArt <br> Fable 
+				<br> FalafelPorpoise <br> Fearless-Quit <br> Felis-Licht <br> FerMrack <br> Fingernails <br> Fire_Scyther <br> FissionCube 
+				<br> fledermaus <br> FlowerSnek <br> FrivolousAqua <br> Frostdrop1 <br> G〜 <br> Gayschlatt <br> Gelius <br> Ginnie 
 				<br> Giru <br> Grimlin <br> gromchurch <br> Gust <br> GustavoMusinTG <br> Hanbei <br> Hemlock <br> HopeBurnsBright2008
-				<br> Ichor <br> Inv3rse <br> jackolanternjackalope <br> Jarleypeño <br> Jelly <br> JemDragons <br> JFain <br> Jhony-Rex
-				<br> JkKU　(Jenrikku) <br> JuanmaSG <br> JustAGunk <br> Katach314 <br> Kawaiitron <br> KCN015 <br> Keldaan <br> Kevin0itachi
-				<br> LazerBlitz <br> leafia_barrett <br> LegendaryPhoenix <br> Leif <br> lemongrass <br> LightBlueBlaze <br> Limomon <br> lokatts
-				<br> LornaWR <br> lovefulpup <br> Lovi <br> LT <br> Luca <br> LuchuIsASquirrel <br> Luna-Alex <br> Magu <br> Maruvert
-				<br> MeepTheMareep02 <br> Meganai <br> metalbear <br> Michael12 <br> Miju <br> MilesFarber <br> mixy:3 <br> Mojo <br> Mond
-				<br> MonochromeKirby <br> Moo <br> Mooncaller <br> Morei <br> mothbeanie <br> motherhenna Helen <br> Mr_L <br> mucrush <br> namu
-				<br> nataniel-sama <br> Neat_Neato <br> NeonCityRain <br> NeroIntruder <br> NikolaP <br> Noivern <br> NOLASMOR <br> Noo <br> Novie
+				<br> Ichor <br> Inv3rse <br> jackolanternjackalope <br> Jarleypeño <br> Jelly <br> JemDragons <br> JFain <br> Jhony-Rex 
+				<br> JkKU　(Jenrikku) <br> JuanmaSG <br> JustAGunk <br> Katach314 <br> Kawaiitron <br> KCN015 <br> Keldaan <br> Kevin0itachi 
+				<br> LazerBlitz <br> leafia_barrett <br> LegendaryPhoenix <br> Leif <br> lemongrass <br> LightBlueBlaze <br> Limomon <br> lokatts 
+				<br> LornaWR <br> lovefulpup <br> Lovi <br> LT <br> Luca <br> LuchuIsASquirrel <br> Luna-Alex <br> Magu <br> Maruvert 
+				<br> MeepTheMareep02 <br> Meganai <br> metalbear <br> Michael12 <br> Miju <br> MilesFarber <br> mixy:3 <br> Mojo <br> Mond 
+				<br> MonochromeKirby <br> Moo <br> Mooncaller <br> Morei <br> mothbeanie <br> motherhenna Helen <br> Mr_L <br> mucrush <br> namu 
+				<br> nataniel-sama <br> Neat_Neato <br> NeonCityRain <br> NeroIntruder <br> NikolaP <br> Noivern <br> NOLASMOR <br> Noo <br> Novie 
 				<br> Okami <br> Orange <br> Palika <br> Pencil <br> PhillipsYoung <br> pi3.14 <br> PikaNiko <br> Pink_no_tori <br> PinkKecleon <br>
-				PixlHoopa <br> Pokejavi. <br> Pokenoice <br> PoliteHoppip <br> powercristal <br> Precascer <br> Prismatic <br> programmedsleepstate
-				<br> RacieB <br> RaoKurai <br> Ray2064 <br> Reimu_needs_$$$ <br> RelicCipher <br> Reppamon <br> rhys <br> RibbonDove <br>
-				Richelieu <br> Riodise <br> RoyalRust <br> Rudy <br> Rustnuttie <br> Sceptile <br> Scizivire <br> Semilia <br> SethY <br>
-				Shadowcrafts <br> Sharpen <br> shimx <br> Shitpost_Sunkern <br> ShyStarryRain <br> SilverDeoxys563 <br> silverfox88 <br>
-				SingingMudkip <br> SirViolet <br> SkeleJ64 <br> SKREE <br> skygummi <br> Smalusion <br> smartini <br> smbmaster99 <br> Smingle <br>
-				snarbs <br> Sonikku_A <br> Soulja <br> SpectrumStars <br> Spikey-Valentine <br> stressparticles <br> Sugi <br> Sunny <br>
+				PixlHoopa <br> Pokejavi. <br> Pokenoice <br> PoliteHoppip <br> powercristal <br> Precascer <br> Prismatic <br> programmedsleepstate 
+				<br> RacieB <br> RaoKurai <br> Ray2064 <br> Reimu_needs_$$$ <br> RelicCipher <br> Reppamon <br> rhys <br> RibbonDove <br> 
+				Richelieu <br> Riodise <br> RoyalRust <br> Rudy <br> Rustnuttie <br> Sceptile <br> Scizivire <br> Semilia <br> SethY <br> 
+				Shadowcrafts <br> Sharpen <br> shimx <br> Shitpost_Sunkern <br> ShyStarryRain <br> SilverDeoxys563 <br> silverfox88 <br> 
+				SingingMudkip <br> SirViolet <br> SkeleJ64 <br> SKREE <br> skygummi <br> Smalusion <br> smartini <br> smbmaster99 <br> Smingle <br> 
+				snarbs <br> Sonikku_A <br> Soulja <br> SpectrumStars <br> Spikey-Valentine <br> stressparticles <br> Sugi <br> Sunny <br> 
 				SuperFabbioGuy <br> SuperLean23 <br> Tacocoa <br> Tainted#3886 <br> TawnySoup <br> TaylorTrap622 <br> teddg <br> Top_Kec <br>
 				Uni <br> Vendily <br> VersuS <br> CelestialDrago <br> Vex <br> VOID <br> Vynnyal <br> Waffluffe <br> Wyvernagon <br> XModxGodX <br>
 				Xrit63 <br> XxWindpawxX <br> Yari <br> YoukaiMinori <br> ZacianSword <br> ZoroarkDX <br> ZoZoBab <br>
@@ -168,7 +171,7 @@ const CREDITS = {
 		This is a non-profit fangame created by a single person, and it is not affiliated with, sponsored by, or approved by Nintendo, Game Freak, or The Pokémon Company. <br><br>
 		All characters, items, sprites, music, and other materials related to Pokémon are the property of their respective owners: © Nintendo, Game Freak, Creatures Inc.`,
 		`
-		Este es un juego fangame sin fines de lucro creado por una sola persona, y no está afiliado, patrocinado ni aprobado por Nintendo, Game Freak o The Pokémon Company. <br><br>
+		Este es un juego fangame sin fines de lucro creado por una sola persona, y no está afiliado, patrocinado ni aprobado por Nintendo, Game Freak o The Pokémon Company. <br><br> 
 		Todos los personajes, objetos, sprites, música y demás materiales relacionados con Pokémon son propiedad de sus respectivos dueños: © Nintendo, Game Freak, Creatures Inc.`,
 		`
 		Ceci est un fangame à but non lucratif créé par une seule personne, et il n’est affilié, parrainé ni approuvé par Nintendo, Game Freak ou The Pokémon Company. <br><br>
@@ -198,7 +201,7 @@ const SHORTCUTS = {
 	key: {
 		0: ['0–9', '0–9', '0–9', '0–9', '0–9', '0–9', '0-9', '0–9', '0–9', '0-9'],
 		1: ['Q', 'Q', 'A', 'Q', 'Q', 'Q', 'Q', 'Q', 'Q', 'Q'],
-		2: ['W', 'W', 'Z', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+		2: ['W', 'W', 'Z', 'W', 'W', 'W', 'W', 'W', 'W', 'W'], 
 		3: ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
 		4: ['S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S'],
 		5: ['Z', 'Z', 'W', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z', 'Z'],
@@ -227,7 +230,137 @@ const SHORTCUTS = {
 	}
 }
 
+const settingData = [
+	{
+		key: 'showDamage',
+		options: [0, 1]
+	},
+	{
+		key: 'autoStop',
+		options: [0, 1]
+	},
+	{
+		key: 'autoStopBoss',
+		options: [0, 1]
+	},
+	{
+		key: 'autoReset',
+		options: [0, 1, 2, 3]
+	},
+	{
+		key: 'displayHealth',
+		options: [0, 1, 2]
+	},
+	{
+		key: 'mapEffects',
+		options: [0, 1, 2]
+	},
+	{
+		key: 'indicatorField',
+		options: [0, 1]
+	},
+	{
+		key: 'indicatorShape',
+		options: [0, 1]
+	},
+	{
+		key: 'fastTarget',
+		options: [0, 1]
+	},
+	{
+		key: 'durationCC',
+		options: [0, 1]
+	},	
+	{
+		key: 'particles',
+		options: [0, 1]
+	},
+	{
+		key: 'disableTagColors',
+		options: [0, 1]
+	},
+
+];
+
 const audioKeys = ['master', 'music', 'ui', 'effects'];
+const MUTE_ROW_ORDER = [0, 3, 4, 1, 2];
+const MUTE_LABELS = {
+	3: [
+        'Mute Areas',
+        'Silenciar áreas',
+        'Silencier zones',
+        'Silenciar áreas',
+        'Silenziare aree',
+        'Flächengeräusche stumm',
+        '範囲攻撃音をミュート',
+        '범위 공격 소리 음소거',
+        '靜音範圍攻擊音效',
+        'Wycisz dźwięki obszarów'
+    ],
+    4: [
+	    'Mute Beams',
+	    'Silenciar rayos',
+	    'Couper le son des rayons',
+	    'Silenciar raios',
+	    'Silenziare i raggi',
+	    'Strahlen stummschalten',
+	    'ビーム技の音をミュート',
+	    '빔 공격 소리 음소거',
+	    '靜音光線招式音效',
+	    'Wycisz dźwięki promieni'
+	],
+};
+
+const effectOpacityKeys = [
+    'projectiles',
+    'areas',
+    'beams',
+    'waves',
+    'auras',
+    'bombardment',
+    'special'
+];
+
+const effectOpacityDefaults = {
+    projectiles: 100,
+    areas: 100,
+    beams: 100,
+    waves: 100,
+    auras: 50,
+    bombardment: 100,
+    special: 100
+};
+
+const effectOpacityLabels = {
+    projectiles: [
+        'Projectile Opacity', 'Opacidad proyectiles', 'Opacité projectiles', 'Opacidade projéteis',
+        'Opacità dei proiettili', 'Projektil-Deckkraft', '飛び道具の不透明度', '투사체 불투명도', '投射物不透明度', 'Krycie pocisków'
+    ],
+    areas: [
+        'Area Opacity', 'Opacidad áreas', 'Opacité zones', 'Opacidade áreas',
+        'Opacità aree', 'Flächen-Deckkraft', '範囲の不透明度', '영역 불투명도', '范围不透明度', 'Krycie obszarów'
+    ],
+    beams: [
+	    'Beam Opacity', 'Opacidad de los rayos', 'Opacité des rayons', 'Opacidade dos raios',
+	    'Opacità dei raggi', 'Strahlen-Deckkraft', 'ビームの不透明度', '빔 불투명도', '光線不透明度', 'Krycie promieni'
+	],
+    waves: [
+        'Wave Opacity', 'Opacidad ondas', 'Opacité ondes', 'Opacidade ondas',
+        'Opacità onde', 'Wellen-Deckkraft', '波の不透明度', '파동 불투명도', '波动不透明度', 'Krycie fal'
+    ],
+    auras: [
+        'Aura Opacity', 'Opacidad de auras', 'Opacité auras', 'Opacidade auras',
+        'Opacità aure', 'Aura-Deckkraft', 'オーラの不透明度', '오라 불투명도', '光环不透明度', 'Krycie aur'
+    ],
+    bombardment: [
+        'Bombardment Opacity', 'Opacidad bombardeo', 'Opacité bombardement', 'Opacidade bombardeio',
+        'Opacità bombardamento', 'Bombardement-Deckkraft', '爆撃の不透明度', '폭격 불투명도', '轰炸不透明度', 'Krycie bombardowania'
+    ],
+    special: [
+	    'Special Attack Opacity', 'Opacidad ataques especiales', 'Opacité attaques spéciales', 'Opacidade ataques especiais',
+	    'Opacità attacchi speciali', 'Deckkraft Spezialattacken', '特殊攻撃の不透明度', '특수 공격 불투명도', '特殊攻击不透明度', 'Krycie specjalnych'
+	]
+};
 
 export class MenuScene extends SectionScene {
 	constructor(main) {
@@ -251,20 +384,179 @@ export class MenuScene extends SectionScene {
     }
 
     createSection(parent) {
-		const section = new Element(parent, { className: 'menu-scene-section' }).element;
-		const title = new Element(section, { className: 'menu-scene-section-title' }).element;
-		const content = new Element(section, { className: 'menu-scene-section-content' }).element;
+		const section = new Element(parent, { className: 'menu-scene-section stroke' }).element;
+		const title = new Element(section, { className: 'menu-scene-section-title stroke' }).element;
+		const content = new Element(section, { className: 'menu-scene-section-content stroke' }).element;
 		return { section, title, content };
 	}
 
 	createArrowRow(parent) {
-		const row = new Element(parent, { className: 'menu-scene-row' }).element;
-		row.label = new Element(row, { className: 'menu-scene-label' }).element;
-		row.prev = new Element(row, { className: 'menu-scene-arrow', text: '<' }).element;
-		row.value = new Element(row, { className: 'menu-scene-value' }).element;
-		row.next = new Element(row, { className: 'menu-scene-arrow', text: '>' }).element;
+		const row = new Element(parent, { className: 'menu-scene-row stroke' }).element;
+		row.label = new Element(row, { className: 'menu-scene-label stroke' }).element;
+		row.prev = new Element(row, { className: 'menu-scene-arrow stroke', text: '<' }).element;
+		row.value = new Element(row, { className: 'menu-scene-value stroke' }).element;
+		row.next = new Element(row, { className: 'menu-scene-arrow stroke', text: '>' }).element;
 		return row;
 	}
+
+	createSliderRow(parent) {
+		const row = new Element(parent, { className: 'menu-scene-row menu-scene-audio-row' }).element;
+
+		row.label = new Element(row, { className: 'menu-scene-label' }).element;
+
+		row.slider = document.createElement('input');
+		row.slider.type = 'range';
+		row.slider.min = '0';
+		row.slider.max = '20';
+		row.slider.step = '1';
+		row.slider.className = 'menu-scene-audio-slider';
+
+		row.value = new Element(row, { className: 'menu-scene-value' }).element;
+
+		row.appendChild(row.slider);
+
+		row.slider.addEventListener('input', () => {
+			const key = row.audioKey;
+			const value = Number(row.slider.value);
+
+			const config = this.getConfig();
+			config.audio[key] = value;
+			this.saveConfig(config);
+
+			row.value.innerText = value;
+
+			setVolume();
+		});
+
+		row.slider.addEventListener('change', () => {
+			playSound('option', 'ui');
+
+			const config = this.getConfig();
+
+			if (
+				!this.main.player.secrets.chatot &&
+				!this.main.area.inChallenge
+			) {
+				if (
+					config.audio.master == 0 &&
+					config.audio.music == 4 &&
+					config.audio.ui == 4 &&
+					config.audio.effects == 1
+				) {
+					this.main.player.secrets.chatot = true;
+					this.main.UI.getSecret('chatot');
+				}
+			}
+		});
+
+		return row;
+	}
+
+	createOpacitySliderRow(parent, key) {
+	    const row = new Element(parent, {
+	        className: 'menu-scene-row menu-scene-audio-row'
+	    }).element;
+
+	    row.label = new Element(row, {
+	        className: 'menu-scene-label'
+	    }).element;
+
+	    row.slider = document.createElement('input');
+	    row.slider.type = 'range';
+	    row.slider.min = '0';
+	    row.slider.max = '100';
+	    row.slider.step = '5';
+	    row.slider.className = 'menu-scene-audio-slider';
+
+	    row.value = new Element(row, {
+	        className: 'menu-scene-value'
+	    }).element;
+
+	    row.opacityKey = key;
+	    row.appendChild(row.slider);
+
+	    row.slider.addEventListener('input', () => {
+	        const value = Number(row.slider.value);
+	        const config = this.getConfig();
+
+	        config.effectOpacity = {
+	            ...effectOpacityDefaults,
+	            ...(config.effectOpacity ?? {}),
+	            [key]: value
+	        };
+
+	        this.saveConfig(config);
+
+	        this.main.effectOpacity = {
+	            ...config.effectOpacity
+	        };
+
+	        row.value.innerText = `${value}%`;
+	    });
+
+	    row.slider.addEventListener('change', () => {
+	        playSound('option', 'ui');
+	    });
+
+	    return row;
+	}
+
+	createOptionRow(parent, options, cb) {
+		const row = new Element(parent, {
+			className: 'menu-scene-row menu-scene-option-row'
+		}).element;
+
+		row.label = new Element(row, {
+			className: 'menu-scene-label'
+		}).element;
+
+		row.options = new Element(row, {
+			className: 'menu-scene-option-buttons'
+		}).element;
+
+		row.buttons = [];
+
+		options.forEach((option, i) => {
+	        const button = new Element(row.options, {
+	            className: 'menu-scene-option-button'
+	        }).element;
+
+	        button.addEventListener('click', () => {
+	            cb(i);
+	        });
+
+	        button.addEventListener('mouseenter', () => {
+	            playSound('hover1', 'ui');
+	        });
+
+	        row.buttons.push(button);
+	    });
+
+		return row;
+	}
+
+	updateSetting = (key, value) => {
+	    const config = this.getConfig();
+
+	    config[key] = value;
+	    this.saveConfig(config);
+
+	    this.main[key] = value;
+	    if (key === 'disableTagColors') {
+	        document.body.classList.toggle('disable-tag-colors', Boolean(value));
+	    }
+
+	    if (
+	        key === 'indicatorField' ||
+	        key === 'indicatorShape' ||
+	        key === 'fastTarget'
+	    ) {
+	        this.main.UI.updatePokemon();
+	    }
+
+	    this.update();
+	    playSound('option', 'ui');
+	};
 
 	createLabelValueRow(parent, creditStyle = false) {
 		const row = new Element(parent, { className: creditStyle ? 'menu-scene-credit-row' : 'menu-scene-row' }).element;
@@ -314,45 +606,60 @@ export class MenuScene extends SectionScene {
 	}
 
 	renderSettings() {
-		const { section, title, content } = this.sectionSettings = this.createSection(this.menuContainer);
-		this.titleSettings = title;
-		this.contentSettings = content;
+	    const { section, title, content } = this.sectionSettings = this.createSection(this.menuContainer);
 
-		this.languageRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.languageRow, () => this.updateLanguage(-1), () => this.updateLanguage(1));
+	    this.titleSettings = title;
+	    this.contentSettings = content;
 
-		this.damageRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.damageRow, () => this.updateShowDamage(), () => this.updateShowDamage());
+	    // LANGUAGE
+	    this.languageRow = this.createArrowRow(content);
 
-		this.autoStopRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.autoStopRow, () => this.updateAutoStop(), () => this.updateAutoStop());
+	    this.bindArrowEvents(
+	        this.languageRow,
+	        () => this.updateLanguage(-1),
+	        () => this.updateLanguage(1)
+	    );
 
-		this.autoStopBossRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.autoStopBossRow, () => this.updateAutoStopBoss(), () => this.updateAutoStopBoss());
+	    // THEME
+		this.themeRow = this.createArrowRow(content);
 
-		this.autoResetRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.autoResetRow, () => this.updateAutoReset(-1), () => this.updateAutoReset(1));
+		this.bindArrowEvents(
+		    this.themeRow,
+		    () => this.updateTheme(-1),
+		    () => this.updateTheme(1)
+		);
 
-		this.displayHealthRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.displayHealthRow, () => this.updateDisplayHealth(-1), () => this.updateDisplayHealth(1));
+		// FONT
+		this.fontRow = this.createArrowRow(content);
 
-		this.mapEffectsRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.mapEffectsRow, () => this.updateMapEffects(-1), () => this.updateMapEffects(1));
+		this.bindArrowEvents(
+		    this.fontRow,
+		    () => this.updateFont(-1),
+		    () => this.updateFont(1)
+		);
 
-		this.indicatorShapeRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.indicatorShapeRow, () => this.updateIndicatorShape(), () => this.updateIndicatorShape());
+	    // SETTINGS
+	    this.settingsRow = [];
 
-		this.indicatorFieldRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.indicatorFieldRow, () => this.updateIndicatorField(), () => this.updateIndicatorField());
+	    settingData.forEach(setting => {
+	        const row = this.createOptionRow(
+	            content,
+	            setting.options,
+	            (value) => this.updateSetting(setting.key, value)
+	        );
 
-		this.fastTargetRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.fastTargetRow, () => this.updateFastTarget(), () => this.updateFastTarget());
+	        row.key = setting.key;
+	        row.label.innerHTML = text.menu.settings[row.key].label[this.main.lang].toUpperCase();
 
-		this.durationCCRow = this.createArrowRow(content);
-		this.bindArrowEvents(this.durationCCRow, () => this.updateDurationCC(), () => this.updateDurationCC());
+	        this.settingsRow.push(row);
+	    });
 
-		// this.slowRefreshFixRow = this.createArrowRow(content);
-		// this.bindArrowEvents(this.slowRefreshFixRow, () => this.updateSlowRefreshFix(), () => this.updateSlowRefreshFix());
+	    this.effectOpacityRow = [];
+
+		effectOpacityKeys.forEach(key => {
+		    const row = this.createOpacitySliderRow(content, key);
+		    this.effectOpacityRow.push(row);
+		});
 	}
 
 	renderAudio() {
@@ -361,18 +668,34 @@ export class MenuScene extends SectionScene {
 		this.contentAudio = content;
 
 		this.audioRow = [];
+
 		for (let i = 0; i < audioKeys.length; i++) {
-			const row = this.createArrowRow(content);
-			this.bindArrowEvents(row, () => this.updateAudio(audioKeys[i], -1), () => this.updateAudio(audioKeys[i], 1));
+			const row = this.createSliderRow(content);
+			row.audioKey = audioKeys[i];
 			this.audioRow.push(row);
 		}
 
+		this.main.mute = {
+		    0: false, // Projectiles
+		    1: false, // Teleport
+		    2: false, // Shiny
+		    3: false, // Beams
+		    4: false, // Areas
+		    ...(this.main.mute ?? {})
+		};
+
 		this.muteRow = [];
-		for (let i = 0; i < 3; i++) {
-			const row = this.createArrowRow(content);
-			this.bindArrowEvents(row, () => this.muteAudio(i), () => this.muteAudio(i));
-			this.muteRow.push(row);
-		}
+
+		MUTE_ROW_ORDER.forEach(muteIndex => {
+		    const row = this.createOptionRow(
+		        content,
+		        [0, 1],
+		        value => this.muteAudio(muteIndex, value)
+		    );
+
+		    row.muteIndex = muteIndex;
+		    this.muteRow.push(row);
+		});
 	}
 
 	renderShortcuts() {
@@ -408,10 +731,10 @@ export class MenuScene extends SectionScene {
 			if (isSaveExportDisabled()) return;
 			this.exportScene.open();
 		});
-		this.importData = this.makeButton(content, 'menu-scene-import-data', () => this.importScene.open());
+		this.importData = this.makeButton(content, 'menu-scene-import-data stroke', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version', text: `v 1.6.3` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.0` }).element;
 	}
 
 	syncExportDataButtonState() {
@@ -495,65 +818,104 @@ export class MenuScene extends SectionScene {
 		this.languageRow.label.innerText = text.menu.settings.language[this.main.lang].toUpperCase();
 		this.languageRow.value.innerText = OPTION.language[this.main.lang].toUpperCase();
 
+		const audioConfig = this.getConfig().audio;
+
 		for (let i = 0; i < this.audioRow.length; i++) {
-			this.audioRow[i].label.innerHTML = text.menu.settings.audio[i][this.main.lang].toUpperCase();
-			this.audioRow[i].value.innerHTML = this.getConfig().audio[audioKeys[i]];
+			const row = this.audioRow[i];
+			const value = Number(audioConfig[audioKeys[i]] ?? 20);
+
+			row.label.innerHTML = text.menu.settings.audio[i][this.main.lang].toUpperCase();
+			row.slider.value = value;
+			row.value.innerText = value;
 		}
 
-		for (let i = 0; i < this.muteRow.length; i++) {
-			this.muteRow[i].label.innerHTML = text.menu.settings.mute[i][this.main.lang].toUpperCase();
-			this.muteRow[i].value.innerHTML = (this.main.mute[i]) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+		for (const row of this.muteRow) {
+		    const muteIndex = row.muteIndex;
+
+		    const label = muteIndex < 3
+		        ? text.menu.settings.mute[muteIndex][this.main.lang]
+		        : MUTE_LABELS[muteIndex][this.main.lang];
+
+		    const isMuted = Boolean(this.main.mute[muteIndex]);
+
+		    row.label.innerHTML = label.toUpperCase();
+
+		    row.buttons.forEach((button, buttonIndex) => {
+		        button.innerHTML = buttonIndex === 1 ? 'ON' : 'OFF';
+
+		        button.classList.remove(
+		            'selected',
+		            'selected-off',
+		            'selected-on'
+		        );
+
+		        if (buttonIndex === Number(isMuted)) {
+		            button.classList.add('selected');
+		            button.classList.add(
+		                buttonIndex === 0 ? 'selected-off' : 'selected-on'
+		            );
+		        }
+		    });
 		}
 
-		this.damageRow.label.innerText = text.menu.settings.showDamage[this.main.lang].toUpperCase();
-		this.damageRow.value.innerText = (data.config.showDamage) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+		const config = this.getConfig();
 
-		this.autoStopRow.label.innerText = text.menu.settings.autoStop[this.main.lang].toUpperCase();
-		this.autoStopRow.value.innerText = (data.config.autoStop) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+		this.languageRow.label.innerHTML = text.menu.settings.language[this.main.lang].toUpperCase();
+		this.languageRow.value.innerHTML = OPTION.language[this.main.lang];
 
-		this.autoStopBossRow.label.innerText = text.menu.settings.autoStopBoss[this.main.lang].toUpperCase();
-		this.autoStopBossRow.value.innerText = (data.config.autoStopBoss) ? text.ui.yes[this.main.lang].toUpperCase() : text.ui.no[this.main.lang].toUpperCase();
+		this.themeRow.label.innerHTML = text.menu.settings.theme[this.main.lang].toUpperCase();
+		this.themeRow.value.innerHTML = text.menu.settings.themes[this.main.uiTheme][this.main.lang].toUpperCase();
 
-		this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
-		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();
+		this.themeRow.label.innerHTML = text.menu.settings.theme[this.main.lang].toUpperCase();
+		this.themeRow.value.innerHTML = text.menu.settings.themes[this.main.uiTheme][this.main.lang].toUpperCase();
 
-		this.displayHealthRow.label.innerText = text.menu.settings.displayHealth[this.main.lang].toUpperCase();
-		if (data.config.displayHealth == 1) this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[1][this.main.lang].toUpperCase();
-		else if (data.config.displayHealth == 2) this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[2][this.main.lang].toUpperCase();
-		else this.displayHealthRow.value.innerText = text.menu.settings.displayHealthOptions[0][this.main.lang].toUpperCase();
+		this.fontRow.label.innerHTML = text.menu.settings.font[this.main.lang].toUpperCase();
+		this.fontRow.value.innerHTML = text.menu.settings.fonts[config.font][this.main.lang].toUpperCase();
 
-		this.mapEffectsRow.label.innerText = text.menu.settings.mapEffects[this.main.lang].toUpperCase();
-		if (data.config.mapEffects == 1) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[1][this.main.lang].toUpperCase();
-		else if (data.config.mapEffects == 2) this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[2][this.main.lang].toUpperCase();
-		else this.mapEffectsRow.value.innerText = text.menu.settings.mapEffectsOptions[0][this.main.lang].toUpperCase();
+		this.settingsRow.forEach(row => {
+		    const key = row.key;
+		    const value = Number(config[key] ?? 0);
 
-		// this.slowRefreshFixRow.label.innerText = text.menu.settings.slowRefreshFix[this.main.lang].toUpperCase();
-		// this.slowRefreshFixRow.value.innerText = (data.config.slowRefreshFix == 1)
-		// 	? text.menu.settings.slowRefreshFixOptions[1][this.main.lang].toUpperCase()
-		// 	: text.menu.settings.slowRefreshFixOptions[0][this.main.lang].toUpperCase();
+		    row.label.innerHTML = text.menu.settings[key].label[this.main.lang].toUpperCase();
 
-		this.indicatorFieldRow.label.innerText = text.menu.settings.indicatorField[this.main.lang].toUpperCase();
-		this.indicatorFieldRow.value.innerText = (data.config.indicatorField == 1)
-			? text.menu.settings.indicatorFieldOptions[1][this.main.lang].toUpperCase()
-			: text.menu.settings.indicatorFieldOptions[0][this.main.lang].toUpperCase();
+		    row.buttons.forEach((button, i) => {
+		        button.innerHTML =
+		            text.menu.settings[key][i][this.main.lang].toUpperCase();
 
-		this.indicatorShapeRow.label.innerText = text.menu.settings.indicatorShape[this.main.lang].toUpperCase();
-		this.indicatorShapeRow.value.innerText = (data.config.indicatorShape == 1)
-			? text.menu.settings.indicatorShapeOptions[1][this.main.lang].toUpperCase()
-			: text.menu.settings.indicatorShapeOptions[0][this.main.lang].toUpperCase();
+		        button.classList.remove('selected', 'selected-off', 'selected-on');
 
-		this.fastTargetRow.label.innerText = text.menu.settings.fastTarget[this.main.lang].toUpperCase();
-		this.fastTargetRow.value.innerText = (data.config.fastTarget == 1)
-			? text.menu.settings.fastTargetOptions[1][this.main.lang].toUpperCase()
-			: text.menu.settings.fastTargetOptions[0][this.main.lang].toUpperCase();
+		        if (i === value) {
+		            button.classList.add('selected');
 
-		this.durationCCRow.label.innerText = text.menu.settings.durationCC[this.main.lang].toUpperCase();
-		this.durationCCRow.value.innerText = (data.config.durationCC == 1)
-			? text.menu.settings.durationCCOptions[1][this.main.lang].toUpperCase()
-			: text.menu.settings.durationCCOptions[0][this.main.lang].toUpperCase();
+		            if (i === 0) {
+		                button.classList.add('selected-off');
+		            } else {
+		                button.classList.add('selected-on');
+		            }
+		        }
+		    });
+		});
+
+		const opacityConfig = {
+		    ...effectOpacityDefaults,
+		    ...(config.effectOpacity ?? {})
+		};
+
+		this.main.effectOpacity = {
+		    ...opacityConfig
+		};
+
+		this.effectOpacityRow.forEach(row => {
+		    const key = row.opacityKey;
+
+		    row.label.innerText =
+		        effectOpacityLabels[key][this.main.lang].toUpperCase();
+
+		    const value = Number(opacityConfig[key] ?? 100);
+
+		    row.slider.value = value;
+		    row.value.innerText = `${value}%`;
+		});
 
 		for (let i = 0; i < this.shortcutRow.length; i++) {
 			this.shortcutRow[i].label.innerHTML = SHORTCUTS.key[i][this.main.lang].toUpperCase();
@@ -593,9 +955,9 @@ export class MenuScene extends SectionScene {
 		if (pos < 0) pos = 9;
 		else if (pos == 10) pos = 0;
 
-		if (pos == 6) document.body.style.fontFamily = 'PixelMPlus';
-		else if (pos == 7) document.body.style.fontFamily = 'NGC';
-		else  document.body.style.fontFamily = 'PressStart2P';
+		// if (pos == 6) document.body.style.fontFamily = 'PixelMPlus';
+		// else if (pos == 7) document.body.style.fontFamily = 'NGC';
+		// else  document.body.style.fontFamily = 'PressStart2P';
 		this.main.lang = pos;
 
         this.update();
@@ -605,12 +967,56 @@ export class MenuScene extends SectionScene {
         data.config.language = pos;
         window.localStorage.setItem("data", JSON.stringify(data));
         playSound('option', 'ui');
-	}
+  	}
 
-	updateAudio = (key, dir) => {
-		let value = this.getConfig().audio[key] += dir;
-	if (value < 0) value = 0;
-		else if (value > 20 ) value = 20;
+  	updateTheme = (dir) => {
+	    let pos = Number(this.main.uiTheme) + dir;
+
+	    if (pos < 0) pos = OPTION.theme.length - 1;
+	    else if (pos >= OPTION.theme.length) pos = 0;
+
+	    this.main.uiTheme = pos;
+
+	    const data = JSON.parse(window.localStorage.getItem("data"));
+	    data.config.uiTheme = pos;
+	    window.localStorage.setItem("data", JSON.stringify(data));
+
+	    applyUITheme(getUIThemeName(pos));
+
+	    this.update();
+	    this.main.UI.update();
+	    playSound('option', 'ui');
+	};
+
+	updateFont = (dir) => {
+	    const config = this.getConfig();
+
+	    let pos = Number(config.font ?? 0) + dir;
+
+	    if (pos < 0) pos = OPTION.font.length - 1;
+	    else if (pos >= OPTION.font.length) pos = 0;
+
+	    config.font = pos;
+	    this.main.font = pos;
+	    this.saveConfig(config);
+
+	    this.applyFont();
+
+	    this.update();
+	    playSound('option', 'ui');
+	};
+
+	applyFont = () => {
+	    const config = this.getConfig();
+	    const font = OPTION.font[Number(config.font ?? 0)];
+	    document.body.dataset.font = font;
+	    document.body.style.fontFamily = `'${font}'`;
+	};
+
+  	updateAudio = (key, dir) => {
+  		let value = this.getConfig().audio[key] += dir;
+       	if (value < 0) value = 0;
+  		else if (value > 20 ) value = 20;
 
         let config = this.getConfig();
         config.audio[key] = value;
@@ -620,166 +1026,45 @@ export class MenuScene extends SectionScene {
         playSound('option', 'ui');
 
         if (
-	!this.main.player.secrets.chatot &&
+        	!this.main.player.secrets.chatot &&
 			!this.main.area.inChallenge
         ) {
-	if (config.audio['master'] == 0 && config.audio['music'] == 4 && config.audio['ui'] == 4 && config.audio['effects'] == 1) {
-		this.main.player.secrets.chatot = true;
-		this.main.UI.getSecret('chatot');
-	}
+        	if (config.audio['master'] == 0 && config.audio['music'] == 4 && config.audio['ui'] == 4 && config.audio['effects'] == 1) {
+        		this.main.player.secrets.chatot = true;
+        		this.main.UI.getSecret('chatot');
+        	}
         }
     };
 
-    muteAudio = (pos) => {
-	this.main.mute[pos] = !this.main.mute[pos];
+    muteAudio = (pos, value) => {
+	    this.main.mute[pos] = Number(value) === 1;
 
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.mute = this.main.mute;
-        window.localStorage.setItem("data", JSON.stringify(data));
+	    const data = JSON.parse(window.localStorage.getItem('data'));
 
-        this.update();
-        playSound('option', 'ui');
-    }
+	    data.config.mute = {
+	        0: false,
+	        1: false,
+	        2: false,
+	        3: false,
+	        4: false,
+	        ...(data.config.mute ?? {}),
+	        ...this.main.mute
+	    };
 
-    updateAutoReset = (dir) => {
-	let pos = Number(this.main.autoReset) + dir;
-		if (pos < 0) pos = 3;
-		else if (pos == 4) pos = 0;
-		this.main.autoReset = pos;
+	    this.main.mute = data.config.mute;
 
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.autoReset = this.main.autoReset;
-        window.localStorage.setItem("data", JSON.stringify(data));
+	    window.localStorage.setItem('data', JSON.stringify(data));
 
-        this.update();
-        playSound('option', 'ui');
-    };
-
-    updateDisplayHealth = (dir) => {
-	let pos = Number(this.main.displayHealth) + dir;
-		if (pos < 0) pos = 3;
-		else if (pos == 4) pos = 0;
-		this.main.displayHealth = pos;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.displayHealth = this.main.displayHealth;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        playSound('option', 'ui');
-    };
-
-    updateMapEffects = (dir) => {
-	let pos = Number(this.main.mapEffects) + dir;
-		if (pos < 0) pos = 3;
-		else if (pos == 4) pos = 0;
-		this.main.mapEffects = pos;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.mapEffects = this.main.mapEffects;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        playSound('option', 'ui');
-    };
-
-    updateIndicatorShape = () => {
-	this.main.indicatorShape = this.main.indicatorShape == 1 ? 0 : 1;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.indicatorShape = this.main.indicatorShape;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        this.main.UI.updatePokemon();
-        playSound('option', 'ui');
-    };
-
-    updateIndicatorField = () => {
-	this.main.indicatorField = this.main.indicatorField == 1 ? 0 : 1;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.indicatorField = this.main.indicatorField;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        this.main.UI.updatePokemon();
-        playSound('option', 'ui');
-    };
-
-    updateFastTarget = () => {
-	this.main.fastTarget = this.main.fastTarget == 1 ? 0 : 1;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.fastTarget = this.main.fastTarget;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        this.main.UI.updatePokemon();
-        playSound('option', 'ui');
-    };
-
-    updateDurationCC = () => {
-	this.main.durationCC = this.main.durationCC == 1 ? 0 : 1;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.durationCC = this.main.durationCC;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        playSound('option', 'ui');
-    };
-
-    // updateSlowRefreshFix = () => {
-    // 	this.main.slowRefreshFix = this.main.slowRefreshFix == 1 ? 0 : 1;
-
-	// 	const data = JSON.parse(window.localStorage.getItem("data"));
-    //     data.config.slowRefreshFix = this.main.slowRefreshFix;
-    //     window.localStorage.setItem("data", JSON.stringify(data));
-
-    //     this.update();
-    //     playSound('option', 'ui');
-    // };
-
-    updateAutoStop = () => {
-	this.main.autoStop = !this.main.autoStop;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.autoStop = this.main.autoStop;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        playSound('option', 'ui');
-    }
-
-    updateAutoStopBoss = () => {
-	this.main.autoStopBoss = !this.main.autoStopBoss;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.autoStopBoss = this.main.autoStopBoss;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        playSound('option', 'ui');
-    }
-
-    updateShowDamage = () => {
-	this.main.showDamage = !this.main.showDamage;
-
-		const data = JSON.parse(window.localStorage.getItem("data"));
-        data.config.showDamage = this.main.showDamage;
-        window.localStorage.setItem("data", JSON.stringify(data));
-
-        this.update();
-        playSound('option', 'ui');
-    };
+	    this.update();
+	    playSound('option', 'ui');
+	};
 
 	open() {
 		if (this.isOpen) return this.close();
 		this.main?.sections.forEach(section => {
 			if (section?.isOpen && section != this) section.close();
 		})
-
+		
 		super.open();
 		this.update();
 		this.main.UI.section['menu'].classList.add('is-selected');
@@ -875,6 +1160,9 @@ export class MenuScene extends SectionScene {
 			this.main.UI.getSecret(reward.key);
 		} else if (reward.kind === 'currency' && reward.currency === 'gold') {
 			this.main.player.changeGold(reward.amount);
+		} else if (reward.kind === 'map') {
+			this.main.player.secretMaps[reward.secret] = true;
+			this.main.UI.getSecretMap(reward.id); 
 		} else {
 			return { ok: false, message: text.menu.data.redeemUnavailable[this.main.lang] };
 		}
@@ -944,16 +1232,16 @@ export class DeleteData extends GameScene {
 	constructor(main) {
 		super(400, 130);
 		this.main = main;
-
+		
 		this.header.removeChild(this.closeButton);
 		this.render();
 	}
 
 	render() {
-		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
-
-		this.yesButton = new Element(this.container, { className: 'delete-scene-yes-button' }).element;
-		this.noButton = new Element(this.container, { className: 'delete-scene-no-button' }).element;
+		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt stroke' }).element;
+		
+		this.yesButton = new Element(this.container, { className: 'delete-scene-yes-button stroke' }).element;
+		this.noButton = new Element(this.container, { className: 'delete-scene-no-button stroke' }).element;
 
 		this.yesButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
 		this.noButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
@@ -972,6 +1260,7 @@ export class DeleteData extends GameScene {
 	}
 
 	open() {
+		if (this.main.font === 4) return playSound('pop0', 'ui');
 		super.open();
 		this.update();
 	}
@@ -989,10 +1278,10 @@ export class ImportData extends GameScene {
 		const input = document.createElement("input");
 	    input.type = "file";
 	    input.accept = ".txt";
-	    input.style.display = "none";
+	    input.style.display = "none"; 
 
 	    this.uploadButton = document.createElement("button");
-	    this.uploadButton.className = 'export-scene-button';
+	    this.uploadButton.className = 'export-scene-button stroke';
 	    this.uploadButton.style.fontFamily ='inherit';
 	    this.uploadButton.style.lineHeight ='24px';
 	    this.uploadButton.style.height = '26px'
@@ -1017,14 +1306,14 @@ export class ImportData extends GameScene {
 		    reader.readAsText(archivo);
 		});
 
-		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
-		this.importButton = new Element(this.container, { className: 'export-scene-button' }).element;
-		this.importMessage = new Element(this.container, { className: 'export-scene-message' }).element;
+		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt stroke' }).element;
+		this.importButton = new Element(this.container, { className: 'export-scene-button stroke' }).element;
+		this.importMessage = new Element(this.container, { className: 'export-scene-message stroke' }).element;
 		this.codeInput = new Input(
-			this.container,
-			"text",
-			{
-				className: "import-export-code",
+			this.container, 
+			"text", 
+			{ 
+				className: "import-export-code stroke",  
 			}
 		);
 
@@ -1062,6 +1351,7 @@ export class ImportData extends GameScene {
 	}
 
 	open() {
+		if (this.main.font === 4) return playSound('pop0', 'ui');
 		super.open();
 		this.update();
 	}
@@ -1076,19 +1366,19 @@ export class ExportData extends GameScene {
 	}
 
 	render() {
-		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
-		this.exportButton = new Element(this.container, { className: 'export-scene-button' }).element;
-		this.downloadButton = new Element(this.container, { className: 'export-scene-button' }).element;
+		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt stroke' }).element;
+		this.exportButton = new Element(this.container, { className: 'export-scene-button stroke' }).element;
+		this.downloadButton = new Element(this.container, { className: 'export-scene-button stroke' }).element; 
 
 		this.codeInput = new Input(
-			this.container,
-			"text",
-			{
-				className: "import-export-code",
+			this.container, 
+			"text", 
+			{ 
+				className: "import-export-code stroke",  
 				readonly: true
 			}
 		);
-		this.exportMessage = new Element(this.container, { className: 'import-scene-message' }).element;
+		this.exportMessage = new Element(this.container, { className: 'import-scene-message stroke' }).element;
 		this.exportButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') })
 		this.exportButton.addEventListener('click', () => {
 			if (isSaveExportDisabled()) return;
@@ -1100,25 +1390,25 @@ export class ExportData extends GameScene {
 		    tempInput.select();
 
 		    try {
-		        document.execCommand('copy');
+		        document.execCommand('copy'); 
 		        this.exportMessage.innerHTML = text.menu.data.codeCopied[this.main.lang].toUpperCase();
 		    } catch (err) {
 		        this.exportMessage.innerHTML = 'COPY FAILED, TRY CLICK -> CTRL + A -> CTRL + C';
 		    }
 
-		    document.body.removeChild(tempInput);
+		    document.body.removeChild(tempInput); 
 		});
 
 		this.downloadButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui') });
 	    this.downloadButton.addEventListener('click', () => {
-		if (isSaveExportDisabled()) return;
+	    	if (isSaveExportDisabled()) return;
 	        playSound('key1', 'ui');
 
 	        const blob = new Blob([this.code], { type: 'text/plain' });
 	        const url = URL.createObjectURL(blob);
 	        const a = document.createElement('a');
 	        a.href = url;
-	        a.download = 'PokePathSave.txt';
+	        a.download = 'PokePathSave.txt'; 
 	        document.body.appendChild(a);
 	        a.click();
 	        document.body.removeChild(a);
@@ -1140,6 +1430,7 @@ export class ExportData extends GameScene {
 
 
 	open() {
+		if (this.main.font === 4) return playSound('pop0', 'ui');
 		if (isSaveExportDisabled()) return;
 		super.open();
 		this.update();
@@ -1154,7 +1445,7 @@ function encode(data) {
             return value;
         }
     );
-    return btoa(unescape(encodeURIComponent(json)));
+    return btoa(unescape(encodeURIComponent(json))); 
 }
 
 function decode(code) {
@@ -1165,6 +1456,6 @@ function decode(code) {
             return value;
         });
     } catch (err) {
-        return null;
+        return null; 
     }
 }

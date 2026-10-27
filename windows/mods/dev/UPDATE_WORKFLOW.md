@@ -6,7 +6,7 @@ Use this for every PokePath TD vanilla update before touching mod files.
 
 - The first step is always a clean vanilla backup before installing or replacing the game.
 - If the installed `resources\app.asar` is modded, back up `resources\app.asar.vanilla` as the clean source of truth.
-- If multiple vanilla versions were skipped, review the changelog/devlog for every skipped version even when only installing the latest version.
+- Whenever an update is detected, fetch the complete official patch notes/devlogs for every version after the installed baseline through the candidate version, including skipped releases. Keep a local evidence copy and record each official URL and publication date in the update notes. Compare those notes against the downloaded runtime source before rebasing; a download filename or short listing summary is not enough. Report inaccessible notes as an outstanding review gate rather than assuming they were read.
 - Record every backup, comparison baseline, overlap finding, mistake, and fix in that version's update notes.
 
 ## Process
@@ -41,7 +41,7 @@ Use this for every PokePath TD vanilla update before touching mod files.
    - visible game version text in `MenuScene.modded.js`, if vanilla changed it.
 8. Update save editor metadata.
    - Regenerate `windows/mods/dev/pokemon_data.json` from the new runtime `pokemonData.js`.
-   - Confirm new shop items are loadable from runtime `itemData.js`.
+   - Regenerate `dev/egg_catalog.json` and `dev/item_catalog.json` from the same runtime; run `check_editor_170.py` (or its version-adapted successor). Confirm every localized item definition, ordinary-egg boundary and route ID.
    - Confirm route dropdowns and complete-all-stages logic match `routeData.js`.
 9. Audit localization and unlockable text.
    - Compare vanilla `src/js/file/text.js` keys against `windows/mods/patches/text.modded.js`.

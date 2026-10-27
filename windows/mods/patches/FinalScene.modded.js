@@ -21,6 +21,9 @@ const BOSS = [
 	enemyData['mew'], enemyData['victini'], enemyData['marshadow'], enemyData['sirfetchd'],
 	enemyData['diancie'], enemyData['calyrex'],
 	enemyData['zamazenta'], enemyData['zacian'],
+	enemyData['latios'], enemyData['virizion'], enemyData['meloetta'], enemyData['cresselia'],
+	enemyData['solgaleo'], enemyData['regidrago'], enemyData['regieleki'], enemyData['reshiram'],
+	enemyData['spectrier'],
 ]
 
 export class FinalScene extends GameScene {
@@ -35,13 +38,13 @@ export class FinalScene extends GameScene {
 	render() {
 		this.title.innerHTML = text.final.title[this.main.lang].toUpperCase();
 
-		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
+		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt stroke' }).element;
 		this.image = new Element(this.container, { className: 'final-scene-image' }).element;
 
 		this.hofContainer = new Element(this.container, { className: 'final-hof-container' }).element;
 		this.hof = [];
 
-		this.info = new Element(this.container, { className: 'defeat-scene-info' }).element;
+		this.info = new Element(this.container, { className: 'defeat-scene-info stroke' }).element;
 
 		this.challengeContainer = new Element(this.container, { className: 'final-challenge-container' }).element;
 		this.challenge = [];
@@ -53,7 +56,7 @@ export class FinalScene extends GameScene {
 		// Continue button (green - endless mode)
 		this.continueButton = new Element(this.buttonContainer, {
 			className: 'final-scene-button',
-			text: 'CONTINUE'
+			text: text.final.continueEndless[this.main.lang].toUpperCase()
 		}).element;
 		this.continueButton.style.cssText = 'padding:12px 25px;cursor:pointer;font-weight:bold;border:none;border-radius:5px;background:linear-gradient(180deg,#70ac4c 0%,#5a8c3c 100%);color:white;font-size:14px;';
 		this.continueButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui'); });
@@ -62,7 +65,7 @@ export class FinalScene extends GameScene {
 		// Restart button (red - back to wave 1)
 		this.restartButton = new Element(this.buttonContainer, {
 			className: 'final-scene-button',
-			text: 'RESTART'
+			text: text.defeat.restart[this.main.lang].toUpperCase()
 		}).element;
 		this.restartButton.style.cssText = 'padding:12px 25px;cursor:pointer;font-weight:bold;border:none;border-radius:5px;background:linear-gradient(180deg,#e06666 0%,#b33333 100%);color:white;font-size:14px;';
 		this.restartButton.addEventListener('mouseenter', () => { playSound('hover2', 'ui'); });
@@ -70,8 +73,11 @@ export class FinalScene extends GameScene {
 	}
 
 	update() {
-		this.main.game.chrono.stop();
+		this.continueButton.innerText = text.final.continueEndless[this.main.lang].toUpperCase();
+        this.restartButton.innerText = text.defeat.restart[this.main.lang].toUpperCase();
+        this.main.game.chrono.stop();
 
+		let challengeAmount = CHALLENGES_LIST.length;
 		const routeName = this.main.area.map.name[this.main.lang];
 		this.boss = BOSS[this.main.area.routeNumber];
 
@@ -93,6 +99,7 @@ export class FinalScene extends GameScene {
 		this.challenge = [];
 		this.challengeContainer.innerHTML = "";
 		this.challengeContainer.style.display = 'none';
+
 		if (this.main.area.inChallenge) {
 			this.main.game.chrono.stop();
 			this.challengeContainer.innerHTML = "";
@@ -113,7 +120,10 @@ export class FinalScene extends GameScene {
 
 		        let display = "";
 
-		        if (value === false) display = text.challenge.off[this.main.lang].toUpperCase();
+		        if (value === false) {
+		        	display = text.challenge.off[this.main.lang].toUpperCase();
+		        	challengeAmount--;
+		        }
 
 		        else if (key === 'lvlCap' && typeof value === 'number') {
 		            display = `LEVEL ${value}`;
@@ -132,11 +142,15 @@ export class FinalScene extends GameScene {
 		        }
 
 		        this.challenge[i].innerText =
-		            `${text.challenge[key].title[this.main.lang].toUpperCase()} ΓÇö ${display}`;
+		            `${text.challenge[key].title[this.main.lang].toUpperCase()} — ${display}`;
 
-		        this.challenge[i].style.color = (value && value !== false) ? '#ebbe35' : '#666';
+		        this.challenge[i].style.color = (value && value !== false) ? 'var(--stars)' : '#666';
 		});
 		}
+	
+		if (this.main.area.inChallenge) this.main.area.towers.forEach(t => {
+			t.pokemon.stadistics.challenge = (t.pokemon.stadistics.challenge ?? 0) + challengeAmount;
+		});
 	}
 
 	open() {
@@ -217,7 +231,7 @@ export class FinalScene extends GameScene {
 		this.main.UI.nextWave.style.pointerEvents = 'all';
 
 		this.main.area.autoWave = false;
-		this.main.UI.autoWave.style.background = '#2c70e3';
+		this.main.UI.autoWave.style.background = 'var(--autoWave1)';
 
 		//this.main.UI.saveTeamButton.style.display = 'revert-layer';
 		//this.main.UI.importTeamButton.style.display = 'revert-layer';
@@ -232,9 +246,12 @@ export class FinalScene extends GameScene {
 			this.main.UI.getSecret('manaphy')
 		}
 
-		if (this.boss == enemyData['mew'] && !this.main.player.secrets['mew']) {
-			this.main.player.secrets.mew = true;
-			this.main.UI.getSecret('mew')
+		if (this.boss == enemyData['mew']) {
+			this.main.player.recordEnemyDefeated('mew');
+			if (!this.main.player.secrets['mew']) {
+				this.main.player.secrets.mew = true;
+				this.main.UI.getSecret('mew');
+			}
 		}
 
 		if (this.boss == enemyData['victini'] && !this.main.player.secrets['victini']) {
@@ -257,21 +274,26 @@ export class FinalScene extends GameScene {
 			this.main.UI.getSecret('calyrex')
 		}
 
+		if (this.boss == enemyData['spectrier'] && !this.main.player.secrets['spectrier']) {
+			this.main.player.secrets.spectrier = true;
+			this.main.UI.getSecret('spectrier')
+		}
+
 		if (!this.main.area.isCustom) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
 
 	getText(lang) {
 		const text = [
 			`You defeated ${this.boss.name[lang]} and showed who's boss, congratulations!`,
-		    `Has derrotado a ${this.boss.name[lang]} y le has demostrado qui├⌐n manda`,
-		    `Vous avez vaincu ${this.boss.name[lang]} et montr├⌐ qui est le patron,`,
-		    `Voc├¬ derrotou ${this.boss.name[lang]} e mostrou quem manda, parab├⌐ns!`,
+		    `Has derrotado a ${this.boss.name[lang]} y le has demostrado quién manda`,
+		    `Vous avez vaincu ${this.boss.name[lang]} et montré qui est le patron,`,
+		    `Você derrotou ${this.boss.name[lang]} e mostrou quem manda, parabéns!`,
 		    `Hai sconfitto ${this.boss.name[lang]} e hai dimostrato chi comanda`,
 		    `Du hast ${this.boss.name[lang]} besiegt und gezeigt, wer der Boss ist`,
-		    `${this.boss.name[lang]}πéÆσÇÆπüùπüªπâ£πé╣πü«σ║ºπéÆΦªïπü¢πüñπüæπüƒπÇüτÑ¥τªÅπüùπü╛πüÖ∩╝ü`,
-		    `${this.boss.name[lang]}δÑ╝ δ¼╝δª¼∞╣ÿΩ│á δêäΩ░Ç δ│┤∞èñ∞¥╕∞ºÇ δ│┤∞ù¼∞ñ¼δïñ, ∞╢òφòÿφò┤!`,
-		    `Σ╜áσç╗Φ┤ÑΣ║å${this.boss.name[lang]}∩╝îσÉæΣ╗ûσ▒òτñ║Σ║åΦ░üµëìµÿ»ΦÇüσñº∩╝îµü¡σû£∩╝ü`,
-			`Pokona┼ée┼¢ ${this.boss.name[lang]} i pokaza┼ée┼¢, kto tu rz─àdzi ΓÇö gratulacje!`,
+		    `${this.boss.name[lang]}を倒してボスの座を見せつけた、祝福します！`,
+		    `${this.boss.name[lang]}를 물리치고 누가 보스인지 보여줬다, 축하해!`,
+		    `你击败了${this.boss.name[lang]}，向他展示了谁才是老大，恭喜！`,
+			`Pokonałeś ${this.boss.name[lang]} i pokazałeś, kto tu rządzi — gratulacje!`,
 		]
 		return text[lang];
 	}

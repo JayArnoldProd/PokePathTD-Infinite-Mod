@@ -25,21 +25,24 @@ export class BoxScene extends SectionScene {
 		this.selectedPos = 0;
 		this.tabSelected = 0;
 
+		this.size = [44, 50, 58, 67];
+		this.sizePosition = 0;
+
 		this.nameChange = new ChangePokemonName(this.main);
 	}
 
 	render() {
-		this.unitSelectedName = new Element(this.container, { className: 'box-scene-unit-selected-name' }).element;
+		this.unitSelectedName = new Element(this.container, { className: 'box-scene-unit-selected-name stroke' }).element;
 
 		this.collectionStats = new Element(this.container, { className: 'box-scene-collection-stats' }).element;
-		this.pokedexStats = new Element(this.collectionStats, { className: 'box-scene-collection-stat' }).element;
-		this.shinyStats = new Element(this.collectionStats, { className: 'box-scene-collection-stat' }).element;
+		this.pokedexStats = new Element(this.collectionStats, { className: 'box-scene-collection-stat stroke' }).element;
+		this.shinyStats = new Element(this.collectionStats, { className: 'box-scene-collection-stat stroke' }).element;
 
 		this.unitSelectedName.addEventListener('click', () => {
 			this.nameChange.open(this.selected);
 		})
 
-		this.favoriteButton = new Element(this.container, { className: 'box-scene-favorite-button', text: '⭐' }).element;
+		this.favoriteButton = new Element(this.container, { className: 'box-scene-favorite-button stroke', text: '⭐' }).element;
 
 		this.favoriteButton.addEventListener('click', () => {
 			playSound('hover2', 'ui')
@@ -49,7 +52,7 @@ export class BoxScene extends SectionScene {
 		this.unitContainer = new Element(this.container, { className: 'box-scene-unit-container' }).element;
 		this.units = [];
 
-		this.buttonContainer = new Element(this.container, { className: 'box-scene-button-container' }).element;
+		this.buttonContainer = new Element(this.container, { className: 'box-scene-button-container stroke' }).element;
 		this.addUnit = new Element(this.buttonContainer, { className: 'box-scene-button' }).element;
 		this.removeUnit = new Element(this.buttonContainer, { className: 'box-scene-button' }).element;
 		this.dataUnit = new Element(this.buttonContainer, { className: 'box-scene-button' }).element;
@@ -75,61 +78,9 @@ export class BoxScene extends SectionScene {
 		this.removeUnit.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 		this.removeAll.addEventListener('mouseenter', () => { playSound('hover3', 'ui') })
 
-		for (let i = 0; i < 200; i++) {
-			this.units[i] = new Element(this.unitContainer, { className: 'box-scene-unit' }).element;
-			this.units[i].text = new Element(this.units[i], { className: 'box-scene-unit-text stroke' }).element;
-			this.units[i].fav = new Element(this.units[i], { className: 'box-scene-unit-fav' }).element;
-			this.units[i].shiny = new Element(this.units[i], { className: 'box-scene-unit-shiny' }).element;
-			this.units[i].shape = new Element(this.units[i], { className: 'box-scene-unit-shape' }).element;
-			this.units[i].itemBadge = new Element(this.units[i], { className: 'box-scene-unit-item-badge' }).element;
-			this.units[i].addEventListener('click', () => {
-			    playSound('click1', 'ui');
+		this.ensureBoxSlots();
 
-			    this.units.forEach(unit => unit.classList.remove('is-selected'));
-			    this.units[i].classList.add('is-selected');
-
-			    this.selected = this.searchPokemon[i];
-			    this.selectedPos = i;
-			    this.displayPokemon();
-			});
-			this.units[i].addEventListener('dblclick', () => {
-				this.selected = this.searchPokemon[i];
-				if (this.selected.inGroup) {
-					if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
-
-					if (this.selected.isDeployed) {
-						this.main.game.deployingUnit = this.selected;
-						this.main.game.retireUnit();
-					} else {
-						playSound('unequip', 'ui');
-					}
-
-					this.main.box.addPokemon(this.selected);
-					this.main.team.removePokemon(this.selected);
-
-					this.update();
-					this.main.area.checkWeather();
-					this.main.UI.update();
-				} else if (this.main.team.pokemon.length < this.main.player.teamSlots) {
-					if (
-						typeof this.main.area.inChallenge.slotLimit == 'number' &&
-						this.main.team.pokemon.length >= this.main.area.inChallenge.slotLimit
-					) {
-						playSound('pop0', 'ui');
-						return;
-					}
-					playSound('equip', 'ui');
-					this.main.team.addPokemon(this.selected);
-					this.main.box.removePokemon(this.selected);
-					this.update();
-					this.main.UI.update();
-				}
-				this.applyTabEffect(this.tabSelected);
-			});
-			this.units[i].addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
-		}
-
-		this.sortContainer = new Element(this.container, { className: 'box-scene-sort-container' }).element;
+		this.sortContainer = new Element(this.container, { className: 'box-scene-sort-container stroke' }).element;
 
 		this.sortArrowLeft = new Element(this.sortContainer, { className: 'box-scene-sort-arrow', text: '<' }).element;
 		this.sortValue = new Element(this.sortContainer, { className: 'box-scene-sort-value' }).element;
@@ -141,7 +92,7 @@ export class BoxScene extends SectionScene {
 		this.sortArrowLeft.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 		this.sortArrowRight.addEventListener('mouseenter', () => { playSound('hover1', 'ui') })
 
-		this.tabContainer = new Element(this.container, { className: 'box-scene-tab-container' }).element;
+		this.tabContainer = new Element(this.container, { className: 'box-scene-tab-container stroke' }).element;
 		this.tabs = [];
 
 		for (let i = 0; i < TAB_CONTENT.length; i++) {
@@ -166,6 +117,9 @@ export class BoxScene extends SectionScene {
 				}
 			}
 		);
+
+		this.viewButton = new Element(this.container, { className: 'box-scene-view-button' }).element;
+		this.viewButton.addEventListener('click', () => this.changeView());
 
 		this.setupUnitDragAndDrop();
 	}
@@ -214,18 +168,25 @@ export class BoxScene extends SectionScene {
 	            (searchValue === "-" && poke.rangeType === 'horizontalLine') ||
 	            ("bombardment".includes(searchValue) && poke.attackType === 'bombardment') ||
 	            ("orbital".includes(searchValue) && poke.attackType === 'orbital') ||
-	            ("stun".includes(searchValue) && (([13, 72, 133, 136, 162].includes(poke.id)) || ['vikavolt'].includes(poke.specie.key))) ||
-	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170].includes(poke.id)) || ['grubbin', 'charjabug'].includes(poke.specie.key))) ||
-	            ("aura".includes(searchValue) && ([83, 111, 144, 172, 175, 176].includes(poke.id))) ||
-	            ("heal".includes(searchValue) && ([83, 103, 109].includes(poke.id))) ||
+	            ("aura".includes(searchValue) && poke.attackType === 'aura') ||
+	            ("beam".includes(searchValue) && ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.ability.id)) ||
+	            ("stun".includes(searchValue) && (([13, 72, 133, 136, 162].includes(poke.id)) || ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.specie.key))) ||
+	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170].includes(poke.id)) || ['grubbin', 'charjabug', 'kyogre', 'tapuFini'].includes(poke.specie.key))) ||
+	            ("ricochet".includes(searchValue) && ([72].includes(poke.id))) ||
+	            ("heal".includes(searchValue) && ([83, 103, 109, 231, 225].includes(poke.id))) ||
 	            ("curse".includes(searchValue) && ([16, 180, 73].includes(poke.id))) ||
-	            ("burn".includes(searchValue) && ([0, 73, 74, 107, 120, 181].includes(poke.id))) ||
-	            ("poison".includes(searchValue) && ([169].includes(poke.id))) ||
+	            ("burn".includes(searchValue) && ([0, 73, 74, 107, 120, 181, 197, 226, 228].includes(poke.id))) ||
+	            ("poison".includes(searchValue) && ([169, 196, 202, 6, 203, 222].includes(poke.id))) ||
 	            ("armor".includes(searchValue) && ([8, 151, 138].includes(poke.id))) ||
 	            ("splash".includes(searchValue) && ([54, 109].includes(poke.id))) ||
+	            (["sword", "soj"].includes(searchValue) && ([165, 175, 176, 233].includes(poke.id))) ||
+	            (["forces", "nature", "fon"].includes(searchValue) && ([220, 227, 230].includes(poke.id))) ||
+	            (["-+", "+-"].includes(searchValue) && (['minun', 'plusle'].includes(poke.specie.key))) ||
+	            (["ub", "ultra", "beast", "ultrabeast"].includes(searchValue) && (['stakataka', 'nihilego', 'pheromosa'].includes(poke.specie.key))) ||
 	            ("nightmare".includes(searchValue) && ([69, 91, 154].includes(poke.id))) ||
 	            ("iron thorns".includes(searchValue) && poke.id === 178) ||
-				("sandy shocks".includes(searchValue) && poke.id === 179)
+				("sandy shocks".includes(searchValue) && poke.id === 179) ||
+				("paradox".includes(searchValue) && ([178, 179, 238, 239].includes(poke.id)))
 	        );
 	    });
 	    this.displayUnits();
@@ -235,7 +196,8 @@ export class BoxScene extends SectionScene {
 	displayUnits() {
 		this.sortUnits();
 
-		for (let i = 0; i < 200; i++) {
+		this.ensureBoxSlots();
+		for (let i = 0; i < this.units.length; i++) {
 			const unit = this.units[i];
 			const poke = this.searchPokemon[i];
 			unit.classList.remove('is-selected');
@@ -249,7 +211,6 @@ export class BoxScene extends SectionScene {
 
 				if (poke?.item?.id == 'inverter') this.units[i].style.transform = `scale(1, -1)`;
 				else this.units[i].style.transform = `revert-layer`;
-
 
 				this.units[i].shape.innerHTML = this.getBoxAttackShapeSymbol(poke);
 				this.units[i].shape.style.display = (this.main.indicatorShape) ? 'block' : 'none';
@@ -284,7 +245,9 @@ export class BoxScene extends SectionScene {
 						'area': text.box.area?.[this.main.lang] ?? 'AOE',
 						'aura': text.box.aura?.[this.main.lang] ?? 'Aura',
 						'single': text.box.single?.[this.main.lang] ?? 'Single',
-						'orbital': text.box.orbital?.[this.main.lang] ?? 'Orbital',
+						'stream': text.box.stream[this.main.lang],
+                        'bombardment': text.box.bombardment[this.main.lang],
+                        'orbital': text.box.orbital?.[this.main.lang] ?? 'Orbital',
 					};
 					const typeColors = { 'area': '#e94560', 'aura': '#a855f7', 'single': '#38bdf8', 'orbital': '#f59e0b' };
 					const label = typeLabels[poke.attackType] || poke.attackType;
@@ -313,7 +276,24 @@ export class BoxScene extends SectionScene {
 				if (this.sorted == 10) this.units[i].text.innerHTML = poke.range
 
 				unit.style.display = 'revert-layer';
-				unit.style.backgroundImage = `url("${poke.sprite.base}")`;
+
+				const spriteUrl = poke.sprite?.base ?? '';
+				unit.style.backgroundImage = spriteUrl  ? `url("${spriteUrl}")` : '';
+
+				if (unit.dataset.bgSpriteUrl !== spriteUrl) {
+				    unit.dataset.bgSpriteUrl = spriteUrl;
+
+				    // eliminar las dimensiones del sprite anterior
+				    unit.style.backgroundSize = '';
+
+				    delete unit.dataset.bgOriginalImage;
+				    delete unit.dataset.bgOriginalWidth;
+				    delete unit.dataset.bgOriginalHeight;
+
+				    unit.dataset.bgLoading = 'false';
+				}
+
+				this.applyUnitBackgroundScale(unit, spriteUrl);
 				unit.style.pointerEvents = 'all';
 				unit.style.filter = 'revert-layer';
 
@@ -336,7 +316,7 @@ export class BoxScene extends SectionScene {
 							if (!poke.tiles.includes(4)) unit.style.filter = 'brightness(0.3)';
 							break;
 						case 4:
-							if (![58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(poke.id)) unit.style.filter = 'brightness(0.3)';
+							if (![58, 59, 63, 64, 65, 66, 94, 140, 136, 151, 247].includes(poke.id)) unit.style.filter = 'brightness(0.3)';
 							break;
 					}
 				}
@@ -346,6 +326,7 @@ export class BoxScene extends SectionScene {
 				unit.style.pointerEvents = 'none';
 				unit.style.filter = 'brightness(0.5)';
 				unit.style.backgroundColor = 'transparent';
+				unit.style.backgroundSize = '';
 				unit.shape.innerHTML = '';
 				unit.itemBadge.style.display = 'none';
 				unit.itemBadge.style.backgroundImage = '';
@@ -380,7 +361,7 @@ export class BoxScene extends SectionScene {
 	                if (!poke.tiles.includes(4)) this.units[i].style.filter = 'brightness(0.3)';
 	                break;
 	            case 5:
-	                if (![58, 59, 63, 64, 65, 66, 94, 140, 136, 151].includes(poke.id)) this.units[i].style.filter = 'brightness(0.3)';
+	                if (![58, 59, 63, 64, 65, 66, 94, 140, 136, 151, 247].includes(poke.id)) this.units[i].style.filter = 'brightness(0.3)';
 	                break;
 	        }
 	    }
@@ -484,10 +465,17 @@ export class BoxScene extends SectionScene {
 		        break;
 		    case 'alphabetical':
 		        this.searchPokemon.sort((a, b) => {
-		            if (a.favorite && !b.favorite) return -1;
-		            if (!a.favorite && b.favorite) return 1;
-		            return a.name[this.main.lang].localeCompare(b.name[this.main.lang]);
-		        });
+		        if (a.favorite && !b.favorite) return -1;
+		        if (!a.favorite && b.favorite) return 1;
+
+		        const nameA = a.name[this.main.lang];
+		        const nameB = b.name[this.main.lang];
+
+		        const sortNameA = nameA.startsWith('M-') ? nameA.slice(2) : nameA;
+		        const sortNameB = nameB.startsWith('M-') ? nameB.slice(2) : nameB;
+
+		        return sortNameA.localeCompare(sortNameB);
+		    });
 		        break;
 		    case 'level':
 		        this.searchPokemon.sort((a, b) => {
@@ -570,7 +558,7 @@ export class BoxScene extends SectionScene {
                 break;
             case 'attackType':
 		        {
-		            const typeOrder = { 'area': 0, 'aura': 1, 'single': 2, 'orbital': 3 };
+		            const typeOrder = { 'area': 0, 'aura': 1, 'single': 2, 'orbital': 3, 'stream': 4, 'bombardment': 5 };
 		            this.searchPokemon.sort((a, b) => {
 		                if (a.favorite && !b.favorite) return -1;
 		                if (!a.favorite && b.favorite) return 1;
@@ -647,27 +635,34 @@ export class BoxScene extends SectionScene {
 	    let activePointerId = null;
 	    let originatingUnit = null;
 	    let originBgSaved = null;
-		let originTransformSaved = null;
+	    let originTransformSaved = null;
 
 	    const clearDragState = () => {
 	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
 	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
 	        window.removeEventListener('pointercancel', onPointerCancelDuringDrag);
-	        if (clone && typeof clone.remove === 'function') { clone.remove(); clone = null; }
+
+	        if (clone && typeof clone.remove === 'function') {
+	            clone.remove();
+	            clone = null;
+	        }
+
 	        if (originatingUnit && activePointerId != null) {
-	            try { originatingUnit.releasePointerCapture(activePointerId); } catch (e) {}
+	            try {
+	                originatingUnit.releasePointerCapture(activePointerId);
+	            } catch (e) {}
 	        }
 
 	        if (originatingUnit) {
-		originatingUnit.classList.remove('is-dragging');
-			    if (originBgSaved !== null) {
+	            originatingUnit.classList.remove('is-dragging');
+	            if (originBgSaved !== null) {
+	                originatingUnit.style.backgroundImage = originBgSaved;
+	            }
+	            if (originTransformSaved !== null) {
+	                originatingUnit.style.transform = originTransformSaved;
+	            }
+	        }
 
-			        originatingUnit.style.backgroundImage = originBgSaved;
-			    }
-			    if (originTransformSaved !== null) {
-			        originatingUnit.style.transform = originTransformSaved;
-			    }
-			}
 	        draggedIndex = null;
 	        activePointerId = null;
 	        originatingUnit = null;
@@ -681,14 +676,16 @@ export class BoxScene extends SectionScene {
 	            try { this.main.game.animate(performance.now()); } catch (err) {}
 	        }
 
-	        this.pokemon.forEach(s => { if (s && s.classList) s.classList.remove('drag-over'); });
+	        this.pokemon.forEach(s => {
+	            if (s && s.classList) s.classList.remove('drag-over');
+	        });
 
 	        document.body.style.cursor = '';
 	    };
 
 	    const onPointerMoveDuringDrag = (e) => {
-	        if (this.main.game.stopped) return playSound('pop0', 'ui');
 	        if (!clone) return;
+
 	        clone.style.left = `${e.pageX - clone.offsetWidth / 2}px`;
 	        clone.style.top = `${e.pageY - clone.offsetHeight / 2}px`;
 
@@ -697,7 +694,10 @@ export class BoxScene extends SectionScene {
 	        clone.style.display = 'block';
 
 	        const targetSlot = targetElement?.closest('.ui-pokemon');
-	        this.pokemon.forEach(s => { if (s && s.classList) s.classList.remove('drag-over'); });
+	        this.pokemon.forEach(s => {
+	            if (s && s.classList) s.classList.remove('drag-over');
+	        });
+
 	        if (targetSlot && parseInt(targetSlot.dataset.index) !== draggedIndex) {
 	            targetSlot.classList.add('drag-over');
 	        }
@@ -712,11 +712,8 @@ export class BoxScene extends SectionScene {
 	            ) {
 	                const scaleX = canvasEl.width / rect.width;
 	                const scaleY = canvasEl.height / rect.height;
-	                const canvasX = (e.clientX - rect.left) * scaleX;
-	                const canvasY = (e.clientY - rect.top) * scaleY;
-
-	                this.main.game.mouse.x = canvasX;
-	                this.main.game.mouse.y = canvasY;
+	                this.main.game.mouse.x = (e.clientX - rect.left) * scaleX;
+	                this.main.game.mouse.y = (e.clientY - rect.top) * scaleY;
 	            } else {
 	                this.main.game.mouse.x = undefined;
 	                this.main.game.mouse.y = undefined;
@@ -731,16 +728,14 @@ export class BoxScene extends SectionScene {
 	    };
 
 	    const onPointerUpDuringDrag = (e) => {
-	        if (this.main.game.stopped) return playSound('pop0', 'ui');
-
-	        window.removeEventListener('pointermove', onPointerMoveDuringDrag);
-	        window.removeEventListener('pointerup', onPointerUpDuringDrag);
-	        window.removeEventListener('pointercancel', onPointerCancelDuringDrag);
-
-	        if (clone && typeof clone.remove === 'function') clone.remove();
+	        if (!clone) {
+	            clearDragState();
+	            return;
+	        }
 
 	        const canvasEl = this.main.game.canvas;
 	        let tile = null;
+
 	        if (canvasEl) {
 	            const rect = canvasEl.getBoundingClientRect();
 	            const cx = e.clientX;
@@ -753,6 +748,7 @@ export class BoxScene extends SectionScene {
 	            ) {
 	                const scaleX = canvasEl.width / rect.width;
 	                const scaleY = canvasEl.height / rect.height;
+
 	                const canvasX = (cx - rect.left) * scaleX;
 	                const canvasY = (cy - rect.top) * scaleY;
 
@@ -764,6 +760,8 @@ export class BoxScene extends SectionScene {
 	                );
 	            }
 	        }
+
+	        // Despliegue en el tablero
 	        if (tile && draggedIndex != null) {
 	            const pokemon = this.searchPokemon[draggedIndex];
 	            if (!pokemon) {
@@ -775,7 +773,9 @@ export class BoxScene extends SectionScene {
 
 	            this.main.game.tryDeployUnit(draggedIndex, true);
 
-	            if (!this.main.game.deployingUnit) this.main.game.deployingUnit = pokemon;
+	            if (!this.main.game.deployingUnit) {
+	                this.main.game.deployingUnit = pokemon;
+	            }
 
 	            if (clickedPokemon === this.main.game.deployingUnit) {
 	                this.main.game.cancelDeployUnit();
@@ -801,33 +801,38 @@ export class BoxScene extends SectionScene {
 	                        this.main.game.moveUnitToTile(tile);
 	                    } else {
 	                        if (this.main.game.deployingUnit.isDeployed) {
-	                            const sourceTile = this.main.area.placementTiles.find(t => t.tower === this.main.game.deployingUnit);
+	                            const sourceTile = this.main.area.placementTiles.find(
+	                                t => t.tower === this.main.game.deployingUnit
+	                            );
+
 	                            if (sourceTile) {
-	                                this.main.game.swapUnits(sourceTile, this.main.game.deployingUnit, tile, clickedPokemon);
+	                                this.main.game.swapUnits(
+	                                    sourceTile,
+	                                    this.main.game.deployingUnit,
+	                                    tile,
+	                                    clickedPokemon
+	                                );
 	                            } else {
 	                                this.main.game.retireUnit();
 	                                this.main.game.moveUnitToTile(tile);
 	                            }
+
 	                            this.main.game.cancelDeployUnit();
 	                            playSound('equip', 'ui');
-	                            if (this.main.UI.fastScene.isOpen) this.main.UI.fastScene.close();
-	                            if (!this.main.area.waveActive) {
-	                                this.main.UI.revertUI();
-	                                this.main.UI.nextWave.style.filter = 'revert-layer';
-	                                this.main.UI.nextWave.style.pointerEvents = 'revert-layer';
-	                            }
 	                        } else {
 	                            this.main.game.moveUnitToTile(tile);
 	                        }
 	                    }
 	                }
 	            }
+
 	            this.update();
 	            if (this.main.UI) this.main.UI.updatePokemon();
 	            clearDragState();
 	            return;
 	        }
 
+	        // Soltar en el equipo
 	        const targetElement = document.elementFromPoint(e.clientX, e.clientY);
 	        const targetSlot = targetElement?.closest('.ui-pokemon');
 
@@ -891,9 +896,9 @@ export class BoxScene extends SectionScene {
 	                const insertIndex = Math.min(Math.max(0, toIndex), teamArr.length);
 	                teamArr.splice(insertIndex, 0, pokemonToAdd);
 	                this.main.team.pokemon = teamArr;
+				this.main.team.refreshDittoADN?.('box-drag-to-team-slot');
 	            }
 
-	            this.main.team.refreshDittoADN?.('box-drag-to-team-slot');
 	            this.update();
 	            if (this.main.UI) this.main.UI.updatePokemon();
 	            playSound('equip', 'ui');
@@ -907,65 +912,63 @@ export class BoxScene extends SectionScene {
 	    };
 
 	    const startDragActual = (e, index, originatingSlot) => {
-		    if (!this.isOpen) return;
-		    if (this.main.game.stopped) return playSound('pop0', 'ui');
-		    if (!this.searchPokemon || !this.searchPokemon[index]) { clearDragState(); return; }
+	    	if (!this.isOpen) return;
+	        if (!this.searchPokemon || !this.searchPokemon[index]) {
+	            clearDragState();
+	            return;
+	        }
 
-		    const pokemon = this.searchPokemon[index];
-		    draggedIndex = index;
-		    originatingUnit = originatingSlot;
-		    document.body.style.cursor = 'grabbing';
+	        const pokemon = this.searchPokemon[index];
+	        draggedIndex = index;
+	        originatingUnit = originatingSlot;
+	        document.body.style.cursor = 'grabbing';
 
-		    originBgSaved = originatingSlot.style.backgroundImage || '';
-			originTransformSaved = originatingSlot.style.transform || '';
-			originatingSlot.style.backgroundImage = 'none';
-			originatingSlot.style.transform = 'revert-layer';
+	        originBgSaved = originatingSlot.style.backgroundImage || '';
+	        originTransformSaved = originatingSlot.style.transform || '';
 
-		    clone = document.createElement('div');
-		    clone.className = 'box-drag-sprite-clone';
-		    clone.style.position = 'absolute';
-		    clone.style.zIndex = '10000';
-		    clone.style.pointerEvents = 'none';
+	        originatingSlot.style.backgroundImage = 'none';
+	        originatingSlot.style.transform = 'revert-layer';
 
-		    const spriteUrl = pokemon?.sprite?.base || '';
-		    clone.style.backgroundImage = `url("${spriteUrl}")`;
-		    clone.style.backgroundRepeat = 'no-repeat';
-		    clone.style.backgroundPosition = 'center';
-		    clone.style.scale = '1.2';
-		    clone.style.imageRendering = 'pixelated';
-		    clone.style.width = `60px`;
-		    clone.style.height = `60px`;
-		    clone.style.filter = `drop-shadow(6px 6px 2px #222)`;
+	        clone = document.createElement('div');
+	        clone.className = 'box-drag-sprite-clone';
+	        clone.style.position = 'absolute';
+	        clone.style.zIndex = '10000';
+	        clone.style.pointerEvents = 'none';
+	        clone.style.backgroundImage = `url("${pokemon?.sprite?.base || ''}")`;
+	        clone.style.backgroundRepeat = 'no-repeat';
+	        clone.style.backgroundPosition = 'center';
+	        clone.style.width = `60px`;
+	        clone.style.height = `60px`;
+	        clone.style.scale = '1.2';
+	        clone.style.imageRendering = 'pixelated';
+	        clone.style.filter = `drop-shadow(6px 6px 2px #222)`;
 
-		    document.body.appendChild(clone);
+	        document.body.appendChild(clone);
 
-		    originatingSlot.classList.add('is-dragging');
-		    this.isDragging = true;
+	        clone.style.left = `${e.pageX - 30}px`;
+	        clone.style.top = `${e.pageY - 30}px`;
 
-		    const setClonePos = (pageX, pageY) => {
-		        clone.style.left = `${pageX - clone.offsetWidth / 2}px`;
-		        clone.style.top = `${pageY - clone.offsetHeight / 2}px`;
-		    };
-		    setClonePos(e.pageX, e.pageY);
+	        originatingSlot.classList.add('is-dragging');
+	        this.isDragging = true;
 
-		    playSound('hover3', 'ui');
+	        playSound('hover3', 'ui');
 
-		    try {
-		        originatingSlot.setPointerCapture(e.pointerId);
-		        activePointerId = e.pointerId;
-		    } catch (err) {
-		        activePointerId = null;
-		    }
+	        try {
+	            originatingSlot.setPointerCapture(e.pointerId);
+	            activePointerId = e.pointerId;
+	        } catch (err) {
+	            activePointerId = null;
+	        }
 
-		    window.addEventListener('pointermove', onPointerMoveDuringDrag);
-		    window.addEventListener('pointerup', onPointerUpDuringDrag);
-		    window.addEventListener('pointercancel', onPointerCancelDuringDrag);
-		};
+	        window.addEventListener('pointermove', onPointerMoveDuringDrag);
+	        window.addEventListener('pointerup', onPointerUpDuringDrag);
+	        window.addEventListener('pointercancel', onPointerCancelDuringDrag);
+	    };
 
-	    const onPointerDownCandidate = function(e) {
+	    const onPointerDownCandidate = function (e) {
 	        if (!e.isPrimary) return;
-
-	        if (e.target.closest('.box-scene-unit-fav') || e.target.closest('.box-scene-unit-shiny')) return;
+	        if (e.target.closest('.box-scene-unit-fav') ||
+	            e.target.closest('.box-scene-unit-shiny')) return;
 
 	        const originatingSlot = this;
 	        const index = parseInt(originatingSlot.dataset.index);
@@ -976,6 +979,7 @@ export class BoxScene extends SectionScene {
 	        const onMoveCheck = (ev) => {
 	            const dx = ev.clientX - startX;
 	            const dy = ev.clientY - startY;
+
 	            if (Math.hypot(dx, dy) > THRESHOLD) {
 	                window.removeEventListener('pointermove', onMoveCheck);
 	                window.removeEventListener('pointerup', onCancel);
@@ -986,27 +990,34 @@ export class BoxScene extends SectionScene {
 	        const onCancel = () => {
 	            window.removeEventListener('pointermove', onMoveCheck);
 	            window.removeEventListener('pointerup', onCancel);
-	            window.removeEventListener('pointercancel', onCancel);
 	        };
 
 	        e.preventDefault();
-
 	        window.addEventListener('pointermove', onMoveCheck);
 	        window.addEventListener('pointerup', onCancel);
-	        window.addEventListener('pointercancel', onCancel);
 	    };
 
-	    for (let i = 0; i < this.units.length; i++) {
-	        const unitEl = this.units[i];
-	        if (!unitEl) continue;
-	        if (unitEl._boxDragSetup) continue;
-	        unitEl._boxDragSetup = true;
+	    this._attachBoxDragHandlers = (unitEl, i) => {
+	        if (!unitEl) return;
+	        if (unitEl._boxDragSetup) return;
 
+	        unitEl._boxDragSetup = true;
 	        unitEl.dataset.index = i;
 
-	        unitEl.addEventListener('pointerdown', (e) => onPointerDownCandidate.call(unitEl, e));
+	        // Previene conflictos en móvil
+	        unitEl.style.touchAction = 'none';
+
+	        unitEl.addEventListener('pointerdown', function (e) {
+	            onPointerDownCandidate.call(this, e);
+	        });
+
+	        unitEl.addEventListener('lostpointercapture', () => {
+	            if (this.isDragging) clearDragState();
+	        });
+
 	        unitEl.addEventListener('dragstart', (e) => e.preventDefault());
-	    }
+	    };
+	    this.units.forEach((unit, i) => this._attachBoxDragHandlers(unit, i));
 	}
 
 	getBoxAttackShapeSymbol(pokemon) {
@@ -1027,19 +1038,10 @@ export class BoxScene extends SectionScene {
 	}
 
 	getBoxAttackShapeInfo(pokemon) {
-		const shapes = {
-			circle: { label: 'Circle', color: '#22c55e' },
-			donut: { label: 'Donut', color: '#f97316' },
-			cross: { label: 'Cross', color: '#eab308' },
-			xShape: { label: 'X', color: '#ec4899' },
-			horizontalLine: { label: 'Line', color: '#60a5fa' },
-		};
-		const fallback = String(pokemon?.rangeType ?? 'Unknown')
-			.replace(/([a-z])([A-Z])/g, '$1 $2')
-			.replace(/\bshape\b/ig, '')
-			.trim();
-		return shapes[pokemon?.rangeType] ?? { label: fallback || 'Unknown', color: '#fff' };
-	}
+        const key = pokemon?.rangeType ?? 'circle';
+        const colors = {circle:'#22c55e',donut:'#f97316',cross:'#eab308',xShape:'#ec4899',horizontalLine:'#60a5fa'};
+        return {label: text.pokemon[key]?.[this.main.lang] ?? key, color: colors[key] ?? '#fff'};
+    }
 
 	updateCollectionStats() {
 
@@ -1049,4 +1051,155 @@ export class BoxScene extends SectionScene {
 		// this.main.player.stats.pokemonOwned
 		// this.main.player.shinyAmount
 	}
+
+	changeView() {
+	    this.sizePosition++;
+	    playSound('option', 'ui');
+
+	    if (this.sizePosition > 3) this.sizePosition = 0;
+
+	    const size = this.size[this.sizePosition];
+	    const multiplier = 1 + this.sizePosition * 0.1;
+
+	    this.units.forEach(unit => {
+	        unit.style.width = `${size}px`;
+	        unit.style.height = `${size}px`;
+
+	        // Mantener el escalado de la fuente.
+	        if (unit.text) {
+	            if (!unit.dataset.baseFontSize) {
+	                unit.dataset.baseFontSize =
+	                    getComputedStyle(unit.text).fontSize;
+	            }
+
+	            const baseFontSize = parseFloat(unit.dataset.baseFontSize);
+
+	            unit.text.style.fontSize =
+	                `${baseFontSize * multiplier}px`;
+	        }
+
+	        // Recalcular el fondo usando el sprite actual.
+	        this.applyUnitBackgroundScale(unit);
+	    });
+	}
+
+	applyUnitBackgroundScale(unit, imageUrl = unit.dataset.bgSpriteUrl) {
+	    if (!imageUrl) {
+	        unit.style.backgroundSize = '';
+	        return;
+	    }
+
+	    if (unit.dataset.bgOriginalImage !== imageUrl) {
+	        unit.dataset.bgOriginalImage = imageUrl;
+
+	        delete unit.dataset.bgOriginalWidth;
+	        delete unit.dataset.bgOriginalHeight;
+
+	        unit.style.backgroundSize = '';
+	        unit.dataset.bgLoading = 'false';
+	    }
+
+	    const applySize = () => {
+	        if (unit.dataset.bgOriginalImage !== imageUrl) return;
+
+	        const width = Number(unit.dataset.bgOriginalWidth);
+	        const height = Number(unit.dataset.bgOriginalHeight);
+
+	        if (!width || !height) return;
+
+	        const multiplier = 1 + (this.sizePosition || 0) * 0.1;
+
+	        unit.style.backgroundSize =
+	            `${width * multiplier}px ${height * multiplier}px`;
+	    };
+
+	    if (unit.dataset.bgOriginalWidth && unit.dataset.bgOriginalHeight) {
+	        applySize();
+	        return;
+	    }
+
+	    if (unit.dataset.bgLoading === 'true') return;
+
+	    unit.dataset.bgLoading = 'true';
+
+	    const img = new Image();
+
+	    img.onload = () => {
+	        if (unit.dataset.bgOriginalImage !== imageUrl) return;
+
+	        unit.dataset.bgOriginalWidth = img.naturalWidth;
+	        unit.dataset.bgOriginalHeight = img.naturalHeight;
+	        unit.dataset.bgLoading = 'false';
+
+	        applySize();
+	    };
+
+	    img.onerror = () => {
+	        if (unit.dataset.bgOriginalImage === imageUrl) {
+	            unit.dataset.bgLoading = 'false';
+	            unit.style.backgroundSize = '';
+	        }
+	    };
+
+	    img.src = imageUrl;
+	}
+
+ ensureBoxSlots() {
+ const capacity=Math.max(allPokemon.length,(this.main.box?.pokemon.length||0)+(this.main.team?.pokemon.length||0));
+ for(let i=this.units.length;i<capacity;i++) {
+			this.units[i] = new Element(this.unitContainer, { className: 'box-scene-unit' }).element;
+			this.units[i].text = new Element(this.units[i], { className: 'box-scene-unit-text stroke' }).element;
+			this.units[i].fav = new Element(this.units[i], { className: 'box-scene-unit-fav' }).element;
+			this.units[i].shiny = new Element(this.units[i], { className: 'box-scene-unit-shiny' }).element;
+			this.units[i].shape = new Element(this.units[i], { className: 'box-scene-unit-shape' }).element;
+			this.units[i].itemBadge = new Element(this.units[i], { className: 'box-scene-unit-item-badge' }).element;
+			this.units[i].addEventListener('click', () => {
+			    playSound('click1', 'ui');
+
+			    this.units.forEach(unit => unit.classList.remove('is-selected'));
+			    this.units[i].classList.add('is-selected');
+
+			    this.selected = this.searchPokemon[i];
+			    this.selectedPos = i;
+			    this.displayPokemon();
+			});
+			this.units[i].addEventListener('dblclick', () => {
+				this.selected = this.searchPokemon[i];
+				if (this.selected.inGroup) {
+					if (this.main.game.deployingUnit != undefined) this.main.game.cancelDeployUnit();
+
+					if (this.selected.isDeployed) {
+						this.main.game.deployingUnit = this.selected;
+						this.main.game.retireUnit();
+					} else {
+						playSound('unequip', 'ui');
+					}
+
+					this.main.box.addPokemon(this.selected);
+					this.main.team.removePokemon(this.selected);
+
+					this.update();
+					this.main.area.checkWeather();
+					this.main.UI.update();
+				} else if (this.main.team.pokemon.length < this.main.player.teamSlots) {
+					if (
+						typeof this.main.area.inChallenge.slotLimit == 'number' &&
+						this.main.team.pokemon.length >= this.main.area.inChallenge.slotLimit
+					) {
+						playSound('pop0', 'ui');
+						return;
+					}
+					playSound('equip', 'ui');
+					this.main.team.addPokemon(this.selected);
+					this.main.box.removePokemon(this.selected);
+					this.update();
+					this.main.UI.update();
+				}
+				this.applyTabEffect(this.tabSelected);
+			});
+			this.units[i].addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+		
+            this._attachBoxDragHandlers?.(this.units[i], i);
+        }
+ }
 }

@@ -13,14 +13,24 @@ import { achievementReworkData } from '../data/achievementReworkData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
-// Every obtainable secret line in the 1.6.3 pokemonData secretPokemon export.
+// Every obtainable secret line in the 1.7.0 pokemonData secretPokemon export.
 // Cacturne is represented by its unlock-time base form, Cacnea.
 const SECRET_POKEMON_KEYS = [
-	'greavard', 'cacnea', 'ducklett', 'sandygast', 'luvdisc', 'chatot',
-	'shedinja', 'gholdengo', 'stakataka', 'manaphy', 'phione', 'missingNo',
-	'spiritomb', 'bronzor', 'minior', 'corsolaGalar', 'keldeo', 'victini',
-	'mew', 'marshadow', 'terrakion', 'cobalion', 'farfetchdGalar',
-	'ironThorns', 'sandyShocks', 'dhelmise', 'calyrex',
+	//achievements
+	'shaymin', 'celebi', 'lunala', 'zapdos', 'moltres', 'articuno', 'regirock', 'groudon', 'hooh', 'registeel', 'regice', 'regigigas', 
+	'kyogre', 'thundurus', 'tapuFini', 'nihilego', 'tapuKoko', 'tapuBulu', 'tapuLele', 'keldeo', 'heatran', 'landorus', 'volcanion', 'pheromosa', 
+	'cobalion', 'stakataka', 'tornadus', 'magearna', 'diancie', 'terrakion', 'virizion', 
+
+	'shedinja', 'gholdengo', 'unown',
+
+	'greavard', 'cacnea', 'dhelmise', 'manaphy', 'phione', 'marshadow', 'ducklett', 'sandygast', 'victini', 'bronzor', 'spiritomb', 'farfetchdGalar', 'calyrex',
+
+	'chatot', 'luvdisc', 'tyrunt', 
+	'corsolaGalar', 'sneaselHisui', 'samurottHisui', 'wooper', 'minior', 'mew',
+
+	'pumpkaboo', 'spectrier', 
+	// codes
+	'ironThorns', 'sandyShocks', 'ironBundle', 'flutterMane','missingNo',
 ];
 
 const PROFILE_STAT_FALLBACK_TEXT = {
@@ -63,6 +73,14 @@ const PROFILE_STAT_FALLBACK_TEXT = {
 };
 
 const PROFILE_UNLOCKABLE_TEXT = {
+	findHiddenItem: ["Click the hidden item on {route}, outside challenges with no wave active.","Haz clic en el objeto oculto de {route}, fuera de desafíos y sin oleadas activas.","Cliquez sur l’objet caché de {route}, hors défi et sans vague active.","Clique no item escondido em {route}, fora de desafios e sem onda ativa.","Clicca sull’oggetto nascosto in {route}, fuori dalle sfide e senza ondate attive.","Klicke auf das versteckte Item auf {route}, außerhalb von Herausforderungen und ohne aktive Welle.","チャレンジ外でウェーブがない時に、{route}の隠された道具をクリックする。","챌린지 밖에서 웨이브가 없을 때 {route}의 숨겨진 도구를 클릭하세요.","在非挑战模式且没有波次进行时，点击{route}的隐藏道具。","Kliknij ukryty przedmiot na {route}, poza wyzwaniem i bez aktywnej fali."],
+	wooperExplosion: ["Let an Explosion user reduce your health to zero (or trigger the auto-reset threshold).","Deja que un usuario de Explosión reduzca tu salud a cero (o active el reinicio automático).","Laissez un utilisateur d’Explosion réduire vos PV à zéro (ou déclencher le redémarrage automatique).","Deixe um usuário de Explosão reduzir sua vida a zero (ou acionar o reinício automático).","Lascia che un utilizzatore di Esplosione riduca la salute a zero (o attivi il riavvio automatico).","Lass einen Explosions-Nutzer deine Gesundheit auf null senken (oder den automatischen Neustart auslösen).","だいばくはつで体力を0にする（または自動リセットの条件を満たす）。","대폭발로 체력을 0으로 만들거나 자동 재시작 조건을 발동시키세요.","让大爆炸使用者将生命降至零，或触发自动重置阈值。","Pozwól użytkownikowi Eksplozji obniżyć zdrowie do zera lub uruchomić automatyczny reset."],
+	unownConversation: ["Open Unown’s Compendium entry and answer its five questions using the search box. Progress: {count}/5.","Abre la entrada de Unown en el compendio y responde sus cinco preguntas en el buscador. Progreso: {count}/5.","Ouvrez la fiche d’Unown dans le compendium et répondez aux cinq questions dans la recherche. Progression : {count}/5.","Abra a entrada de Unown no compêndio e responda às cinco perguntas na busca. Progresso: {count}/5.","Apri la voce di Unown nel compendio e rispondi alle cinque domande nella ricerca. Progresso: {count}/5.","Öffne Unowns Kompendium-Eintrag und beantworte die fünf Fragen im Suchfeld. Fortschritt: {count}/5.","図鑑のアンノーンの項目を開き、検索欄で5つの質問に答える。進行度：{count}/5。","도감에서 안농 항목을 열고 검색창으로 다섯 질문에 답하세요. 진행: {count}/5.","打开图鉴的未知图腾条目，在搜索框回答五个问题。进度：{count}/5。","Otwórz wpis Unowna w kompendium i odpowiedz na pięć pytań w polu wyszukiwania. Postęp: {count}/5."],
+	clickSecretsTutorial: ["Click the image in the Compendium’s Secrets tutorial.","Haz clic en la imagen del tutorial de secretos del compendio.","Cliquez sur l’image du tutoriel des secrets dans le compendium.","Clique na imagem do tutorial de segredos do compêndio.","Clicca sull’immagine del tutorial sui segreti nel compendio.","Klicke auf das Bild im Geheimnis-Tutorial des Kompendiums.","図鑑のシークレット解説の画像をクリックする。","도감의 비밀 튜토리얼 이미지를 클릭하세요.","点击图鉴中秘密教程的图片。","Kliknij obraz w poradniku o sekretach w kompendium."],
+	solveWebPuzzle: ["Solve the official web puzzle and redeem its player-specific code from the Menu.","Resuelve el puzle web oficial y canjea su código personal desde el menú.","Résolvez l’énigme web officielle et utilisez son code personnel depuis le menu.","Resolva o quebra-cabeça oficial na web e resgate o código pessoal no menu.","Risolvi l’enigma web ufficiale e riscatta il codice personale dal menu.","Löse das offizielle Web-Rätsel und löse deinen persönlichen Code im Menü ein.","公式ウェブパズルを解き、プレイヤー専用コードをメニューで入力する。","공식 웹 퍼즐을 풀고 플레이어 전용 코드를 메뉴에서 입력하세요.","解开官方网页谜题，在菜单中兑换玩家专属代码。","Rozwiąż oficjalną zagadkę internetową i wpisz osobisty kod w menu."],
+	redeemNamedCode: ["Redeem {code} from the Menu.","Canjea {code} desde el menú.","Utilisez {code} depuis le menu.","Resgate {code} no menu.","Riscatta {code} dal menu.","Löse {code} im Menü ein.","メニューで{code}を入力する。","메뉴에서 {code}를 입력하세요.","在菜单中兑换{code}。","Wpisz {code} w menu."],
+	achievementReward: ["Complete this achievement, then defeat the boss again if the reward is still locked.","Completa este logro y vuelve a derrotar al jefe si la recompensa sigue bloqueada.","Terminez ce succès, puis battez à nouveau le boss si la récompense reste verrouillée.","Conclua esta conquista e derrote o chefe novamente se a recompensa ainda estiver bloqueada.","Completa questo obiettivo, poi sconfiggi di nuovo il boss se la ricompensa è ancora bloccata.","Schließe diesen Erfolg ab und besiege den Boss erneut, falls die Belohnung noch gesperrt ist.","この実績を達成する。報酬が未入手なら、もう一度ボスを倒す。","이 업적을 달성하고 보상이 잠겨 있으면 보스를 다시 쓰러뜨리세요.","完成此成就；若奖励仍未解锁，再次击败首领。","Ukończ to osiągnięcie, a jeśli nagroda jest nadal zablokowana, ponownie pokonaj bossa."],
+	achievementState: ["Achievement complete: {count}/1.","Logro completado: {count}/1.","Succès accompli : {count}/1.","Conquista concluída: {count}/1.","Obiettivo completato: {count}/1.","Erfolg abgeschlossen: {count}/1.","実績達成：{count}/1。","업적 달성: {count}/1.","成就完成：{count}/1。","Ukończone osiągnięcie: {count}/1."],
 	findHiddenBoardRoom: ["Find the hidden Board Room entrance on {route}, outside challenges with no wave active.", "Encuentra la entrada oculta a la sala del tablero en {route}, fuera de desafíos y sin oleadas activas.", "Trouvez l’entrée cachée de la salle du plateau sur {route}, hors défi et sans vague active.", "Encontre a entrada escondida da sala do tabuleiro em {route}, fora dos desafios e sem onda ativa.", "Trova l’ingresso nascosto della stanza della scacchiera su {route}, fuori dalle sfide e senza ondate attive.", "Finde den versteckten Eingang zum Schachraum auf {route}, außerhalb von Herausforderungen und ohne aktive Welle.", "チャレンジ外でウェーブがない時に、{route}の隠されたボードルーム入口を見つける。", "챌린지 밖에서 웨이브가 진행 중이 아닐 때 {route}의 숨겨진 보드 룸 입구를 찾으세요.", "在非挑战模式且没有波次进行时，找到{route}隐藏的棋盘房间入口。", "Znajdź ukryte wejście do pokoju z planszą na {route}, poza wyzwaniem i bez aktywnej fali."],
 	unlockCalyrex: ["In {map}, deploy {pieces} on squares that light up chess pieces. More active pieces increase damage. Defeat {pokemon}.", "En {map}, coloca {pieces} en casillas que activen las piezas. Más piezas activas aumentan el daño. Derrota a {pokemon}.", "Dans {map}, placez {pieces} sur les cases qui activent les pièces. Plus de pièces actives augmentent les dégâts. Battez {pokemon}.", "Em {map}, posicione {pieces} nas casas que ativam as peças. Mais peças ativas aumentam o dano. Derrote {pokemon}.", "In {map}, schiera {pieces} sulle caselle che attivano i pezzi. Più pezzi attivi aumentano i danni. Sconfiggi {pokemon}.", "Platziere in {map} {pieces} auf Feldern, die Schachfiguren aktivieren. Mehr aktive Figuren erhöhen den Schaden. Besiege {pokemon}.", "{map}で{pieces}を駒が光るマスに配置する。有効な駒が多いほどダメージが増える。{pokemon}を倒す。", "{map}에서 {pieces}를 체스 말이 활성화되는 칸에 배치하세요. 활성화된 말이 많을수록 피해가 증가합니다. {pokemon}를 쓰러뜨리세요.", "在{map}将{pieces}部署到能点亮棋子的格子上。激活的棋子越多，伤害越高。击败{pokemon}。", "W {map} rozstaw {pieces} na polach aktywujących figury. Więcej aktywnych figur zwiększa obrażenia. Pokonaj {pokemon}."],
 	chessProgress: ["Current board: {count}/{total} active pieces.", "Tablero actual: {count}/{total} piezas activas.", "Plateau actuel : {count}/{total} pièces actives.", "Tabuleiro atual: {count}/{total} peças ativas.", "Scacchiera attuale: {count}/{total} pezzi attivi.", "Aktuelles Brett: {count}/{total} aktive Figuren.", "現在の盤面：有効な駒 {count}/{total}。", "현재 보드: 활성화된 말 {count}/{total}.", "当前棋盘：已激活{count}/{total}个棋子。", "Bieżąca plansza: {count}/{total} aktywnych figur."],
@@ -147,9 +165,23 @@ export class ProfileScene extends SectionScene {
 		this.playerContainer = new Element(this.container, { className: 'profile-player-container' }).element;
 
 		this.portrait = new Element(this.playerContainer, { className: 'profile-scene-portrait' }).element;
+		this.portrait.addEventListener('click', () => this.togglePortraitPicker());
 
-		this.avatarPrev = new Element(this.playerContainer, { className: 'profile-scene-avatar-arrow-prev', text: '<' }).element;
-		this.avatarNext = new Element(this.playerContainer, { className: 'profile-scene-avatar-arrow-next', text: '>' }).element;
+		this.avatarPicker = new Element(this.playerContainer, { className: 'profile-scene-avatar-picker' }).element;
+		this.avatarOptions = [];
+		for (let portrait = 0; portrait <= 79; portrait++) {
+			const option = new Element(this.avatarPicker, {
+				className: 'profile-scene-avatar-option'
+			}).element;
+			option.style.backgroundImage = `url("./src/assets/images/portraits/${portrait}.png")`;
+			option.addEventListener('click', () => this.selectPortrait(portrait));
+			option.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
+			this.avatarOptions.push(option);
+		}
+
+
+		this.avatarPrev = new Element(this.playerContainer, { className: 'profile-scene-avatar-arrow-prev stroke', text: '<' }).element;
+		this.avatarNext = new Element(this.playerContainer, { className: 'profile-scene-avatar-arrow-next stroke', text: '>' }).element;
 		this.avatarPrev.addEventListener('click', () => { this.changePortrait(-1) });
 		this.avatarNext.addEventListener('click', () => { this.changePortrait(1) });
 		this.avatarPrev.addEventListener('mouseenter', () => { playSound('hover1', 'ui') });
@@ -159,7 +191,7 @@ export class ProfileScene extends SectionScene {
 			this.playerContainer,
 			'text',
 			{
-				className: 'profile-scene-name',
+				className: 'profile-scene-name stroke',
 				maxlength: 11,
 				cb: () => { this.changeName() }
 			}
@@ -170,6 +202,18 @@ export class ProfileScene extends SectionScene {
 		for (let i = 0; i < achievementReworkData.length; i++) {
 			this.achievement[i] = new Element(this.achievementsContainer, { className: 'profile-scene-achievement' }).element;
 		}
+
+		const achievementOrder = Array.from({ length: 39 }, (_, i) => i);
+
+		const index38 = achievementOrder.indexOf(38);
+		const index21 = achievementOrder.indexOf(21);
+
+		achievementOrder.splice(index38, 1);
+		achievementOrder.splice(index21, 0, 38);
+
+		achievementOrder.forEach(i => {
+			this.achievementsContainer.appendChild(this.achievement[i]);
+		});
 
 		this.subviewTabs = new Element(this.container, { className: 'profile-subview-tabs' }).element;
 		this.statsButton = new Element(this.subviewTabs, { className: 'profile-subview-button' }).element;
@@ -184,7 +228,7 @@ export class ProfileScene extends SectionScene {
 		this.statsContainer = new Element(this.container, { className: 'profile-stats-container' }).element;
 		this.stats = [];
 		for (let i = 0; i < 22; i++) {
-			this.stats[i] = new Element(this.statsContainer, { className: 'profile-stat' }).element;
+			this.stats[i] = new Element(this.statsContainer, { className: 'profile-stat stroke' }).element;
 			this.stats[i].label = new Element(this.stats[i], { className: 'profile-stat-label' }).element;
 			this.stats[i].value = new Element(this.stats[i], { className: 'profile-stat-value' }).element;
 		}
@@ -727,7 +771,7 @@ export class ProfileScene extends SectionScene {
 				order: 10135,
 				name: localized(pokemonData.stakataka?.name, clampLang(this.main.lang)),
 				lockedName: getProfileUnlockableText('hiddenName', clampLang(this.main.lang), '???'),
-				unlockText: formatTemplate(getProfileUnlockableText('type5675OnRouteOutsideChallenge', clampLang(this.main.lang), 'On {route}, type 5675 outside Challenge'), { route: secretRoute8 }),
+				unlockText: achievementRequirement(25, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[25]?.status ? 1 : 0}),
 				icon: pokemonData.stakataka?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.stakataka || this.hasPokemonKey('stakataka'),
@@ -837,7 +881,7 @@ export class ProfileScene extends SectionScene {
 				order: 10250,
 				name: localized(pokemonData.keldeo?.name, lang),
 				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
-				unlockText: achievementRequirement(19, 'Defeat Keldeo without triggering Justified.'),
+				unlockText: achievementRequirement(19, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[19]?.status ? 1 : 0}),
 				icon: pokemonData.keldeo?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.keldeo || this.hasPokemonKey('keldeo'),
@@ -907,7 +951,7 @@ export class ProfileScene extends SectionScene {
 				order: 10290,
 				name: localized(pokemonData.terrakion?.name, lang),
 				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
-				unlockText: achievementRequirement(26, 'Defeat Terrakion without triggering Justified.'),
+				unlockText: achievementRequirement(26, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[26]?.status ? 1 : 0}),
 				icon: pokemonData.terrakion?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.terrakion || this.hasPokemonKey('terrakion'),
@@ -917,7 +961,7 @@ export class ProfileScene extends SectionScene {
 				order: 10300,
 				name: localized(pokemonData.cobalion?.name, lang),
 				lockedName: getProfileUnlockableText('hiddenName', lang, '???'),
-				unlockText: achievementRequirement(23, 'Defeat Cobalion without triggering Justified.'),
+				unlockText: achievementRequirement(23, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[23]?.status ? 1 : 0}),
 				icon: pokemonData.cobalion?.sprite?.base,
 				secretLevel: 'normal',
 				isUnlocked: () => !!this.main.player?.secrets?.cobalion || this.hasPokemonKey('cobalion'),
@@ -973,6 +1017,85 @@ export class ProfileScene extends SectionScene {
 				isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('gold25k'),
 			}
 		);
+
+		
+        entries.push({id: 'secret-shaymin', order: 10400, name: localized(pokemonData.shaymin.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(0, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[0]?.status ? 1 : 0}), icon: pokemonData.shaymin.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.shaymin || this.hasPokemonKey('shaymin') });
+
+        entries.push({id: 'secret-celebi', order: 10401, name: localized(pokemonData.celebi.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(1, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[1]?.status ? 1 : 0}), icon: pokemonData.celebi.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.celebi || this.hasPokemonKey('celebi') });
+
+        entries.push({id: 'secret-lunala', order: 10402, name: localized(pokemonData.lunala.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(2, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[2]?.status ? 1 : 0}), icon: pokemonData.lunala.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.lunala || this.hasPokemonKey('lunala') });
+
+        entries.push({id: 'secret-zapdos', order: 10403, name: localized(pokemonData.zapdos.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(3, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[3]?.status ? 1 : 0}), icon: pokemonData.zapdos.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.zapdos || this.hasPokemonKey('zapdos') });
+
+        entries.push({id: 'secret-moltres', order: 10404, name: localized(pokemonData.moltres.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(4, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[4]?.status ? 1 : 0}), icon: pokemonData.moltres.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.moltres || this.hasPokemonKey('moltres') });
+
+        entries.push({id: 'secret-regirock', order: 10405, name: localized(pokemonData.regirock.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(5, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[5]?.status ? 1 : 0}), icon: pokemonData.regirock.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.regirock || this.hasPokemonKey('regirock') });
+
+        entries.push({id: 'secret-groudon', order: 10406, name: localized(pokemonData.groudon.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(6, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[6]?.status ? 1 : 0}), icon: pokemonData.groudon.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.groudon || this.hasPokemonKey('groudon') });
+
+        entries.push({id: 'secret-hooh', order: 10407, name: localized(pokemonData.hooh.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(7, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[7]?.status ? 1 : 0}), icon: pokemonData.hooh.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.hooh || this.hasPokemonKey('hooh') });
+
+        entries.push({id: 'secret-registeel', order: 10408, name: localized(pokemonData.registeel.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(8, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[8]?.status ? 1 : 0}), icon: pokemonData.registeel.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.registeel || this.hasPokemonKey('registeel') });
+
+        entries.push({id: 'secret-regice', order: 10409, name: localized(pokemonData.regice.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(9, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[9]?.status ? 1 : 0}), icon: pokemonData.regice.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.regice || this.hasPokemonKey('regice') });
+
+        entries.push({id: 'secret-regigigas', order: 10410, name: localized(pokemonData.regigigas.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(10, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[10]?.status ? 1 : 0}), icon: pokemonData.regigigas.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.regigigas || this.hasPokemonKey('regigigas') });
+
+        entries.push({id: 'secret-articuno', order: 10411, name: localized(pokemonData.articuno.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(11, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[11]?.status ? 1 : 0}), icon: pokemonData.articuno.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.articuno || this.hasPokemonKey('articuno') });
+
+        entries.push({id: 'secret-kyogre', order: 10412, name: localized(pokemonData.kyogre.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(12, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[12]?.status ? 1 : 0}), icon: pokemonData.kyogre.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.kyogre || this.hasPokemonKey('kyogre') });
+
+        entries.push({id: 'secret-thundurus', order: 10413, name: localized(pokemonData.thundurus.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(13, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[13]?.status ? 1 : 0}), icon: pokemonData.thundurus.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.thundurus || this.hasPokemonKey('thundurus') });
+
+        entries.push({id: 'secret-tapu-fini', order: 10414, name: localized(pokemonData.tapuFini.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(14, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[14]?.status ? 1 : 0}), icon: pokemonData.tapuFini.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.tapuFini || this.hasPokemonKey('tapuFini') });
+
+        entries.push({id: 'secret-nihilego', order: 10415, name: localized(pokemonData.nihilego.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(15, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[15]?.status ? 1 : 0}), icon: pokemonData.nihilego.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.nihilego || this.hasPokemonKey('nihilego') });
+
+        entries.push({id: 'secret-tapu-koko', order: 10416, name: localized(pokemonData.tapuKoko.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(16, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[16]?.status ? 1 : 0}), icon: pokemonData.tapuKoko.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.tapuKoko || this.hasPokemonKey('tapuKoko') });
+
+        entries.push({id: 'secret-tapu-bulu', order: 10417, name: localized(pokemonData.tapuBulu.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(17, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[17]?.status ? 1 : 0}), icon: pokemonData.tapuBulu.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.tapuBulu || this.hasPokemonKey('tapuBulu') });
+
+        entries.push({id: 'secret-tapu-lele', order: 10418, name: localized(pokemonData.tapuLele.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(18, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[18]?.status ? 1 : 0}), icon: pokemonData.tapuLele.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.tapuLele || this.hasPokemonKey('tapuLele') });
+
+        entries.push({id: 'secret-heatran', order: 10419, name: localized(pokemonData.heatran.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(20, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[20]?.status ? 1 : 0}), icon: pokemonData.heatran.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.heatran || this.hasPokemonKey('heatran') });
+
+        entries.push({id: 'secret-volcanion', order: 10420, name: localized(pokemonData.volcanion.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(21, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[21]?.status ? 1 : 0}), icon: pokemonData.volcanion.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.volcanion || this.hasPokemonKey('volcanion') });
+
+        entries.push({id: 'secret-pheromosa', order: 10421, name: localized(pokemonData.pheromosa.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(22, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[22]?.status ? 1 : 0}), icon: pokemonData.pheromosa.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.pheromosa || this.hasPokemonKey('pheromosa') });
+
+        entries.push({id: 'secret-tornadus', order: 10422, name: localized(pokemonData.tornadus.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(24, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[24]?.status ? 1 : 0}), icon: pokemonData.tornadus.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.tornadus || this.hasPokemonKey('tornadus') });
+
+        entries.push({id: 'secret-magearna', order: 10423, name: localized(pokemonData.magearna.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(27, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[27]?.status ? 1 : 0}), icon: pokemonData.magearna.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.magearna || this.hasPokemonKey('magearna') });
+
+        entries.push({id: 'secret-diancie', order: 10424, name: localized(pokemonData.diancie.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(28, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[28]?.status ? 1 : 0}), icon: pokemonData.diancie.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.diancie || this.hasPokemonKey('diancie') });
+
+        entries.push({id: 'secret-virizion', order: 10425, name: localized(pokemonData.virizion.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(32, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[32]?.status ? 1 : 0}), icon: pokemonData.virizion.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.virizion || this.hasPokemonKey('virizion') });
+
+        entries.push({id: 'secret-landorus', order: 10426, name: localized(pokemonData.landorus.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: achievementRequirement(38, '') + ' ' + getProfileUnlockableText('achievementReward', lang) + ' ' + formatTemplate(getProfileUnlockableText('achievementState', lang), {count: this.main.player?.achievementsRework?.[38]?.status ? 1 : 0}), icon: pokemonData.landorus.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.landorus || this.hasPokemonKey('landorus') });
+
+        entries.push({id: 'secret-sneasel-hisui', order: 10427, name: localized(pokemonData.sneaselHisui.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang), {item: localized(itemData.poisonBarb.name, lang), pokemon: localized(pokemonData.weavile.name, lang)}), icon: pokemonData.sneaselHisui.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.sneaselHisui || this.hasPokemonKey('sneaselHisui') });
+
+        entries.push({id: 'secret-samurott-hisui', order: 10428, name: localized(pokemonData.samurottHisui.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang), {item: localized(itemData.ancientSword.name, lang), pokemon: localized(pokemonData.samurott.name, lang)}), icon: pokemonData.samurottHisui.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.samurottHisui || this.hasPokemonKey('samurottHisui') });
+
+        entries.push({id: 'secret-iron-bundle', order: 10429, name: localized(pokemonData.ironBundle.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('solveWebPuzzle', lang), icon: pokemonData.ironBundle.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('ironBundle') || this.hasPokemonKey('ironBundle') });
+
+        entries.push({id: 'secret-flutter-mane', order: 10430, name: localized(pokemonData.flutterMane.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('solveWebPuzzle', lang), icon: pokemonData.flutterMane.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('flutterMane') || this.hasPokemonKey('flutterMane') });
+
+        entries.push({id: 'secret-pumpkaboo', order: 10431, name: localized(pokemonData.pumpkaboo.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('redeemNamedCode', lang), {code: 'BOOPKABOO'}), icon: pokemonData.pumpkaboo.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('pumpkaboo') || this.hasPokemonKey('pumpkaboo') });
+
+        entries.push({id: 'secret-spectrier', order: 10432, name: localized(pokemonData.spectrier.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: defeatPokemonInMap('spectrier', this.getRouteName(46)), icon: pokemonData.spectrier.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.spectrier || this.hasPokemonKey('spectrier') });
+
+        entries.push({id: 'secret-tyrunt', order: 10433, name: localized(pokemonData.tyrunt.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('clickSecretsTutorial', lang), icon: pokemonData.tyrunt.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.tyrunt || this.hasPokemonKey('tyrunt') });
+
+        entries.push({id: 'secret-unown', order: 10434, name: localized(pokemonData.unown.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('unownConversation', lang), {count: Math.min(5, this.main.player?.unownState ?? 0)}), icon: pokemonData.unown.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.unown || this.hasPokemonKey('unown') });
+
+        entries.push({id: 'secret-wooper', order: 10435, name: localized(pokemonData.wooper.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('wooperExplosion', lang), icon: pokemonData.wooper.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.wooper || this.hasPokemonKey('wooper') });
+
+        entries.push({id: 'secret-halloween-2026', order: 10500, name: this.getRouteName(46), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('redeemNamedCode', lang), {code: 'HALLOWEEN_2026'}), icon: routeData[46].background, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secretMaps?.halloween2026});
+
+        entries.push({id: 'secret-item-beedrillite', order: 10510, name: localized(itemData.beedrillite.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('findHiddenItem', lang), {route: this.getRouteName(39)}), icon: itemData.beedrillite.sprite, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secretItems?.beedrillite});
+
+        entries.push({id: 'secret-item-gengarite', order: 10510, name: localized(itemData.gengarite.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('findHiddenItem', lang), {route: this.getRouteName(6)}), icon: itemData.gengarite.sprite, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secretItems?.gengarite});
 
 		return entries.sort((a, b) => a.order - b.order);
 	}
@@ -1030,6 +1153,7 @@ export class ProfileScene extends SectionScene {
 	update() {
 		this.name.value.placeholder = this.main.player.name;
 		this.portrait.style.backgroundImage = `url("./src/assets/images/portraits/${this.main.player.portrait}.png")`;
+		this.updatePortraitOptions();
 
 		this.achievement.forEach((achievement, i) => {
 			this.achievement[i].style.backgroundImage = `url("${achievementReworkData[i].image}")`;
@@ -1055,11 +1179,11 @@ export class ProfileScene extends SectionScene {
 		this.stats[4].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestPokemonLevel, this.main.lang)}`;
 		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}`;
 		this.stats[6].value.innerText = `$${this.main.utility.numberDot(this.main.player.stats.totalGold, this.main.lang)}`;
-		this.stats[7].value.innerText = `${this.main.player.itemAmount}/146`;
+		this.stats[7].value.innerText = `${this.main.player.itemAmount}/177`;
 		this.stats[8].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.wavesCompleted, this.main.lang)}`;
 		this.stats[9].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestHit, this.main.lang)}`;
 		this.stats[10].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.defeatedEnemies, this.main.lang)}`;
-		this.stats[11].value.innerText = `${this.main.player.stats.defeatedSpecies.size}/293`;
+		this.stats[11].value.innerText = `${this.main.player.enemyDefeatedAmount}/345`;
 		this.stats[12].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedStuns, this.main.lang)}`;
 		this.stats[13].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedSlows, this.main.lang)}`;
 		this.stats[14].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.appliedBurns, this.main.lang)}`;
@@ -1080,10 +1204,10 @@ export class ProfileScene extends SectionScene {
 		let pos = this.main.player.portrait;
 		pos += dir;
 
-		if (pos < 0) pos = 52;
-		else if (pos > 52) pos = 0;
+		if (pos < 0) pos = 79;
+		else if (pos > 79) pos = 0
 
-		this.main.player.portrait = pos;
+		this.main.player.portrait = pos;	
 
 		this.update();
 		this.main.UI.updatePlayer();
@@ -1123,9 +1247,30 @@ export class ProfileScene extends SectionScene {
 			this._refreshInterval = null;
 		}
 		super.close();
+		this.avatarPicker.classList.remove('is-open');
 		this.main.tooltip.hide();
 		this.main.UI.section['profile'].classList.remove('is-selected');
 		this.saveProfile();
+	}
+
+	togglePortraitPicker() {
+		this.avatarPicker.classList.toggle('is-open');
+	}
+
+	updatePortraitOptions() {
+		this.avatarOptions.forEach((option, portrait) => {
+			const selected = portrait === this.main.player.portrait;
+			option.classList.toggle('is-selected', selected);
+		});
+	}
+
+	selectPortrait(portrait) {
+		this.main.player.portrait = portrait;
+		this.update();
+		this.main.UI.updatePlayer();
+		this.avatarPicker.classList.remove('is-open');
+		this.saveProfile();
+		playSound('option', 'ui');
 	}
 }
 

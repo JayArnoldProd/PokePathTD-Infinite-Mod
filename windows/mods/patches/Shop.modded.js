@@ -1,7 +1,7 @@
 import { Pokemon, findSpecieInCatalog } from '../component/Pokemon.js';
 import { saveData } from '../../file/data.js';
-import { itemData, itemListData, itemBackup } from '../data/itemData.js';
-import { pokemonData, eggListData } from '../data/pokemonData.js';
+import { itemData, itemListData, itemBackup, normalPool, luxuryPool, adminPool } from '../data/itemData.js';
+import { pokemonData, eggListData, forcedInitialPool, forcedSecondaryPool } from '../data/pokemonData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Shop {
@@ -10,12 +10,50 @@ export class Shop {
 		this.eggPrice = shopData.eggPrice;
 		this.eggList = shopData.eggList;
 
-		this.itemList = Array.isArray(shopData.itemList) ? [...shopData.itemList] : [...itemListData];
-		this.itemStock = Array.isArray(shopData.itemStock) ? [...shopData.itemStock] : [];
+		if (
+			Array.isArray(shopData.normalItemList) ||
+			Array.isArray(shopData.luxuryItemList) ||
+			Array.isArray(shopData.adminItemList)
+		) {
+			this.itemLists = {
+				normal: Array.isArray(shopData.normalItemList) ? [...shopData.normalItemList] : [...normalPool],
+				luxury: Array.isArray(shopData.luxuryItemList) ? [...shopData.luxuryItemList] : [...luxuryPool],
+				admin: Array.isArray(shopData.adminItemList) ? [...shopData.adminItemList] : [...adminPool]
+			};
+		} else {
+			// Save antiguo: itemList contenía todos los objetos juntos.
+			const oldItemList = Array.isArray(shopData.itemList)
+				? [...shopData.itemList]
+				: [...itemListData];
+
+			this.itemLists = {
+				normal: [],
+				luxury: [],
+				admin: []
+			};
+
+			for (const id of oldItemList) {
+				if (!id) continue;
+
+				if (normalPool.includes(id)) {
+					this.itemLists.normal.push(id);
+				} else if (luxuryPool.includes(id)) {
+					this.itemLists.luxury.push(id);
+				} else if (adminPool.includes(id)) {
+					this.itemLists.admin.push(id);
+				}
+			}
+		}
+
+		this.itemStock = Array.isArray(shopData.itemStock)
+			? [...shopData.itemStock]
+			: [];
 
 		for (let i = 0; i < this.itemStock.length; i++) {
 			const entry = this.itemStock[i];
+
 			if (!entry) continue;
+
 			if (typeof entry === 'string') {
 				this.itemStock[i] = itemData[entry] ?? null;
 			} else if (entry.id && itemData[entry.id]) {
@@ -25,38 +63,45 @@ export class Shop {
 			}
 		}
 
-		// Eliminar duplicados iniciales entre itemStock e itemList
+		const usingLegacyItemList =
+			!Array.isArray(shopData.normalItemList) &&
+			!Array.isArray(shopData.luxuryItemList) &&
+			!Array.isArray(shopData.adminItemList);
+
+		if (usingLegacyItemList) {
+			this.migrateLegacyItemStock();
+		}
+
 		this.dedupeInitialLists();
 
 		this.itemBackup = Array.isArray(itemBackup) ? [...itemBackup] : [];
 		this.restoreItemBackup();
-
-		this.ownedBaseKeys = new Set();
-		for (const poke of [...(this.main.team?.pokemon || []), ...(this.main.box?.pokemon || [])]) {
-			if (!poke?.specie) continue;
-			let base = poke.specie;
-			while (base.preEvolution && pokemonData[base.preEvolution]) base = pokemonData[base.preEvolution];
-			for (const key in pokemonData) {
-				if (pokemonData[key] === base) {
-					this.ownedBaseKeys.add(key);
-					break;
-				}
-			}
-		}
 
 		this.generateStock();
 		this.removeOwnedItems();
 		this.removeGimmighoulIfGholdengo();
 
 		this.updateEggList();
-		// if (this.eggList.length == 0) this.main.player.unlockAchievement(0);
 	}
 
 	getSaveData() {
 		return {
 			eggPrice: this.eggPrice,
 			eggList: this.eggList,
-			itemList: this.itemList,
+
+			// Nuevo formato
+			normalItemList: this.itemLists.normal,
+			luxuryItemList: this.itemLists.luxury,
+			adminItemList: this.itemLists.admin,
+
+			// Formato antiguo, para que versiones anteriores
+			// puedan seguir leyendo este save.
+			itemList: [
+				...this.itemLists.normal,
+				...this.itemLists.luxury,
+				...this.itemLists.admin
+			],
+
 			itemStock: this.itemStock
 		};
 	}
@@ -66,9 +111,44 @@ export class Shop {
 
 		playSound('purchase', 'ui');
 
-		let index = Math.floor(Math.random() * this.eggList.length);
+		const getEggKey = egg => {
+			if (typeof egg === 'string') return egg;
 
-		if (this.eggList.length == 125) index = Math.floor(Math.random() * 3) + 2;
+			if (egg?.key != null) return egg.key;
+			if (egg?.species != null) return egg.species;
+			if (egg?.id != null) return egg.id;
+
+			return null;
+		};
+
+		const initialIndices = [];
+		const secondaryIndices = [];
+
+		for (let i = 0; i < this.eggList.length; i++) {
+			const eggKey = getEggKey(this.eggList[i]);
+
+			if (eggKey == null) continue;
+
+			if (forcedInitialPool.includes(eggKey)) {
+				initialIndices.push(i);
+			} else if (forcedSecondaryPool.includes(eggKey)) {
+				secondaryIndices.push(i);
+			}
+		}
+
+		let index;
+
+		if (initialIndices.length > 0) {
+			index = initialIndices[
+				Math.floor(Math.random() * initialIndices.length)
+			];
+		} else if (secondaryIndices.length > 0) {
+			index = secondaryIndices[
+				Math.floor(Math.random() * secondaryIndices.length)
+			];
+		} else {
+			index = Math.floor(Math.random() * this.eggList.length);
+		}
 
 		let egg = this.eggList[index];
 		let pokemon;
@@ -100,18 +180,13 @@ export class Shop {
 		}
 
 		this.main.player.stats.pokemonOwned++;
-
 		this.main.player.stats.totalPokemonLevel++;
-		// this.main.player.achievementProgress.evolutionCount++;
 
 		this.main.player.changeGold(-Math.min(50000, this.eggPrice));
 		this.eggList.splice(index, 1);
 		this.eggPrice = Math.min(50000, Math.ceil(this.eggPrice * 1.12 + 35));
 		this.main.shopScene.update();
 		this.main.UI.update();
-
-		// if (this.eggList.length === 0) this.main.player.unlockAchievement(0);
-		// if (this.main.player.achievementProgress.evolutionCount === 210) this.main.player.unlockAchievement(1);
 
 		if (!this.main.area.waveActive) saveData(this.main.player, this.main.team, this.main.box, this.main.area, this.main.shop, this.main.teamManager);
 	}
@@ -129,7 +204,8 @@ export class Shop {
 	    }
 
 	    // Reemplazar el slot i con el siguiente elemento válido de itemList (no duplicado)
-	    this.itemStock[i] = this.getNextNonDuplicateFromList();
+	    const poolName = this.getPoolForSlot(i);
+		this.itemStock[i] = poolName ? this.getNextNonDuplicateFromList(poolName) : null;
 
 	    this.main.shopScene.update();
 	    this.main.tooltip.hide();
@@ -142,25 +218,45 @@ export class Shop {
 	    } else if (itemBought.id == "mitsuesCocktail") {
 		this.main.player.hasCocktail = true;
 	    } else if (itemBought.id == "sokudosPortfolio") {
-		this.main.player.hasSkinator = true;
+	    	this.main.player.hasSkinator = true;
 	    } else if (itemBought.id == "revysBook") {
-		this.main.player.hasEditable = true;
+	    	this.main.player.hasEditable = true;
+	    } else if (itemBought.id == "rosesItem") {
+	    	this.main.player.hasRose = true;
+	    } else if (itemBought.id == "noxDex") {
+	    	this.main.player.hasNox = true;
+	    } else if (itemBought.id == "thundersDrive") {
+	    	this.main.player.hasThunder = true;
 	    }
 	}
 
 	generateStock() {
-	    for (let i = 0; i < 8; i++) {
-	        if (!this.itemStock[i]) {
-	            // tomamos el siguiente id válido desde itemList evitando duplicados
-	            this.itemStock[i] = this.getNextNonDuplicateFromList();
-	        }
-	    }
+		if (!Array.isArray(this.itemStock)) {
+			this.itemStock = [];
+		}
+
+		while (this.itemStock.length < 10) {
+			this.itemStock.push(null);
+		}
+
+		for (let i = 0; i < 10; i++) {
+			if (this.itemStock[i]) continue;
+
+			const poolName = this.getPoolForSlot(i);
+
+			if (poolName) {
+				this.itemStock[i] = this.getNextNonDuplicateFromList(poolName);
+			}
+		}
 	}
 
 	updateEggList() {
 		if (!Array.isArray(eggListData)) return;
 
-		const playerPokemon = [...this.main.team.pokemon, ...this.main.box.pokemon];
+		const playerPokemon = [
+			...this.main.team.pokemon,
+			...this.main.box.pokemon
+		];
 
 		const pidFromEntry = (entry) => {
 			if (!entry) return null;
@@ -175,38 +271,77 @@ export class Shop {
 				return entry.id;
 			}
 
-			if (entry.species && pokemonData[entry.species]) return pokemonData[entry.species].id;
-			if (entry.name && pokemonData[String(entry.name).toLowerCase()]) return pokemonData[String(entry.name).toLowerCase()].id;
+			if (entry.species && pokemonData[entry.species]) {
+				return pokemonData[entry.species].id;
+			}
+
+			if (entry.name && pokemonData[String(entry.name).toLowerCase()]) {
+				return pokemonData[String(entry.name).toLowerCase()].id;
+			}
 
 			return null;
 		};
 
-		const present = new Set();
-		for (const e of this.eggList) {
-			const pid = pidFromEntry(e);
-			if (pid != null) present.add(String(pid));
-		}
-
-		const playerHasPid = (pid) => {
-			if (pid == null) return false;
-			const pidStr = String(pid);
-			for (const p of playerPokemon) {
-				if (!p) continue;
-				if (String(p.id) === pidStr) return true;
-			}
-			return false;
-		};
+		// IDs que actualmente pueden aparecer en huevos
+		const allowed = new Set();
 
 		for (const entry of eggListData) {
-			if (typeof entry === 'string' && this.ownedBaseKeys?.has(entry)) continue;
-			if (!entry) continue;
-
 			const pid = pidFromEntry(entry);
+
+			if (pid != null) {
+				allowed.add(String(pid));
+			}
+		}
+
+		// Pokémon que el jugador ya tiene
+		const owned = new Set();
+
+		for (const pokemon of playerPokemon) {
+			if (!pokemon) continue;
+
+			const pid = pokemon.id;
+
+			if (pid != null) {
+				owned.add(String(pid));
+			}
+		}
+
+		// Limpiar la lista guardada:
+		// - quitar Pokémon eliminados de eggListData
+		// - quitar duplicados
+		// - quitar Pokémon que ya posee el jugador
+		const cleanedEggList = [];
+		const present = new Set();
+
+		for (const entry of this.eggList) {
+			const pid = pidFromEntry(entry);
+
 			if (pid == null) continue;
 
 			const pidStr = String(pid);
+
+			if (!allowed.has(pidStr)) continue;
+			if (owned.has(pidStr)) continue;
 			if (present.has(pidStr)) continue;
-			if (playerHasPid(pid)) continue;
+
+			cleanedEggList.push(entry);
+			present.add(pidStr);
+		}
+
+		this.eggList = cleanedEggList;
+
+		// Añadir Pokémon nuevos que todavía no estén en la lista
+		for (const entry of eggListData) {
+			if (!entry) continue;
+
+			const pid = pidFromEntry(entry);
+
+			if (pid == null) continue;
+
+			const pidStr = String(pid);
+
+			if (present.has(pidStr)) continue;
+			if (owned.has(pidStr)) continue;
 
 			this.eggList.push(entry);
 			present.add(pidStr);
@@ -215,31 +350,62 @@ export class Shop {
 
 	dedupeInitialLists() {
 		const seen = new Set();
-		// dedupe itemStock: conservar primera aparición, poner null en duplicados
+
+		// Limpiar itemStock:
+		// - eliminar objetos inexistentes
+		// - eliminar objetos que ya no pertenecen a ninguna pool
+		// - eliminar objetos que estén en un slot incorrecto
 		for (let i = 0; i < this.itemStock.length; i++) {
 			const entry = this.itemStock[i];
+
 			if (!entry || !entry.id) {
 				this.itemStock[i] = null;
 				continue;
 			}
+
 			const id = entry.id;
+
+			if (!this.isItemInCurrentPools(id)) {
+				this.itemStock[i] = null;
+				continue;
+			}
+
+			if (!this.isItemValidForSlot(id, i)) {
+				this.itemStock[i] = null;
+				continue;
+			}
+
 			if (seen.has(id)) {
 				this.itemStock[i] = null;
-			} else {
-				seen.add(id);
+				continue;
 			}
+
+			seen.add(id);
 		}
-		// dedupe itemList: eliminar ids que ya están en seen y eliminar duplicados dentro de itemList
-		const newList = [];
-		for (const id of this.itemList) {
-			if (!id) continue;
-			if (!seen.has(id)) {
+
+		// Limpiar las listas guardadas de cada pool
+		const pools = {
+			normal: normalPool,
+			luxury: luxuryPool,
+			admin: adminPool
+		};
+
+		for (const poolName of Object.keys(this.itemLists)) {
+			const currentPool = pools[poolName];
+			const newList = [];
+
+			for (const id of this.itemLists[poolName]) {
+				if (!id) continue;
+				if (!itemData[id]) continue;
+				if (!currentPool.includes(id)) continue;
+				if (seen.has(id)) continue;
+
 				seen.add(id);
 				newList.push(id);
 			}
-			// si estaba en seen (ya en stock o ya añadido), se omite => se elimina duplicado
+
+			this.itemLists[poolName] = newList;
 		}
-		this.itemList = newList;
 	}
 
 	// Devuelve true si itemStock contiene actualmente el id (ignora nulls)
@@ -253,96 +419,190 @@ export class Shop {
 
 	// Extrae del itemList el primer id que no esté presente actualmente en itemStock.
 	// Devuelve el objeto itemData[id] o null si no hay ninguno.
-	getNextNonDuplicateFromList() {
-		while (this.itemList.length > 0) {
-			const id = this.itemList.shift();
+	getNextNonDuplicateFromList(poolName) {
+		const list = this.itemLists[poolName];
+
+		if (!list) return null;
+
+		while (list.length > 0) {
+			const id = list.shift();
+
 			if (!id) continue;
+
 			if (!this.stockHasId(id)) {
 				return itemData[id] ?? null;
 			}
 		}
+
 		return null;
 	}
 
 	removeOwnedItems() {
-	    for (let i = 0; i < this.itemStock.length; i++) {
-	        const entry = this.itemStock[i];
-	        if (!entry) continue;
+		for (let i = 0; i < this.itemStock.length; i++) {
+			const entry = this.itemStock[i];
 
-	        // Comprobar si el jugador ya posee este item
-	        if (this.main.player.hasItem(entry.id)) {
-	            // Reemplazar con el siguiente ítem no duplicado y que no tenga el jugador
-	            let newItem = null;
-	            while (this.itemList.length > 0) {
-	                const nextId = this.itemList.shift();
-	                if (!nextId) continue;
-	                if (!this.stockHasId(nextId) && !this.main.player.hasItem(nextId)) {
-	                    newItem = itemData[nextId] ?? null;
-	                    break;
-	                }
-	            }
-	            this.itemStock[i] = newItem;
-	        }
-	    }
+			if (!entry) continue;
+
+			if (this.main.player.hasItem(entry.id)) {
+				const poolName = this.getPoolForSlot(i);
+
+				let newItem = null;
+
+				if (poolName) {
+					const list = this.itemLists[poolName];
+
+					while (list.length > 0) {
+						const nextId = list.shift();
+
+						if (!nextId) continue;
+						if (this.stockHasId(nextId)) continue;
+						if (this.main.player.hasItem(nextId)) continue;
+
+						newItem = itemData[nextId] ?? null;
+						break;
+					}
+				}
+
+				this.itemStock[i] = newItem;
+			}
+		}
 	}
 
 	restoreItemBackup() {
 		if (!Array.isArray(this.itemBackup) || this.itemBackup.length === 0) return;
 
 		for (const raw of this.itemBackup) {
-			const id = (typeof raw === 'string') ? raw : (raw && raw.id);
-			if (!id) continue;
+			const id = typeof raw === 'string' ? raw : (raw && raw.id);
 
+			if (!id) continue;
+			if (!itemData[id]) continue;
 			if (this.main.player.hasItem(id)) continue;
 			if (this.stockHasId(id)) continue;
 
-			if (this.itemList.includes(id)) continue;
+			const poolName = this.getPoolForItem(id);
 
-			let placed = false;
-			for (let i = 0; i < Math.max(8, this.itemStock.length); i++) {
-				if (typeof this.itemStock[i] === 'undefined') this.itemStock[i] = null;
+			if (!poolName) continue;
 
-				if (!this.itemStock[i]) {
-					this.itemStock[i] = itemData[id] ?? null;
-					placed = true;
-					break;
-				}
-			}
+			const list = this.itemLists[poolName];
 
-			if (!placed) {
-				if (itemData[id]) this.itemList.push(id);
+			if (!list.includes(id)) {
+				list.push(id);
 			}
 		}
-
-		const seen = new Set();
-		this.itemList = this.itemList.filter(iid => {
-			if (!iid) return false;
-			if (!itemData[iid]) return false;
-			if (this.stockHasId(iid)) return false;
-			if (seen.has(iid)) return false;
-			seen.add(iid);
-			return true;
-		});
 	}
 
 	removeGimmighoulIfGholdengo() {
 		let isGholdengo = false;
-		const pokemon = [...this.main.team.pokemon, ...this.main.box.pokemon];
+
+		const pokemon = [
+			...this.main.team.pokemon,
+			...this.main.box.pokemon
+		];
+
 		pokemon.forEach(pokemon => {
-			if (pokemon.id == 102) isGholdengo = true;
-		})
+			if (pokemon.id == 102) {
+				isGholdengo = true;
+			}
+		});
 
 		if (!isGholdengo) return;
 
+		// Quitar Gimmighoul del stock actual
 		for (let i = 0; i < this.itemStock.length; i++) {
 			const entry = this.itemStock[i];
+
 			if (entry && entry.id === 'gimmighoul') {
 				this.itemStock[i] = null;
 			}
 		}
 
-		this.itemList = this.itemList.filter(id => id !== 'gimmighoul');
+		// Quitar Gimmighoul de todos los pools
+		for (const poolName of Object.keys(this.itemLists)) {
+			this.itemLists[poolName] = this.itemLists[poolName].filter(
+				id => id !== 'gimmighoul'
+			);
+		}
 
 		this.generateStock();
 	}
+
+	getPoolForSlot(i) {
+		if (i === 0 || i === 1 || i === 4 || i === 5 || i === 8 || i === 9) {
+			return 'normal';
+		}
+
+		if (i === 2 || i === 3) {
+			return 'luxury';
+		}
+
+		if (i === 6 || i === 7) {
+			return 'admin';
+		}
+
+		return null;
+	}
+
+	getPoolForItem(id) {
+		if (normalPool.includes(id)) return 'normal';
+		if (luxuryPool.includes(id)) return 'luxury';
+		if (adminPool.includes(id)) return 'admin';
+
+		return null;
+	}
+
+	isItemInCurrentPools(id) {
+		return (
+			normalPool.includes(id) ||
+			luxuryPool.includes(id) ||
+			adminPool.includes(id)
+		);
+	}
+
+	isItemValidForSlot(id, slot) {
+		const poolName = this.getPoolForSlot(slot);
+
+		if (!poolName) return false;
+
+		if (poolName === 'normal') return normalPool.includes(id);
+		if (poolName === 'luxury') return luxuryPool.includes(id);
+		if (poolName === 'admin') return adminPool.includes(id);
+
+		return false;
+	}
+
+	migrateLegacyItemStock() {
+		const oldStock = [...this.itemStock];
+
+		const slots = {
+			normal: [0, 1, 4, 5, 8, 9],
+			luxury: [2, 3],
+			admin: [6, 7]
+		};
+
+		this.itemStock = new Array(10).fill(null);
+
+		const used = new Set();
+
+		for (const entry of oldStock) {
+			if (!entry || !entry.id) continue;
+
+			const id = entry.id;
+
+			if (used.has(id)) continue;
+			if (!this.isItemInCurrentPools(id)) continue;
+
+			const poolName = this.getPoolForItem(id);
+			if (!poolName) continue;
+
+			const targetSlot = slots[poolName].find(
+				slot => !this.itemStock[slot]
+			);
+
+			if (targetSlot === undefined) continue;
+
+			this.itemStock[targetSlot] = itemData[id];
+			used.add(id);
+		}
+	}
 }
+

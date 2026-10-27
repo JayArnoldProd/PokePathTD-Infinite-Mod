@@ -1,13 +1,13 @@
 {
-    "version": "1.6.3",
-    "game_version": "1.6.3",
-    "release_date": "2026-10-26",
-    "hotfix": "egg-shop-2026-10-26",
+    "version": "1.7.0",
+    "game_version": "1.7.0",
+    "release_date": "2026-10-27",
     "changes": [
-        "Hotfix: stop implicit editor restocking, filter owned egg lines, preserve existing Pokemon and feature selections",
-        "Rebased Windows mod onto clean PokePath TD 1.6.3, including 1.6.2 content",
-        "Preserved new map views, acquisition sorting, item mechanics and balance changes",
-        "Added Calyrex chess-puzzle progress in all ten languages",
-        "Updated save-editor metadata and normal/shiny sprite coverage"
+        "Rebased Windows compatibility onto verified Pok\u00e9Path TD 1.7.0",
+        "Preserved new combat, weather, cosmetics, routes, items and reward behavior",
+        "Expanded localized Unlockables coverage and official normal/shiny art",
+        "Updated editor Pok\u00e9mon, item, route and ordinary-egg metadata",
+        "Fixed paused placement, adaptive box capacity and partial feature compatibility",
+        "Retained egg-shop ownership protection, existing Pok\u00e9mon and feature selections"
     ]
 }

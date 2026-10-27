@@ -5,7 +5,7 @@ const path = require('path');
 let win;
 
 function createWindow() {
-    if (win) return; 
+    if (win) return;
 
     const baseWidth = 1238;
     const baseHeight = 674;
@@ -13,9 +13,9 @@ function createWindow() {
     win = new BrowserWindow({
       width: 1238,
       height: 674,
-      minWidth: 1238,      
-      minHeight: 674,  
-      resizable: true,  
+      minWidth: 1238,
+      minHeight: 674,
+      resizable: true,
       center: true,
       title: "PokePath TD",
       icon: path.join(__dirname, 'src/assets/icon.ico'),

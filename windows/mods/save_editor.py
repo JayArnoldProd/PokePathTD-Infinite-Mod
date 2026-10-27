@@ -169,34 +169,21 @@ def _has_feature(key):
 
 
 def _load_route_options():
-    """Load route labels from routeData.js (route id + display order + English name)."""
-    route_options = []
+    """Read route IDs and labels without crossing into another route definition."""
     if not ROUTE_DATA_FILE or not ROUTE_DATA_FILE.exists():
-        return route_options
-
-    try:
-        text = ROUTE_DATA_FILE.read_text(encoding='utf-8', errors='replace')
-        pattern = re.compile(
-            r"id\s*:\s*(\d+).*?order\s*:\s*(\d+).*?name\s*:\s*\[\s*'([^']+)'",
-            re.DOTALL,
-        )
-
-        found = {}
-        for match in pattern.finditer(text):
-            route_id = int(match.group(1))
-            order = int(match.group(2))
-            english_name = match.group(3).strip()
-            found[route_id] = {
-                'id': route_id,
-                'order': order,
-                'name': english_name,
-            }
-
-        route_options = sorted(found.values(), key=lambda x: (x['order'], x['id']))
-    except Exception:
-        pass
-
-    return route_options
+        return []
+    text = ROUTE_DATA_FILE.read_text(encoding='utf-8')
+    pattern = re.compile(
+        r"id\s*:\s*(\d+)\s*,\s*order\s*:\s*(\d+)\s*,"
+        r"(?:(?!\bid\s*:).)*?name\s*:\s*\[\s*(['\"])((?:\\.|(?!\3).)*)\3",
+        re.DOTALL,
+    )
+    found = {}
+    for match in pattern.finditer(text):
+        route_id = int(match.group(1))
+        name = match.group(4).replace("\\'", "'").replace('\\"', '"')
+        found[route_id] = {'id': route_id, 'order': int(match.group(2)), 'name': name.strip()}
+    return sorted(found.values(), key=lambda route: (route['order'], route['id']))
 
 
 def _load_route_reward_pokemon_keys():
@@ -226,7 +213,7 @@ def _load_egg_list_keys():
 
     try:
         text = POKEMON_JS_DATA_FILE.read_text(encoding='utf-8', errors='replace')
-        match = re.search(r"eggListData\s*=\s*\[(.*?)\]\s*;", text, re.DOTALL)
+        match = re.search(r"\beggListData\s*=\s*\[([^\]]*)\]", text, re.DOTALL)
         if match:
             eggs = re.findall(r"'([^']+)'", match.group(1))
     except Exception:
@@ -237,6 +224,11 @@ def _load_egg_list_keys():
 
 def _load_item_catalog_from_data():
     """Load base item definitions from itemData.js."""
+    # Generated from the verified runtime; includes complete localized item metadata.
+    bundled = SCRIPT_DIR / 'dev/item_catalog.json'
+    if bundled.exists():
+        items = json.loads(bundled.read_text(encoding='utf-8'))['items']
+        return {key: value for key, value in items.items() if value.get('id') == key}
     catalog = {}
     if not ITEM_DATA_FILE or not ITEM_DATA_FILE.exists():
         return catalog

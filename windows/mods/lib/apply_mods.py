@@ -80,15 +80,15 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  69495,
-    "src/js/game/component/Pokemon.js":     28680,
-    "src/js/game/scenes/PokemonScene.js":   75915,
-    "src/js/game/core/Area.js":             33465,
-    "src/js/game/core/Team.js":             2789,
+    "src/js/game/Game.js":                  70420,
+    "src/js/game/component/Pokemon.js":     35044,
+    "src/js/game/scenes/PokemonScene.js":   83461,
+    "src/js/game/core/Area.js":             36405,
+    "src/js/game/core/Team.js":             2849,
     "src/js/game/core/Box.js":              859,
-    "src/js/game/component/Tower.js":       190519,
-    "src/js/game/component/Enemy.js":        74672,
-    "src/js/game/scenes/MenuScene.js":       54339,
+    "src/js/game/component/Tower.js":       358039,
+    "src/js/game/component/Enemy.js":        101889,
+    "src/js/game/scenes/MenuScene.js":       57638,
 }
 
 def check_game_version_compatibility():
@@ -417,8 +417,8 @@ MOD_FEATURES = {
         'default': True,
     },
     'box_expansion': {
-        'name': 'Box Expansion (200 slots)',
-        'description': 'Expand Pokemon storage from 120 to 200 slots',
+        'name': 'Adaptive Box Storage',
+        'description': 'Keep every owned copy accessible as the collection grows, including duplicate Pokemon',
         'functions': ['apply_box_expansion', 'apply_attacktype_sort'],
         'default': True,
     },
@@ -427,14 +427,14 @@ MOD_FEATURES = {
     # Keeping them in the shop would create duplicates. See transcript guide.
     'deltatime': {
         'name': 'Delta Time & Performance',
-        'description': 'Sub-stepping simulation, accurate high-speed attacks and projectiles, squared-distance checks, batch removal, throttled UI, and sub-step draw skipping',
+        'description': 'Sub-stepping simulation, accurate high-speed attacks and projectiles, squared-distance checks, vanilla simulation-time power throttling, and sub-step draw skipping',
         'functions': ['_ensure_game_modded', 'apply_tower_deltatime', 'apply_orbital_tower_guard', 'apply_projectile_scaling', 'apply_projectile_speed_scaling'],
         'default': True,
     },
     'vanilla_fixes': {
         'name': 'Vanilla Bug Fixes',
-        'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix, projectile retargeting, off-screen cleanup, Shell Bell / Clefairy Doll tracking, and published 1.6.1 balance corrections omitted from the supplied build',
-        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_orbital_tower_guard', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix', 'apply_v161_published_balance_fixes'],
+        'description': 'Challenge level cap fix (no boost), Pokemon sprite-isolation fix, projectile retargeting, off-screen cleanup, Shell Bell / Clefairy Doll tracking',
+        'functions': ['apply_pokemon_sprite_isolation_fix', 'apply_challenge_levelcap_fix', 'apply_orbital_tower_guard', 'apply_projectile_retarget_fix', 'apply_offscreen_target_fix', 'apply_shellbell_fix'],
         'default': True,
     },
     'allow_dupes': {
@@ -506,104 +506,25 @@ def apply_shiny_sprites():
 # TEXT.JS - Add "Continue" option to auto-reset
 # ============================================================================
 def apply_text_continue_option():
-    """Add 'Continue' as 4th auto-reset option in all languages."""
-    path = JS_ROOT / "file" / "text.js"
-    content = read_file(path)
-
-    # Check if already applied
-    if "'Continue'" in content or '"Continue"' in content:
-        log_skip("text.js: Continue option")
-        return True
-
-    # Find the reset object and add option 3
-    old_pattern = """reset: {
-				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关é--­', 'Wył.'],
-				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
-				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
-			}"""
-
-    new_pattern = """reset: {
-				0: ['Off', 'Apagado', 'Arrêt', 'Desligado', 'Spento', 'Aus', 'オフ', '끄기', '关é--­', 'Wył.'],
-				1: ['Restart', 'Reiniciar', 'Recommencer', 'Reiniciar', 'Ricomincia', 'Neustarten', 'リスタート', '재시작', '重新开始', 'Restart'],
-				2: ['Retry', 'Reintentar', 'Réessayer', 'Tentar', 'Riprova', 'Wiederholen', 'リトライ', '재시도', '重试', 'Ponów'],
-				3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],
-			}"""
-
-    if old_pattern in content:
-        content = content.replace(old_pattern, new_pattern)
-        write_file(path, content)
-        log_success("text.js: Continue option added")
-        return True
-
-    # Try alternate pattern matching (encoding might differ)
-    # Match the structure and add line 3
-    pattern = r"(reset:\s*\{\s*\n\s*0:\s*\[[^\]]+\],\s*\n\s*1:\s*\[[^\]]+\],\s*\n\s*2:\s*\[[^\]]+\],)(\s*\n\s*\},?)"
-    match = re.search(pattern, content)
-    if match:
-        new_line = "\n\t\t\t\t3: ['Continue', 'Continuar', 'Continuer', 'Continuar', 'Continua', 'Fortsetzen', 'つづく', '계속', '继续', 'Kontynuuj'],"
-        content = content[:match.end(1)] + new_line + content[match.start(2):]
-        write_file(path, content)
-        log_success("text.js: Continue option added (regex)")
-        return True
-
-    log_fail("text.js: Continue option")
-    return False
+    """Install the 1.7 language table, including the optional Continue label."""
+    copy_modded_file(MODS_DIR / 'patches/text.modded.js', JS_ROOT / 'file/text.js')
+    log_success('text.js: 1.7 translations and Continue option')
+    return True
 
 # ============================================================================
 # MENUSCENE.JS - Auto-reset cycles 0-3 instead of 0-2
 # ============================================================================
 def apply_menu_autoreset_range():
-    """Change auto-reset to cycle through 4 options (0-3) instead of 3 (0-2)."""
-    path = JS_ROOT / "game" / "scenes" / "MenuScene.js"
+    path = JS_ROOT / 'game/scenes/MenuScene.js'
     content = read_file(path)
-    changed = False
-
-    old_pattern = """updateAutoReset = (dir) => {
-	let pos = Number(this.main.autoReset) + dir;
-		if (pos < 0) pos = 2;
-		else if (pos == 3) pos = 0;"""
-
-    new_pattern = """updateAutoReset = (dir) => {
-	let pos = Number(this.main.autoReset) + dir;
-		if (pos < 0) pos = 3;
-		else if (pos == 4) pos = 0;"""
-
-    if old_pattern in content:
-        content = content.replace(old_pattern, new_pattern)
-        changed = True
-
-    display_old = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
-
-    display_new = """this.autoResetRow.label.innerText = text.menu.settings.autoReset[this.main.lang].toUpperCase();
-		if (data.config.autoReset == 1) this.autoResetRow.value.innerText = text.menu.settings.reset[1][this.main.lang].toUpperCase();
-		else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();
-		else if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();
-		else this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"""
-
-    if display_old in content:
-        content = content.replace(display_old, display_new)
-        changed = True
-    elif 'else if (data.config.autoReset == 3)' not in content:
-        fallback_old = "else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();\n\t\telse this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"
-        fallback_new = "else if (data.config.autoReset == 2) this.autoResetRow.value.innerText = text.menu.settings.reset[2][this.main.lang].toUpperCase();\n\t\telse if (data.config.autoReset == 3) this.autoResetRow.value.innerText = text.menu.settings.reset[3][this.main.lang].toUpperCase();\n\t\telse this.autoResetRow.value.innerText = text.menu.settings.reset[0][this.main.lang].toUpperCase();"
-        if fallback_old in content:
-            content = content.replace(fallback_old, fallback_new)
-            changed = True
-
-    if changed:
-        write_file(path, content)
-        log_success("MenuScene.js: Auto-reset range/display 0-3")
-        return True
-
-    if 'pos == 4' in content and 'else if (data.config.autoReset == 3)' in content:
-        log_skip("MenuScene.js: Auto-reset range/display 0-3")
-        return True
-
-    log_fail("MenuScene.js: Auto-reset range")
-    return False
+    old = "key: 'autoReset',\n\t\toptions: [0, 1, 2]"
+    new = "key: 'autoReset',\n\t\toptions: [0, 1, 2, 3]"
+    if new not in content and old not in content:
+        log_fail('MenuScene.js: Auto-reset range', '1.7 option table missing')
+        return False
+    write_file(path, content.replace(old, new, 1))
+    log_success('MenuScene.js: Auto-reset range 0-3')
+    return True
 
 # ============================================================================
 # MAPSCENE.JS - Remove wave 100 cap on record display
@@ -734,383 +655,99 @@ def apply_shiny_starters():
 # SHOPSCENE.JS - Shiny reveal display
 # ============================================================================
 def apply_shiny_reveal():
-    """Add shiny reveal display with sparkle animation."""
-    path = JS_ROOT / "game" / "scenes" / "ShopScene.js"
-    content = read_file(path)
-
-    # Check if already applied
-    if 'isShinyReveal' in content:
-        log_skip("ShopScene.js: Shiny reveal")
-        return True
-
-    # Modify DisplayPokemon constructor
-    old_constructor = """class DisplayPokemon extends GameScene {
-	constructor(main) {
-		super(200, 200);
-		this.main = main;
-		this.pokemon;
-
-		this.header.removeChild(this.closeButton);
-		this.render();
-	}"""
-
-    new_constructor = """class DisplayPokemon extends GameScene {
-	constructor(main) {
-		super(200, 200);
-		this.main = main;
-		this.pokemon;
-		this.isShinyReveal = false;
-
-		this.header.removeChild(this.closeButton);
-		this.render();
-	}"""
-
-    # Modify render to add shiny symbol
-    old_render = """	render() {
-		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt = new Element(this.container, { className: 'dp-scene-prompt' }).element;
-		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
-		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
-		this.closeButton = new Element(this.container, { className: 'shop-scene-purchase' }).element;"""
-
-    new_render = """	render() {
-		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt = new Element(this.container, { className: 'dp-scene-prompt' }).element;
-		this.pokemonName = new Element(this.container, { className: 'dp-scene-pokemon-name' }).element;
-		this.image = new Element(this.container, { className: 'dp-scene-image' }).element;
-		// Scale up the Pokemon sprite 2.4x (96px = 40px * 2.4)
-		this.image.style.cssText = 'width:96px;height:96px;background-size:contain;image-rendering:pixelated;margin-top:10px;';
-
-		// Shiny symbol - enlarged star positioned in corner
-		this.shinySymbol = new Element(this.container, { className: 'dp-scene-shiny-symbol' }).element;
-		this.shinySymbol.innerHTML = '<span class="msrre">\u2b50</span>';
-		this.shinySymbol.style.cssText = 'position:absolute;top:10px;right:10px;font-size:40px;display:none;text-shadow:0 0 10px gold,0 0 20px gold;';
-
-		// Add pulse animation keyframe if not exists
-		if (!document.getElementById('shinyPulseStyle')) {
-			const style = document.createElement('style');
-			style.id = 'shinyPulseStyle';
-			style.textContent = '@keyframes shinyPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.2);opacity:0.8}}';
-			document.head.appendChild(style);
-		}
-		this.shinySymbol.style.animation = 'shinyPulse 1s ease-in-out infinite';
-
-		this.closeButton = new Element(this.container, { className: 'shop-scene-purchase' }).element;"""
-
-    # Modify update to show shiny text
-    old_update = """	update() {
-		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		this.prompt.innerText = text.shop.new[this.main.lang].toUpperCase();
-		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
-		this.pokemonName.style.color = this.pokemon.specie.color;
-		this.image.style.backgroundImage = `url("${this.pokemon.sprite.base}")`;
-		this.closeButton.innerHTML = 'OK';
-	}"""
-
-    new_update = """	update() {
-		this.title.innerHTML = text.shop.title[this.main.lang].toUpperCase();
-		if (this.isShinyReveal) {
-			this.prompt.innerHTML = '<span class="msrre">\u2b50</span> SHINY! <span class="msrre">\u2b50</span>';
-		} else {
-			this.prompt.innerText = text.shop.new[this.main.lang].toUpperCase();
-		}
-		this.pokemonName.innerHTML = this.pokemon.name[this.main.lang].toUpperCase();
-		this.pokemonName.style.color = this.pokemon.specie.color;
-		this.image.style.backgroundImage = `url("${this.pokemon.sprite.base}")`;
-		this.closeButton.innerHTML = 'OK';
-
-		// Show shiny symbol if it's a shiny reveal
-		this.shinySymbol.style.display = this.isShinyReveal ? 'block' : 'none';
-	}"""
-
-    # Modify open to accept isShiny param
-    old_open = """	open(pokemon) {
-		playSound('results', 'ui');
-		this.pokemon = pokemon;
-
-		super.open();
-		this.update();
-	}"""
-
-    new_open = """	open(pokemon, isShiny = false) {
-		playSound('results', 'ui');
-		this.pokemon = pokemon;
-		this.isShinyReveal = isShiny;
-
-		super.open();
-		this.update();
-	}"""
-
-    changes_made = 0
-
-    if old_constructor in content:
-        content = content.replace(old_constructor, new_constructor)
-        changes_made += 1
-
-    if old_render in content:
-        content = content.replace(old_render, new_render)
-        changes_made += 1
-
-    if old_update in content:
-        content = content.replace(old_update, new_update)
-        changes_made += 1
-
-    if old_open in content:
-        content = content.replace(old_open, new_open)
-        changes_made += 1
-
-    if changes_made > 0:
-        write_file(path, content)
-        log_success(f"ShopScene.js: Shiny reveal ({changes_made} changes)")
-        return True
-
-    log_fail("ShopScene.js: Shiny reveal")
-    return False
+    copy_modded_file(MODS_DIR / 'patches/ShopScene.modded.js', JS_ROOT / 'game/scenes/ShopScene.js')
+    log_success('ShopScene.js: Shiny reveal with 1.7 secret/item rewards')
+    return True
 
 # ============================================================================
 # UI.JS - 1/30 shiny chance for secret/hidden Pokemon unlocks
 # ============================================================================
 def apply_secret_shiny():
-    """Patch getSecret() in UI.js to add 1/30 shiny chance for hidden Pokemon."""
-    path = JS_ROOT / "game" / "UI.js"
-
-    if not path.exists():
-        log_skip("UI.js: Secret shiny (file not yet installed)")
-        return True
-
+    path = JS_ROOT / 'game/UI.js'
     content = read_file(path)
-
-    if 'const isShiny = Math.random() < (1 / 30);' in content and 'getSecret' in content:
-        log_skip("UI.js: Secret shiny")
-        return True
-
-    old = """	getSecret(poke) {
-		const pokemon = pokemonData[poke];
-
-		if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1));
-		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1));
-		}"""
-
-    new = """	getSecret(poke) {
-		const pokemon = pokemonData[poke];
-		const isShiny = Math.random() < (1 / 30);
-
-		if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny);
-		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny);
-		}"""
-
-    if old in content:
-        content = content.replace(old, new)
-        write_file(path, content)
-        log_success("UI.js: Secret shiny (1/30 chance for hidden Pokemon)")
-        return True
-
-    log_fail("UI.js: Secret shiny", "getSecret pattern not found")
-    return False
+    start = content.find('getSecret(poke) {')
+    if start < 0:
+        log_fail(path.name + ': Shiny acquisition', 'method missing')
+        return False
+    end = content.find('\n\t}', start)
+    if end < 0:
+        log_fail(path.name + ': Shiny acquisition', 'method boundary missing')
+        return False
+    body = content[start:end]
+    if 'const isShiny = Math.random() < (1 / 30);' not in body:
+        old = 'new Pokemon(pokemon, 1, null, this.main)'
+        if body.count(old) != 2:
+            log_fail(path.name + ': Shiny acquisition', 'expected both acquisition paths')
+            return False
+        body = body.replace('{', '{\n\t\tconst isShiny = Math.random() < (1 / 30);', 1)
+        body = body.replace(old, 'new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny)')
+        write_file(path, content[:start] + body + content[end:])
+    log_success(path.name + ': Shiny acquisition preserves reward text and checks')
+    return True
 
 
 def apply_challenge_reward_shiny():
-    """Patch ChallengeScene reward Pokemon claims to roll 1/30 shiny odds."""
-    path = JS_ROOT / "game" / "scenes" / "ChallengeScene.js"
-
-    if not path.exists():
-        log_skip("ChallengeScene.js: Reward shiny (file not yet installed)")
-        return True
-
+    path = JS_ROOT / 'game/scenes/ChallengeScene.js'
     content = read_file(path)
-
-    if 'const isShiny = Math.random() < (1 / 30);' in content and 'claimPokemon(rewardIndex, pokemon)' in content:
-        log_skip("ChallengeScene.js: Reward shiny")
-        return True
-
-    old = """\tclaimPokemon(rewardIndex, pokemon) {
-\t\tconst price = this.prices[rewardIndex];
-
-\t\tif (
-\t\t\tthis.main.player.rewards[rewardIndex][this.main.area.routeNumber] ||
-\t\t\tthis.main.challengeScene.ribbonsMap < price
-\t\t) return;
-
-\t\tplaySound('purchase', 'ui');
-
-\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
-\t\t\tthis.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-\t\t\tthis.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1));
-\t\t} else {
-\t\t\tthis.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main));
-\t\t\tthis.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1));
-\t\t}
-"""
-
-    new = """\tclaimPokemon(rewardIndex, pokemon) {
-\t\tconst price = this.prices[rewardIndex];
-
-\t\tif (
-\t\t\tthis.main.player.rewards[rewardIndex][this.main.area.routeNumber] ||
-\t\t\tthis.main.challengeScene.ribbonsMap < price
-\t\t) return;
-
-\t\tplaySound('purchase', 'ui');
-\t\tconst isShiny = Math.random() < (1 / 30);
-
-\t\tif (this.main.team.pokemon.length < this.main.player.teamSlots && typeof this.main.area.inChallenge.slotLimit != 'number') {
-\t\t\tthis.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-\t\t\tthis.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), isShiny);
-\t\t} else {
-\t\t\tthis.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-\t\t\tthis.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), isShiny);
-\t\t}
-"""
-
-    if old in content:
-        content = content.replace(old, new)
-        write_file(path, content)
-        log_success("ChallengeScene.js: Reward shiny (1/30 chance for reward Pokemon)")
-        return True
-
-    log_fail("ChallengeScene.js: Reward shiny", "claimPokemon pattern not found")
-    return False
+    start = content.find('claimPokemon(rewardIndex, pokemon) {')
+    if start < 0:
+        log_fail(path.name + ': Shiny acquisition', 'method missing')
+        return False
+    end = content.find('\n\t}', start)
+    if end < 0:
+        log_fail(path.name + ': Shiny acquisition', 'method boundary missing')
+        return False
+    body = content[start:end]
+    if 'const isShiny = Math.random() < (1 / 30);' not in body:
+        old = 'new Pokemon(pokemon, 1, null, this.main)'
+        if body.count(old) != 2:
+            log_fail(path.name + ': Shiny acquisition', 'expected both acquisition paths')
+            return False
+        body = body.replace('{', '{\n\t\tconst isShiny = Math.random() < (1 / 30);', 1)
+        body = body.replace(old, 'new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny)')
+        write_file(path, content[:start] + body + content[end:])
+    log_success(path.name + ': Shiny acquisition preserves reward text and checks')
+    return True
 
 
 def apply_enemy_shiny_spawn():
-    """Patch Enemy.js to add the shiny enemy gameplay variant."""
-    path = JS_ROOT / "game" / "component" / "Enemy.js"
-
-    if not path.exists():
-        log_skip("Enemy.js: Shiny enemy spawn (file not yet installed)")
-        return True
-
+    path = JS_ROOT / 'game/component/Enemy.js'
     content = read_file(path)
-
-    if "this.isShiny = Math.random() < (1 / 1000);" in content and "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content:
-        log_skip("Enemy.js: Shiny enemy spawn")
-        return True
-
-    old_constructor = """		this.enemy = enemy;
-		this.hp = enemy.hp;
-		this.hpMax = enemy.hp;
-		this.armor = enemy.armor || 0;
-		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0;
-		this.regenTimer = 0;
-		this.speed = enemy.speed;
-		this.baseSpeed = this.speed;
-		this.power = enemy.power;
-		this.gold = enemy.gold + this.main.player.extraGold;
+    marker = 'this.isShiny = Math.random() < (1 / 1000);'
+    if marker not in content:
+        old = 'this.enemy = enemy;'
+        gold = re.search(r'this\.gold = enemy\.gold \+ this\.main\.player\.extraGold;?', content)
+        if content.count(old) != 1 or not gold:
+            log_fail('Enemy.js: Shiny enemies', '1.7 constructor markers missing')
+            return False
+        bonus = """;
+        if (this.isShiny) {
+            this.hp = Math.floor(this.hp * 2);
+            this.hpMax = Math.floor(this.hpMax * 2);
+            this.armor = Math.floor(this.armor * 2);
+            this.armorMax = Math.floor(this.armorMax * 2);
+            this.power = 2;
+            this.gold = Math.floor(this.gold * 1000);
+        }
 """
-    # 1.5.3 variant omits semicolon on the gold line
-    old_constructor_no_semicolon = """		this.enemy = enemy;
-		this.hp = enemy.hp;
-		this.hpMax = enemy.hp;
-		this.armor = enemy.armor || 0;
-		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0;
-		this.regenTimer = 0;
-		this.speed = enemy.speed;
-		this.baseSpeed = this.speed;
-		this.power = enemy.power;
-		this.gold = enemy.gold + this.main.player.extraGold
-"""
-    new_constructor = """		this.enemy = enemy;
-		this.isShiny = Math.random() < (1 / 1000);
-		if (this.isShiny && typeof this.sprite?.src === 'string' && this.sprite.src.includes('/normal/')) {
-			const shinySrc = this.sprite.src.replace(/\\/normal\\//g, '/shiny/');
-			this.loaded = false;
-			this.sprite.src = shinySrc;
-		}
-		this.hp = enemy.hp;
-		this.hpMax = enemy.hp;
-		this.armor = enemy.armor || 0;
-		this.armorMax = enemy.armor || 0;
-		this.regeneration = enemy.regeneration || 0;
-		this.regenTimer = 0;
-		this.speed = enemy.speed;
-		this.baseSpeed = this.speed;
-		this.power = enemy.power;
-		this.gold = enemy.gold + this.main.player.extraGold;
-		if (this.isShiny) {
-			this.hp = Math.floor(this.hp * 2);
-			this.hpMax = Math.floor(this.hpMax * 2);
-			this.armor = Math.floor(this.armor * 2);
-			this.armorMax = Math.floor(this.armorMax * 2);
-			this.power = 2;
-			this.gold = Math.floor(this.gold * 1000);
-		}
-"""
-    old_defeat = """	    	this.main.player.stats.defeatedEnemies++;
-		this.main.player.stats.defeatedSpecies.add(this.enemy.id);
-"""
-    new_defeat = """	    	this.main.player.stats.defeatedEnemies++;
-		if (this.isShiny) this.main.player.stats.shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;
-		this.main.player.stats.defeatedSpecies.add(this.enemy.id);
-"""
-
-    changed = False
-
-    # Constructor patch (required for actual shiny spawn behavior)
-    if old_constructor in content:
-        content = content.replace(old_constructor, new_constructor, 1)
-        changed = True
-    elif old_constructor_no_semicolon in content:
-        content = content.replace(old_constructor_no_semicolon, new_constructor, 1)
-        changed = True
-    elif "this.isShiny = Math.random() < (1 / 1000);" not in content:
-        constructor_regex = (
-            r"\t\tthis\.enemy = enemy;\s*"
-            r"\t\tthis\.hp = enemy\.hp;\s*"
-            r"\t\tthis\.hpMax = enemy\.hp;\s*"
-            r"\t\tthis\.armor = enemy\.armor \|\| 0;\s*"
-            r"\t\tthis\.armorMax = enemy\.armor \|\| 0;\s*"
-            r"\t\tthis\.regeneration = enemy\.regeneration \|\| 0;\s*"
-            r"\t\tthis\.regenTimer = 0;\s*"
-            r"\t\tthis\.speed = enemy\.speed;\s*"
-            r"\t\tthis\.baseSpeed = this\.speed;\s*"
-            r"\t\tthis\.power = enemy\.power;\s*"
-            r"\t\tthis\.gold = enemy\.gold \+ this\.main\.player\.extraGold;?\s*"
-        )
-        content2, replacements = re.subn(constructor_regex, new_constructor, content, count=1)
-        if replacements > 0:
-            content = content2
-            changed = True
-
-    # Defeat tracking patch (optional but expected)
-    if old_defeat in content:
-        content = content.replace(old_defeat, new_defeat, 1)
-        changed = True
-    elif "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" not in content:
-        content2, replacements = re.subn(
-            r"(\bthis\.main\.player\.stats\.defeatedEnemies\+\+;\s*)",
-            r"\1if (this.isShiny) this.main.player.stats.shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;\n            ",
-            content,
-            count=1,
-        )
-        if replacements > 0:
-            content = content2
-            changed = True
-
-    constructor_ok = "this.isShiny = Math.random() < (1 / 1000);" in content
-    defeat_ok = "shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;" in content
-
-    if changed:
-        write_file(path, content)
-
-    if constructor_ok and defeat_ok:
-        log_success("Enemy.js: Shiny enemy spawn (1/1000 gameplay variant)")
-        return True
-
-    if constructor_ok:
-        log_fail("Enemy.js: Shiny enemy spawn", "constructor patched but shiny defeat stat hook missing")
-    else:
-        log_fail("Enemy.js: Shiny enemy spawn", "enemy constructor shiny insertion pattern not found")
-    return False
+        content = content[:gold.end()] + bonus + content[gold.end():]
+        content = content.replace(old, old + r"""
+        this.isShiny = Math.random() < (1 / 1000);
+        if (this.isShiny && typeof this.sprite?.src === 'string' && this.sprite.src.includes('/normal/')) {
+            this.loaded = false;
+            this.sprite.src = this.sprite.src.replace(/\/normal\//g, '/shiny/');
+        }
+""", 1)
+    tracking = 'shinyEnemiesDefeated = (this.main.player.stats.shinyEnemiesDefeated ?? 0) + 1;'
+    if tracking not in content:
+        old = 'this.main.player.recordEnemyDefeated(this.enemy.id);'
+        if content.count(old) != 1:
+            log_fail('Enemy.js: Shiny enemies', 'defeat tracking missing')
+            return False
+        content = content.replace(old, old + '\n\t\tif (this.isShiny) this.main.player.stats.' + tracking)
+    write_file(path, content)
+    log_success('Enemy.js: Shiny enemies and defeat statistics')
+    return True
 
 # ============================================================================
 # FINALSCENE.JS - Endless mode continue/restart buttons
@@ -1144,7 +781,7 @@ def apply_item_tooltips():
     content = read_file(path)
 
     # Check if already applied
-    if 'showText' in content:
+    if 'showText(text, event)' in content and 'bindTextTo(' in content:
         log_skip("Tooltip.js: Item tooltips")
         return True
 
@@ -1202,6 +839,24 @@ def apply_pause_micromanagement():
 
     content = read_file(path)
     changes = 0
+
+    # 1.7 pause input gates: only this selected feature permits all species to act.
+    # Keep Time Warp's vanilla behavior when pause micromanagement is unselected.
+    for old in [
+        'if (this.stopped && !this.canTimeWarpAct(pokemon)) return;',
+        'if (this.stopped && !this.canTimeWarpAct(this.deployingUnit)) return;',
+    ]:
+        if old in content:
+            content = content.replace(old, '// MOD: PAUSE MICROMANAGEMENT - 1.7 placement allowed')
+            changes += 1
+    old = "if (this.stopped && this.canTimeWarpAct(pokemon)) {"
+    if old in content:
+        content = content.replace(old, 'if (false) { // MOD: pause placement must not advance simulation')
+        changes += 1
+    for condition in ["newPokemon?.ability?.id === 'timeWarp'", 'pokemon?.isDeployed']:
+        pattern = r'this\.stopped &&(\s+)' + re.escape(condition)
+        content, count = re.subn(pattern, r'false &&\1' + condition + ' /* MOD: paused swaps allowed */', content)
+        changes += count
 
     # 1. Remove early return from animate() so the render/input refresh keeps running.
     if 'PAUSE MICROMANAGEMENT - No early return' not in content:
@@ -1982,60 +1637,21 @@ def apply_tower_deltatime():
 
 
 def apply_orbital_tower_guard():
-    """Prevent orbital towers from firing normal projectiles.
-
-    PokePath 1.6.1 keeps Tower.js as the vanilla base for LinkBeam/SpikeZone
-    compatibility. This surgical guard is applied after any optional Tower.js
-    replacement so orbital Pokemon only update their orbit projectiles.
-    """
-    path = JS_ROOT / "game" / "component" / "Tower.js"
-    if not path.exists():
-        log_skip("Tower.js: Orbital projectile guard (file not yet installed)")
-        return True
-
+    path = JS_ROOT / 'game/component/Tower.js'
     content = read_file(path)
-    if 'MOD: Orbital projectile guard' in content or 'const isOrbitalTower =' in content:
-        log_skip("Tower.js: Orbital projectile guard")
+    if 'const isOrbitalTower =' in content:
+        log_skip('Tower.js: Orbital projectile guard')
         return True
-
-    changes = 0
-
-    # Older vanilla path: single-shot projectile branch.
-    old_single = "if (this.target && this.attackCooldown <= 0 && this.pokemon.attackType  !== 'orbital') {"
-    if old_single in content:
-        content = content.replace(
-            old_single,
-            "const isOrbitalTower = this.attackType === 'orbital' || this.pokemon?.attackType === 'orbital' || (this.orbital ?? 0) > 0;\n"
-            "        // MOD: Orbital projectile guard - orbitals only use orbit projectiles.\n"
-            "        if (isOrbitalTower && !this.projectiles.some(p => p?.orbit)) this.spawnOrbitales();\n\n"
-            "        if (this.target && this.attackCooldown <= 0 && !isOrbitalTower) {",
-            1,
-        )
-        changes += 1
-    else:
-        # Delta-time Tower.modded.js path: multi-shot while loop.
-        old_loop = "while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && this.pokemon.attackType !== 'orbital') {"
-        if old_loop in content:
-            marker = "// --- TORRES CON PROYECTILES ---"
-            idx = content.find(marker)
-            if idx != -1:
-                insert_at = content.find("\n", idx) + 1
-                content = content[:insert_at] + "        const isOrbitalTower = this.attackType === 'orbital' || this.pokemon?.attackType === 'orbital' || (this.orbital ?? 0) > 0;\n        // MOD: Orbital projectile guard - orbitals only use orbit projectiles.\n        if (isOrbitalTower && !this.projectiles.some(p => p?.orbit)) this.refreshOrbitalProjectiles();\n\n" + content[insert_at:]
-                content = content.replace(old_loop, "while (this.target && this.attackCooldown <= 0 && validEnemies.length > 0 && shotsThisFrame < MAX_SHOTS_PER_FRAME && !isOrbitalTower) {", 1)
-                changes += 1
-
-    # Retarget cleanup must not delete orbit projectiles just because they have no enemy.
-    if "if (this.pokemon.attackType === 'orbital') {" in content:
-        content = content.replace("if (this.pokemon.attackType === 'orbital') {", "if (isOrbitalTower || p.orbit) {", 1)
-        changes += 1
-
-    if changes > 0:
-        write_file(path, content)
-        log_success(f"Tower.js: Orbital projectile guard ({changes} patches)")
-        return True
-
-    log_fail("Tower.js: Orbital projectile guard", "projectile branch patterns not found")
-    return False
+    anchor = "        if (\n            this.target &&"
+    if anchor not in content or "this.pokemon.attackType !== 'orbital' &&" not in content:
+        log_fail('Tower.js: Orbital projectile guard', '1.7 attack branch missing')
+        return False
+    content = content.replace(anchor, "        const isOrbitalTower = this.attackType === 'orbital' || this.pokemon?.attackType === 'orbital';\n        // MOD: Orbital projectile guard preserves streams, auras and special attacks.\n        if (isOrbitalTower && !this.projectiles.some(p => p?.orbit)) this.spawnOrbitales();\n" + anchor, 1)
+    content = content.replace("this.pokemon.attackType !== 'orbital' &&", '!isOrbitalTower &&', 1)
+    content = content.replace("this.pokemon.attackType === 'orbital' || p.bonemerang || p.bleakwindStorm", 'isOrbitalTower || p.orbit || p.bonemerang || p.bleakwindStorm', 1)
+    write_file(path, content)
+    log_success('Tower.js: Orbital projectile guard')
+    return True
 
 # ============================================================================
 # PROJECTILE.JS - Endless damage calculations
@@ -2108,36 +1724,10 @@ def apply_projectile_speed_scaling():
 # BOXSCENE.JS - Expand box storage to 200 slots
 # ============================================================================
 def apply_box_expansion():
-    """Expand Pokemon box storage from 103 to 200 slots."""
-    path = JS_ROOT / "game" / "scenes" / "BoxScene.js"
-
-    if not path.exists():
-        log_fail("BoxScene.js: File not found")
-        return False
-
-    content = read_file(path)
-
-    # Check if already expanded
-    if "< 200" in content:
-        log_skip("BoxScene.js: Box expansion (already 200 slots)")
-        return True
-
-    # Use modded file directly
-    modded_file = MODS_DIR / "patches" / "BoxScene.modded.js"
-    if modded_file.exists():
-        copy_modded_file(modded_file, path)
-        log_success("BoxScene.js: Box expanded to 200 slots")
-        return True
-
-    # Fallback: direct replacement
-    if "< 103" in content:
-        content = content.replace("< 103", "< 200")
-        write_file(path, content)
-        log_success("BoxScene.js: Box expanded to 200 slots (inline)")
-        return True
-
-    log_fail("BoxScene.js: Box expansion pattern not found")
-    return False
+    path = JS_ROOT / 'game/scenes/BoxScene.js'
+    copy_modded_file(MODS_DIR / 'patches/BoxScene.modded.js', path)
+    log_success('BoxScene.js: Storage grows for the current collection and owned copies')
+    return True
 
 # ============================================================================
 # PROFILESCENE.JS - Endless mode stats display
@@ -2502,48 +2092,23 @@ def apply_profile_live_update():
 # POKEMON.JS - Prevent shared sprite mutation across Pokemon instances
 # ============================================================================
 def apply_pokemon_sprite_isolation_fix():
-    """Ensure each Pokemon gets its own sprite object copy.
-
-    Vanilla assigns this.sprite = specie.sprite, then setShiny() mutates paths in-place.
-    That mutates shared species metadata and can make unrelated non-shiny Pokemon point
-    at missing shiny sprite files. Clone sprite data per instance to isolate mutations.
-    """
-    path = JS_ROOT / "game" / "component" / "Pokemon.js"
+    path = JS_ROOT / 'game/component/Pokemon.js'
     content = read_file(path)
-
-    new_line = "\t\tthis.sprite = JSON.parse(JSON.stringify(specie.sprite));"
-    new_skin_line = "\t\tthis.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin));"
-    if new_line in content or new_skin_line in content:
-        log_skip("Pokemon.js: Sprite isolation fix")
-        return True
-
-    old_skin_line = "\t\tthis.sprite = (this.skin == null) ? specie.sprite : this.skin;"
-    if old_skin_line in content:
-        content = content.replace(old_skin_line, new_skin_line, 1)
-        write_file(path, content)
-        log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
-        return True
-
-    old_line = "\t\tthis.sprite = specie.sprite;"
-    if old_line in content:
-        content = content.replace(old_line, new_line, 1)
-        write_file(path, content)
-        log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
-        return True
-
-    # Flexible fallback for whitespace variants
-    pattern = r"\bthis\.sprite\s*=\s*\(this\.skin\s*==\s*null\)\s*\?\s*specie\.sprite\s*:\s*this\.skin\s*;"
-    content2, replacements = re.subn(pattern, "this.sprite = JSON.parse(JSON.stringify((this.skin == null) ? specie.sprite : this.skin));", content, count=1)
-    if replacements <= 0:
-        pattern = r"\bthis\.sprite\s*=\s*specie\.sprite\s*;"
-        content2, replacements = re.subn(pattern, "this.sprite = JSON.parse(JSON.stringify(specie.sprite));", content, count=1)
-    if replacements > 0:
-        write_file(path, content2)
-        log_success("Pokemon.js: Sprite isolation fix (prevent shared shiny path bleed)")
-        return True
-
-    log_fail("Pokemon.js: Sprite isolation fix", "sprite assignment pattern not found")
-    return False
+    # 1.7 already deep-copies several transition paths. Its initial skin selection
+    # and Ditto ADN assignment still require isolation before shiny mutations.
+    pairs = [
+        ('this.sprite = (this.skin == null || this.isMega) ? specie.sprite : this.skin;', 'this.sprite = JSON.parse(JSON.stringify((this.skin == null || this.isMega) ? specie.sprite : this.skin));'),
+        ('this.sprite = this.adn.sprite;', 'this.sprite = JSON.parse(JSON.stringify(this.adn.sprite));'),
+    ]
+    for old,new in pairs:
+        if old in content:
+            content = content.replace(old,new)
+        elif new not in content:
+            log_fail('Pokemon.js: Sprite isolation', 'expected 1.7 source missing')
+            return False
+    write_file(path,content)
+    log_success('Pokemon.js: Initial/ADN sprite isolation')
+    return True
 
 
 # ============================================================================
@@ -2683,57 +2248,8 @@ def apply_challenge_levelcap_fix():
 
 
 def apply_attacktype_sort():
-    """Add attack type/shape sorting options + localized labels to box section in text.js.
-
-    Ensures text.box has:
-    - attackType (sort label)
-    - attackShape (sort label)
-    - single / aura / area / orbital (per-Pokemon top labels)
-    """
-    path = JS_ROOT / "file" / "text.js"
-    content = read_file(path)
-
-    import re
-
-    # Scope strictly to box:{} so we don't accidentally patch pokemon:{} keys.
-    box_match = re.search(r'(box:\s*\{)([\s\S]*?)(\n\t\},\n\tchangeName:\s*\{)', content)
-    if not box_match:
-        log_fail("text.js: Attack type/shape labels", "box section not found")
-        return False
-
-    box_start, box_body, box_end = box_match.group(1), box_match.group(2), box_match.group(3)
-
-    shiny_match = re.search(r'(shiny:\s*\[.*?\])', box_body)
-    if not shiny_match:
-        log_fail("text.js: Attack type/shape labels", "box.shiny label pattern not found")
-        return False
-
-    additions = []
-    if re.search(r'\n\s*attackType:\s*\[', box_body) is None:
-        additions.append('\n\t\tattackType: ["Attack Type","Tipo de ataque","Type d’attaque","Tipo de ataque","Tipo di attacco","Angriffstyp","攻撃タイプ","공격 유형","攻击类型","Typ ataku"]')
-    if re.search(r'\n\s*attackShape:\s*\[', box_body) is None:
-        additions.append('\n\t\tattackShape: ["Attack Shape","Forma de ataque","Forme d’attaque","Forma de ataque","Forma attacco","Angriffsform","攻撃形状","공격 형태","攻击形状","Kształt ataku"]')
-    if re.search(r'\n\s*single:\s*\[', box_body) is None:
-        additions.append('\n\t\tsingle: ["Single","Único","Unique","Único","Singolo","Einzeln","単体","단일","单体","Pojedynczy"]')
-    if re.search(r'\n\s*aura:\s*\[', box_body) is None:
-        additions.append('\n\t\taura: ["Aura","Aura","Aura","Aura","Aura","Aura","オーラ","오라","光环","Aura"]')
-    if re.search(r'\n\s*area:\s*\[', box_body) is None:
-        additions.append('\n\t\tarea: ["AOE","Área","Zone","Área","Area","Fläche","範囲","범위","范围","Obszar"]')
-    if re.search(r'\n\s*orbital:\s*\[', box_body) is None:
-        additions.append('\n\t\torbital: ["Orbital","Orbital","Orbital","Orbital","Orbitale","Orbital","軌道","궤도","轨道","Orbitalny"]')
-
-    if not additions:
-        log_skip("text.js: Attack type/shape labels")
-        return True
-
-    shiny_line = shiny_match.group(1)
-    new_shiny_line = shiny_line + ',' + ','.join(additions)
-    new_box_body = box_body.replace(shiny_line, new_shiny_line, 1)
-    new_box_block = box_start + new_box_body + box_end
-
-    content = content[:box_match.start()] + new_box_block + content[box_match.end():]
-    write_file(path, content)
-    log_success("text.js: Attack type/shape labels added")
+    copy_modded_file(MODS_DIR / 'patches/text.modded.js', JS_ROOT / 'file/text.js')
+    log_success('text.js: 1.7 labels with attack type/shape sorting')
     return True
 
 
@@ -2897,7 +2413,7 @@ def apply_projectile_retarget_fix():
     content = read_file(path)
 
     # Check if already fixed (modded file or already patched)
-    if 'const towerRange = this.tower.range || 100;' in content and 'findClosestEnemy(this.tower, towerRange)' in content:
+    if 'findClosestEnemy(this.tower, this.tower.range || 100)' in content or ('const towerRange = this.tower.range || 100;' in content and 'findClosestEnemy(this.tower, towerRange)' in content):
         log_skip("Projectile.js: Retarget fix")
         return True
 
@@ -2996,38 +2512,8 @@ def apply_shellbell_fix():
 
 
 def apply_v161_published_balance_fixes():
-    """Apply published 1.6.1 values missing from the supplied Windows build."""
-    changes = 0
-
-    projectile_path = JS_ROOT / "game" / "component" / "Projectile.js"
-    projectile_content = read_file(projectile_path)
-    old_make_it_rain = "let goldPerDigit = (this.tower?.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.05"
-    new_make_it_rain = "let goldPerDigit = (this.tower?.pokemon?.item?.id == 'amuletCoin') ? 0.1 : 0.075"
-    if old_make_it_rain in projectile_content:
-        projectile_content = projectile_content.replace(old_make_it_rain, new_make_it_rain, 1)
-        write_file(projectile_path, projectile_content)
-        changes += 1
-
-    enemy_path = JS_ROOT / "game" / "data" / "enemyData.js"
-    enemy_content = read_file(enemy_path)
-    for key, old_hp, new_hp in (("stunky", 43000, 40000), ("skuntank", 55000, 50000)):
-        pattern = re.compile(rf"(\t{key}: \{{.*?\n\t\thp: ){old_hp}(,)", re.DOTALL)
-        enemy_content, count = pattern.subn(rf"\g<1>{new_hp}\2", enemy_content, count=1)
-        changes += count
-    write_file(enemy_path, enemy_content)
-
-    complete = new_make_it_rain in projectile_content and all(
-        re.search(rf"\t{key}: \{{.*?\n\t\thp: {hp},", enemy_content, re.DOTALL)
-        for key, hp in (("stunky", 40000), ("skuntank", 50000))
-    )
-    if not complete:
-        log_fail("1.6.1 published balance corrections", "expected Make It Rain or enemy HP patterns not found")
-        return False
-
-    if changes:
-        log_success(f"1.6.1 published balance corrections ({changes} patches)")
-    else:
-        log_skip("1.6.1 published balance corrections")
+    """Legacy entry point: 1.7 supplies these balance changes natively."""
+    log_skip('Published balance corrections are included in vanilla 1.7')
     return True
 
 
@@ -3549,6 +3035,10 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     total = len(unique_functions) + 1  # +1 for repack
     current = 0
 
+    # Common translations contain labels only, so partial selections retain their UI strings.
+    if selected_features:
+        copy_modded_file(MODS_DIR / "patches/text.modded.js", JS_ROOT / "file/text.js")
+
     # Step 3: Apply selected mods
     print("\n[*] Applying selected mods...")
 
@@ -3561,7 +3051,8 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
         func = globals().get(func_name)
         if func and callable(func):
             try:
-                func()
+                if func() is False:
+                    failed_mods.append(f"{func_name}: patch returned failure")
             except Exception as e:
                 failed_mods.append(f"{func_name}: {str(e)}")
         else:
@@ -3612,6 +3103,10 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
             apply_star_record_cap()
         except Exception as e:
             failed_mods.append(f"star record cap: {str(e)}")
+
+    # Never publish a partially applied installation.
+    if failed_mods:
+        return False, applied_mods.copy(), failed_mods.copy()
 
     # Step 5: Repack
     if progress_callback:
@@ -3799,9 +3294,9 @@ def apply_ditto_party_refresh():
     content = read_file(path)
 
     helper = """\trefreshDittoADN(reason = 'manual') {
-\t\tconst fossilIds = [58, 59, 63, 64, 65, 66, 94, 140, 136, 151];
-\t\tconst pastIds = [179];
-\t\tconst futureIds = [178];
+\t\tconst fossilIds = [58, 59, 63, 64, 65, 66, 94, 140, 136, 151, 247];
+\t\tconst pastIds = [179, 239];
+\t\tconst futureIds = [178, 238];
 \t\tlet changed = false;
 
 \t\tthis.pokemon.forEach(pokemon => {

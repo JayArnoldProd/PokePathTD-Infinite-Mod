@@ -1,45 +1,37 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.6.3
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.7.0
 
-**Compatible with PokePath TD v1.6.3 on Windows** ✅
+**For PokéPath TD v1.7.0 on Windows.** macOS remains on its older release track.
 
-**1.6.3 egg-shop hotfix (October 26, 2026):** Save-editor loads no longer restock eggs. The egg shop now removes stale/owned evolution lines before purchases, while keeping every existing Pokémon—including duplicates. The installer remembers feature selections; new installs default duplicate acquisitions to off. Duplicate permission does not restock the egg shop.
+Endless waves, optional 10x speed, paused micromanagement, shiny improvements and save tools, rebased onto the new game.
 
-**Already running the 1.6.3 mod?** Close the game, back up your saves, replace the files in `mods/` with the current ZIP (keep `installed_features.json`), and rerun the installer. Keep the original **1.6.3** `resources/app.asar.vanilla` backup. No save reset or Pokémon deletion is needed. The version stays **1.6.3**.
+**Windows refresh — October 27, 2026**
+- Preserves 1.7.0 combat, weather, cosmetics, items, routes and hidden rewards.
+- Updates Unlockables requirements and progress in all ten languages.
+- Updates Pokémon, item, route and egg metadata in the save editor.
+- Keeps every existing Pokémon and remembers your selected features.
+- Grows box storage to fit the collection and additional owned copies.
 
-A comprehensive mod pack for **PokePath TD** that adds endless mode, removes caps, improves quality of life, and includes bug fixes, shiny improvements, and save editing tools.
+**Updating:** Close the game and back up both save profiles and your current installation. Install the official Windows 1.7.0 build, then copy this release's `mods/` folder into it, retaining your `installed_features.json`. The installer needs a **clean 1.7.0** `app.asar.vanilla`; archive the previous version's backup separately. Rerun the installer with your remembered selections. No save reset is needed.
 
-> **v1.6.3 release:** Windows compatibility has been validated on a clean 1.6.3 installation. macOS support remains on its older release track pending a dedicated validation pass.
->
-> **Install model:** Mix and match features, uninstall any feature later, or fully revert to vanilla from the installer. Vanilla/modded saves stay separate.
->
-> **Windows v1.6.3 refresh (2026-10-26):**
-> - Rebases the full mod onto PokePath TD 1.6.3, including the 1.6.2 content expansion and 1.6.3 balance and bug fixes
-> - Updates installer compatibility checks, save-editor data, route progress, sprites, and high-speed tower behavior
-> - Validates renderer startup, pause + speed together, new route bosses, and all new species in real Electron tests
-> - Audits all 27 secret Pokémon, 6 secret maps, and the hidden welcome gift, with exact Unlockables instructions in all 10 built-in languages
+**Egg safety:** Loading the editor does not restock eggs. Ordinary eggs exclude owned evolution lines and secret/challenge rewards. Existing duplicates stay intact, even when new duplicate acquisitions are disabled. Fresh installs default duplicate permission off.
 
-> **New hidden content:** the Board Room entrance is on Route 8-2, outside a challenge while no wave is active. Deploy Kingdra, Vespiquen, Pawniard/Bisharp/Kingambit, or Stakataka on qualifying squares to activate chess pieces and increase damage against Calyrex. Unlockables shows live active-piece progress while in the room.
->
-> **Vanilla overlap:** retains both map views, Acquisition sorting, new range/filter indicators, draft restart and the corrected collection counters. The mod keeps its extra sorts, duplicate-aware collection counts, and partial +5/+10 purchases near level 100; shiny Pokémon retain infinite leveling. All new species already ship with official shiny art, which takes precedence over older bundled sprites.
->
-> ### 🚨 Updating from a previous mod version?
-> **Install on a clean vanilla game.** Uninstall PokePath TD completely, reinstall the vanilla game from [itch.io](https://khydra98.itch.io/pokepath), then install the mod fresh. Do **not** install over a previously modded copy.
+**Vanilla overlap:** The game now supplies expanded collection storage, more sorting/filtering, item information, cosmetics, weather mechanics and the published balance fixes. INFINITE keeps adaptive storage for extra copies, its additional sorts, localized Unlockables, endless scaling and paused controls. Official art takes priority; supplemental shiny art remains where needed.
 
 ---
 
 ## 🎮 Features
 
 ### ⚡ Speed Options
-- **2x / 3x / 5x / 10x** speed (vanilla: 1x, 1.5x, 1.75x)
+- **1x / 1.5x / 2x / 3x / 5x / 10x** with the speed feature; otherwise keeps vanilla speeds and the Roses item behavior
 - Speed button shows current multiplier text
 
 ### 📈 Removed Caps
-- **Level Cap Removed** - Pokemon can level past 100 (to 9999+)
-- **No Star Cap** - Earn as many stars as you physically can
+- **Shiny Level Cap Removed** - Shiny Pokémon can level past 100; ordinary Pokémon retain their level-100 cap
+- **Star-Based Scaling** - Removes caps on star-scaled bonuses; ordinary-route stars still come from waves 1–100
 - **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
-- **Orbital Speed Scaling** - Replaced the unused orbital attack-rate stat with an orbital speed stat that scales infinitely
+- **Orbital Speed Scaling** - Extends orbital motion and count scaling beyond level 100 while preserving new weather and ability effects
 
 ### 🌊 Endless Mode
 - **Continue Button** - After beating wave 100, choose to continue to wave 101+
@@ -56,7 +48,7 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 ### ✨ Shiny System Improvements
 - **Shiny Eggs** - 1 in 30 chance when opening eggs
 - **Shiny Starters** - 1 in 30 chance when selecting starter
-- **Pre-Packaged Shiny Sprites** - Large shiny sprite set for non-max-evolution Pokemon
+- **Shiny Sprite Coverage** - Official art plus supplemental sprites for supported earlier evolutions and forms
 - **Shiny Reveal** - Special SHINY prompt with sparkle animation
 - **Shinies Have No Level Cap** - Can level infinitely unlike regular Pokemon
 
@@ -66,9 +58,9 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Profile Tracking** - Shiny enemy defeats are recorded in Profile
 
 ### 🔧 Quality of Life
-- **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.6.3
-- **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.6.3 provides its own attack/field indicators and target-mode guards
-- **Unlockables Profile Tab** - Track every challenge reward, all 27 secret Pokémon, all 6 secret maps, and the hidden welcome gift with verified unlock conditions
+- **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.7.0
+- **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.7.0 provides its own attack/field indicators and target-mode guards
+- **Unlockables Profile Tab** - Track every challenge reward, all 63 secret Pokémon, all 7 secret maps, two hidden items, and the welcome gift with verified unlock conditions
 - **Live Profile Updates** - Stats in profile update while the menu is open
 - **Built-in Language Support** - Mod-added UI text supports all built-in game languages
 - **Tower Placement Persistence** - When you close and open the game, your Tower Placement and Party Remains
@@ -81,10 +73,8 @@ A comprehensive mod pack for **PokePath TD** that adds endless mode, removes cap
 - **Delta Time Accuracy** at high speed
 - **Squared Distance Checks**
 - **Optimized Game Loop**
-- **Reduced Garbage Collection**
-- **Throttled UI Updates**
 - **Sub-Step Draw Skipping**
-- **Power Recalculation Throttling**
+- **Power Recalculation** - Retains vanilla 1.7.0’s simulation-time throttling
 
 ---
 
@@ -121,13 +111,13 @@ Your save data is kept separate and is not overwritten by the installer.
 ## 📥 Downloads
 
 **Latest + fallback releases:**
-- **Windows (latest 1.6.3):** [PokePath-TD-INFINITE-Windows-v1.6.3.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.6.3/PokePath-TD-INFINITE-Windows-v1.6.3.zip)
+- **Windows (latest 1.7.0):** [PokePath-TD-INFINITE-Windows-v1.7.0.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.7.0/PokePath-TD-INFINITE-Windows-v1.7.0.zip)
 - **Windows (older 1.6.1):** [PokePath-TD-INFINITE-Windows-v1.6.1.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.6.1/PokePath-TD-INFINITE-Windows-v1.6.1.zip)
 - **Windows (older):** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
 - **macOS ZIP (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
 - **macOS DMG (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
 
-> 💡 **Match your game version.** Windows v1.6.3 targets **PokePath TD 1.6.3**.
+> 💡 **Match your game version.** Windows v1.7.0 targets **PokePath TD 1.7.0**.
 > macOS is still on the older **1.4.4** release track for now.
 
 ---
@@ -151,7 +141,7 @@ Your save data is kept separate and is not overwritten by the installer.
 
 ### Windows
 
-1. Download **`PokePath-TD-INFINITE-Windows-v1.6.3.zip`** from the [v1.6.3 release](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.6.3).
+1. Download **`PokePath-TD-INFINITE-Windows-v1.7.0.zip`** from the [v1.7.0 release](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.7.0).
 2. Extract it anywhere.
 3. Copy the included **`mods`** folder into your game directory:
    ```
@@ -217,7 +207,7 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
   - `windows/mods/`
   - `mac/PokePath-TD-INFINITE-Mac/`
 - The Windows release intentionally includes a top-level **`mods`** folder so users can drop it directly into the game directory.
-- Recommended for Windows: **v1.6.3**.
+- Recommended for Windows: **v1.7.0**.
 - Older fallback release: **v1.4.4 (older)**.
 
 ---

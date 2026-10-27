@@ -26,13 +26,17 @@
     "armaldo",
     "armarouge",
     "aron",
+    "articuno",
     "aurorus",
     "avalugg",
+    "baltoy",
     "barbaracle",
     "barboach",
     "bastiodon",
     "bayleef",
+    "beedrill",
     "beldum",
+    "bellsprout",
     "bergmite",
     "bibarel",
     "bidoof",
@@ -56,6 +60,7 @@
     "carracosta",
     "carvanha",
     "castform",
+    "celebi",
     "ceruledge",
     "charcadet",
     "charizard",
@@ -74,8 +79,10 @@
     "chingling",
     "clauncher",
     "clawitzer",
+    "claydol",
     "clefable",
     "clefairy",
+    "cloyster",
     "cobalion",
     "cofagrigus",
     "combee",
@@ -102,6 +109,8 @@
     "dewott",
     "dewpider",
     "dhelmise",
+    "diancie",
+    "diglett",
     "ditto",
     "dodrio",
     "doduo",
@@ -112,6 +121,7 @@
     "dragonair",
     "dragonite",
     "drakloak",
+    "drampa",
     "dratini",
     "dreepy",
     "drifblim",
@@ -121,11 +131,14 @@
     "drudiggon",
     "ducklett",
     "dudunsparce",
+    "dugtrio",
     "dunsparce",
+    "durant",
     "ekans",
     "eldegoss",
     "electrode",
     "emboar",
+    "empoleon",
     "excadrill",
     "farfetchd",
     "farfetchdGalar",
@@ -138,24 +151,34 @@
     "flaaffy",
     "flapple",
     "floragato",
+    "flutterMane",
     "flygon",
     "forretress",
     "frillishF",
     "frillishM",
     "froaki",
     "frogadier",
+    "froslass",
     "fuecoco",
+    "gabite",
+    "gallade",
+    "garchomp",
     "gardevoir",
     "gastly",
     "gengar",
     "gholdengo",
+    "gible",
     "girafarig",
+    "glalie",
     "golduck",
     "golisopod",
     "gossifleur",
+    "gourgeist",
     "greavard",
     "greninja",
+    "grookey",
     "grotle",
+    "groudon",
     "grovyle",
     "grubbin",
     "grumpig",
@@ -164,11 +187,14 @@
     "hariyama",
     "haunter",
     "hawlucha",
+    "heatmor",
+    "heatran",
     "heracross",
     "hippopotas",
     "hippowdon",
     "honchkrow",
     "honedge",
+    "hooh",
     "hoothoot",
     "hoppip",
     "horsea",
@@ -176,9 +202,11 @@
     "houndour",
     "houndstone",
     "hydreigon",
+    "illumise",
     "infernape",
     "inkay",
     "inteleon",
+    "ironBundle",
     "ironThorns",
     "ivysaur",
     "jellicentF",
@@ -187,6 +215,7 @@
     "kabuto",
     "kabutops",
     "kadabra",
+    "kakuna",
     "keldeo",
     "kingambit",
     "kingdra",
@@ -197,15 +226,19 @@
     "koffing",
     "krokorok",
     "krookodile",
+    "kyogre",
     "lairon",
+    "landorus",
     "lanturn",
     "lapras",
     "larvesta",
+    "larvitar",
     "leavanny",
     "lileep",
     "lilligant",
     "lopunny",
     "lucario",
+    "lunala",
     "lunatone",
     "luvdisc",
     "lycanrocDay",
@@ -213,6 +246,7 @@
     "machamp",
     "machoke",
     "machop",
+    "magearna",
     "magikarp",
     "magnemite",
     "magneton",
@@ -229,19 +263,42 @@
     "masquerain",
     "mawile",
     "megaAbsol",
+    "megaAerodactyl",
     "megaAlakazam",
     "megaAltaria",
     "megaAmpharos",
     "megaBarbacle",
+    "megaBeedrill",
+    "megaCamerupt",
     "megaCharizardX",
     "megaCharizardY",
+    "megaChimecho",
+    "megaDragalge",
+    "megaDrampa",
+    "megaExcadrill",
     "megaFlygon",
+    "megaGallade",
+    "megaGardevoir",
+    "megaGengar",
+    "megaGlalie",
+    "megaHoundoom",
+    "megaLopunny",
     "megaLucario",
+    "megaMawile",
     "meganium",
     "megaPidgeot",
     "megaSableye",
     "megaSceptile",
+    "megaScizor",
+    "megaScovillain",
+    "megaScrafty",
     "megaSharpedo",
+    "megaSkarmory",
+    "megaSlowbro",
+    "megaStarmie",
+    "megaSteelix",
+    "megaTatsugiri",
+    "megaTyranitar",
     "meowscarada",
     "meowth",
     "metagross",
@@ -251,6 +308,7 @@
     "minior",
     "minun",
     "missingNo",
+    "moltres",
     "monferno",
     "mudkip",
     "munna",
@@ -258,6 +316,7 @@
     "musharna",
     "natu",
     "nickit",
+    "nihilego",
     "nincada",
     "ninetales",
     "ninjask",
@@ -268,6 +327,7 @@
     "octillery",
     "omanyte",
     "omastar",
+    "onix",
     "oshawott",
     "palossand",
     "paras",
@@ -277,6 +337,7 @@
     "pelipper",
     "persian",
     "petilil",
+    "pheromosa",
     "phione",
     "pidgeot",
     "pidgeotto",
@@ -284,6 +345,7 @@
     "pignite",
     "pikachu",
     "pineco",
+    "piplup",
     "plusle",
     "popplio",
     "porygon",
@@ -291,15 +353,26 @@
     "porygonZ",
     "primarina",
     "primeape",
+    "prinplup",
     "psyduck",
+    "pumpkaboo",
+    "pupitar",
     "pyukumuku",
+    "quagsire",
     "quilava",
     "quilladin",
     "raichu",
     "ralts",
     "rampardos",
+    "raticate",
+    "rattata",
+    "regice",
+    "regigigas",
+    "regirock",
+    "registeel",
     "remoraid",
     "ribombee",
+    "rillaboom",
     "riolu",
     "rockruff",
     "roselia",
@@ -307,34 +380,51 @@
     "rowlet",
     "sableye",
     "samurott",
+    "samurottHisui",
     "sandile",
     "sandshrew",
     "sandslash",
     "sandygast",
     "sandyShocks",
     "sceptile",
+    "scizor",
     "scovillain",
+    "scrafty",
+    "scraggy",
+    "scyther",
     "seadra",
+    "sealeo",
     "seel",
     "serperior",
     "servine",
     "seviper",
     "sewaddle",
     "sharpedo",
+    "shaymin",
     "shedinja",
+    "shellder",
     "shieldon",
     "shroomish",
     "shuckle",
     "sirfetchd",
+    "skarmory",
     "skeledirge",
     "skiploom",
     "skrelp",
+    "slowbro",
+    "slowpoke",
     "smeargle",
     "sneasel",
+    "sneaselHisui",
+    "sneasler",
     "snivy",
+    "snorlax",
+    "snorunt",
     "snover",
     "sobble",
     "solrock",
+    "spectrier",
+    "spheal",
     "spidops",
     "spinarak",
     "spinda",
@@ -348,6 +438,7 @@
     "starly",
     "starmie",
     "staryu",
+    "steelix",
     "sunflora",
     "sunkern",
     "surskit",
@@ -358,6 +449,10 @@
     "swanna",
     "tangela",
     "tangrowth",
+    "tapuBulu",
+    "tapuFini",
+    "tapuKoko",
+    "tapuLele",
     "tarountula",
     "tatsugiri",
     "tentacool",
@@ -365,8 +460,11 @@
     "tepig",
     "terrakion",
     "thievul",
+    "thundurus",
+    "thwackey",
     "tirtouga",
     "torkoal",
+    "tornadus",
     "torterra",
     "totodile",
     "trapinch",
@@ -374,25 +472,38 @@
     "tropius",
     "turtwig",
     "typhlosion",
+    "tyranitar",
+    "tyrantrum",
+    "tyrunt",
+    "unown",
     "venusaur",
     "vespiquen",
     "vibrava",
     "victini",
+    "victreebel",
     "vikavolt",
+    "virizion",
+    "volbeat",
+    "volcanion",
     "volcarona",
     "voltorb",
     "vulpix",
+    "walrein",
     "wartortle",
     "watchog",
     "weavile",
+    "weedle",
+    "weepinbell",
     "weezing",
     "whimsicott",
     "whiscash",
     "wimpod",
     "wingull",
+    "wooper",
     "xatu",
     "yamask",
     "zangoose",
+    "zapdos",
     "zweilous"
   ],
   "evolutions": {
@@ -424,6 +535,10 @@
       "evolves_to": "lairon",
       "level": 32
     },
+    "baltoy": {
+      "evolves_to": "claydol",
+      "level": 36
+    },
     "barboach": {
       "evolves_to": "whiscash",
       "level": 30
@@ -435,6 +550,10 @@
     "beldum": {
       "evolves_to": "metang",
       "level": 20
+    },
+    "bellsprout": {
+      "evolves_to": "weepinbell",
+      "level": 21
     },
     "bergmite": {
       "evolves_to": "avalugg",
@@ -592,6 +711,10 @@
       "evolves_to": "araquanid",
       "level": 22
     },
+    "diglett": {
+      "evolves_to": "dugtrio",
+      "level": 26
+    },
     "doduo": {
       "evolves_to": "dodrio",
       "level": 31
@@ -684,9 +807,17 @@
       "evolves_to": "crocalor",
       "level": 16
     },
+    "gabite": {
+      "evolves_to": "garchomp",
+      "level": 48
+    },
     "gastly": {
       "evolves_to": "haunter",
       "level": 25
+    },
+    "gible": {
+      "evolves_to": "gabite",
+      "level": 24
     },
     "girafarig": {
       "evolves_to": "farigiraf",
@@ -699,6 +830,10 @@
     "greavard": {
       "evolves_to": "houndstone",
       "level": 30
+    },
+    "grookey": {
+      "evolves_to": "thwackey",
+      "level": 16
     },
     "grotle": {
       "evolves_to": "torterra",
@@ -760,6 +895,10 @@
       "evolves_to": "alakazam",
       "level": 50
     },
+    "kakuna": {
+      "evolves_to": "beedrill",
+      "level": 10
+    },
     "kirlia": {
       "evolves_to": "gardevoir",
       "level": 30
@@ -787,6 +926,10 @@
     "larvesta": {
       "evolves_to": "volcarona",
       "level": 59
+    },
+    "larvitar": {
+      "evolves_to": "pupitar",
+      "level": 30
     },
     "lileep": {
       "evolves_to": "cradily",
@@ -876,6 +1019,10 @@
       "evolves_to": "omastar",
       "level": 40
     },
+    "onix": {
+      "evolves_to": "steelix",
+      "level": 40
+    },
     "oshawott": {
       "evolves_to": "dewott",
       "level": 17
@@ -916,6 +1063,10 @@
       "evolves_to": "forretress",
       "level": 31
     },
+    "piplup": {
+      "evolves_to": "prinplup",
+      "level": 16
+    },
     "popplio": {
       "evolves_to": "brionne",
       "level": 17
@@ -932,9 +1083,21 @@
       "evolves_to": "annihilape",
       "level": 70
     },
+    "prinplup": {
+      "evolves_to": "empoleon",
+      "level": 36
+    },
     "psyduck": {
       "evolves_to": "golduck",
       "level": 33
+    },
+    "pumpkaboo": {
+      "evolves_to": "gourgeist",
+      "level": 66
+    },
+    "pupitar": {
+      "evolves_to": "tyranitar",
+      "level": 55
     },
     "quilava": {
       "evolves_to": "typhlosion",
@@ -946,6 +1109,10 @@
     },
     "ralts": {
       "evolves_to": "kirlia",
+      "level": 20
+    },
+    "rattata": {
+      "evolves_to": "raticate",
       "level": 20
     },
     "remoraid": {
@@ -980,9 +1147,17 @@
       "evolves_to": "palossand",
       "level": 42
     },
+    "scraggy": {
+      "evolves_to": "scrafty",
+      "level": 39
+    },
     "seadra": {
       "evolves_to": "kingdra",
       "level": 55
+    },
+    "sealeo": {
+      "evolves_to": "walrein",
+      "level": 44
     },
     "seel": {
       "evolves_to": "dewgong",
@@ -995,6 +1170,10 @@
     "sewaddle": {
       "evolves_to": "swadloon",
       "level": 20
+    },
+    "shellder": {
+      "evolves_to": "cloyster",
+      "level": 45
     },
     "shieldon": {
       "evolves_to": "bastiodon",
@@ -1012,13 +1191,25 @@
       "evolves_to": "dragalge",
       "level": 48
     },
+    "slowpoke": {
+      "evolves_to": "slowbro",
+      "level": 37
+    },
     "sneasel": {
       "evolves_to": "weavile",
       "level": 25
     },
+    "sneaselHisui": {
+      "evolves_to": "sneasler",
+      "level": 40
+    },
     "snivy": {
       "evolves_to": "servine",
       "level": 17
+    },
+    "snorunt": {
+      "evolves_to": "glalie",
+      "level": 42
     },
     "snover": {
       "evolves_to": "abomasnow",
@@ -1027,6 +1218,10 @@
     "sobble": {
       "evolves_to": "drizzile",
       "level": 16
+    },
+    "spheal": {
+      "evolves_to": "sealeo",
+      "level": 32
     },
     "spinarak": {
       "evolves_to": "ariados",
@@ -1088,6 +1283,10 @@
       "evolves_to": "pignite",
       "level": 17
     },
+    "thwackey": {
+      "evolves_to": "rillaboom",
+      "level": 35
+    },
     "tirtouga": {
       "evolves_to": "carracosta",
       "level": 37
@@ -1108,6 +1307,10 @@
       "evolves_to": "grotle",
       "level": 18
     },
+    "tyrunt": {
+      "evolves_to": "tyrantrum",
+      "level": 39
+    },
     "vibrava": {
       "evolves_to": "flygon",
       "level": 45
@@ -1124,6 +1327,14 @@
       "evolves_to": "blastoise",
       "level": 36
     },
+    "weedle": {
+      "evolves_to": "kakuna",
+      "level": 7
+    },
+    "weepinbell": {
+      "evolves_to": "victreebel",
+      "level": 40
+    },
     "wimpod": {
       "evolves_to": "golisopod",
       "level": 30
@@ -1131,6 +1342,10 @@
     "wingull": {
       "evolves_to": "pelipper",
       "level": 25
+    },
+    "wooper": {
+      "evolves_to": "quagsire",
+      "level": 20
     },
     "yamask": {
       "evolves_to": "cofagrigus",
@@ -1154,8 +1369,11 @@
     "applin",
     "archen",
     "aron",
+    "articuno",
+    "baltoy",
     "barboach",
     "beldum",
+    "bellsprout",
     "bergmite",
     "bidoof",
     "binacle",
@@ -1169,6 +1387,7 @@
     "carbink",
     "carvanha",
     "castform",
+    "celebi",
     "ceruledge",
     "charcadet",
     "charmander",
@@ -1196,9 +1415,12 @@
     "deino",
     "dewpider",
     "dhelmise",
+    "diancie",
+    "diglett",
     "ditto",
     "doduo",
     "dondozo",
+    "drampa",
     "dratini",
     "dreepy",
     "drifloon",
@@ -1206,44 +1428,61 @@
     "drudiggon",
     "ducklett",
     "dunsparce",
+    "durant",
     "ekans",
     "farfetchd",
     "farfetchdGalar",
     "feebas",
     "fennekin",
     "ferroseed",
+    "flutterMane",
     "frillishF",
     "frillishM",
     "froaki",
+    "froslass",
     "fuecoco",
+    "gallade",
     "gastly",
     "gholdengo",
+    "gible",
     "girafarig",
     "gossifleur",
     "greavard",
+    "grookey",
+    "groudon",
     "grubbin",
     "gulpin",
     "hawlucha",
+    "heatmor",
+    "heatran",
     "heracross",
     "hippopotas",
     "honedge",
+    "hooh",
     "hoothoot",
     "hoppip",
     "horsea",
     "houndour",
+    "illumise",
     "inkay",
+    "ironBundle",
     "ironThorns",
     "kabuto",
     "keldeo",
     "klink",
     "koffing",
+    "kyogre",
+    "landorus",
     "lapras",
     "larvesta",
+    "larvitar",
     "lileep",
+    "lunala",
     "lunatone",
     "luvdisc",
     "lycanrocNight",
     "machop",
+    "magearna",
     "magikarp",
     "magnemite",
     "makuhita",
@@ -1254,70 +1493,117 @@
     "marshadow",
     "mawile",
     "megaAbsol",
+    "megaAerodactyl",
     "megaAlakazam",
     "megaAltaria",
     "megaAmpharos",
     "megaBarbacle",
+    "megaBeedrill",
+    "megaCamerupt",
     "megaCharizardX",
     "megaCharizardY",
+    "megaChimecho",
+    "megaDragalge",
+    "megaDrampa",
+    "megaExcadrill",
     "megaFlygon",
+    "megaGallade",
+    "megaGardevoir",
+    "megaGengar",
+    "megaGlalie",
+    "megaHoundoom",
+    "megaLopunny",
     "megaLucario",
+    "megaMawile",
     "megaPidgeot",
     "megaSableye",
     "megaSceptile",
+    "megaScizor",
+    "megaScovillain",
+    "megaScrafty",
     "megaSharpedo",
+    "megaSkarmory",
+    "megaSlowbro",
+    "megaStarmie",
+    "megaSteelix",
+    "megaTatsugiri",
+    "megaTyranitar",
     "meowth",
     "mew",
     "minior",
     "minun",
     "missingNo",
+    "moltres",
     "mudkip",
     "munna",
     "murkrow",
     "natu",
     "nickit",
+    "nihilego",
     "nincada",
     "noibat",
     "numel",
     "omanyte",
+    "onix",
     "oshawott",
     "paras",
     "patrat",
     "pawniard",
     "petilil",
+    "pheromosa",
     "phione",
     "pidgey",
     "pikachu",
     "pineco",
+    "piplup",
     "plusle",
     "popplio",
     "porygon",
     "psyduck",
+    "pumpkaboo",
     "pyukumuku",
     "ralts",
+    "rattata",
+    "regice",
+    "regigigas",
+    "regirock",
+    "registeel",
     "remoraid",
     "riolu",
     "rockruff",
     "rowlet",
     "sableye",
+    "samurottHisui",
     "sandile",
     "sandshrew",
     "sandygast",
     "sandyShocks",
+    "scizor",
+    "scraggy",
+    "scyther",
     "seel",
     "seviper",
     "sewaddle",
+    "shaymin",
     "shedinja",
+    "shellder",
     "shieldon",
     "shroomish",
     "shuckle",
+    "skarmory",
     "skrelp",
+    "slowpoke",
     "smeargle",
     "sneasel",
+    "sneaselHisui",
     "snivy",
+    "snorlax",
+    "snorunt",
     "snover",
     "sobble",
     "solrock",
+    "spectrier",
+    "spheal",
     "spinarak",
     "spinda",
     "spiritomb",
@@ -1331,25 +1617,39 @@
     "surskit",
     "swablu",
     "tangela",
+    "tapuBulu",
+    "tapuFini",
+    "tapuKoko",
+    "tapuLele",
     "tarountula",
     "tatsugiri",
     "tentacool",
     "tepig",
     "terrakion",
+    "thundurus",
     "tirtouga",
     "torkoal",
+    "tornadus",
     "totodile",
     "trapinch",
     "treecko",
     "tropius",
     "turtwig",
+    "tyrunt",
+    "unown",
     "victini",
+    "virizion",
+    "volbeat",
+    "volcanion",
     "voltorb",
     "vulpix",
+    "weedle",
     "wimpod",
     "wingull",
+    "wooper",
     "yamask",
-    "zangoose"
+    "zangoose",
+    "zapdos"
   ],
   "finalForms": [
     "abomasnow",
@@ -1371,10 +1671,12 @@
     "ariados",
     "armaldo",
     "armarouge",
+    "articuno",
     "aurorus",
     "avalugg",
     "barbaracle",
     "bastiodon",
+    "beedrill",
     "bibarel",
     "blastoise",
     "breloom",
@@ -1385,6 +1687,7 @@
     "carbink",
     "carracosta",
     "castform",
+    "celebi",
     "ceruledge",
     "charizard",
     "chatot",
@@ -1392,7 +1695,9 @@
     "chesnaught",
     "chimecho",
     "clawitzer",
+    "claydol",
     "clefable",
+    "cloyster",
     "cobalion",
     "cofagrigus",
     "comfey",
@@ -1405,44 +1710,61 @@
     "delphox",
     "dewgong",
     "dhelmise",
+    "diancie",
     "ditto",
     "dodrio",
     "dondozo",
     "dragalge",
     "dragapult",
     "dragonite",
+    "drampa",
     "drifblim",
     "drudiggon",
     "dudunsparce",
+    "dugtrio",
+    "durant",
     "eldegoss",
     "electrode",
     "emboar",
+    "empoleon",
     "excadrill",
     "farfetchd",
     "farigiraf",
     "feraligatr",
     "ferrothorn",
     "flapple",
+    "flutterMane",
     "flygon",
     "forretress",
+    "froslass",
+    "gallade",
+    "garchomp",
     "gardevoir",
     "gengar",
     "gholdengo",
+    "glalie",
     "golduck",
     "golisopod",
+    "gourgeist",
     "greninja",
+    "groudon",
     "grumpig",
     "gyarados",
     "hariyama",
     "hawlucha",
+    "heatmor",
+    "heatran",
     "heracross",
     "hippowdon",
     "honchkrow",
+    "hooh",
     "houndoom",
     "houndstone",
     "hydreigon",
+    "illumise",
     "infernape",
     "inteleon",
+    "ironBundle",
     "ironThorns",
     "jellicentF",
     "jellicentM",
@@ -1453,17 +1775,21 @@
     "kingdra",
     "klinklang",
     "krookodile",
+    "kyogre",
+    "landorus",
     "lanturn",
     "lapras",
     "leavanny",
     "lilligant",
     "lopunny",
     "lucario",
+    "lunala",
     "lunatone",
     "luvdisc",
     "lycanrocDay",
     "lycanrocNight",
     "machamp",
+    "magearna",
     "magnezone",
     "malamar",
     "manaphy",
@@ -1473,19 +1799,42 @@
     "masquerain",
     "mawile",
     "megaAbsol",
+    "megaAerodactyl",
     "megaAlakazam",
     "megaAltaria",
     "megaAmpharos",
     "megaBarbacle",
+    "megaBeedrill",
+    "megaCamerupt",
     "megaCharizardX",
     "megaCharizardY",
+    "megaChimecho",
+    "megaDragalge",
+    "megaDrampa",
+    "megaExcadrill",
     "megaFlygon",
+    "megaGallade",
+    "megaGardevoir",
+    "megaGengar",
+    "megaGlalie",
+    "megaHoundoom",
+    "megaLopunny",
     "megaLucario",
+    "megaMawile",
     "meganium",
     "megaPidgeot",
     "megaSableye",
     "megaSceptile",
+    "megaScizor",
+    "megaScovillain",
+    "megaScrafty",
     "megaSharpedo",
+    "megaSkarmory",
+    "megaSlowbro",
+    "megaStarmie",
+    "megaSteelix",
+    "megaTatsugiri",
+    "megaTyranitar",
     "meowscarada",
     "metagross",
     "mew",
@@ -1493,7 +1842,9 @@
     "minior",
     "minun",
     "missingNo",
+    "moltres",
     "musharna",
+    "nihilego",
     "ninetales",
     "ninjask",
     "noctowl",
@@ -1504,62 +1855,96 @@
     "parasect",
     "pelipper",
     "persian",
+    "pheromosa",
     "phione",
     "pidgeot",
     "plusle",
     "porygonZ",
     "primarina",
     "pyukumuku",
+    "quagsire",
     "raichu",
     "rampardos",
+    "raticate",
+    "regice",
+    "regigigas",
+    "regirock",
+    "registeel",
     "ribombee",
+    "rillaboom",
     "roserade",
     "sableye",
     "samurott",
+    "samurottHisui",
     "sandslash",
     "sandyShocks",
     "sceptile",
+    "scizor",
     "scovillain",
+    "scrafty",
+    "scyther",
     "serperior",
     "seviper",
     "sharpedo",
+    "shaymin",
     "shedinja",
     "shuckle",
     "sirfetchd",
+    "skarmory",
     "skeledirge",
+    "slowbro",
     "smeargle",
+    "sneasler",
+    "snorlax",
     "solrock",
+    "spectrier",
     "spidops",
     "spinda",
     "spiritomb",
     "stakataka",
     "staraptor",
     "starmie",
+    "steelix",
     "sunflora",
     "swalot",
     "swampert",
     "swanna",
     "tangrowth",
+    "tapuBulu",
+    "tapuFini",
+    "tapuKoko",
+    "tapuLele",
     "tatsugiri",
     "tentacruel",
     "terrakion",
     "thievul",
+    "thundurus",
     "torkoal",
+    "tornadus",
     "torterra",
     "tropius",
     "typhlosion",
+    "tyranitar",
+    "tyrantrum",
+    "unown",
     "venusaur",
     "vespiquen",
     "victini",
+    "victreebel",
     "vikavolt",
+    "virizion",
+    "volbeat",
+    "volcanion",
     "volcarona",
+    "walrein",
     "watchog",
     "weavile",
     "weezing",
     "whimsicott",
     "whiscash",
     "xatu",
-    "zangoose"
+    "zangoose",
+    "zapdos"
   ],
   "chains": {
     "abra": [
@@ -1607,6 +1992,13 @@
       "lairon",
       "aggron"
     ],
+    "articuno": [
+      "articuno"
+    ],
+    "baltoy": [
+      "baltoy",
+      "claydol"
+    ],
     "barboach": [
       "barboach",
       "whiscash"
@@ -1615,6 +2007,11 @@
       "beldum",
       "metang",
       "metagross"
+    ],
+    "bellsprout": [
+      "bellsprout",
+      "weepinbell",
+      "victreebel"
     ],
     "bergmite": [
       "bergmite",
@@ -1666,6 +2063,9 @@
     ],
     "castform": [
       "castform"
+    ],
+    "celebi": [
+      "celebi"
     ],
     "ceruledge": [
       "ceruledge"
@@ -1774,6 +2174,13 @@
     "dhelmise": [
       "dhelmise"
     ],
+    "diancie": [
+      "diancie"
+    ],
+    "diglett": [
+      "diglett",
+      "dugtrio"
+    ],
     "ditto": [
       "ditto"
     ],
@@ -1783,6 +2190,9 @@
     ],
     "dondozo": [
       "dondozo"
+    ],
+    "drampa": [
+      "drampa"
     ],
     "dratini": [
       "dratini",
@@ -1813,6 +2223,9 @@
       "dunsparce",
       "dudunsparce"
     ],
+    "durant": [
+      "durant"
+    ],
     "ekans": [
       "ekans",
       "arbok"
@@ -1837,6 +2250,9 @@
       "ferroseed",
       "ferrothorn"
     ],
+    "flutterMane": [
+      "flutterMane"
+    ],
     "frillishF": [
       "frillishF",
       "jellicentF"
@@ -1850,10 +2266,16 @@
       "frogadier",
       "greninja"
     ],
+    "froslass": [
+      "froslass"
+    ],
     "fuecoco": [
       "fuecoco",
       "crocalor",
       "skeledirge"
+    ],
+    "gallade": [
+      "gallade"
     ],
     "gastly": [
       "gastly",
@@ -1862,6 +2284,11 @@
     ],
     "gholdengo": [
       "gholdengo"
+    ],
+    "gible": [
+      "gible",
+      "gabite",
+      "garchomp"
     ],
     "girafarig": [
       "girafarig",
@@ -1875,6 +2302,14 @@
       "greavard",
       "houndstone"
     ],
+    "grookey": [
+      "grookey",
+      "thwackey",
+      "rillaboom"
+    ],
+    "groudon": [
+      "groudon"
+    ],
     "grubbin": [
       "grubbin",
       "charjabug",
@@ -1887,6 +2322,12 @@
     "hawlucha": [
       "hawlucha"
     ],
+    "heatmor": [
+      "heatmor"
+    ],
+    "heatran": [
+      "heatran"
+    ],
     "heracross": [
       "heracross"
     ],
@@ -1898,6 +2339,9 @@
       "honedge",
       "doublade",
       "aegislash"
+    ],
+    "hooh": [
+      "hooh"
     ],
     "hoothoot": [
       "hoothoot",
@@ -1917,9 +2361,15 @@
       "houndour",
       "houndoom"
     ],
+    "illumise": [
+      "illumise"
+    ],
     "inkay": [
       "inkay",
       "malamar"
+    ],
+    "ironBundle": [
+      "ironBundle"
     ],
     "ironThorns": [
       "ironThorns"
@@ -1940,6 +2390,12 @@
       "koffing",
       "weezing"
     ],
+    "kyogre": [
+      "kyogre"
+    ],
+    "landorus": [
+      "landorus"
+    ],
     "lapras": [
       "lapras"
     ],
@@ -1947,9 +2403,17 @@
       "larvesta",
       "volcarona"
     ],
+    "larvitar": [
+      "larvitar",
+      "pupitar",
+      "tyranitar"
+    ],
     "lileep": [
       "lileep",
       "cradily"
+    ],
+    "lunala": [
+      "lunala"
     ],
     "lunatone": [
       "lunatone"
@@ -1964,6 +2428,9 @@
       "machop",
       "machoke",
       "machamp"
+    ],
+    "magearna": [
+      "magearna"
     ],
     "magikarp": [
       "magikarp",
@@ -2003,6 +2470,9 @@
     "megaAbsol": [
       "megaAbsol"
     ],
+    "megaAerodactyl": [
+      "megaAerodactyl"
+    ],
     "megaAlakazam": [
       "megaAlakazam"
     ],
@@ -2015,17 +2485,56 @@
     "megaBarbacle": [
       "megaBarbacle"
     ],
+    "megaBeedrill": [
+      "megaBeedrill"
+    ],
+    "megaCamerupt": [
+      "megaCamerupt"
+    ],
     "megaCharizardX": [
       "megaCharizardX"
     ],
     "megaCharizardY": [
       "megaCharizardY"
     ],
+    "megaChimecho": [
+      "megaChimecho"
+    ],
+    "megaDragalge": [
+      "megaDragalge"
+    ],
+    "megaDrampa": [
+      "megaDrampa"
+    ],
+    "megaExcadrill": [
+      "megaExcadrill"
+    ],
     "megaFlygon": [
       "megaFlygon"
     ],
+    "megaGallade": [
+      "megaGallade"
+    ],
+    "megaGardevoir": [
+      "megaGardevoir"
+    ],
+    "megaGengar": [
+      "megaGengar"
+    ],
+    "megaGlalie": [
+      "megaGlalie"
+    ],
+    "megaHoundoom": [
+      "megaHoundoom"
+    ],
+    "megaLopunny": [
+      "megaLopunny"
+    ],
     "megaLucario": [
       "megaLucario"
+    ],
+    "megaMawile": [
+      "megaMawile"
     ],
     "megaPidgeot": [
       "megaPidgeot"
@@ -2036,8 +2545,35 @@
     "megaSceptile": [
       "megaSceptile"
     ],
+    "megaScizor": [
+      "megaScizor"
+    ],
+    "megaScovillain": [
+      "megaScovillain"
+    ],
+    "megaScrafty": [
+      "megaScrafty"
+    ],
     "megaSharpedo": [
       "megaSharpedo"
+    ],
+    "megaSkarmory": [
+      "megaSkarmory"
+    ],
+    "megaSlowbro": [
+      "megaSlowbro"
+    ],
+    "megaStarmie": [
+      "megaStarmie"
+    ],
+    "megaSteelix": [
+      "megaSteelix"
+    ],
+    "megaTatsugiri": [
+      "megaTatsugiri"
+    ],
+    "megaTyranitar": [
+      "megaTyranitar"
     ],
     "meowth": [
       "meowth",
@@ -2054,6 +2590,9 @@
     ],
     "missingNo": [
       "missingNo"
+    ],
+    "moltres": [
+      "moltres"
     ],
     "mudkip": [
       "mudkip",
@@ -2076,6 +2615,9 @@
       "nickit",
       "thievul"
     ],
+    "nihilego": [
+      "nihilego"
+    ],
     "nincada": [
       "nincada",
       "ninjask"
@@ -2091,6 +2633,10 @@
     "omanyte": [
       "omanyte",
       "omastar"
+    ],
+    "onix": [
+      "onix",
+      "steelix"
     ],
     "oshawott": [
       "oshawott",
@@ -2114,6 +2660,9 @@
       "petilil",
       "lilligant"
     ],
+    "pheromosa": [
+      "pheromosa"
+    ],
     "phione": [
       "phione"
     ],
@@ -2129,6 +2678,11 @@
     "pineco": [
       "pineco",
       "forretress"
+    ],
+    "piplup": [
+      "piplup",
+      "prinplup",
+      "empoleon"
     ],
     "plusle": [
       "plusle"
@@ -2147,6 +2701,10 @@
       "psyduck",
       "golduck"
     ],
+    "pumpkaboo": [
+      "pumpkaboo",
+      "gourgeist"
+    ],
     "pyukumuku": [
       "pyukumuku"
     ],
@@ -2154,6 +2712,22 @@
       "ralts",
       "kirlia",
       "gardevoir"
+    ],
+    "rattata": [
+      "rattata",
+      "raticate"
+    ],
+    "regice": [
+      "regice"
+    ],
+    "regigigas": [
+      "regigigas"
+    ],
+    "regirock": [
+      "regirock"
+    ],
+    "registeel": [
+      "registeel"
     ],
     "remoraid": [
       "remoraid",
@@ -2175,6 +2749,9 @@
     "sableye": [
       "sableye"
     ],
+    "samurottHisui": [
+      "samurottHisui"
+    ],
     "sandile": [
       "sandile",
       "krokorok",
@@ -2191,6 +2768,16 @@
     "sandyShocks": [
       "sandyShocks"
     ],
+    "scizor": [
+      "scizor"
+    ],
+    "scraggy": [
+      "scraggy",
+      "scrafty"
+    ],
+    "scyther": [
+      "scyther"
+    ],
     "seel": [
       "seel",
       "dewgong"
@@ -2203,8 +2790,15 @@
       "swadloon",
       "leavanny"
     ],
+    "shaymin": [
+      "shaymin"
+    ],
     "shedinja": [
       "shedinja"
+    ],
+    "shellder": [
+      "shellder",
+      "cloyster"
     ],
     "shieldon": [
       "shieldon",
@@ -2217,9 +2811,16 @@
     "shuckle": [
       "shuckle"
     ],
+    "skarmory": [
+      "skarmory"
+    ],
     "skrelp": [
       "skrelp",
       "dragalge"
+    ],
+    "slowpoke": [
+      "slowpoke",
+      "slowbro"
     ],
     "smeargle": [
       "smeargle"
@@ -2228,10 +2829,21 @@
       "sneasel",
       "weavile"
     ],
+    "sneaselHisui": [
+      "sneaselHisui",
+      "sneasler"
+    ],
     "snivy": [
       "snivy",
       "servine",
       "serperior"
+    ],
+    "snorlax": [
+      "snorlax"
+    ],
+    "snorunt": [
+      "snorunt",
+      "glalie"
     ],
     "snover": [
       "snover",
@@ -2244,6 +2856,14 @@
     ],
     "solrock": [
       "solrock"
+    ],
+    "spectrier": [
+      "spectrier"
+    ],
+    "spheal": [
+      "spheal",
+      "sealeo",
+      "walrein"
     ],
     "spinarak": [
       "spinarak",
@@ -2297,6 +2917,18 @@
       "tangela",
       "tangrowth"
     ],
+    "tapuBulu": [
+      "tapuBulu"
+    ],
+    "tapuFini": [
+      "tapuFini"
+    ],
+    "tapuKoko": [
+      "tapuKoko"
+    ],
+    "tapuLele": [
+      "tapuLele"
+    ],
     "tarountula": [
       "tarountula",
       "spidops"
@@ -2316,12 +2948,18 @@
     "terrakion": [
       "terrakion"
     ],
+    "thundurus": [
+      "thundurus"
+    ],
     "tirtouga": [
       "tirtouga",
       "carracosta"
     ],
     "torkoal": [
       "torkoal"
+    ],
+    "tornadus": [
+      "tornadus"
     ],
     "totodile": [
       "totodile",
@@ -2346,8 +2984,24 @@
       "grotle",
       "torterra"
     ],
+    "tyrunt": [
+      "tyrunt",
+      "tyrantrum"
+    ],
+    "unown": [
+      "unown"
+    ],
     "victini": [
       "victini"
+    ],
+    "virizion": [
+      "virizion"
+    ],
+    "volbeat": [
+      "volbeat"
+    ],
+    "volcanion": [
+      "volcanion"
     ],
     "voltorb": [
       "voltorb",
@@ -2357,6 +3011,11 @@
       "vulpix",
       "ninetales"
     ],
+    "weedle": [
+      "weedle",
+      "kakuna",
+      "beedrill"
+    ],
     "wimpod": [
       "wimpod",
       "golisopod"
@@ -2365,12 +3024,19 @@
       "wingull",
       "pelipper"
     ],
+    "wooper": [
+      "wooper",
+      "quagsire"
+    ],
     "yamask": [
       "yamask",
       "cofagrigus"
     ],
     "zangoose": [
       "zangoose"
+    ],
+    "zapdos": [
+      "zapdos"
     ]
   },
   "spritePath": {
@@ -2400,13 +3066,17 @@
     "armaldo": "armaldo.png",
     "armarouge": "armarouge.png",
     "aron": "aron.png",
+    "articuno": "articuno.png",
     "aurorus": "aurorus.png",
     "avalugg": "avalugg.png",
+    "baltoy": "baltoy.png",
     "barbaracle": "barbaracle.png",
     "barboach": "barboach.png",
     "bastiodon": "bastiodon.png",
     "bayleef": "bayleef.png",
+    "beedrill": "beedrill.png",
     "beldum": "beldum.png",
+    "bellsprout": "bellsprout.png",
     "bergmite": "bergmite.png",
     "bibarel": "bibarel.png",
     "bidoof": "bidoof.png",
@@ -2430,6 +3100,7 @@
     "carracosta": "carracosta.png",
     "carvanha": "carvanha.png",
     "castform": "castform.png",
+    "celebi": "celebi.png",
     "ceruledge": "ceruledge.png",
     "charcadet": "charcadet.png",
     "charizard": "charizard.png",
@@ -2448,8 +3119,10 @@
     "chingling": "chingling.png",
     "clauncher": "clauncher.png",
     "clawitzer": "clawitzer.png",
+    "claydol": "claydol.png",
     "clefable": "clefable.png",
     "clefairy": "clefairy.png",
+    "cloyster": "cloyster.png",
     "cobalion": "cobalion.png",
     "cofagrigus": "cofagrigus.png",
     "combee": "combee.png",
@@ -2476,6 +3149,8 @@
     "dewott": "dewott.png",
     "dewpider": "dewpider.png",
     "dhelmise": "dhelmise.png",
+    "diancie": "diancie.png",
+    "diglett": "diglett.png",
     "ditto": "ditto.png",
     "dodrio": "dodrio.png",
     "doduo": "doduo.png",
@@ -2486,6 +3161,7 @@
     "dragonair": "dragonair.png",
     "dragonite": "dragonite.png",
     "drakloak": "drakloak.png",
+    "drampa": "drampa.png",
     "dratini": "dratini.png",
     "dreepy": "dreepy.png",
     "drifblim": "drifblim.png",
@@ -2495,11 +3171,14 @@
     "drudiggon": "drudiggon.png",
     "ducklett": "ducklett.png",
     "dudunsparce": "dudunsparce.png",
+    "dugtrio": "dugtrio.png",
     "dunsparce": "dunsparce.png",
+    "durant": "durant.png",
     "ekans": "ekans.png",
     "eldegoss": "eldegoss.png",
     "electrode": "electrode.png",
     "emboar": "emboar.png",
+    "empoleon": "empoleon.png",
     "excadrill": "excadrill.png",
     "farfetchd": "farfetchd.png",
     "farfetchdGalar": "farfetchdGalar.png",
@@ -2512,24 +3191,34 @@
     "flaaffy": "flaaffy.png",
     "flapple": "flapple.png",
     "floragato": "floragato.png",
+    "flutterMane": "flutterMane.png",
     "flygon": "flygon.png",
     "forretress": "forretress.png",
     "frillishF": "frillishF.png",
     "frillishM": "frillishM.png",
     "froaki": "froaki.png",
     "frogadier": "frogadier.png",
+    "froslass": "froslass.png",
     "fuecoco": "fuecoco.png",
+    "gabite": "gabite.png",
+    "gallade": "gallade.png",
+    "garchomp": "garchomp.png",
     "gardevoir": "gardevoir.png",
     "gastly": "gastly.png",
     "gengar": "gengar.png",
     "gholdengo": "gholdengo.png",
+    "gible": "gible.png",
     "girafarig": "girafarig.png",
+    "glalie": "glalie.png",
     "golduck": "golduck.png",
     "golisopod": "golisopod.png",
     "gossifleur": "gossifleur.png",
+    "gourgeist": "gourgeist.png",
     "greavard": "greavard.png",
     "greninja": "greninja.png",
+    "grookey": "grookey.png",
     "grotle": "grotle.png",
+    "groudon": "groudon.png",
     "grovyle": "grovyle.png",
     "grubbin": "grubbin.png",
     "grumpig": "grumpig.png",
@@ -2538,11 +3227,14 @@
     "hariyama": "hariyama.png",
     "haunter": "haunter.png",
     "hawlucha": "hawlucha.png",
+    "heatmor": "heatmor.png",
+    "heatran": "heatran.png",
     "heracross": "heracross.png",
     "hippopotas": "hippopotas.png",
     "hippowdon": "hippowdon.png",
     "honchkrow": "honchkrow.png",
     "honedge": "honedge.png",
+    "hooh": "hooh.png",
     "hoothoot": "hoothoot.png",
     "hoppip": "hoppip.png",
     "horsea": "horsea.png",
@@ -2550,9 +3242,11 @@
     "houndour": "houndour.png",
     "houndstone": "houndstone.png",
     "hydreigon": "hydreigon.png",
+    "illumise": "illumise.png",
     "infernape": "infernape.png",
     "inkay": "inkay.png",
     "inteleon": "inteleon.png",
+    "ironBundle": "ironBundle.png",
     "ironThorns": "ironThorns.png",
     "ivysaur": "ivysaur.png",
     "jellicentF": "jellicentF.png",
@@ -2561,6 +3255,7 @@
     "kabuto": "kabuto.png",
     "kabutops": "kabutops.png",
     "kadabra": "kadabra.png",
+    "kakuna": "kakuna.png",
     "keldeo": "keldeo.png",
     "kingambit": "kingambit.png",
     "kingdra": "kingdra.png",
@@ -2571,15 +3266,19 @@
     "koffing": "koffing.png",
     "krokorok": "krokorok.png",
     "krookodile": "krookodile.png",
+    "kyogre": "kyogre.png",
     "lairon": "lairon.png",
+    "landorus": "landorus.png",
     "lanturn": "lanturn.png",
     "lapras": "lapras.png",
     "larvesta": "larvesta.png",
+    "larvitar": "larvitar.png",
     "leavanny": "leavanny.png",
     "lileep": "lileep.png",
     "lilligant": "lilligant.png",
     "lopunny": "lopunny.png",
     "lucario": "lucario.png",
+    "lunala": "lunala.png",
     "lunatone": "lunatone.png",
     "luvdisc": "luvdisc.png",
     "lycanrocDay": "lycanroc1.png",
@@ -2587,6 +3286,7 @@
     "machamp": "machamp.png",
     "machoke": "machoke.png",
     "machop": "machop.png",
+    "magearna": "magearna.png",
     "magikarp": "magikarp.png",
     "magnemite": "magnemite.png",
     "magneton": "magneton.png",
@@ -2603,19 +3303,42 @@
     "masquerain": "masquerain.png",
     "mawile": "mawile.png",
     "megaAbsol": "megaAbsol.png",
+    "megaAerodactyl": "megaAerodactyl.png",
     "megaAlakazam": "megaAlakazam.png",
     "megaAltaria": "megaAltaria.png",
     "megaAmpharos": "megaAmpharos.png",
     "megaBarbacle": "megaBarbaracle.png",
+    "megaBeedrill": "megaBeedrill.png",
+    "megaCamerupt": "megaCamerupt.png",
     "megaCharizardX": "megaCharizardX.png",
     "megaCharizardY": "megaCharizardY.png",
+    "megaChimecho": "megaChimecho.png",
+    "megaDragalge": "megaDragalge.png",
+    "megaDrampa": "megaDrampa.png",
+    "megaExcadrill": "megaExcadrill.png",
     "megaFlygon": "megaFlygon.png",
+    "megaGallade": "megaGallade.png",
+    "megaGardevoir": "megaGardevoir.png",
+    "megaGengar": "megaGengar.png",
+    "megaGlalie": "megaGlalie.png",
+    "megaHoundoom": "megaHoundoom.png",
+    "megaLopunny": "megaLopunny.png",
     "megaLucario": "megaLucario.png",
+    "megaMawile": "megaMawile.png",
     "meganium": "meganium.png",
     "megaPidgeot": "megaPidgeot.png",
     "megaSableye": "megaSableye.png",
     "megaSceptile": "megaSceptile.png",
+    "megaScizor": "megaScizor.png",
+    "megaScovillain": "megaScovillain.png",
+    "megaScrafty": "megaScrafty.png",
     "megaSharpedo": "megaSharpedo.png",
+    "megaSkarmory": "megaSkarmory.png",
+    "megaSlowbro": "megaSlowbro.png",
+    "megaStarmie": "megaStarmie.png",
+    "megaSteelix": "megaSteelix.png",
+    "megaTatsugiri": "megaTatsugiri.png",
+    "megaTyranitar": "megaTyranitar.png",
     "meowscarada": "meowscarada.png",
     "meowth": "meowth.png",
     "metagross": "metagross.png",
@@ -2625,6 +3348,7 @@
     "minior": "minior.png",
     "minun": "minun.png",
     "missingNo": "missingNo.png",
+    "moltres": "moltres.png",
     "monferno": "monferno.png",
     "mudkip": "mudkip.png",
     "munna": "munna.png",
@@ -2632,6 +3356,7 @@
     "musharna": "musharna.png",
     "natu": "natu.png",
     "nickit": "nickit.png",
+    "nihilego": "nihilego.png",
     "nincada": "nincada.png",
     "ninetales": "ninetales.png",
     "ninjask": "ninjask.png",
@@ -2642,6 +3367,7 @@
     "octillery": "octillery.png",
     "omanyte": "omanyte.png",
     "omastar": "omastar.png",
+    "onix": "onix.png",
     "oshawott": "oshawott.png",
     "palossand": "palossand.png",
     "paras": "paras.png",
@@ -2651,6 +3377,7 @@
     "pelipper": "pelipper.png",
     "persian": "persian.png",
     "petilil": "petilil.png",
+    "pheromosa": "pheromosa.png",
     "phione": "phione.png",
     "pidgeot": "pidgeot.png",
     "pidgeotto": "pidgeotto.png",
@@ -2658,6 +3385,7 @@
     "pignite": "pignite.png",
     "pikachu": "pikachu.png",
     "pineco": "pineco.png",
+    "piplup": "piplup.png",
     "plusle": "plusle.png",
     "popplio": "popplio.png",
     "porygon": "porygon.png",
@@ -2665,15 +3393,26 @@
     "porygonZ": "porygonZ.png",
     "primarina": "primarina.png",
     "primeape": "primeape.png",
+    "prinplup": "prinplup.png",
     "psyduck": "psyduck.png",
+    "pumpkaboo": "pumpkaboo.png",
+    "pupitar": "pupitar.png",
     "pyukumuku": "pyukumuku.png",
+    "quagsire": "quagsire.png",
     "quilava": "quilava.png",
     "quilladin": "quilladin.png",
     "raichu": "raichu.png",
     "ralts": "ralts.png",
     "rampardos": "rampardos.png",
+    "raticate": "raticate.png",
+    "rattata": "rattata.png",
+    "regice": "regice.png",
+    "regigigas": "regigigas.png",
+    "regirock": "regirock.png",
+    "registeel": "registeel.png",
     "remoraid": "remoraid.png",
     "ribombee": "ribombee.png",
+    "rillaboom": "rillaboom.png",
     "riolu": "riolu.png",
     "rockruff": "rockruff.png",
     "roselia": "roselia.png",
@@ -2681,34 +3420,51 @@
     "rowlet": "rowlet.png",
     "sableye": "sableye.png",
     "samurott": "samurott.png",
+    "samurottHisui": "samurottHisui.png",
     "sandile": "sandile.png",
     "sandshrew": "sandshrew.png",
     "sandslash": "sandslash.png",
     "sandygast": "sandygast.png",
     "sandyShocks": "sandyShocks.png",
     "sceptile": "sceptile.png",
+    "scizor": "scizor.png",
     "scovillain": "scovillain.png",
+    "scrafty": "scrafty.png",
+    "scraggy": "scraggy.png",
+    "scyther": "scyther.png",
     "seadra": "seadra.png",
+    "sealeo": "sealeo.png",
     "seel": "seel.png",
     "serperior": "serperior.png",
     "servine": "servine.png",
     "seviper": "seviper.png",
     "sewaddle": "sewaddle.png",
     "sharpedo": "sharpedo.png",
+    "shaymin": "shaymin.png",
     "shedinja": "shedinja.png",
+    "shellder": "shellder.png",
     "shieldon": "shieldon.png",
     "shroomish": "shroomish.png",
     "shuckle": "shuckle.png",
     "sirfetchd": "sirfetchd.png",
+    "skarmory": "skarmory.png",
     "skeledirge": "skeledirge.png",
     "skiploom": "skiploom.png",
     "skrelp": "skrelp.png",
+    "slowbro": "slowbro.png",
+    "slowpoke": "slowpoke.png",
     "smeargle": "smeargle.png",
     "sneasel": "sneasel.png",
+    "sneaselHisui": "sneaselHisui.png",
+    "sneasler": "sneasler.png",
     "snivy": "snivy.png",
+    "snorlax": "snorlax.png",
+    "snorunt": "snorunt.png",
     "snover": "snover.png",
     "sobble": "sobble.png",
     "solrock": "solrock.png",
+    "spectrier": "spectrier.png",
+    "spheal": "spheal.png",
     "spidops": "spidops.png",
     "spinarak": "spinarak.png",
     "spinda": "spinda.png",
@@ -2722,6 +3478,7 @@
     "starly": "starly.png",
     "starmie": "starmie.png",
     "staryu": "staryu.png",
+    "steelix": "steelix.png",
     "sunflora": "sunflora.png",
     "sunkern": "sunkern.png",
     "surskit": "surskit.png",
@@ -2732,6 +3489,10 @@
     "swanna": "swanna.png",
     "tangela": "tangela.png",
     "tangrowth": "tangrowth.png",
+    "tapuBulu": "tapuBulu.png",
+    "tapuFini": "tapuFini.png",
+    "tapuKoko": "tapuKoko.png",
+    "tapuLele": "tapuLele.png",
     "tarountula": "tarountula.png",
     "tatsugiri": "tatsugiri.png",
     "tentacool": "tentacool.png",
@@ -2739,8 +3500,11 @@
     "tepig": "tepig.png",
     "terrakion": "terrakion.png",
     "thievul": "thievul.png",
+    "thundurus": "thundurus.png",
+    "thwackey": "thwackey.png",
     "tirtouga": "tirtouga.png",
     "torkoal": "torkoal.png",
+    "tornadus": "tornadus.png",
     "torterra": "torterra.png",
     "totodile": "totodile.png",
     "trapinch": "trapinch.png",
@@ -2748,25 +3512,38 @@
     "tropius": "tropius.png",
     "turtwig": "turtwig.png",
     "typhlosion": "typhlosion.png",
+    "tyranitar": "tyranitar.png",
+    "tyrantrum": "tyrantrum.png",
+    "tyrunt": "tyrunt.png",
+    "unown": "unown-a.png",
     "venusaur": "venusaur.png",
     "vespiquen": "vespiquen.png",
     "vibrava": "vibrava.png",
     "victini": "victini.png",
+    "victreebel": "victreebel.png",
     "vikavolt": "vikavolt.png",
+    "virizion": "virizion.png",
+    "volbeat": "volbeat.png",
+    "volcanion": "volcanion.png",
     "volcarona": "volcarona.png",
     "voltorb": "voltorb.png",
     "vulpix": "vulpix.png",
+    "walrein": "walrein.png",
     "wartortle": "wartortle.png",
     "watchog": "watchog.png",
     "weavile": "weavile.png",
+    "weedle": "weedle.png",
+    "weepinbell": "weepinbell.png",
     "weezing": "weezing.png",
     "whimsicott": "whimsicott.png",
     "whiscash": "whiscash.png",
     "wimpod": "wimpod.png",
     "wingull": "wingull.png",
+    "wooper": "wooper.png",
     "xatu": "xatu.png",
     "yamask": "yamask.png",
     "zangoose": "zangoose.png",
+    "zapdos": "zapdos.png",
     "zweilous": "zweilous.png"
   },
   "allObtainable": [
@@ -2837,17 +3614,14 @@
     "shieldon",
     "cranidos",
     "starly",
-    "abra",
     "gastly",
     "ditto",
     "magikarp",
     "pikachu",
     "fuecoco",
-    "larvesta",
     "cherubi",
     "rockruff",
     "pawniard",
-    "sandile",
     "wimpod",
     "honedge",
     "sobble",
@@ -2862,7 +3636,6 @@
     "mudkip",
     "patrat",
     "snivy",
-    "drifloon",
     "dondozo",
     "plusle",
     "minun",
@@ -2871,9 +3644,7 @@
     "squirtle",
     "tentacool",
     "snover",
-    "nincada",
     "chespin",
-    "dewpider",
     "budew",
     "sewaddle",
     "sprigatito",
@@ -2882,7 +3653,6 @@
     "amaura",
     "tirtouga",
     "buneary",
-    "dratini",
     "makuhita",
     "solrock",
     "lunatone",
@@ -2890,75 +3660,141 @@
     "seviper",
     "frillishM",
     "alomomola",
-    "pyukumuku",
     "corphish",
     "doduo",
     "swablu",
     "aerodactyl",
-    "feebas",
-    "numel",
-    "dreepy",
-    "grubbin",
     "porygon",
-    "cutiefly",
-    "chatot",
-    "luvdisc",
-    "cacturne",
-    "stakataka",
-    "greavard",
-    "gholdengo",
-    "missingNo",
-    "shedinja",
-    "sandygast",
-    "ducklett",
-    "manaphy",
-    "phione",
-    "spiritomb",
-    "bronzor",
-    "minior",
-    "corsolaGalar",
-    "keldeo",
-    "victini",
-    "mew",
-    "marshadow",
-    "terrakion",
-    "cobalion",
-    "farfetchdGalar",
-    "ironThorns",
-    "sandyShocks",
-    "dhelmise",
-    "calyrex",
     "wingull",
     "inkay",
     "totodile",
-    "turtwig",
-    "hoothoot",
     "tarountula",
-    "archen",
-    "carbink",
     "vulpix",
-    "munna",
-    "bidoof",
     "fennekin",
-    "skrelp",
-    "charcadet",
-    "capsakid",
-    "tatsugiri",
-    "klink",
-    "deino",
     "houndour",
     "pineco",
     "chinchou",
-    "paras",
-    "bergmite",
     "aipom",
-    "popplio",
-    "beldum",
-    "chingling",
-    "heracross",
     "combee",
-    "applin",
     "tropius",
-    "gossifleur"
+    "weedle",
+    "volbeat",
+    "illumise",
+    "piplup",
+    "grookey",
+    "heatmor",
+    "durant",
+    "bellsprout",
+    "shellder",
+    "rattata",
+    "diglett",
+    "skarmory",
+    "scraggy",
+    "onix",
+    "drampa",
+    "slowpoke",
+    "bidoof",
+    "hoothoot",
+    "nincada",
+    "turtwig",
+    "capsakid",
+    "larvesta",
+    "numel",
+    "dratini",
+    "beldum",
+    "snorunt",
+    "spheal",
+    "bergmite",
+    "feebas",
+    "dreepy",
+    "skrelp",
+    "tatsugiri",
+    "dewpider",
+    "grubbin",
+    "pyukumuku",
+    "abra",
+    "deino",
+    "paras",
+    "gible",
+    "sandile",
+    "popplio",
+    "drifloon",
+    "chingling",
+    "cutiefly",
+    "charcadet",
+    "carbink",
+    "munna",
+    "heracross",
+    "applin",
+    "snorlax",
+    "gossifleur",
+    "scyther",
+    "baltoy",
+    "larvitar",
+    "klink",
+    "archen",
+    "shaymin",
+    "celebi",
+    "lunala",
+    "zapdos",
+    "moltres",
+    "articuno",
+    "regirock",
+    "groudon",
+    "hooh",
+    "registeel",
+    "regice",
+    "regigigas",
+    "kyogre",
+    "thundurus",
+    "tapuFini",
+    "nihilego",
+    "tapuKoko",
+    "tapuBulu",
+    "tapuLele",
+    "keldeo",
+    "heatran",
+    "landorus",
+    "volcanion",
+    "pheromosa",
+    "cobalion",
+    "stakataka",
+    "tornadus",
+    "magearna",
+    "diancie",
+    "terrakion",
+    "virizion",
+    "shedinja",
+    "gholdengo",
+    "unown",
+    "greavard",
+    "cacnea",
+    "dhelmise",
+    "manaphy",
+    "phione",
+    "marshadow",
+    "ducklett",
+    "sandygast",
+    "victini",
+    "bronzor",
+    "spiritomb",
+    "farfetchdGalar",
+    "calyrex",
+    "chatot",
+    "luvdisc",
+    "tyrunt",
+    "corsolaGalar",
+    "sneaselHisui",
+    "samurottHisui",
+    "wooper",
+    "minior",
+    "mew",
+    "pumpkaboo",
+    "spectrier",
+    "ironThorns",
+    "sandyShocks",
+    "ironBundle",
+    "flutterMane",
+    "missingNo"
   ]
 }

@@ -22,17 +22,17 @@ export class DefeatScene extends GameScene {
 	render() {
 		this.title.innerHTML = text.defeat.title[this.main.lang].toUpperCase();
 
-		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt' }).element;
+		this.prompt = new Element(this.container, { className: 'defeat-scene-prompt stroke' }).element;
 		this.image = new Element(this.container, { className: 'defeat-scene-image' }).element;
-		this.restartButton = new Element(this.container, { className: 'defeat-restart-button' }).element;
+		this.restartButton = new Element(this.container, { className: 'defeat-restart-button stroke' }).element;
 		this.restartButton.addEventListener('click', () => this.restart());
 		this.restartButton.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 
-		this.retryButton = new Element(this.container, { className: 'defeat-retry-button' }).element;
+		this.retryButton = new Element(this.container, { className: 'defeat-retry-button stroke' }).element;
 		this.retryButton.addEventListener('click', () => this.retry());
 		this.retryButton.addEventListener('mouseenter', () => { playSound('open', 'ui') });
 
-		this.info = new Element(this.container, { className: 'defeat-scene-info' }).element;
+		this.info = new Element(this.container, { className: 'defeat-scene-info stroke' }).element;
 
 		this.challengeContainer = new Element(this.container, { className: 'final-challenge-container' }).element;
 		this.challengeContainer.style.display = 'none';
@@ -68,6 +68,10 @@ export class DefeatScene extends GameScene {
 				this.image.className = 'defeat-scene-image-happy';
 				this.info.innerHTML = text.editable.win[this.main.lang].toUpperCase();
 			}
+		}
+
+		if (this.main.area.map.id === 46 || this.main.uiTheme == 3) {
+			this.image.className = 'defeat-scene-image-halloween';
 		}
 
 		if (this.main.area.inChallenge.permadeath) {
@@ -107,9 +111,9 @@ export class DefeatScene extends GameScene {
 			        }
 
 			        this.challenge[i].innerText =
-			            `${text.challenge[key].title[this.main.lang].toUpperCase()} ΓÇö ${display}`;
+			            `${text.challenge[key].title[this.main.lang].toUpperCase()} — ${display}`;
 
-			        this.challenge[i].style.color = (value && value !== false) ? '#ebbe35' : '#666';
+			        this.challenge[i].style.color = (value && value !== false) ? 'var(--stars)' : '#666';
 			});
 			}
 		}
@@ -231,7 +235,7 @@ export class DefeatScene extends GameScene {
 		this.main.UI.nextWave.style.pointerEvents = 'all';
 
 		this.main.area.autoWave = false;
-		this.main.UI.autoWave.style.background = '#2c70e3';
+		this.main.UI.autoWave.style.background = 'var(--autoWave1)';
 
 		this.main.UI.update();
 		this.main.UI.revertUI();
@@ -291,14 +295,14 @@ export class DefeatScene extends GameScene {
 		const text = [
 			`You can use retry to return to wave ${this.savedWave} with ${lives} lives`,
 			`Puedes reintentar y volver a la oleada ${this.savedWave} con ${lives} vidas`,
-			`Vous pouvez r├⌐essayer et revenir ├á la vague ${this.savedWave} avec ${lives} vies`,
-			`Voc├¬ pode reiniciar e voltar ├á onda ${this.savedWave} com ${lives} vidas`,
-			`Puoi ritentare e tornare all'ondata ${this.savedWave} con ${lives} vite`,
-			`Du kannst mit ${lives} Leben zu Welle ${this.savedWave} zur├╝ck.`,
-			`πâ¬πâêπâ⌐πéñπéÆΣ╜┐πüåπü¿πÇü${lives}πâ⌐πéñπâòπü«τè╢µàïπüºπéªπéºπâ╝πâû${this.savedWave}πü½µê╗πéîπü╛πüÖ`,
-			`∞₧¼∞ï£δÅäδÑ╝ ∞é¼∞Ü⌐φòÿδ⌐┤ δ¬⌐∞ê¿ ${lives}Ω░£δí£ ${this.savedWave}∞¢¿∞¥┤δ╕îδí£ δÅî∞òäΩ░ê ∞êÿ ∞₧ê∞è╡δïêδïñ`,
-			`Σ╜áσÅ»Σ╗ÑΣ╜┐τö¿ΘçìΦ»òΦ┐öσ¢₧σê░τ¼¼${this.savedWave}µ│ó∩╝îσ╣╢µïÑµ£ë${lives}µ¥íτöƒσæ╜`,
-			`Mo┼╝esz u┼╝y─ç ponownej pr├│by, aby wr├│ci─ç do fali ${this.savedWave} z ${lives} ┼╝yciami`
+			`Vous pouvez réessayer et revenir à la vague ${this.savedWave} avec ${lives} vies`,
+			`Você pode reiniciar e voltar à onda ${this.savedWave} com ${lives} vidas`,
+			`Puoi ritentare e tornare all’ondata ${this.savedWave} con ${lives} vite`,
+			`Du kannst mit ${lives} Leben zu Welle ${this.savedWave} zurück.`,
+			`リトライを使うと、${lives}ライフの状態でウェーブ${this.savedWave}に戻れます`,
+			`재시도를 사용하면 목숨 ${lives}개로 ${this.savedWave}웨이브로 돌아갈 수 있습니다`,
+			`你可以使用重试返回到第${this.savedWave}波，并拥有${lives}条生命`,
+			`Możesz użyć ponownej próby, aby wrócić do fali ${this.savedWave} z ${lives} życiami`
 		]
 		return text[lang];
 	}
