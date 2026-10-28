@@ -4,7 +4,7 @@ import { playSound } from '../../file/audio.js';
 export class Pokemon {
 	constructor(
 		specie, lvl, targetMode, main, adn = undefined, favorite = false, item = null, alias = undefined, isShiny = false,
-		hideShiny = false, isMega = false, isReset = false, skin = null, extra = false, acquisitionDate = Date.now(), stadistics = {}, hasCustomSkin = false
+		hideShiny = false, isMega = false, isReset = false, skin = null, extra = false, acquisitionDate = Date.now(), stadistics = {}, hasCustomSkin = false, unownForm = undefined
 	) {
 		this.main = main;
 
@@ -29,6 +29,7 @@ export class Pokemon {
 		if (this.hasCustomSkin) this.setCustomSkin();
 		this.name = specie.name;
 		this.alias = alias;
+		this.unownForm = unownForm;
 		this.ability = specie.ability;
 		this.tiles = specie.tiles;
 		this.projectile = specie.projectile;
@@ -106,7 +107,7 @@ export class Pokemon {
 		this.baseSprite = JSON.parse(JSON.stringify(this.sprite));
 		this.hideShiny = hideShiny;
 
-		if (this.specie?.key === 'unown')  this.updateUnownSprite();
+		if (this.specie?.key === 'unown') this.updateUnownSprite();
 
 		if (this.isShiny) {
 			if (!this.hideShiny) this.setShiny();
@@ -266,6 +267,7 @@ export class Pokemon {
 	            acquisitionDate: this.acquisitionDate,
 	            stadistics: this.stadistics,
 	            hasCustomSkin: this.hasCustomSkin,
+	            unownForm: this.unownForm,
 	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    } else {
@@ -286,6 +288,7 @@ export class Pokemon {
 	            acquisitionDate: this.acquisitionDate,
 	            stadistics: this.stadistics,
 	            hasCustomSkin: this.hasCustomSkin,
+	            unownForm: this.unownForm,
 	            tilePosition: this.tilePosition // MOD: Persist tower placement
 	        };
 	    }
@@ -325,7 +328,8 @@ export class Pokemon {
 	        data.extra,
 	        data.acquisitionDate ?? Date.now(),
 	        data.stadistics,
-	        data.hasCustomSkin ?? false
+	        data.hasCustomSkin ?? false,
+	        data.unownForm
 	    );
 	    // MOD: Restore saved tower placement position
 	    pokemon.tilePosition = data.tilePosition ?? -1;
@@ -976,16 +980,20 @@ export class Pokemon {
 	    }
 	}
 
-	updateUnownSprite() {
+	updateUnownSprite(alias = this.alias) {
 	    if (this.specie?.key !== 'unown') return;
 
-	    const letter = String(
-	        this.main.player?.unownLetter || 'A'
-	    ).trim().toUpperCase();
+	    const aliasLetter = String(alias ?? '').trim().toUpperCase();
+	    const defaultLetter = String(this.main.player?.unownLetter || 'A').trim().toUpperCase();
+	    if (/^[A-Z!?]$/.test(aliasLetter)) this.unownForm = aliasLetter;
+	    if (!/^[A-Z!?]$/.test(this.unownForm ?? '')) {
+	        this.unownForm = /^[A-Z!?]$/.test(defaultLetter) ? defaultLetter : 'A';
+	    }
+	    const letter = this.unownForm;
 
 	    if (!/^[A-Z!?]$/.test(letter)) return;
+	    this.sprite = JSON.parse(JSON.stringify(this.baseSprite));
 
-	    // Los símbolos necesitan nombres de archivo válidos en Windows.
 	    const form = letter === '!'
 	        ? 'exclamation'
 	        : letter === '?'
@@ -1011,7 +1019,19 @@ export class Pokemon {
 	    };
 
 	    updateSprite(this.sprite);
-	    updateSprite(this.baseSprite);
+
+	    if (this.isShiny && !this.hideShiny) {
+	        for (const key in this.sprite) {
+	            if (Object.prototype.hasOwnProperty.call(this.sprite, key) && typeof this.sprite[key] === 'string') {
+	                this.sprite[key] = this.sprite[key].replace(/\/normal\//g, '/shiny/');
+	            }
+	        }
+	    }
+
+	    if (this.isDeployed) {
+	        const tower = this.main.area.towers.find(t => t.pokemon === this);
+	        if (tower) tower.updateTowerSprite();
+	    }
 	}
 
 	resetPokemon() {

@@ -542,6 +542,9 @@ export class MenuScene extends SectionScene {
 	    this.saveConfig(config);
 
 	    this.main[key] = value;
+	    if (key === 'mapEffects') {
+	        document.documentElement.classList.toggle('disable-shop-background-animation', value === 0);
+	    }
 	    if (key === 'disableTagColors') {
 	        document.body.classList.toggle('disable-tag-colors', Boolean(value));
 	    }
@@ -734,7 +737,7 @@ export class MenuScene extends SectionScene {
 		this.importData = this.makeButton(content, 'menu-scene-import-data stroke', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.0` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.1` }).element;
 	}
 
 	syncExportDataButtonState() {

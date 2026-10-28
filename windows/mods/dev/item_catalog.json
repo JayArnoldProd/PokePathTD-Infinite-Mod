@@ -1,5 +1,5 @@
 {
-  "gameVersion": "1.7.0",
+  "gameVersion": "1.7.1",
   "items": {
     "ringTarget": {
       "id": "ringTarget",
@@ -2741,7 +2741,8 @@
           "originPulse",
           "charmedCharm",
           "icyWind",
-          "whiteRay"
+          "whiteRay",
+          "precipiceBlades"
         ],
         "attackType": "aura",
         "orbital": true,
@@ -4000,7 +4001,8 @@
           "curseSplash",
           "electroBall",
           "pollenPuff",
-          "autotomize"
+          "autotomize",
+          "auraSphere"
         ]
       },
       "restriction": {
@@ -4058,7 +4060,8 @@
           "curseSplash",
           "electroBall",
           "pollenPuff",
-          "autotomize"
+          "autotomize",
+          "auraSphere"
         ]
       },
       "restriction": {
@@ -6817,6 +6820,7 @@
           "icyWind",
           "cryogenicCannon",
           "twineedleMega",
+          "flowerTrick",
           "uTurn",
           "dazzlingGleam",
           "flamethrower",

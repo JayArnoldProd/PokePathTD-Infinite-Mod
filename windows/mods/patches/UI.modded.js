@@ -2687,17 +2687,21 @@ export class UI {
 		let txt = " ";
 		const pokemon = pokemonData[poke];
 		const isShiny = Math.random() < (1 / 30);
+		const reward = new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny);
 
 		if (pokemon?.key === 'wooper') txt = text.shop.wooper;
 		if (pokemon?.key === 'tyrunt') txt = text.shop.tyrunt;
 
-		if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
-			this.main.team.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.team.pokemon.at(-1), txt);
+		if (this.main.area.heavyMetal) {
+			reward.inGroup = false;
+			this.main.box.pokemon.push(reward);
+		} else if (this.main.team.pokemon.length < this.main.player.teamSlots && !this.main.area.inChallenge) {
+			this.main.team.addPokemon(reward);
 		} else {
-			this.main.box.addPokemon(new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny));
-			this.main.shopScene.displayPokemon.open(this.main.box.pokemon.at(-1), txt);
+			this.main.box.addPokemon(reward);
 		}
+
+		this.main.shopScene.displayPokemon.open(reward, txt);
 
 		this.main.player.stats.pokemonOwned++;
 		this.main.player.stats.totalPokemonLevel++;

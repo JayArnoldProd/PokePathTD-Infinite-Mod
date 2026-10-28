@@ -80,15 +80,15 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  70420,
-    "src/js/game/component/Pokemon.js":     35044,
-    "src/js/game/scenes/PokemonScene.js":   83461,
-    "src/js/game/core/Area.js":             36405,
+    "src/js/game/Game.js":                  70430,
+    "src/js/game/component/Pokemon.js":     35981,
+    "src/js/game/scenes/PokemonScene.js":   83459,
+    "src/js/game/core/Area.js":             36624,
     "src/js/game/core/Team.js":             2849,
     "src/js/game/core/Box.js":              859,
-    "src/js/game/component/Tower.js":       358039,
-    "src/js/game/component/Enemy.js":        101889,
-    "src/js/game/scenes/MenuScene.js":       57638,
+    "src/js/game/component/Tower.js":       358934,
+    "src/js/game/component/Enemy.js":        101642,
+    "src/js/game/scenes/MenuScene.js":       57783,
 }
 
 def check_game_version_compatibility():
@@ -388,14 +388,13 @@ MOD_FEATURES = {
                       'apply_enemy_scaling',
                       'apply_text_continue_option', 'apply_menu_autoreset_range',
                       'apply_map_record_uncap', 'apply_wave_manager_fix',
-                      'apply_endless_stat_safety', 'apply_endless_levelbutton_safety',
-                      'apply_star_scaling_uncap'],
+                      'apply_endless_stat_safety', 'apply_endless_levelbutton_safety'],
         'default': True,
     },
     'infinite_levels': {
         'name': 'Infinite Levels',
-        'description': 'Remove level 100 cap, asymptotic stat scaling, recharge precision at sub-0.1s, and uncap star-scaled bonuses',
-        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods', 'apply_recharge_precision', 'apply_star_scaling_uncap'],
+        'description': 'Remove level 100 cap, asymptotic stat scaling, and recharge precision at sub-0.1s',
+        'functions': ['apply_pokemon_mods', 'apply_pokemonscene_mods', 'apply_recharge_precision'],
         'default': True,
     },
     'shiny': {
@@ -676,8 +675,8 @@ def apply_secret_shiny():
     body = content[start:end]
     if 'const isShiny = Math.random() < (1 / 30);' not in body:
         old = 'new Pokemon(pokemon, 1, null, this.main)'
-        if body.count(old) != 2:
-            log_fail(path.name + ': Shiny acquisition', 'expected both acquisition paths')
+        if body.count(old) != 1:
+            log_fail(path.name + ': Shiny acquisition', 'expected one shared reward object')
             return False
         body = body.replace('{', '{\n\t\tconst isShiny = Math.random() < (1 / 30);', 1)
         body = body.replace(old, 'new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny)')
@@ -1210,128 +1209,6 @@ def apply_recharge_precision():
 
     log_fail("PokemonScene.js: Recharge precision - no matching patterns")
     return False
-
-
-def apply_star_scaling_uncap():
-    """Remove 1200-star cap behavior for star-scaled Clefairy/Star Candy/Amulet Coin effects.
-
-    Targets:
-    - PlacementTile range preview for Star Candy (remove Math.min 120 cap)
-    - Projectile Clefairy star ability damage (remove Math.min 1200 cap if present)
-    - Projectile Amulet Coin gold bonus cap (remove Math.min 1200 cap if present)
-    - Tower Star Candy range bonus (remove Math.min 120 cap if present)
-    - Star/Candy/Amulet descriptions (remove stale "max 1200" text)
-
-    Notes:
-    - Some versions already use uncapped formulas; this patch is idempotent.
-    - This patch is used by Infinite Levels and Endless mode to keep star-cap behavior consistent.
-    """
-    changed_any = False
-
-    # PlacementTile.js - Star Candy preview range cap
-    placement_path = JS_ROOT / "game" / "component" / "PlacementTile.js"
-    if placement_path.exists():
-        placement = read_file(placement_path)
-        if "drawRangeValue += Math.min(120, this.main.player.stars * 0.1);" in placement:
-            placement = placement.replace(
-                "drawRangeValue += Math.min(120, this.main.player.stars * 0.1);",
-                "drawRangeValue += (this.main.player.stars * 0.1);"
-            )
-            write_file(placement_path, placement)
-            changed_any = True
-
-    # Projectile.js - Clefairy star ability damage cap (if present in this version)
-    projectile_path = JS_ROOT / "game" / "component" / "Projectile.js"
-    if projectile_path.exists():
-        projectile = read_file(projectile_path)
-        replacements = [
-            (
-                "finalDamage += Math.min(1200, this.tower.main.player.stars);",
-                "finalDamage += this.tower.main.player.stars;"
-            ),
-            (
-                "finalDamage += Math.min(1200, this.main.player.stars);",
-                "finalDamage += this.main.player.stars;"
-            ),
-        ]
-        local_change = False
-        for old, new in replacements:
-            if old in projectile:
-                projectile = projectile.replace(old, new)
-                local_change = True
-        if local_change:
-            write_file(projectile_path, projectile)
-            changed_any = True
-
-    # Projectile.js - Amulet Coin gold bonus cap (if present in this version)
-    if projectile_path.exists():
-        projectile = read_file(projectile_path)
-        amulet_before = projectile
-        projectile = projectile.replace(
-            "Math.min(1200, this.tower.main.player.stars)",
-            "this.tower.main.player.stars"
-        )
-        projectile = projectile.replace(
-            "Math.min(1200, this.main.player.stars)",
-            "this.main.player.stars"
-        )
-        projectile = re.sub(
-            r"Math\.min\(\s*1200\s*,\s*([^\)]*player\.stars[^\)]*)\)",
-            r"\1",
-            projectile,
-        )
-        if projectile != amulet_before:
-            write_file(projectile_path, projectile)
-            changed_any = True
-
-    # Tower.js - Star Candy range cap (if present in this version)
-    tower_path = JS_ROOT / "game" / "component" / "Tower.js"
-    if tower_path.exists():
-        tower = read_file(tower_path)
-        local_change = False
-        for old in [
-            "this.range += Math.min(120, this.main.player.stars * 0.1);",
-            "this.range = this.range + Math.min(120, this.main.player.stars * 0.1);",
-        ]:
-            if old in tower:
-                tower = tower.replace(old, "this.range += (this.main.player.stars * 0.1);")
-                local_change = True
-        if local_change:
-            write_file(tower_path, tower)
-            changed_any = True
-
-    # abilityData.js / itemData.js - remove stale description caps
-    for rel in [
-        ("game", "data", "abilityData.js"),
-        ("game", "data", "itemData.js"),
-    ]:
-        data_path = JS_ROOT.joinpath(*rel)
-        if not data_path.exists():
-            continue
-        data = read_file(data_path)
-        updated = data
-        for token in [
-            "(max 1200)",
-            "(máx. 1200)",
-            "(max. 1200)",
-            "(최대 1200)",
-            "（最大1200）",
-            "（最大 1200）",
-            "(maks. 1200)",
-        ]:
-            updated = updated.replace(token, "")
-        # punctuation cleanup after token removal (e.g. "obtained ." -> "obtained.")
-        updated = re.sub(r'\s+\.', '.', updated)
-        if updated != data:
-            write_file(data_path, updated)
-            changed_any = True
-
-    if changed_any:
-        log_success("Star-scaled bonuses: 1200 cap removed")
-    else:
-        log_skip("Star-scaled bonuses: already uncapped")
-
-    return True
 
 
 # ============================================================================
@@ -1947,6 +1824,7 @@ def apply_gold_display_format_player():
     old_options = [
         "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(this.main.player.gold)}`;",
         "this.main.UI.playerGold.innerText = `$${this.main.utility.numberDot(Math.min(99999999999, this.gold))}`;",
+        "this.main.UI.playerGold.innerText = `$${this.main.utility.formatGold(this.gold, this.main.lang)}`;",
     ]
     # Also match the previously patched version
     for marker in ['const g = this.main.player.gold;']:
@@ -1965,7 +1843,7 @@ def apply_gold_display_format_player():
 
     for old in old_options:
         if old in content:
-            replacement = "this.main.UI.updatePlayer();" if "Math.min(99999999999, this.gold)" in old else new
+            replacement = "this.main.UI.updatePlayer();" if "Math.min(99999999999, this.gold)" in old or "formatGold(this.gold, this.main.lang)" in old else new
             content = content.replace(old, replacement)
             write_file(path, content)
             log_success("Player.js: Gold display abbreviated (BILLION/TRILLION/QUADRILLION)")

@@ -1691,7 +1691,6 @@ export class PokemonScene extends GameScene {
 		        	mulPower *= 1 + (tower.lightningRodCharge * 0.1);
 		        }
 
-
 		        if (['sandstorm', 'sandAvalanche'].includes(this.main.area.weather)) {
 		        	if (tower.pokemon?.ability?.id == 'sandRush') mulSpeed *= 0.5;
 		        	if (tower.pokemon?.ability?.id == 'sandForce') mulPower *= 1.5;

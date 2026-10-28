@@ -1,6 +1,6 @@
-# Windows 1.7.0 feature and compatibility checklist
+# Windows 1.7.1 feature and compatibility checklist
 
-This is a behavior checklist for the verified 1.7.0 baseline. Historical implementation details are available in Git history. Do not restore obsolete patches merely to match an older checklist: compare clean upstream source first, preserve selected user behavior, and test the resulting combinations.
+This is a behavior checklist for the verified 1.7.1 baseline. Historical implementation details are available in Git history. Do not restore obsolete patches merely to match an older checklist: compare clean upstream source first, preserve selected user behavior, and test the resulting combinations.
 
 ## Installation and saves
 - [ ] Verify the downloaded runtime version, clean ASAR hash, all skipped official devlogs and source differences.
@@ -72,3 +72,10 @@ This is a behavior checklist for the verified 1.7.0 baseline. Historical impleme
 - [ ] Use the personal code-review skill and re-review all fixes.
 - [ ] Test a clean installation from the actual release ZIP; exclude dependencies, saves, manifests, baselines, caches and test hooks.
 - [ ] Verify the published ZIP SHA256 and source commit/tag before local deployment and notification.
+
+## Windows 1.7.1 regressions
+- [ ] Unown A–Z/!/? forms preserve shiny state, metadata and placement through rename/save/reload.
+- [ ] Heavy Metal rewards reach storage and missing already-unlocked secrets recover on startup.
+- [ ] Weather initializes and clears correctly; preserve Mega Glalie, Mega Steelix, Kyogre and balance fixes.
+- [ ] Preserve new filter entries, translated names, route mirror endpoint and item restrictions.
+- [ ] Retain vanilla Moonblast/Amulet Coin scaling and Star Candy's 140-range bonus cap; do not restore obsolete cap patches.

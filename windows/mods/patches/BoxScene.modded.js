@@ -171,11 +171,11 @@ export class BoxScene extends SectionScene {
 	            ("aura".includes(searchValue) && poke.attackType === 'aura') ||
 	            ("beam".includes(searchValue) && ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.ability.id)) ||
 	            ("stun".includes(searchValue) && (([13, 72, 133, 136, 162].includes(poke.id)) || ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.specie.key))) ||
-	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170].includes(poke.id)) || ['grubbin', 'charjabug', 'kyogre', 'tapuFini'].includes(poke.specie.key))) ||
+	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170, 195].includes(poke.id)) || ['grubbin', 'charjabug', 'kyogre', 'tapuFini'].includes(poke.specie.key))) ||
 	            ("ricochet".includes(searchValue) && ([72].includes(poke.id))) ||
-	            ("heal".includes(searchValue) && ([83, 103, 109, 231, 225].includes(poke.id))) ||
+	            ("heal".includes(searchValue) && ([83, 103, 109, 231, 225, 207].includes(poke.id))) ||
 	            ("curse".includes(searchValue) && ([16, 180, 73].includes(poke.id))) ||
-	            ("burn".includes(searchValue) && ([0, 73, 74, 107, 120, 181, 197, 226, 228].includes(poke.id))) ||
+	            ("burn".includes(searchValue) && ([0, 73, 74, 107, 120, 181, 197, 226, 228, 211, 214].includes(poke.id))) ||
 	            ("poison".includes(searchValue) && ([169, 196, 202, 6, 203, 222].includes(poke.id))) ||
 	            ("armor".includes(searchValue) && ([8, 151, 138].includes(poke.id))) ||
 	            ("splash".includes(searchValue) && ([54, 109].includes(poke.id))) ||

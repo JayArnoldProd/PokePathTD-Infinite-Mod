@@ -320,6 +320,7 @@ export class Area {
 		this.main.UI.waveSelectorBlock.style.boxShadow = 'revert-layer';
 		this.main.UI.waveSelectorMirror.style.background = 'revert-layer';
 		this.main.UI.waveSelectorMirror.style.boxShadow = 'revert-layer';
+		this.weather = false;
 		this.imposedWeather = false;
 		this.enemyWeather = false;
 		this.autoWave = false;
@@ -516,6 +517,7 @@ export class Area {
 		this.bulkUpUsers = {};
 		this.meteorMashUsers = {};
 		this.main.UI.refreshDamageDealt(true);
+		if (this.main.area === this) this.checkWeather();
 		this.music = this.map.music;
 		playMusic(this.music.song);
 
@@ -719,12 +721,12 @@ export class Area {
 	endWave() {
 		this.heavyMetal = false;
 		this.anchorShot = false;
-		this.enemyWeather = false
-		if (!this.map?.weather) {
-	        this.imposedWeather = false;
-	        this.checkWeather();
-	    }
-
+		const hadEnemyWeather = Boolean(this.enemyWeather);
+		this.enemyWeather = false;
+		this.imposedWeather = Boolean(this.map?.weather);
+		if (!this.map?.weather || hadEnemyWeather || this.towers.some(tower => tower.ability?.id === 'pixilate')) {
+			this.checkWeather();
+		}
 
 		if (this.main.player.health[this.routeNumber] <= 0) return;
 

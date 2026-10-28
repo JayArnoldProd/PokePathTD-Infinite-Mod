@@ -2588,6 +2588,24 @@ export class Tower extends Sprite {
             this.ctx.restore();
         }
 
+        if (this.ability?.id === 'seedFlare' && this.main.area.heartScale > 0) {
+            const chargeCount = Math.min(2, Math.floor(this.main.area.heartScale));
+            const cx = this.tile.center.x;
+            const cy = this.tile.position.y + tileSize - 2 + this.drawYOffset;
+            const drawRing = (radiusX, radiusY, color) => {
+                this.ctx.beginPath();
+                this.ctx.ellipse(cx, cy, radiusX, radiusY, 0, 0, Math.PI * 2);
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+            };
+
+            this.ctx.save();
+            if (chargeCount >= 2) drawRing(12, 5, '#ff69b4');
+            drawRing(7, 3.5, '#78ff5a');
+            this.ctx.restore();
+        }
+
         if (this.pokemon?.item?.id === 'inverter') {
             this.ctx.save();
 
@@ -3213,7 +3231,7 @@ export class Tower extends Sprite {
             angularSpeed = this.shiftGearSpeed;
         } else if (
             this.pokemon?.ability?.id === 'stoneEdgeMega' &&
-            this.main.area.weather === 'sandstorm'
+            ['sandstorm', 'sandAvalanche'].includes(this.main?.area?.weather)
         ) {
             angularSpeed *= 1.5;
         }
@@ -4829,11 +4847,11 @@ export class Tower extends Sprite {
                                 this.main.UI.getSecret('wooper');
                             }
                         } else {
-                            if (this.main.player.health[this.main.area.routeNumber] == 2 && !this.main.player.secrets.wooper) {
+                            if (this.main.player.health[this.main.area.routeNumber] <= 2 && !this.main.player.secrets.wooper) {
                                 this.main.player.secrets.wooper = true;
                                 this.main.UI.getSecret('wooper');
                             }
-                            this.main.player.getDamaged(1);
+                            this.main.player.getDamaged(2);
                             this.main.area.hitsReceived++;
                         }
                     }
@@ -6217,7 +6235,7 @@ export class Tower extends Sprite {
             else enemy.applyStatusEffect({ type: 'stun', duration: 2 });
         }
 
-        if (enemy.canStun && ['dazzlingGleam'].includes(this.pokemon.ability?.id) && Math.random() < 0.5) {
+        if (enemy.canStun && ['dazzlingGleam'].includes(this.pokemon.ability?.id) && Math.random() < 0.25) {
             if (this.pokemon?.item?.id == 'lightClay') enemy.applyStatusEffect({ type: 'stun', duration: 1.1 });
             else enemy.applyStatusEffect({ type: 'stun', duration: 1 });
         }

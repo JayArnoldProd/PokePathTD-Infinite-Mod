@@ -177,20 +177,16 @@ export class Enemy extends Sprite {
 
 		this.weatherTimer = 0;
 
-		if (['drought', 'sunnyDay'].includes(this.passive?.id)) {
-			this.main.area.enemyWeather = 'harshSunlight';
+		const imposedWeather = ['drought', 'sunnyDay'].includes(this.passive?.id)
+			? 'harshSunlight'
+			: this.passive?.id === 'drizzle'
+				? 'rain'
+				: null;
+
+		if (imposedWeather) {
+			this.main.area.enemyWeather = imposedWeather;
 			this.main.area.imposedWeather = true;
-			if (this.main.area.weather != 'starryNight') {
-				this.main.area.weather = 'harshSunlight';
-				this.main.UI.displayWeather();
-			}
-		} else if (this.passive?.id == 'drizzle' ) {
-			this.main.area.enemyWeather = 'drizzle';
-			this.main.area.imposedWeather = true;
-			if (this.main.area.weather != 'starryNight') {
-				this.main.area.weather = 'rain';
-				this.main.UI.displayWeather();
-			}
+			this.main.area.checkWeather();
 		}
 
 		// Achievement tracker
@@ -1879,7 +1875,7 @@ export class Enemy extends Sprite {
 			playSound('earthquake', 'effect');
 
 			this.main.game.startShake(28, (3000/this.main.game.speedFactor));
-	    	if (this.main.area.weather != 'starryNight') this.main.area.weather = (this.enemy.id == 'groudon') ? 'extremelyHarshSunlight' : 'heavyRain';
+			if (this.main.area.weather != 'starryNight') this.main.area.weather = (this.enemy.id == 'groudon') ? 'extremelyHarshSunlight' : 'heavyRain';
 			this.main.UI.displayWeather();
 	    }
 

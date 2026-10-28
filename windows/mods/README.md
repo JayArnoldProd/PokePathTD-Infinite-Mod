@@ -1,23 +1,22 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.7.0
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.7.1
 
-**For PokéPath TD v1.7.0 on Windows.** macOS remains on its older release track.
+**For PokéPath TD v1.7.1 on Windows.** macOS remains on its older release track.
 
 Endless waves, optional 10x speed, paused micromanagement, shiny improvements and save tools, rebased onto the new game.
 
-**Windows refresh — October 27, 2026**
-- Preserves 1.7.0 combat, weather, cosmetics, items, routes and hidden rewards.
-- Updates Unlockables requirements and progress in all ten languages.
-- Updates Pokémon, item, route and egg metadata in the save editor.
+**Windows refresh — October 28, 2026**
+- Preserves 1.7.1 reward recovery, weather, combat and filter fixes.
+- Keeps Unown letter/symbol forms when renaming, saving and reloading.
+- Refreshes localized names, item restrictions and editor metadata.
 - Keeps every existing Pokémon and remembers your selected features.
-- Grows box storage to fit the collection and additional owned copies.
 
-**Updating:** Close the game and back up both save profiles and your current installation. Install the official Windows 1.7.0 build, then copy this release's `mods/` folder into it, retaining your `installed_features.json`. The installer needs a **clean 1.7.0** `app.asar.vanilla`; archive the previous version's backup separately. Rerun the installer with your remembered selections. No save reset is needed.
+**Updating:** Close the game and back up both save profiles and your current installation. Install the official Windows 1.7.1 build, then copy this release's `mods/` folder into it, retaining your `installed_features.json`. The installer needs a **clean 1.7.1** `app.asar.vanilla`; archive the previous version's backup separately. Rerun the installer with your remembered selections. No save reset is needed.
 
 **Egg safety:** Loading the editor does not restock eggs. Ordinary eggs exclude owned evolution lines and secret/challenge rewards. Existing duplicates stay intact, even when new duplicate acquisitions are disabled. Fresh installs default duplicate permission off.
 
-**Vanilla overlap:** The game now supplies expanded collection storage, more sorting/filtering, item information, cosmetics, weather mechanics and the published balance fixes. INFINITE keeps adaptive storage for extra copies, its additional sorts, localized Unlockables, endless scaling and paused controls. Official art takes priority; supplemental shiny art remains where needed.
+**Vanilla overlap:** The game now supplies expanded collection storage, more sorting/filtering, item information, cosmetics, weather mechanics and the published balance fixes. INFINITE keeps adaptive storage for extra copies, its additional sorts, localized Unlockables, endless scaling and paused controls. Vanilla also supplies uncapped Moonblast/Amulet Coin scaling and large-gold notation; the mod retains its gold abbreviations. Official art takes priority; supplemental shiny art remains where needed.
 
 ---
 
@@ -29,7 +28,7 @@ Endless waves, optional 10x speed, paused micromanagement, shiny improvements an
 
 ### 📈 Removed Caps
 - **Shiny Level Cap Removed** - Shiny Pokémon can level past 100; ordinary Pokémon retain their level-100 cap
-- **Star-Based Scaling** - Removes caps on star-scaled bonuses; ordinary-route stars still come from waves 1–100
+- **Star Bonuses** - Preserves vanilla Moonblast and Amulet Coin scaling; Star Candy retains its current 140-range bonus cap. Ordinary-route stars still come from waves 1–100.
 - **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
 - **Orbital Speed Scaling** - Extends orbital motion and count scaling beyond level 100 while preserving new weather and ability effects
 
@@ -58,8 +57,8 @@ Endless waves, optional 10x speed, paused micromanagement, shiny improvements an
 - **Profile Tracking** - Records shiny enemies defeated in the Profile screen
 
 ### 🔧 Quality of Life
-- **Save/Load Button Labels** - Quick labels for team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.7.0
-- **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.7.0 provides its own attack/field indicators and target-mode guards
+- **Save/Load Button Labels** - Quick labels for team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.7.1
+- **Attack Type/Shape Sorting** - Sort your box by Attack Type (AOE, Aura, Single, Orbital) or Attack Shape (Circle, Donut, Cross, X, Line); vanilla 1.7.1 provides its own attack/field indicators and target-mode guards
 - **Unlockables Profile Tab** - Profile screen tracks every challenge reward, all 63 secret Pokémon, all 7 secret maps, two hidden items, and the welcome gift with verified unlock conditions
 - **Live Profile Updates** - Profile stats refresh while the menu is open, including shiny enemy defeat tracking
 
@@ -68,14 +67,14 @@ Endless waves, optional 10x speed, paused micromanagement, shiny improvements an
 - **Challenge Level Cap Fix** - Level cap no longer boosts low-level Pokemon instead of only capping high-level ones
 - **Shiny Ditto Fix** - Untransformed shiny Ditto now correctly displays its blue sprite
 - **Projectile Retargeting Fix** - Projectiles only retarget enemies within the firing tower's range
-- **Shell Bell & Clefairy Doll Compatibility Guard** - Preserves intended trigger behavior and stays aligned with vanilla 1.7.0 tracking
+- **Shell Bell & Clefairy Doll Compatibility Guard** - Preserves intended trigger behavior and stays aligned with vanilla 1.7.1 tracking
 
 ### ⚡ Performance Optimizations
 - **Delta Time Accuracy** - High-speed attacks process correctly at 5x/10x speed
 - **Squared Distance Checks** - Replaces expensive sqrt calculations in range detection, targeting, and aura checks
 - **High-Speed Game Loop** - Sub-step simulation and precomputed Snow Cloak candidates
 - **Sub-Step Draw Skipping** - Enemies only draw on the final sub-step, not every physics tick
-- **Power Recalculation** - Retains vanilla 1.7.0’s simulation-time throttling
+- **Power Recalculation** - Retains vanilla 1.7.1’s simulation-time throttling
 
 ---
 
@@ -93,7 +92,7 @@ A graphical save editor with full control over your game:
 
 ### Individual Pokemon
 - **Edit Level** - Set any level (1-9999+)
-- **Change Species** - Swap to any Pokemon in the complete 1.7.0 roster
+- **Change Species** - Swap to any Pokemon in the complete 1.7.1 roster
 - **Evolve / Devolve** - Advance or revert evolution
 - **Toggle Shiny** - Make any Pokemon shiny
 - **Add / Delete** - Manage roster
@@ -126,7 +125,7 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 | Version | Platform | Game Compatibility | Download |
 |---------|----------|-------------------|----------|
-| **v1.7.0** (Latest) | Windows | PokePath TD 1.7.0 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.7.0) |
+| **v1.7.1** (Latest) | Windows | PokePath TD 1.7.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.7.1) |
 | v1.6.1 | Windows | PokePath TD 1.6.1 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.6.1) |
 | v1.5.9 | Windows | PokePath TD 1.5.9 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.9) |
 | v1.5.6 | Windows | PokePath TD 1.5.6 | [⬇️ Download](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.5.6) |
@@ -154,7 +153,7 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > **🔴 IMPORTANT:** When installing Python, **check the box that says "Add Python to PATH"** — without this, the mod will not detect Python!
 >
-> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.7.0) or use Python 3.12/3.13 instead.
+> **⚠️ Python 3.14 Note:** If you're on mod version v1.4.1 or older, Python 3.14 is **not compatible**. Either update to the latest Windows release (v1.7.1) or use Python 3.12/3.13 instead.
 >
 > To verify installation, open Command Prompt and run:
 > ```
@@ -210,9 +209,9 @@ You can **re-run the installer at any time** to change your mod configuration:
 
 > See `README.md` inside the Mac mod folder for detailed macOS instructions, save editor usage, and troubleshooting.
 
-## 📋 Release Notes (Windows v1.7.0)
+## 📋 Release Notes (Windows v1.7.1)
 
-- Rebased Windows compatibility onto verified PokéPath TD 1.7.0.
+- Rebased Windows compatibility onto verified PokéPath TD 1.7.1.
 - Preserved new combat, weather, cosmetics, routes, items and reward behavior.
 - Expanded localized Unlockables coverage and official normal/shiny art.
 - Updated editor Pokémon, item, route and ordinary-egg metadata.
