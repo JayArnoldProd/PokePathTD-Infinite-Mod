@@ -411,7 +411,7 @@ MOD_FEATURES = {
     },
     'qol': {
         'name': 'Quality of Life',
-        'description': 'Save/load button labels, tower position saving, attack type and attack shape sorting in box, gold cap raised to 9 quadrillion, abbreviated gold display (BILLION/TRILLION/QUADRILLION), profile unlockables tab, live profile stats, and map hover star counts',
+        'description': 'Save/load button labels, tower position saving, attack type and attack shape sorting in box, readable localized gold names from billion through decillion, profile unlockables tab, live profile stats, and map hover star counts',
         'functions': ['apply_item_tooltips', 'apply_ui_mods', 'apply_emoji_font_fix', 'apply_ui_emoji_font_fix', 'apply_challenge_party_preserve', 'apply_attacktype_sort', 'apply_gold_cap_increase', 'apply_gold_display_format_player', 'apply_gold_display_format_ui', 'apply_profile_endless_stats', 'apply_profile_live_update', 'apply_map_hover_stars'],
         'default': True,
     },

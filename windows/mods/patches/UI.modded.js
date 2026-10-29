@@ -67,12 +67,33 @@ const UI_LOCALIZED_LABELS = {
 	time: ['Time', 'Tiempo', 'Temps', 'Tempo', 'Tempo', 'Zeit', '時間', '시간', '时间', 'Czas'],
 	billion: ['Billion', 'Mil millones', 'Milliard', 'Bilhão', 'Miliardo', 'Milliarde', '十億', '십억', '十亿', 'Miliard'],
 	trillion: ['Trillion', 'Billón', 'Billion', 'Trilhão', 'Bilione', 'Billion', '兆', '조', '万亿', 'Bilion'],
-	quadrillion: ['Quadrillion', 'Mil billones', 'Billiard', 'Quadrilhão', 'Biliardo', 'Billiarde', '京', '경', '千万亿', 'Biliard'],
+	quadrillion: ['Quadrillion', 'Mil billones', 'Billiard', 'Quadrilhão', 'Biliardo', 'Billiarde', '千兆', '천조', '千万亿', 'Biliard'],
+	quintillion: ['Quintillion', 'Trillón', 'Trillion', 'Quintilhão', 'Trilione', 'Trillion', '百京', '백경', '百京', 'Trylion'],
+	sextillion: ['Sextillion', 'Mil trillones', 'Trilliard', 'Sextilhão', 'Triliardo', 'Trilliarde', '十垓', '십해', '十垓', 'Tryliard'],
+	septillion: ['Septillion', 'Cuatrillón', 'Quadrillion', 'Septilhão', 'Quadrilione', 'Quadrillion', '秭', '자', '秭', 'Kwadrylion'],
+	octillion: ['Octillion', 'Mil cuatrillones', 'Quadrilliard', 'Octilhão', 'Quadriliardo', 'Quadrilliarde', '千秭', '천자', '千秭', 'Kwadryliard'],
+	nonillion: ['Nonillion', 'Quintillón', 'Quintillion', 'Nonilhão', 'Quintilione', 'Quintillion', '百穣', '백양', '百穰', 'Kwintylion'],
+	decillion: ['Decillion', 'Mil quintillones', 'Quintilliard', 'Decilhão', 'Quintiliardo', 'Quintilliarde', '十溝', '십구', '十沟', 'Kwintyliard'],
 };
 
 function uiLabel(key, lang = 0, fallback = '') {
 	const idx = Number.isInteger(lang) ? Math.max(0, Math.min(9, lang)) : 0;
 	return text?.ui?.[key]?.[idx] ?? text?.ui?.[key]?.[0] ?? UI_LOCALIZED_LABELS[key]?.[idx] ?? UI_LOCALIZED_LABELS[key]?.[0] ?? fallback;
+}
+
+const GOLD_WORD_UNITS = ['billion', 'trillion', 'quadrillion', 'quintillion', 'sextillion', 'septillion', 'octillion', 'nonillion', 'decillion'];
+
+function formatGoldWords(value, lang, numberDot) {
+	const numeric = Number(value);
+	const gold = Number.isFinite(numeric) ? Math.max(0, numeric) : 0;
+	if (gold < 1e9) return `$${numberDot(gold)}`;
+	let unit = 0;
+	while (unit < GOLD_WORD_UNITS.length - 1 && gold >= 10 ** (12 + unit * 3)) unit++;
+	const amount = gold / 10 ** (9 + unit * 3);
+	// toFixed switches to exponential notation at 1e21; grouping keeps even
+	// values beyond our largest named unit readable without changing saved gold.
+	const digits = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	return `$${digits} ${uiLabel(GOLD_WORD_UNITS[unit], lang, GOLD_WORD_UNITS[unit]).toUpperCase()}`;
 }
 
 export class UI {
@@ -1233,16 +1254,7 @@ export class UI {
 		this.playerName.innerText = this.main.player.name.toUpperCase();
 		const goldValue = Number(this.main.player.gold);
 		const gold = Number.isFinite(goldValue) ? Math.max(0, goldValue) : 0;
-		const billion = uiLabel('billion', this.main.lang, 'BILLION').toUpperCase();
-		const trillion = uiLabel('trillion', this.main.lang, 'TRILLION').toUpperCase();
-		const quadrillion = uiLabel('quadrillion', this.main.lang, 'QUADRILLION').toUpperCase();
-		const goldText = gold >= 1e15
-			? `$${(gold / 1e15).toFixed(2)} ${quadrillion}`
-			: gold >= 1e12
-				? `$${(gold / 1e12).toFixed(2)} ${trillion}`
-				: gold >= 1e9
-					? `$${(gold / 1e9).toFixed(2)} ${billion}`
-					: `$${this.main.utility.numberDot(gold)}`;
+		const goldText = formatGoldWords(gold, this.main.lang, value => this.main.utility.numberDot(value));
 		this.playerGold.innerText = goldText;
 		this.updateWaveIncome();
 		this.playerStars.innerHTML = `<span class="msrre">${this.main.utility.drawStarEmoji(this.main.uiTheme)}</span>${this.main.player.stars}`;

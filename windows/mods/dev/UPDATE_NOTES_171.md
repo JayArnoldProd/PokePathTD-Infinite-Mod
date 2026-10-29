@@ -21,8 +21,10 @@ The data remains 505 species/form keys, 249 obtainable lines, 146 ordinary eggs,
 
 ## Vanilla overlap
 
+October 29 QoL follow-up: gold totals now use localized names from billion through decillion, including quintillion and higher amounts. Values above the largest named unit retain grouped digits with that unit rather than reverting to scientific notation. This changes presentation only; it does not change gold arithmetic, stored values, acquisition limits or saves. Vanilla 1.7.1 has no active gold clamp in `changeGold`; older claims that this patch imposes a nine-quadrillion gameplay cap were removed from the feature list. The editor's separate Max Gold action remains unchanged. Japanese and Korean quadrillion labels now correctly represent 10^15. Installations without QoL retain vanilla formatting.
+
 - Vanilla already supplies uncapped Moonblast and Amulet Coin star formulas. The obsolete 1200-star patch and its broad feature claim were removed. Actual 1.7.1 Star Candy code retains `Math.min(140, stars * 0.035)`; this cap is preserved despite the earlier official notes' broader uncapping claim.
-- Vanilla now displays large gold using exponential notation. The selected QoL feature still provides its distinct gold abbreviations and raised gold limit; partial installs retain upstream formatting.
+- Vanilla now displays large gold using exponential notation. The selected QoL feature provides readable localized gold names; installations without QoL retain upstream formatting.
 - Reward recovery, Unown naming/forms, new combat fixes, weather fixes and added filter matches are upstream features. The mod preserves them without claiming authorship.
 - Prior partial overlaps remain: collection storage versus extra owned copies, vanilla paused Time Warp versus optional general micromanagement, and vanilla egg cleanup versus evolution-safe ownership filtering and editor restock protection.
 

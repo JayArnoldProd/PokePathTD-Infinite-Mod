@@ -1,8 +1,9 @@
 {
     "version": "1.7.1",
     "game_version": "1.7.1",
-    "release_date": "2026-10-28",
+    "release_date": "2026-10-29",
     "changes": [
+        "Extended localized QoL gold names through decillion without changing saved amounts",
         "Rebased onto verified Windows 1.7.1",
         "Preserved Bronzong reward recovery, weather and combat fixes",
         "Preserved Unown form saves alongside shiny state and placement",

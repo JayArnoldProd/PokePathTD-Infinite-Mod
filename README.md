@@ -29,7 +29,7 @@ Endless waves, optional 10x speed, paused micromanagement, shiny improvements an
 ### 📈 Removed Caps
 - **Shiny Level Cap Removed** - Shiny Pokémon can level past 100; ordinary Pokémon retain their level-100 cap
 - **Star Bonuses** - Preserves vanilla Moonblast and Amulet Coin scaling; Star Candy retains its current 140-range bonus cap. Ordinary-route stars still come from waves 1–100.
-- **Gold Cap Raised** - Increased to the safe engine max (~9 quadrillion)
+- **Readable Gold Totals** - Localized billion-through-decillion names instead of scientific notation; preserves the underlying gold amount
 - **Orbital Speed Scaling** - Extends orbital motion and count scaling beyond level 100 while preserving new weather and ability effects
 
 ### 🌊 Endless Mode
