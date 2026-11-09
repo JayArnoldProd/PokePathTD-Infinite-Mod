@@ -1,5 +1,5 @@
 {
-  "gameVersion": "1.7.1",
+  "gameVersion": "1.7.2",
   "items": {
     "ringTarget": {
       "id": "ringTarget",
@@ -528,7 +528,7 @@
     "fertiliser": {
       "id": "fertiliser",
       "name": [
-        "Fertiliser",
+        "Fertilizer",
         "Fertilizante",
         "Engrais",
         "Fertilizante",
@@ -537,7 +537,7 @@
         "肥料",
         "비료",
         "肥料",
-        "Fertiliser"
+        "Fertilizer"
       ],
       "tags": [
         "utility"
@@ -580,7 +580,9 @@
           404,
           142,
           144,
-          173
+          173,
+          180,
+          252
         ]
       }
     },
@@ -1521,22 +1523,24 @@
       "isEquipable": true,
       "isRetirable": true,
       "description": [
-        "Increases [RANGE]range[/RANGE] by 30%, [POWER]power[/POWER] by 50%, and [SPEED]recharge time[/SPEED] by 20%. Can only be held by [POKEMON]apes[/POKEMON].",
-        "Aumenta el [RANGE]alcance[/RANGE] un 30%, el [POWER]poder[/POWER] un 50% y el [SPEED]tiempo de recarga[/SPEED] un 20%. Solo pueden llevarlo [POKEMON]simios[/POKEMON].",
-        "Augmente la [RANGE]portée[/RANGE] de 30 %, la [POWER]puissance[/POWER] de 50 % et le [SPEED]temps de recharge[/SPEED] de 20 %. Ne peut être tenu que par des [POKEMON]singes[/POKEMON].",
-        "Aumenta o [RANGE]alcance[/RANGE] em 30%, o [POWER]poder[/POWER] em 50% e o [SPEED]tempo de recarga[/SPEED] em 20%. Só pode ser segurado por [POKEMON]macacos[/POKEMON].",
-        "Aumenta la [RANGE]portata[/RANGE] del 30%, il [POWER]potere[/POWER] del 50% e il [SPEED]tempo di ricarica[/SPEED] del 20%. Può essere tenuto solo da [POKEMON]scimmie[/POKEMON].",
-        "Erhöht die [RANGE]Reichweite[/RANGE] um 30 %, die [POWER]Kraft[/POWER] um 50 % und die [SPEED]Aufladezeit[/SPEED] um 20 %. Kann nur von [POKEMON]Affen[/POKEMON] getragen werden.",
-        "[RANGE]射程[/RANGE]が30%、[POWER]パワー[/POWER]が50%、[SPEED]再使用時間[/SPEED]が20%増加する。[POKEMON]サル[/POKEMON]のみが持つことができる。",
-        "[RANGE]사거리[/RANGE]가 30%, [POWER]위력[/POWER]이 50%, [SPEED]재사용 대기시간[/SPEED]이 20% 증가합니다. [POKEMON]원숭이[/POKEMON]만 지닐 수 있습니다.",
-        "[RANGE]射程[/RANGE]提高30%，[POWER]攻击力[/POWER]提高50%，[SPEED]冷却时间[/SPEED]增加20%。只有[POKEMON]猿类[/POKEMON]才能携带。",
-        "Zwiększa [RANGE]zasięg[/RANGE] o 30%, [POWER]siłę[/POWER] o 50% oraz [SPEED]czas odnowienia[/SPEED] o 20%. Może być noszony tylko przez [POKEMON]małpy[/POKEMON]."
+        "Increases [RANGE]range[/RANGE] by 30%, [POWER]power[/POWER] by 50%, and [SPEED]recharge time[/SPEED] by 20%. Can only be held by [POKEMON]primates[/POKEMON].",
+        "Aumenta el [RANGE]alcance[/RANGE] un 30%, el [POWER]poder[/POWER] un 50% y el [SPEED]tiempo de recarga[/SPEED] un 20%. Solo pueden equiparlo los [POKEMON]primates[/POKEMON].",
+        "Augmente la [RANGE]portée[/RANGE] de 30 %, la [POWER]puissance[/POWER] de 50 % et le [SPEED]temps de recharge[/SPEED] de 20 %. Ne peut être tenu que par les [POKEMON]primates[/POKEMON].",
+        "Aumenta o [RANGE]alcance[/RANGE] em 30%, o [POWER]poder[/POWER] em 50% e o [SPEED]tempo de recarga[/SPEED] em 20%. Só pode ser segurado por [POKEMON]primatas[/POKEMON].",
+        "Aumenta la [RANGE]gittata[/RANGE] del 30%, la [POWER]potenza[/POWER] del 50% e il [SPEED]tempo di ricarica[/SPEED] del 20%. Può essere tenuto solo dai [POKEMON]primati[/POKEMON].",
+        "Erhöht die [RANGE]Reichweite[/RANGE] um 30 %, die [POWER]Stärke[/POWER] um 50 % und die [SPEED]Aufladezeit[/SPEED] um 20 %. Kann nur von [POKEMON]Primaten[/POKEMON] getragen werden.",
+        "[RANGE]射程[/RANGE]が30%、[POWER]威力[/POWER]が50%、[SPEED]リチャージ時間[/SPEED]が20%増加する。[POKEMON]霊長類のポケモン[/POKEMON]のみ持つことができる。",
+        "[RANGE]사거리[/RANGE]가 30%, [POWER]위력[/POWER]이 50%, [SPEED]재충전 시간[/SPEED]이 20% 증가한다. [POKEMON]영장류 포켓몬[/POKEMON]만 지닐 수 있다.",
+        "[RANGE]范围[/RANGE]提高30%，[POWER]威力[/POWER]提高50%，[SPEED]充能时间[/SPEED]增加20%。只有[POKEMON]灵长类宝可梦[/POKEMON]可以携带。",
+        "Zwiększa [RANGE]zasięg[/RANGE] o 30%, [POWER]moc[/POWER] o 50% i [SPEED]czas ładowania[/SPEED] o 20%. Mogą go trzymać tylko [POKEMON]naczelne[/POKEMON]."
       ],
       "condition": {
         "id": [
           8,
           9,
-          152
+          152,
+          195,
+          253
         ]
       }
     },
@@ -1712,7 +1716,9 @@
           "boomburst",
           "liquidVoice",
           "triAttack",
-          "electroBall"
+          "electroBall",
+          "burnRicochet",
+          "dazzlingGleam"
         ],
         "id": [
           19,
@@ -1798,7 +1804,8 @@
           "zapCannon",
           "lavaPlume",
           "triAttack",
-          "electroBall"
+          "electroBall",
+          "burnRicochet"
         ],
         "id": [
           19,
@@ -2582,9 +2589,9 @@
         "id": [
           63,
           72,
-          97,
           2,
-          45
+          249,
+          250
         ]
       },
       "restriction": {
@@ -3219,7 +3226,8 @@
           "steamEruption",
           "sacredFire",
           "volcanicKaboom",
-          "spicySpray"
+          "spicySpray",
+          "burnRicochet"
         ]
       },
       "restriction": {
@@ -3415,7 +3423,8 @@
           142,
           144,
           173,
-          178
+          178,
+          82
         ],
         "ability": [
           "solarBeam",
@@ -3751,7 +3760,8 @@
           "precipiceBlades",
           "sacredFire",
           "volcanicKaboom",
-          "solarPower"
+          "solarPower",
+          "burnRicochet"
         ]
       },
       "restriction": {
@@ -3909,12 +3919,12 @@
         "X Speed",
         "Velocidad X",
         "Vitesse +",
+        "X Speed",
         "Velocità X",
         "X-Initiative",
         "スピーダー",
         "스피드업",
         "速度强化",
-        "X Speed",
         "Przyspieszenie X"
       ],
       "tags": [
@@ -4158,7 +4168,8 @@
           "drumBeating",
           "originPulse",
           "emptyLight",
-          "soulHeartReactor"
+          "soulHeartReactor",
+          "burnRicochet"
         ],
         "id": [
           19,
@@ -4224,7 +4235,11 @@
           144,
           165,
           173,
-          235
+          235,
+          111,
+          210,
+          211,
+          212
         ],
         "ability": [
           "machBolt",
@@ -4745,7 +4760,8 @@
           404,
           142,
           144,
-          173
+          173,
+          53
         ],
         "ability": [
           "solarBeam",
@@ -4772,7 +4788,8 @@
           "psychoCut",
           "emptyLight",
           "signalBeam",
-          "cryogenicCannon"
+          "cryogenicCannon",
+          "dazzlingGleam"
         ],
         "attackType": "aura"
       }
@@ -5534,7 +5551,8 @@
           "steamEruption",
           "sacredFire",
           "volcanicKaboom",
-          "spicySpray"
+          "spicySpray",
+          "burnRicochet"
         ]
       },
       "restriction": {
@@ -6419,6 +6437,7 @@
           "lavaPlume",
           "steamEruption",
           "sacredFire",
+          "burnRicochet",
           "volcanicKaboom",
           "icyWind"
         ],
@@ -6811,7 +6830,10 @@
           141,
           135,
           121,
-          203
+          203,
+          227,
+          220,
+          230
         ],
         "ability": [
           "signalBeam",

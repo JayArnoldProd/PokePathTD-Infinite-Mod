@@ -4,7 +4,7 @@ import { enemyData } from '../data/enemyData.js';
 
 const BURN_ABILITIES = [
 	'burn', 'flamethrower', 'burnSplash', 'magmaStorm', 'burnDoubleShot', 'flameWheel', 'drought', 'willOWisp', 'triAttack',
-	'lavaPlume', 'fireLash', 'steamEruption', 'precipiceBlades', 'sacredFire', 'volcanicKaboom', 'spicySpray', 'fireBlast'
+	'lavaPlume', 'fireLash', 'steamEruption', 'precipiceBlades', 'sacredFire', 'volcanicKaboom', 'spicySpray', 'fireBlast', 'burnRicochet'
 ]
 
 const SHOW_ENEMY_SPEED_DEBUG = false;
@@ -1267,7 +1267,7 @@ export class Enemy extends Sprite {
 		}
 
 	   	if (this.passive?.id == 'herbogenesis' && (
-	   		['heal', 'bitterBlade', 'takeHeart', 'soulHeartReactor'].includes(ability?.id) ||
+			['heal', 'bitterBlade', 'takeHeart', 'soulHeartReactor', 'seedFlare'].includes(ability?.id) ||
 	   		['leftovers', 'shellBell', 'clefairyDoll'].includes(pokemon?.item?.id)
 	   	)) {
 	   		this.regeneration = Math.max(0, this.regeneration - 1000);
@@ -1944,6 +1944,7 @@ export class Enemy extends Sprite {
 	    	this.main.area.goldWave += this.gold;
 	        this.main.player.changeGold(this.gold);
 	        this.main.player.recordEnemyDefeated(this.enemy.id);
+	        this.main.player.stats.defeatedEnemies++;
 
 	        if (pokemon) pokemon.stadistics['defeated'] = (pokemon.stadistics['defeated'] ?? 0) + 1;
 
@@ -1952,7 +1953,7 @@ export class Enemy extends Sprite {
 			}
 
 			if (this.main.area.magmaStorm && this.statusEffects.some(e => e.type === 'burn')) {
-				const explosionDamage = Math.ceil(this.hpMax * 0.1);
+				const explosionDamage = Math.ceil(this.hpMax * 0.06);
 				const explosionRadius = 50;
 				playSound('explosion', 'effect');
 				this.main.area.enemies.forEach(e => {

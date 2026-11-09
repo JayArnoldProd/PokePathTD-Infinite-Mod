@@ -1,5 +1,5 @@
 {
-  "gameVersion": "1.7.1",
+  "gameVersion": "1.7.2",
   "eggKeys": [
     "charmander",
     "treecko",
@@ -146,7 +146,11 @@
     "scraggy",
     "onix",
     "drampa",
-    "slowpoke"
+    "slowpoke",
+    "mantyke",
+    "sizzlipede",
+    "wynaut",
+    "passimian"
   ],
   "speciesIds": {
     "charmander": 0,
@@ -653,6 +657,15 @@
     "megaSlowbro": 246,
     "tyrunt": 247,
     "tyrantrum": 247,
-    "unown": 248
+    "unown": 248,
+    "mantyke": 249,
+    "mantine": 249,
+    "sizzlipede": 250,
+    "centiscorch": 250,
+    "sandshrewAlola": 251,
+    "sandslashAlola": 251,
+    "wynaut": 252,
+    "wobbuffet": 252,
+    "passimian": 253
   }
 }

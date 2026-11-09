@@ -49,6 +49,9 @@ export class Projectile extends Sprite {
         this.simulatedTime = 0;
 
         this.fairySingularity = null;
+        this.spiritShackleShot = projectile.spiritShackle === true;
+        this.spiritShackleShard = projectile.spiritShackleShard ?? null;
+        this.spiritShackleSplit = false;
 
         if (projectile.fairySingularity) {
             const singularity = typeof projectile.fairySingularity === 'object'
@@ -221,6 +224,11 @@ export class Projectile extends Sprite {
         const frameFactor = simDelta / (1000 / 60);
         const secs = simDelta / 1000;
 
+        if (this.spiritShackleShard) {
+            this.updateSpiritShackleShard(simDelta, shouldDraw);
+            return;
+        }
+
         if (this.orbit) {
             this.age += simDelta;
             this.simulatedTime += simDelta;
@@ -232,7 +240,17 @@ export class Projectile extends Sprite {
 
             const cx = this.tower.center.x;
             const cy = this.tower.center.y;
-            const enemies = this.tower.main.area.enemies;
+            const area = this.tower.main.area;
+            const enemies = area.enemies.slice();
+            if (
+                this.tower.ability?.id === 'shiftGear' &&
+                area.waveActive
+            ) {
+                for (const tower of area.towers) {
+                    if (tower.ability?.id !== 'squishyToy') continue;
+                    enemies.push(tower.getSquishyToyTarget());
+                }
+            }
 
             if (this.sacredFire) {
                 let target = null;
@@ -427,7 +445,8 @@ export class Projectile extends Sprite {
                             this.simulatedTime - last >=
                             this.orbitHitCooldown
                         ) {
-                            this.tower.dealDirectDamage(e);
+                            if (e.isSquishyToyTarget) this.tower.activateShiftGear();
+                            else this.tower.dealDirectDamage(e);
                             this.perEnemyLastHit.set(
                                 e,
                                 this.simulatedTime
@@ -1283,7 +1302,12 @@ export class Projectile extends Sprite {
     }
 
     draw() {
-        if (!this.loaded || !this.ctx) return;
+        if (!this.ctx) return;
+        if (this.spiritShackleShot || this.spiritShackleShard) {
+            this.drawSpiritShackle();
+            return;
+        }
+        if (!this.loaded) return;
 
         this.ctx.save();
         this.ctx.globalAlpha *= this.tower?.getEffectOpacity?.('projectiles') ?? 1;
@@ -1319,6 +1343,141 @@ export class Projectile extends Sprite {
         if (this.frames.elapsed % this.frames.hold === 0) {
             this.frames.current++;
             if (this.frames.current >= this.frames.max) this.frames.current = 0;
+        }
+    }
+
+    drawSpiritShackle() {
+        const ctx = this.ctx;
+        const opacity = this.tower?.getEffectOpacity?.('projectiles') ?? 1;
+        ctx.save();
+        ctx.globalAlpha *= opacity;
+
+        if (this.spiritShackleShard?.impacted) {
+            const progress = this.spiritShackleShard.impactRemaining / this.spiritShackleShard.impactDuration;
+            ctx.translate(this.spiritShackleShard.x, this.spiritShackleShard.y);
+            ctx.globalAlpha *= progress;
+            ctx.fillStyle = 'rgba(43, 20, 66, 0.3)';
+            ctx.strokeStyle = 'rgba(178, 139, 232, 0.9)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.spiritShackleShard.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+            return;
+        }
+
+        const centerX = this.position.x + 14;
+        const centerY = this.position.y + 14;
+        const angle = this.spiritShackleShard
+            ? Math.PI / 2
+            : Math.atan2(
+                (this.enemy?.center?.y ?? centerY) - centerY,
+                (this.enemy?.center?.x ?? centerX) - centerX
+            );
+
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle);
+        ctx.shadowBlur = 9;
+        ctx.shadowColor = 'rgba(102, 52, 150, 0.9)';
+        ctx.fillStyle = '#281638';
+        ctx.strokeStyle = '#b28be8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-14, -2);
+        ctx.lineTo(5, -2);
+        ctx.lineTo(12, 0);
+        ctx.lineTo(5, 2);
+        ctx.lineTo(-14, 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-8, -2);
+        ctx.lineTo(-13, -7);
+        ctx.lineTo(-4, -2);
+        ctx.moveTo(-8, 2);
+        ctx.lineTo(-13, 7);
+        ctx.lineTo(-4, 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    updateSpiritShackleShard(deltaTime, shouldDraw) {
+        const shard = this.spiritShackleShard;
+
+        if (shard.impacted) {
+            shard.impactRemaining -= deltaTime;
+            if (shard.impactRemaining <= 0) this.markedForDeletion = true;
+            if (!this.markedForDeletion && shouldDraw) this.draw();
+            return;
+        }
+
+        shard.elapsed += deltaTime;
+        if (shard.elapsed < 0) return;
+
+        const progress = Math.min(1, shard.elapsed / shard.duration);
+        this.position.x = shard.x - 14;
+        this.position.y = shard.y - 90 * (1 - progress) - 14;
+        this.center = { x: shard.x, y: this.position.y + 14 };
+        this.velocity.x = 0;
+        this.velocity.y = 1;
+
+        if (progress >= 1) {
+            shard.impacted = true;
+            shard.impactRemaining = shard.impactDuration;
+
+            const enemies = this.tower?.main?.area?.enemies ?? [];
+            for (const enemy of enemies) {
+                if (!enemy || enemy.hp <= 0 || enemy.invulnerable) continue;
+                if (
+                    enemy.invisible &&
+                    !(this.tower?.revealInvisible || this.tower?.targetMode === 'invisible')
+                ) continue;
+
+                const enemyRadius = Math.max(enemy.width ?? 12, enemy.height ?? 12) / 2;
+                if (Math.hypot(enemy.center.x - shard.x, enemy.center.y - shard.y) <= shard.radius + enemyRadius) {
+                    this.tower.dealDirectDamage(enemy);
+                }
+            }
+        }
+
+        if (shouldDraw) this.draw();
+    }
+
+    spawnSpiritShackleShards(target) {
+        const area = this.tower?.main?.area;
+        if (!area || !target?.center) return;
+
+        const maxX = area.width ?? this.ctx?.canvas?.width ?? 720;
+        const maxY = area.height ?? this.ctx?.canvas?.height ?? 624;
+        for (let i = 0; i < 3; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.sqrt(Math.random()) * 75;
+            const x = Math.max(16, Math.min(maxX - 16, target.center.x + Math.cos(angle) * distance));
+            const y = Math.max(16, Math.min(maxY - 16, target.center.y + Math.sin(angle) * distance));
+            const shard = new Projectile(
+                x - 14,
+                y - 104,
+                null,
+                this.ctx,
+                {
+                    ...this.tower.projectile,
+                    spiritShackleShard: {
+                        x,
+                        y,
+                        elapsed: -i * 90,
+                        duration: 450,
+                        radius: 36,
+                        impactDuration: 180,
+                        impactRemaining: 0,
+                        impacted: false
+                    }
+                },
+                this.tower
+            );
+            this.tower.projectiles.push(shard);
         }
     }
 
@@ -1464,7 +1623,7 @@ export class Projectile extends Sprite {
             this.tower?.pokemon?.item?.id == 'lifeOrb' 
         ) finalDamage += Math.ceil(this.power * 0.5);
 
-        if (this.tower?.pokemon?.item?.id ==  'nanabBerry') {
+        if (this.tower?.pokemon?.item?.id == 'nanabBerry') {
             finalDamage += (this.tower.main.area.unnerve) ? Math.ceil(this.power * 0.55) : Math.ceil(this.power * 0.5);
         }
 
@@ -1475,7 +1634,7 @@ export class Projectile extends Sprite {
             this.tower.amnesiaStacks = 0;
         }
 
-        if ( this.tower?.pokemon?.item?.id == 'sokudosPortfolio') {
+        if (this.tower?.pokemon?.item?.id == 'sokudosPortfolio') {
             finalDamage = Math.ceil(finalDamage *(2 * this.tower.main.player.shinyAmount / 100));
         }
 
@@ -1512,7 +1671,7 @@ export class Projectile extends Sprite {
         }
 
         if (
-            this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 5 &&
+            this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 7 &&
             this.tower?.ability?.id === 'torrent' &&
             (this.tower?.tile.land === 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'squirtBottle') || this.tower?.carriedBy == 'icePlatform')
         ) {
@@ -1520,7 +1679,7 @@ export class Projectile extends Sprite {
         }
 
         if (
-            this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 5 &&
+            this.tower?.main.player.health[this.tower.main.area.routeNumber] <= 7 &&
             this.tower?.ability?.id === 'overgrow' &&
             (this.tower?.tile.land === 3 || (this.tower?.tile.land == 1 && this.tower?.pokemon?.item?.id == 'fertiliser') || this.tower?.carriedBy == 'grassPlatform')
         ) {
@@ -1541,14 +1700,12 @@ export class Projectile extends Sprite {
         ) {
             if (this.tower?.ability?.id != 'contrary' && this.tower?.ability?.id != 'defiant') {
                 finalDamage -= (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.875) : Math.ceil(this.power * 0.5);
-            } else if (this.tower?.ability?.id === 'defiant') {
-                finalDamage += 500;
+            } else if (this.tower?.ability?.id === 'contrary') {
+                finalDamage += Math.ceil(this.power / 2);
             }
-            else finalDamage += Math.ceil(this.power / 2);
         }
 
         if (this.tower?.pokemon?.item?.id == 'laggingTail') {
-            if (this.tower?.ability?.id === 'defiant') finalDamage += 750;
             finalDamage += (this.tower?.ability?.id == 'simple') ? Math.ceil(this.power * 0.875) : Math.ceil(this.power * 0.5);
         }
 
@@ -1774,6 +1931,11 @@ export class Projectile extends Sprite {
         if (this.extra?.multPower) finalDamage = Math.ceil(finalDamage * this.extra?.multPower);
         
         this.enemy.getDamaged(finalDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower, false, false, this.specialEffect);
+        if (this.spiritShackleShot && !this.spiritShackleSplit) {
+            this.spiritShackleSplit = true;
+            if (!this.tower.main.mute[0]) playSound('hit4', 'effect');
+            this.spawnSpiritShackleShards(this.enemy);
+        }
         if (this.tower?.ability?.id === 'supersonic') this.tower.createSupersonicWaves(this.enemy);
         // if (this.tower?.ability?.id === 'icyWind') {
         //     const enemies = this.tower.main.area.enemies;
@@ -1828,7 +1990,7 @@ export class Projectile extends Sprite {
             this.enemy.spinAngle = 0;
         }
 
-        if (this.tower?.pokemon?.item?.id === 'amuletCoin') {
+        if (this.tower?.pokemon?.item?.id === 'amuletCoin' && !this.enemy?.isSquishyToyTarget) {
             let g = Math.ceil(finalDamage * 0.0005 * this.tower.main.player.stars);
             this.tower.main.area.goldWave += g;
             this.tower.main.player.changeGold(g);
@@ -1880,7 +2042,7 @@ export class Projectile extends Sprite {
             else this.enemy.applyStatusEffect({ type: 'slow', duration: 0.2, slowPercent: 0.5 })
         }
 
-        if (this.tower?.ability?.id === 'invalidState' && Math.random() < 0.05) {
+        if (this.tower?.ability?.id === 'invalidState' && (Math.random() < 0.05 || (Math.random() < 0.05 && this.tower?.pokemon?.item?.id == 'noxDex'))) {
             const statusPool = [];
             if (this.enemy.canBurn) {
                 statusPool.push(() => this.enemy.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.tower.pokemon));
@@ -1908,6 +2070,7 @@ export class Projectile extends Sprite {
             this.tower?.ability?.id === 'burn' || (this.tower?.ability?.id === 'flamethrower' && Math.random() < 0.1) || 
             this.tower?.ability?.id === 'magmaStorm' || 
             this.tower?.ability?.id === 'burnSplash' || 
+            this.tower?.ability?.id === 'burnRicochet' ||
             this.tower?.ability?.id === 'burnDoubleShot' || 
             this.tower?.pokemon?.item?.id == 'scovillainSiracha' ||
             (this.tower?.ability?.id === 'drought' && Math.random() < 0.1) ||
@@ -2139,7 +2302,14 @@ export class Projectile extends Sprite {
         if (this.ricochetsLeft > 0 && this.tower && this.tower?.pokemon?.item?.id != 'loadedDice') {
             const next = this.findClosestEnemy(this.enemy, 200);
             if (next) {
-                const reducedPower = (this.tower?.pokemon?.item?.id === 'metronome') ? Math.ceil(this.power * 0.875) : Math.ceil(this.power * 0.7); 
+                let reducedPower;
+
+                if (this.tower?.ability?.id === 'tripleAxel') {
+                    reducedPower = (this.tower?.pokemon?.item?.id === 'metronome') ? Math.ceil(this.power * 1.625) : Math.ceil(this.power * 1.5);
+                } else {
+                    reducedPower = (this.tower?.pokemon?.item?.id === 'metronome') ? Math.ceil(this.power * 0.875) : Math.ceil(this.power * 0.7);
+                }
+
                 const sx = this.enemy.center.x + (Math.random() - 0.5) * 6;
                 const sy = this.enemy.center.y + (Math.random() - 0.5) * 6;
 

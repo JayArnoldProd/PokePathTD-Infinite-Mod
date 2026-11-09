@@ -1,6 +1,6 @@
-# Windows 1.7.1 feature and compatibility checklist
+# Windows 1.7.2 feature and compatibility checklist
 
-This is a behavior checklist for the verified 1.7.1 baseline. Historical implementation details are available in Git history. Do not restore obsolete patches merely to match an older checklist: compare clean upstream source first, preserve selected user behavior, and test the resulting combinations.
+This is a behavior checklist for the verified 1.7.2 baseline. Historical implementation details are available in Git history. Do not restore obsolete patches merely to match an older checklist: compare clean upstream source first, preserve selected user behavior, and test the resulting combinations.
 
 ## Installation and saves
 - [ ] Verify the downloaded runtime version, clean ASAR hash, all skipped official devlogs and source differences.
@@ -34,10 +34,10 @@ This is a behavior checklist for the verified 1.7.1 baseline. Historical impleme
 ## Shiny and egg behavior
 - [ ] Selected shiny feature rolls 1/30 for eggs, starters, challenge rewards and hidden acquisitions.
 - [ ] Reveal animation uses the Pokémon shiny state and preserves upstream reward text.
-- [ ] All 505 species/form keys resolve normal and shiny art, using official assets where available.
+- [ ] All 514 species/form keys resolve normal and shiny art, using official assets where available.
 - [ ] Shiny enemies: 1/1000 roll, doubled HP/armor, two-heart damage, 1000x gold and defeat tracking.
 - [ ] Sprite and skin objects remain isolated between Pokémon, catalog definitions and Ditto transformations.
-- [ ] Egg shop uses exactly the 146 ordinary egg entries, excludes owned evolution lines and rejects secret/challenge entries.
+- [ ] Egg shop uses exactly the 150 ordinary egg entries, excludes owned evolution lines and rejects secret/challenge entries.
 - [ ] Stale/empty pools never charge gold, and transfers preserve existing copies under both duplicate policies.
 - [ ] Editor operations never implicitly restock eggs; explicit reset retains its confirmation.
 
@@ -48,7 +48,7 @@ This is a behavior checklist for the verified 1.7.1 baseline. Historical impleme
 - [ ] Keep vanilla inventory sorting/tier indicators, cosmetic controls, portrait picker, settings and tooltip content.
 - [ ] Save/load labels, position persistence, gold limits/abbreviations, map hover counts and live Profile stats remain available.
 - [ ] Profile collection counts remain duplicate-aware; evolved forms count toward their obtainable line.
-- [ ] Unlockables includes 63 secret Pokémon, seven maps, two hidden items, the gift and 160 challenge rewards.
+- [ ] Unlockables includes 64 secret Pokémon, seven maps, two hidden items, the gift and 160 challenge rewards.
 - [ ] Conditions and progress derive from real achievements/rewards/puzzle/save state. Do not grant future content.
 - [ ] New strings, fallback strings, button labels and shape/type labels cover all ten languages.
 
@@ -61,7 +61,7 @@ This is a behavior checklist for the verified 1.7.1 baseline. Historical impleme
 
 ## Editor and developer tools
 - [ ] Regenerate `pokemon_data.json`, `egg_catalog.json` and `item_catalog.json` from the verified runtime.
-- [ ] Editor lists 47 routes with correct IDs, 40 star routes, 146 ordinary eggs and 197 localized item definitions.
+- [ ] Editor lists 47 routes with correct IDs, 40 star routes, 150 ordinary eggs and 197 localized item definitions.
 - [ ] Defining an item or future form in metadata must not automatically grant it or add it to eggs.
 - [ ] Developer-tools selection enables Electron F12/Ctrl+Shift+I shortcuts.
 
@@ -73,9 +73,16 @@ This is a behavior checklist for the verified 1.7.1 baseline. Historical impleme
 - [ ] Test a clean installation from the actual release ZIP; exclude dependencies, saves, manifests, baselines, caches and test hooks.
 - [ ] Verify the published ZIP SHA256 and source commit/tag before local deployment and notification.
 
-## Windows 1.7.1 regressions
+## Retained Windows 1.7.1 regressions
 - [ ] Unown A–Z/!/? forms preserve shiny state, metadata and placement through rename/save/reload.
 - [ ] Heavy Metal rewards reach storage and missing already-unlocked secrets recover on startup.
 - [ ] Weather initializes and clears correctly; preserve Mega Glalie, Mega Steelix, Kyogre and balance fixes.
 - [ ] Preserve new filter entries, translated names, route mirror endpoint and item restrictions.
 - [ ] Retain vanilla Moonblast/Amulet Coin scaling and Star Candy's 140-range bonus cap; do not restore obsolete cap patches.
+
+## Windows 1.7.2 regressions
+- [ ] New nine species/forms preserve normal/shiny state, levels and placement through save/reload.
+- [ ] Alolan Sandshrew requires Icy Rock on Sandslash, has ten-language exact conditions and stays outside ordinary eggs.
+- [ ] Box Enter transfer, Cone/Mega filters and shape indicators coexist with mod sorting and extra slots.
+- [ ] Squishy Toy, Spirit Shackle, Defiant items, Mega validation, cosmetics and passenger teleport preserve upstream behavior.
+- [ ] Retain special-attack opacity, smoke optimization, weather damage, enemy defeat tracking and uncapped mod Profile totals.

@@ -170,15 +170,15 @@ export class BoxScene extends SectionScene {
 	            ("orbital".includes(searchValue) && poke.attackType === 'orbital') ||
 	            ("aura".includes(searchValue) && poke.attackType === 'aura') ||
 	            ("beam".includes(searchValue) && ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.ability.id)) ||
-	            ("stun".includes(searchValue) && (([13, 72, 133, 136, 162].includes(poke.id)) || ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.specie.key))) ||
-	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170, 195].includes(poke.id)) || ['grubbin', 'charjabug', 'kyogre', 'tapuFini'].includes(poke.specie.key))) ||
+	            ("stun".includes(searchValue) && (([13, 72, 133, 136, 162, 204, 210, 183, 222, 192].includes(poke.id)) || ['vikavolt', 'tapuKoko', 'kyogre'].includes(poke.specie.key))) ||
+	            ("slow".includes(searchValue) && (([54, 64, 80, 128, 170, 195].includes(poke.id)) || ['grubbin', 'charjabug', 'kyogre', 'tapuFini', 'glalie', 'snorunt'].includes(poke.specie.key))) ||
 	            ("ricochet".includes(searchValue) && ([72].includes(poke.id))) ||
 	            ("heal".includes(searchValue) && ([83, 103, 109, 231, 225, 207].includes(poke.id))) ||
 	            ("curse".includes(searchValue) && ([16, 180, 73].includes(poke.id))) ||
 	            ("burn".includes(searchValue) && ([0, 73, 74, 107, 120, 181, 197, 226, 228, 211, 214].includes(poke.id))) ||
 	            ("poison".includes(searchValue) && ([169, 196, 202, 6, 203, 222].includes(poke.id))) ||
 	            ("armor".includes(searchValue) && ([8, 151, 138].includes(poke.id))) ||
-	            ("splash".includes(searchValue) && ([54, 109].includes(poke.id))) ||
+	            ("splash".includes(searchValue) && ([54, 55, 109].includes(poke.id))) ||
 	            (["sword", "soj"].includes(searchValue) && ([165, 175, 176, 233].includes(poke.id))) ||
 	            (["forces", "nature", "fon"].includes(searchValue) && ([220, 227, 230].includes(poke.id))) ||
 	            (["-+", "+-"].includes(searchValue) && (['minun', 'plusle'].includes(poke.specie.key))) ||
@@ -186,7 +186,9 @@ export class BoxScene extends SectionScene {
 	            ("nightmare".includes(searchValue) && ([69, 91, 154].includes(poke.id))) ||
 	            ("iron thorns".includes(searchValue) && poke.id === 178) ||
 				("sandy shocks".includes(searchValue) && poke.id === 179) ||
-				("paradox".includes(searchValue) && ([178, 179, 238, 239].includes(poke.id)))
+				("paradox".includes(searchValue) && ([178, 179, 238, 239].includes(poke.id))) ||
+				("cone".includes(searchValue) && ['charizard', 'drampa', 'flutterMane', 'glalie', 'snorunt', 'megaCharizardY'].includes(poke.specie.key)) ||
+				("mega".includes(searchValue) && (poke.specie.mega != undefined || poke.specie.base != undefined))
 	        );
 	    });
 	    this.displayUnits();
@@ -201,7 +203,7 @@ export class BoxScene extends SectionScene {
 			const unit = this.units[i];
 			const poke = this.searchPokemon[i];
 			unit.classList.remove('is-selected');
-			unit.classList.remove('shape-circle', 'shape-donut', 'shape-cross', 'shape-x-shape', 'shape-v-shape', 'shape-star','shape-line', 'has-held-item');
+			unit.classList.remove('shape-circle', 'shape-donut', 'shape-cross', 'shape-x-shape', 'shape-v-shape', 'shape-star', 'shape-line', 'shape-stream', 'shape-cone', 'shape-sweep', 'shape-waves', 'shape-area', 'shape-aura', 'has-held-item');
 
 			if (poke) {
 				if (this.selected && poke === this.selected) unit.classList.add('is-selected');
@@ -214,7 +216,12 @@ export class BoxScene extends SectionScene {
 
 				this.units[i].shape.innerHTML = this.getBoxAttackShapeSymbol(poke);
 				this.units[i].shape.style.display = (this.main.indicatorShape) ? 'block' : 'none';
-				if (poke.rangeType === 'circle') {
+				const abilityId = poke.ability?.id;
+				unit.classList.toggle('shape-cone', ['icyWind', 'dazzlingGleam'].includes(abilityId));
+				unit.classList.toggle('shape-sweep', ['secretSword', 'ancientSword'].includes(abilityId) || poke.item?.id === 'ancientSword');
+				unit.classList.toggle('shape-waves', ['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId));
+				unit.classList.toggle('shape-stream', poke.attackType === 'stream');
+				if (poke.rangeType === 'circle' && poke.attackType !== 'stream') {
 					switch(poke.attackType) {
 						case 'area':
 							unit.classList.toggle('shape-area', true);
@@ -404,6 +411,42 @@ export class BoxScene extends SectionScene {
 		this.main.box.removePokemon(this.selected);
 		this.update();
 		this.main.UI.updatePokemon();
+	}
+
+	handleSinglePokemonEnter() {
+		if (
+			!this.isOpen ||
+			this.searchPokemon?.length !== 1 ||
+			this.main.area.heavyMetal ||
+			this.main.game.deployingUnit ||
+			this.isDragging
+		) {
+			return false;
+		}
+
+		this.selected = this.searchPokemon[0];
+		this.selectedPos = 0;
+
+		if (this.selected.inGroup) {
+			this.removeButton();
+			this.applyTabEffect(this.tabSelected);
+			return true;
+		}
+
+		if (
+			this.main.team.pokemon.length >= this.main.player.teamSlots ||
+			(
+				typeof this.main.area.inChallenge.slotLimit === 'number' &&
+				this.main.team.pokemon.length >= this.main.area.inChallenge.slotLimit
+			)
+		) {
+			playSound('pop0', 'ui');
+			return true;
+		}
+
+		playSound('equip', 'ui');
+		this.addButton();
+		return true;
 	}
 
 	removeButton() {
@@ -1021,9 +1064,14 @@ export class BoxScene extends SectionScene {
 	}
 
 	getBoxAttackShapeSymbol(pokemon) {
+		const abilityId = pokemon?.ability?.id;
+		if (['icyWind', 'dazzlingGleam'].includes(abilityId)) return 'C';
+		if (['secretSword', 'ancientSword'].includes(abilityId) || pokemon?.item?.id === 'ancientSword') return 'S';
+		if (['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId)) return 'W';
 		if (pokemon?.attackType === 'area') return 'A';
 		if (pokemon?.attackType === 'aura') return '~';
 		if (pokemon?.attackType === 'bombardment') return 'B';
+		if (pokemon?.attackType === 'stream') return '>';
 
 		switch (pokemon?.rangeType) {
 			case 'cross': return '+';

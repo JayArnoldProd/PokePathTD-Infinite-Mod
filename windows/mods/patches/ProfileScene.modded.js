@@ -13,7 +13,7 @@ import { achievementReworkData } from '../data/achievementReworkData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
-// Every obtainable secret line in the 1.7.0 pokemonData secretPokemon export.
+// Every obtainable secret line in the 1.7.2 pokemonData secretPokemon export.
 // Cacturne is represented by its unlock-time base form, Cacnea.
 const SECRET_POKEMON_KEYS = [
 	//achievements
@@ -26,7 +26,7 @@ const SECRET_POKEMON_KEYS = [
 	'greavard', 'cacnea', 'dhelmise', 'manaphy', 'phione', 'marshadow', 'ducklett', 'sandygast', 'victini', 'bronzor', 'spiritomb', 'farfetchdGalar', 'calyrex',
 
 	'chatot', 'luvdisc', 'tyrunt', 
-	'corsolaGalar', 'sneaselHisui', 'samurottHisui', 'wooper', 'minior', 'mew',
+	'corsolaGalar', 'sneaselHisui', 'samurottHisui', 'sandshrewAlola', 'wooper', 'minior', 'mew',
 
 	'pumpkaboo', 'spectrier', 
 	// codes
@@ -1076,6 +1076,8 @@ export class ProfileScene extends SectionScene {
         entries.push({id: 'secret-sneasel-hisui', order: 10427, name: localized(pokemonData.sneaselHisui.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang), {item: localized(itemData.poisonBarb.name, lang), pokemon: localized(pokemonData.weavile.name, lang)}), icon: pokemonData.sneaselHisui.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.sneaselHisui || this.hasPokemonKey('sneaselHisui') });
 
         entries.push({id: 'secret-samurott-hisui', order: 10428, name: localized(pokemonData.samurottHisui.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang), {item: localized(itemData.ancientSword.name, lang), pokemon: localized(pokemonData.samurott.name, lang)}), icon: pokemonData.samurottHisui.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.samurottHisui || this.hasPokemonKey('samurottHisui') });
+
+        entries.push({id: 'secret-sandshrew-alola', order: 10429, name: localized(pokemonData.sandshrewAlola.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang), {item: localized(itemData.icyRock.name, lang), pokemon: localized(pokemonData.sandslash.name, lang)}), icon: pokemonData.sandshrewAlola.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.sandshrewAlola || this.hasPokemonKey('sandshrewAlola') });
 
         entries.push({id: 'secret-iron-bundle', order: 10429, name: localized(pokemonData.ironBundle.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('solveWebPuzzle', lang), icon: pokemonData.ironBundle.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('ironBundle') || this.hasPokemonKey('ironBundle') });
 

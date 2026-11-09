@@ -421,8 +421,10 @@ export class PokemonScene extends GameScene {
 		if (this.pokemon.id == 64 || this.pokemon?.adn?.id == 64) {
 			this.abilityDescription.innerHTML += `${text.pokemon.current[this.main.lang]} +${this.main.player.fossilInTeam} ${text.pokemon.projectiles[this.main.lang]}`;
 		} else if (
-			this.pokemon.id == 97 || this.pokemon?.adn?.id == 97 || 
 			this.pokemon.id == 2 || this.pokemon?.adn?.id == 2 || 
+			this.pokemon.id == 249 || this.pokemon?.adn?.id == 249 ||
+			this.pokemon.id == 250 || this.pokemon?.adn?.id == 250 ||
+			this.pokemon.id == 251 || this.pokemon?.adn?.id == 251 ||
 			this.pokemon.id == 72 || this.pokemon?.adn?.id == 72
 		) {
 			this.abilityDescription.innerHTML += `${this.pokemon.ricochet} ${text.pokemon.ricochets[this.main.lang]}`;
@@ -840,6 +842,10 @@ export class PokemonScene extends GameScene {
 				    }
 				}
 
+				if (this.pokemon.hasCustomSkin) {
+					spritePath = spritePath.replace(/\/(?:skin\/)*(normal|shiny)\//, '/skin/$1/');
+				}
+
 				this.skinSlot[indx].style.backgroundImage = `url("${spritePath}")`;
 				indx++;
 			}
@@ -1126,6 +1132,7 @@ export class PokemonScene extends GameScene {
 	        case 'icyRock':
 	        case 'heatRockWeather':
 	            mulSpeed *= 1 + 1;
+				if (this.pokemon.ability.id === 'defiant') flatPower += 500;
 	            break;
 	            
 	        case 'cellBattery':
@@ -1307,6 +1314,7 @@ export class PokemonScene extends GameScene {
 				break;
 
 			case 'nanabBerry':
+				if (this.pokemon.ability.id === 'defiant') flatPower += 500;
 				mulRange *= (this.main.area.unnerve) ? 1.33 : 1.3;
 				mulPower *= (this.main.area.unnerve) ? 1.55 : 1.5;
 				mulSpeed *= (this.main.area.unnerve) ? 1.22 : 1.2;
@@ -1717,7 +1725,7 @@ export class PokemonScene extends GameScene {
 
 	            if (
 	             	tile &&
-		            this.main.player.health[this.main.area.routeNumber] <= 5 &&
+		            this.main.player.health[this.main.area.routeNumber] <= 7 &&
 		            towerAbility === 'torrent' &&
 		            (tile.land === 3 || (tile.land == 1 && tower.pokemon?.item?.id == 'squirtBottle') || tower?.carriedBy == 'icePlatform')
 		        ) {
@@ -1726,7 +1734,7 @@ export class PokemonScene extends GameScene {
 
 		        if (
 	             	tile &&
-		            this.main.player.health[this.main.area.routeNumber] <= 5 &&
+		            this.main.player.health[this.main.area.routeNumber] <= 7 &&
 		            towerAbility === 'overgrow' &&
 		            (tile.land === 2 || (tile.land == 1 && tower.pokemon?.item?.id == 'fertiliser') || tower?.carriedBy == 'grassPlatform')
 		        ) {
@@ -1902,6 +1910,15 @@ export class PokemonScene extends GameScene {
 					this.cosmeticContainer.style.outlineColor = this.main.utility.darkenColor(this.pokemon.specie.color);
 					this.cosmeticSlot[0].style.display = 'flex';
 					this.cosmeticSlot[0].style.backgroundImage = `url("${itemData['mitsuesCocktail'].sprite}")`;
+				}
+				break;
+
+			case 249:
+				if (this.main.player.hasItem('inverter')) {
+					this.cosmeticContainer.style.display = 'flex';
+					this.cosmeticContainer.style.outlineColor = this.main.utility.darkenColor(this.pokemon.specie.color);
+					this.cosmeticSlot[0].style.display = 'flex';
+					this.cosmeticSlot[0].style.backgroundImage = `url("${itemData['inverter'].sprite}")`;
 				}
 				break;
 		}

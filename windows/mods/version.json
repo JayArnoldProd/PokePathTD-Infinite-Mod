@@ -1,12 +1,12 @@
 {
-    "version": "1.7.1",
-    "game_version": "1.7.1",
-    "release_date": "2026-10-29",
+    "version": "1.7.2",
+    "game_version": "1.7.2",
+    "release_date": "2026-11-08",
     "changes": [
-        "Extended localized QoL gold names through decillion without changing saved amounts",
-        "Rebased onto verified Windows 1.7.1",
-        "Preserved Bronzong reward recovery, weather and combat fixes",
-        "Preserved Unown form saves alongside shiny state and placement",
-        "Updated balance, filters, localization and editor metadata"
+        "Rebased onto verified Windows 1.7.2",
+        "Added five collection lines with official normal/shiny art including pre-evolutions",
+        "Added localized Alolan Sandshrew unlock condition and refreshed editor catalogs",
+        "Preserved upstream keyboard, filters, combat, item and visual fixes",
+        "Retained selected mod features and uncapped live Profile totals"
     ]
 }

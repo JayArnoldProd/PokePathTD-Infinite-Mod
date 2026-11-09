@@ -7,6 +7,15 @@ const _REVYS_SPRITES = Object.values(projectileData);
 
 export class Tower extends Sprite {
     constructor(main, x, y, ctx, pokemon, tile, teleportBuff = false) {
+        pokemon?.ensureMegaStone?.();
+        if (
+            pokemon?.item &&
+            main?.itemController &&
+            !main.itemController.canEquip(pokemon.item, pokemon)
+        ) {
+            pokemon.retireItem();
+        }
+
         super(x, y, ctx, pokemon.sprite.image, pokemon.sprite.frames, 8, 0, pokemon.sprite.hold);
         this.main = main;
 
@@ -523,6 +532,7 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'laggingTail') { 
             if (this.ability.id === 'contrary') this.speed -= (this.speed * 0.5);
+            else if (this.ability?.id === 'defiant') this.power += 500;
             else this.speed += (this.speed * 0.5);
         }
 
@@ -564,7 +574,16 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'metalPowder') this.speed += (this.speed / 4);
         if (this.cherrimForm) this.speed -= (this.speed * 0.25);
 
-        if (['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(this.pokemon?.item?.id)) this.speed += (this.speed);
+        if (['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(this.pokemon?.item?.id)) {
+            this.speed += (this.speed);
+        }
+
+        if (this.ability?.id === 'defiant' && [
+            'zoomLens', 'quickPowder', 'quickClaw', 'scovillainSiracha', 'koffingJelly',
+            'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'
+        ].includes(this.pokemon?.item?.id)) {
+            this.power += 500;
+        }
 
         if (this.pokemon?.item?.id == 'choiceScarf') {
             if (this.ability.id === 'quadraShot' || this.ability.id === 'quadraShotSand') this.speed -= (this.speed * 0.875);
@@ -616,7 +635,7 @@ export class Tower extends Sprite {
             this.range = this.range * 3;
         }
 
-        if ([3,4,5,10].includes(this.main.area.routeNumber) && (this.pokemon.ability.id === 'doubleShotSand' || this.pokemon.ability.id === 'quadraShotSand')) {
+        if ([3,4,5,10,21,22,23,24,42,43,44,45].includes(this.main.area.routeNumber) && (this.pokemon.ability.id === 'doubleShotSand' || this.pokemon.ability.id === 'quadraShotSand')) {
             this.range = this.range * 2;
         }  
 
@@ -629,6 +648,7 @@ export class Tower extends Sprite {
         }
 
         if (this.pokemon?.item?.id == 'nanabBerry') {
+            if (this.pokemon?.ability?.id === 'defiant') this.power += 500;
             this.range = (this.main.area.unnerve) ? this.range * 1.33 : this.range * 1.3;
             this.speed += (this.main.area.unnerve) ? (this.speed * 0.22) : (this.speed * 0.2);
         }
@@ -780,6 +800,7 @@ export class Tower extends Sprite {
 
         if (this.pokemon?.item?.id == 'laggingTail') { 
             if (this.ability.id === 'contrary') this.speed -= (this.speed * 0.5);
+            else if (this.ability?.id === 'defiant') this.power += 500;
             else this.speed += (this.speed * 0.5);
         }
 
@@ -951,7 +972,16 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'metalPowder') this.speed += (this.speed / 4);
         if (this.cherrimForm) this.speed -= (this.speed * 0.25);
 
-        if (['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(this.pokemon?.item?.id)) this.speed += (this.speed);
+        if (['dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(this.pokemon?.item?.id)) {
+            this.speed += (this.speed);
+        }
+
+        if (this.ability?.id === 'defiant' && [
+            'zoomLens', 'quickPowder', 'quickClaw', 'scovillainSiracha', 'koffingJelly',
+            'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'
+        ].includes(this.pokemon?.item?.id)) {
+            this.power += 500;
+        }
 
         if (this.pokemon?.item?.id == 'choiceScarf') {
             if (this.ability.id === 'quadraShot' || this.ability.id === 'quadraShotSand') this.speed -= (this.speed * 0.875);
@@ -984,7 +1014,7 @@ export class Tower extends Sprite {
             this.range = this.pokemon.range * 2;
         if (this.tile && (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle') || this.carriedBy == 'icePlatform') && (this.pokemon.ability.id === 'swimmer' || this.pokemon.ability.id === 'castform'))
             this.speed /= 2;
-        if ([3,4,5,10,21,22,23,24].includes(this.main.area.routeNumber) && (this.pokemon.ability.id === 'doubleShotSand' || this.pokemon.ability.id === 'quadraShotSand')) {
+        if ([3,4,5,10,21,22,23,24,42,43,44,45].includes(this.main.area.routeNumber) && (this.pokemon.ability.id === 'doubleShotSand' || this.pokemon.ability.id === 'quadraShotSand')) {
             this.range = this.range * 2;
         }
         if (this.tile && this.tile.land === 4 && this.pokemon.ability.id === 'noGuard') this.range = this.pokemon.range * 10;
@@ -998,6 +1028,7 @@ export class Tower extends Sprite {
         }
 
         if (this.pokemon?.item?.id == 'nanabBerry') {
+            if (this.pokemon?.ability?.id === 'defiant') this.power += 500;
             this.range = (this.main.area.unnerve) ? this.range * 1.33 : this.range * 1.3;
             this.speed += (this.main.area.unnerve) ? (this.speed * 0.22) : (this.speed * 0.2);
         }
@@ -3241,6 +3272,17 @@ export class Tower extends Sprite {
         return angularSpeed;
     }
 
+    activateShiftGear() {
+        if (this.ability?.id !== 'shiftGear') return;
+
+        if (this.pokemon?.item?.id === 'lustrousOrb') this.shiftGearSpeed += 0.06;
+        else this.shiftGearSpeed += 0.03;
+
+        this.projectiles.forEach(proj => {
+            proj.angularSpeed = Math.min(5, this.shiftGearSpeed);
+        });
+    }
+
     updateOrbitalSpeed() {
         if (this.attackType !== 'orbital') return;
 
@@ -3298,7 +3340,7 @@ export class Tower extends Sprite {
             const projectile = this.streamProjectile;
             const hitLength = flame.length + flame.hitBuffer;
 
-            for (const enemy of this.main.area.enemies) {
+            for (const enemy of this.getEnemiesWithSquishyToyTarget()) {
                 if (
                     !enemy ||
                     enemy.hp <= 0 ||
@@ -3469,28 +3511,32 @@ export class Tower extends Sprite {
                 targetY = magnetHolder.center.y + (ddy / ddist) * 20;
             } else {
                 this.isMagnetized = false;
-                targetX = this.tile.position.x + cw / 2;
-                targetY = this.tile.position.y + ch / 2;
+                if (this.pokemon?.item?.id !== 'pokeSkates') {
+                    targetX = this.tile.position.x + cw / 2;
+                    targetY = this.tile.position.y + ch / 2;
+                }
             }
 
             const followSpeed = 150; 
-            const curX = this.position.x + cw / 2;
-            const curY = this.position.y + ch / 2;
+            if (Number.isFinite(targetX) && Number.isFinite(targetY)) {
+                const curX = this.position.x + cw / 2;
+                const curY = this.position.y + ch / 2;
 
-            const dx = targetX - curX;
-            const dy = targetY - curY;
-            const dist = Math.hypot(dx, dy);
+                const dx = targetX - curX;
+                const dy = targetY - curY;
+                const dist = Math.hypot(dx, dy);
 
-            if (dist > 1) {
-                const step = Math.min(dist, followSpeed * (simDelta / 1000));
-                const nx = dx / dist;
-                const ny = dy / dist;
+                if (dist > 1) {
+                    const step = Math.min(dist, followSpeed * (simDelta / 1000));
+                    const nx = dx / dist;
+                    const ny = dy / dist;
 
-                this.position.x += nx * step;
-                this.position.y += ny * step;
-                this.center = { x: this.position.x + cw / 2, y: this.position.y + ch / 2 };
-                this.x = this.position.x;
-                this.y = this.position.y;
+                    this.position.x += nx * step;
+                    this.position.y += ny * step;
+                    this.center = { x: this.position.x + cw / 2, y: this.position.y + ch / 2 };
+                    this.x = this.position.x;
+                    this.y = this.position.y;
+                }
             }
         }
 
@@ -4406,6 +4452,15 @@ export class Tower extends Sprite {
             }
         }
 
+        if (
+            validEnemies.length === 0 &&
+            this.main.area.waveActive &&
+            !['signalBeam', 'cryogenicCannon'].includes(this.ability?.id)
+        ) {
+            const squishyToyTarget = this.getClosestSquishyToyTarget();
+            if (squishyToyTarget) validEnemies.push(squishyToyTarget);
+        }
+
         // TARGET 
         let desiredTarget = null;
 
@@ -4663,6 +4718,30 @@ export class Tower extends Sprite {
                             else critical += (this.main.area.unnerve) ? 66 : 60;
                         }
 
+                        if (
+                            this.main.area.weather == 'rain' &&
+                            (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle') || this.carriedBy == 'icePlatform')
+                        ) {
+                            bbWaveDamage = Math.ceil(bbWaveDamage * 1.2);
+                        }
+
+                        if (
+                            this.main.area.weather == 'thunderStorm' &&
+                            (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle') || this.carriedBy == 'icePlatform')
+                        ) {
+                            bbWaveDamage = Math.ceil(bbWaveDamage * 1.25);
+                        }
+
+                        if (
+                            this.main.area.weather == 'heavyRain' && this.pokemon?.item?.id != 'safetyGoggles' &&
+                            (this.tile.land == 3 || (this.tile.land == 1 && this.pokemon?.item?.id == 'squirtBottle') || this.carriedBy == 'icePlatform')
+                        ) {
+                            if (!this.main.area.cloudNine) {
+                                bbWaveDamage = Math.ceil(bbWaveDamage * 0.5);
+                            }
+                        }
+
+
                         if ((Math.random() * 100) < critical && this.tower?.pokemon?.item?.id != 'blueBandana') {
                             isCritical = true;
                             let multiplier = (this.ability?.id === 'superCritical') ? 2.0 : 1.5;
@@ -4674,7 +4753,6 @@ export class Tower extends Sprite {
                                 else multiplier *= 1.25;
                             }
 
-                            if (this.ability?.id === 'waterCompaction' && ['rain', 'thunderStorm', 'sandstorm', 'sandAvalanche'].includes(this.main?.area?.weather)) multiplier *= 1.3;
                             bbWaveDamage = Math.ceil(bbWaveDamage * multiplier);
                         }
 
@@ -4690,11 +4768,11 @@ export class Tower extends Sprite {
                             this
                         );
 
-                        if (this.ability?.id === 'originPulse' && enemy.canStun && enemy.statusEffects.some(e => e.type === 'slow' && e.duration > 0))  {
+                        if (this.ability?.id === 'originPulse' && enemy.canStun && Math.random() < 0.5 && enemy.statusEffects.some(e => e.type === 'slow' && e.duration > 0))  {
                             if (this.pokemon?.item?.id === 'lightClay') {
-                                enemy.applyStatusEffect({ type: 'stun', duration: 2.2 }, this.pokemon);
+                                enemy.applyStatusEffect({ type: 'stun', duration: 1.1 }, this.pokemon);
                             } else {
-                                enemy.applyStatusEffect({ type: 'stun', duration: 2 }, this.pokemon);
+                                enemy.applyStatusEffect({ type: 'stun', duration: 1 }, this.pokemon);
                             }
                         }
 
@@ -4714,7 +4792,7 @@ export class Tower extends Sprite {
                         }
 
                         if (enemy.canSlow && (
-                            (this.ability?.id === 'originPulse' && Math.random() < 0.15) || 
+                            (this.ability?.id === 'originPulse' && Math.random() < 0.5) ||
                             (this.ability?.id === 'liquidVoice' && Math.random() < 0.25) || 
                             this.ability?.id === 'drumBeating')
 
@@ -4825,7 +4903,7 @@ export class Tower extends Sprite {
                     }
 
                     if (enemy?.passive?.id === 'relicSong') {
-                        if (Math.random() < 0.3) {
+                        if (Math.random() < 0.2) {
                             playSound('dance', 'effect');
                             this.attackCooldown = this.speed * (this.snowCloakNear ? 1.5 : 1);
                             this.relicSongSpin = Math.PI * 2;
@@ -5198,8 +5276,8 @@ export class Tower extends Sprite {
                     }
                 }
 
-                if (cand?.passive?.id === 'relicSong') {
-                    if (Math.random() < 0.3) {
+                if (cand?.passive?.id === 'relicSong' && this.pokemon.id != 53) {
+                    if (Math.random() < 0.2) {
                         playSound('dance', 'effect');
                         this.attackCooldown = this.speed * (this.snowCloakNear ? 1.5 : 1);
                         this.relicSongSpin = Math.PI * 2;
@@ -5358,7 +5436,7 @@ export class Tower extends Sprite {
                                 tickRate: 500,
                                 dedupDistance: 0,
                                 slow: true,
-                                slowFactor: 0.5,
+                                slowFactor: 0.8,
                                 smoke: true
                             });
                         }
@@ -5739,7 +5817,12 @@ export class Tower extends Sprite {
                                 this.position.y + spawnOffsetY - 6,
                                 tgt,
                                 this.ctx,
-                                { ...this.projectile, ricochetsLeft: ricochets, ...(this.pokemon?.item?.id === 'revysBook' ? { sprite: _randomRevysSprite() } : {}) },
+                                {
+                                    ...this.projectile,
+                                    ricochetsLeft: ricochets,
+                                    ...(this.pokemon?.ability?.id === 'spiritShackle' ? { spiritShackle: true } : {}),
+                                    ...(this.pokemon?.item?.id === 'revysBook' ? { sprite: _randomRevysSprite() } : {})
+                                },
                                 this
                             );
                             this.projectiles.push(proj);
@@ -5810,7 +5893,7 @@ export class Tower extends Sprite {
                 continue;
             }
             b.update(simDelta);
-            if (!b.isAnchorChain) b.draw();
+            if (b.active && !b.isAnchorChain) b.draw();
             if (!b.active) {
                 this.beams.splice(i, 1);
             }
@@ -6053,10 +6136,7 @@ export class Tower extends Sprite {
         }
 
         if (this.ability?.id == 'shiftGear') {
-            (this.pokemon?.item?.id == 'lustrousOrb') ? this.shiftGearSpeed += 0.06 : this.shiftGearSpeed += 0.03;
-            this.projectiles.forEach(proj => {
-                proj.angularSpeed = Math.min(5, this.shiftGearSpeed);
-            })
+            this.activateShiftGear();
         }
 
         if (this.pokemon?.item?.id == 'oddKeystone') {
@@ -6157,7 +6237,7 @@ export class Tower extends Sprite {
             }
         }
 
-        if (this.pokemon?.item?.id === 'amuletCoin') {
+        if (this.pokemon?.item?.id === 'amuletCoin' && !enemy.isSquishyToyTarget) {
             let g = Math.ceil(finalDamage * 0.0005 * this.main.player.stars);
             this.main.area.goldWave += g;
             this.main.player.changeGold(g);
@@ -7044,42 +7124,83 @@ export class Tower extends Sprite {
     }
 
     tryTeleport() {
-        if (this.pokemon?.item?.id == 'twistedSpoon' || this.pokemon.isPassenger) {
+        if (this.pokemon?.item?.id == 'twistedSpoon') {
             if (!this.main.mute[1]) playSound('teleport', 'effect');
             (!this.teleportBuff) ? this.teleportBuff = 2 : this.teleportBuff++;
-        } else {
-            const tiles = this.main.area.placementTiles.filter(tile => (tile.tower === false && [1, 2, 4].includes(tile.land)))
-            const tile = tiles[Math.floor(Math.random() * tiles.length)];
-            if (tile == undefined) return;
-            const index = this.main.area.towers.findIndex((tower) => tower.pokemon == this.pokemon);
-            if (index !== -1) {
-                this.main.area.towers[index].tile.tower = false;
-                this.main.area.towers[index].pokemon.tilePosition = -1;
-                this.main.area.towers.splice(index, 1);
-            }
-
-            const indexTeam = this.main.team.pokemon.findIndex((pokemon) => pokemon == this.pokemon);
-
-            (!this.teleportBuff) ? this.teleportBuff = 2 : this.teleportBuff++;
-
-            if (!this.main.mute[1]) playSound('teleport', 'effect');
-            this.main.area.towers.push(
-                new Tower(
-                    this.main,
-                    tile.position.x,
-                    tile.position.y,
-                    this.main.game.ctx,
-                    this.main.team.pokemon[indexTeam],
-                    tile, 
-                    this.teleportBuff
-                )
-            );
-
-            tile.tower = this.main.team.pokemon[indexTeam];
-            this.main.team.pokemon[indexTeam].isDeployed = true;
-            this.main.UI.updatePokemon();
-            this.main.area.recalculateAuras();
+            return;
         }
+
+        const platformAbilities = ['grassPlatform', 'mount', 'grimNeigh', 'rest', 'icePlatform'];
+        const tiles = this.main.area.placementTiles.filter(tile =>
+            (tile.tower === false && [1, 2, 4].includes(tile.land)) ||
+            (tile.tower && !tile.passenger && platformAbilities.includes(tile.tower.ability?.id))
+        );
+        const tile = tiles[Math.floor(Math.random() * tiles.length)];
+        if (!tile) return;
+
+        const pokemon = this.pokemon;
+        const wasPassenger = pokemon.isPassenger;
+        const oldTile = this.tile;
+        const destinationPlatform = tile.tower || null;
+
+        if (wasPassenger) {
+            oldTile.passenger = false;
+
+            const carrierTower = this.main.area.towers.find(tower =>
+                tower !== this && tower.tile === oldTile
+            );
+            if (carrierTower) carrierTower.isMounted = false;
+
+            if (this.carriedBy === 'icePlatform') this.main.UI.tilesCountNum[2]--;
+            else if (this.carriedBy === 'grassPlatform') this.main.UI.tilesCountNum[1]--;
+            else this.main.UI.tilesCountNum[oldTile.land - 1]--;
+        } else {
+            oldTile.tower = false;
+            this.main.UI.tilesCountNum[oldTile.land - 1]--;
+        }
+
+        const currentTowerIndex = this.main.area.towers.indexOf(this);
+        if (currentTowerIndex !== -1) this.main.area.towers.splice(currentTowerIndex, 1);
+
+        pokemon.isPassenger = !!destinationPlatform;
+        pokemon.carriedBy = destinationPlatform;
+        pokemon.tilePosition = tile.id;
+
+        (!this.teleportBuff) ? this.teleportBuff = 2 : this.teleportBuff++;
+
+        if (!this.main.mute[1]) playSound('teleport', 'effect');
+        const teleportedTower = new Tower(
+            this.main,
+            tile.position.x,
+            tile.position.y,
+            this.main.game.ctx,
+            pokemon,
+            tile,
+            this.teleportBuff
+        );
+        if (destinationPlatform) {
+            teleportedTower.isPassenger = true;
+            teleportedTower.carriedBy = destinationPlatform.ability.id;
+            teleportedTower.center = {
+                x: tile.position.x + tile.size / 2,
+                y: tile.position.y + tile.size / 2
+            };
+            const platformTower = this.main.area.towers.find(tower => tower.pokemon === destinationPlatform);
+            if (platformTower) platformTower.isMounted = true;
+            teleportedTower.updateStatsFromPokemon();
+            tile.passenger = pokemon;
+            if (teleportedTower.carriedBy === 'icePlatform') this.main.UI.tilesCountNum[2]++;
+            else if (teleportedTower.carriedBy === 'grassPlatform') this.main.UI.tilesCountNum[1]++;
+            else this.main.UI.tilesCountNum[tile.land - 1]++;
+        } else {
+            tile.tower = pokemon;
+            this.main.UI.tilesCountNum[tile.land - 1]++;
+        }
+
+        this.main.area.towers.push(teleportedTower);
+        pokemon.isDeployed = true;
+        this.main.UI.updatePokemon();
+        this.main.area.recalculateAuras();
     }
 
     jumpToStickyWeb(pos) {
@@ -7216,6 +7337,90 @@ export class Tower extends Sprite {
         return Math.max(0, Math.min(100, value)) / 100;
     }
 
+    getSquishyToyTarget() {
+        if (this.ability?.id !== 'squishyToy') return null;
+
+        if (!this.squishyToyTarget) {
+            const toyTower = this;
+            this.squishyToyTarget = {
+                id: 'squishyToy',
+                isSquishyToyTarget: true,
+                tower: toyTower,
+                hp: 1,
+                hpMax: 1,
+                radius: 16,
+                width: toyTower.width || 24,
+                height: toyTower.height || 24,
+                speed: 0,
+                distanceTraveled: 0,
+                armor: 0,
+                invulnerable: false,
+                invisible: false,
+                dying: false,
+                enemy: { id: 'squishyToy' },
+                statusEffects: [],
+                burnedBy: null,
+                nightmaredBy: null,
+                canBurn: false,
+                canPoison: false,
+                canSlow: false,
+                canStun: false,
+                get center() {
+                    return toyTower.center;
+                },
+                get position() {
+                    return { x: toyTower.position.x, y: toyTower.position.y };
+                },
+                getDamaged(_amount, source = 'physical', _ability = null, _isCritical = false, _alreadyCursed, pokemon) {
+                    if (pokemon?.pokemon != undefined) pokemon = pokemon.pokemon;
+                    if (pokemon?.ability?.id === 'honeyGather' && source === 'physical') {
+                        toyTower.main.area.honeyGather++;
+                    }
+                },
+                applyStatusEffect() {}
+            };
+        }
+
+        return this.squishyToyTarget;
+    }
+
+    getEnemiesWithSquishyToyTarget() {
+        const enemies = this.main.area.enemies;
+        const target = this.target;
+
+        if (
+            !target?.isSquishyToyTarget ||
+            !this.main.area.towers.includes(target.tower)
+        ) {
+            return enemies;
+        }
+
+        return [...enemies, target];
+    }
+
+    getClosestSquishyToyTarget() {
+        let closestTarget = null;
+        let closestDistance = Infinity;
+
+        for (const tower of this.main.area.towers) {
+            if (tower === this || tower.ability?.id !== 'squishyToy') continue;
+
+            const target = tower.getSquishyToyTarget();
+            if (!this.main.game.isEnemyInRange(this, target)) continue;
+
+            const distance = Math.hypot(
+                target.center.x - this.center.x,
+                target.center.y - this.center.y
+            );
+            if (distance < closestDistance) {
+                closestTarget = target;
+                closestDistance = distance;
+            }
+        }
+
+        return closestTarget;
+    }
+
 	refreshOrbitalProjectiles() {
         this.projectiles = this.projectiles.filter(p => !p?.orbit);
         this.spawnOrbitales();
@@ -7230,6 +7435,11 @@ class Beam {
         this.from = { x: from.x, y: from.y };
 
         this.attachedEnemy = options.attachedEnemy ?? null;
+        this.squishyToyTarget = this.attachedEnemy?.isSquishyToyTarget
+            ? this.attachedEnemy
+            : tower.target?.isSquishyToyTarget
+                ? tower.target
+                : null;
         this.persistOnDeath = options.persistOnDeath ?? false;
 
         if (this.attachedEnemy && this.attachedEnemy.center) {
@@ -7276,7 +7486,10 @@ class Beam {
         }
 
         if (this.attachedEnemy) {
-            const stillPresent = this.tower?.main?.area?.enemies?.includes(this.attachedEnemy);
+            const area = this.tower?.main?.area;
+            const stillPresent = this.attachedEnemy.isSquishyToyTarget
+                ? area?.towers?.includes(this.attachedEnemy.tower)
+                : area?.enemies?.includes(this.attachedEnemy);
             const stillAlive = this.attachedEnemy.hp > 0 && stillPresent;
 
             if (stillAlive) {
@@ -7358,7 +7571,14 @@ class Beam {
             return;
         }
 
-        const enemies = this.tower.main.area.enemies;
+        const area = this.tower.main.area;
+        const enemies = area.enemies.slice();
+        if (
+            this.squishyToyTarget &&
+            area.towers.includes(this.squishyToyTarget.tower)
+        ) {
+            enemies.push(this.squishyToyTarget);
+        }
 
         const x1 = this.from.x;
         const y1 = this.from.y;
@@ -7405,6 +7625,11 @@ class Beam {
 
     update(delta) {
         if (!this.active) return;
+
+        if (this.squishyToyTarget && !this.tower.main.area.waveActive) {
+            this.active = false;
+            return;
+        }
 
         this.elapsed += delta;
         this.simulatedTime += delta;
@@ -7790,7 +8015,18 @@ export class LinkBeam {
 
     applyHits() {
         if (!this.fromTower || !this.toTower) return;
-        const enemies = this.fromTower.main.area.enemies;
+        const area = this.fromTower.main.area;
+        const enemies = area.enemies.slice();
+        for (const tower of [this.fromTower, this.toTower]) {
+            const target = tower.target;
+            if (
+                target?.isSquishyToyTarget &&
+                area.towers.includes(target.tower) &&
+                !enemies.includes(target)
+            ) {
+                enemies.push(target);
+            }
+        }
         const now = this.simulatedTime; 
 
         const from = this.fromTower.center;
@@ -7932,6 +8168,18 @@ export class SpikeZone {
         this.burn = options.burn ?? false;
         this.innerRadius = options.innerRadius ?? 0;
         this.smoke = options.smoke ?? false;
+        this.smokePuffs = this.smoke
+            ? Array.from({ length: 6 }, (_, i) => {
+                const seed = Math.abs(Math.sin(this.x * 12.9898 + this.y * 78.233) * 43758.5453) % 1000 + i * 17.31;
+                return {
+                    seed,
+                    angle: (i / 6) * Math.PI * 2 + Math.sin(seed) * 0.5,
+                    distanceFactor: 0.10 + (Math.sin(seed * 4.1) * 0.5 + 0.5) * 0.35,
+                    phaseSpeed: 0.7 + (Math.sin(seed * 2.7) * 0.5 + 0.5) * 0.5,
+                    sizeFactor: 0.55 + (Math.sin(seed * 5.3) * 0.5 + 0.5) * 0.35
+                };
+            })
+            : null;
 
         this.active = true;
     }
@@ -7954,6 +8202,8 @@ export class SpikeZone {
             return;
         }
 
+        if (this.smoke) return;
+
         this.tickAccum += dt;
         if (this.tickAccum < this.tickRate) return;
 
@@ -7968,10 +8218,11 @@ export class SpikeZone {
             if (!this.smoke) this.tower.dealDirectDamage(e);
 
             if (this.burn) {
-                if (e.canBurn && !e.isBurned) {
-                    if (this.pokemon?.item?.id == 'magmaStone') e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.pokemon);
-                    else if (this.pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.pokemon);
-                    else e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, this.pokemon);
+                const pokemon = this.tower.pokemon;
+                if (e.canBurn && e.burnedBy == null) {
+                    if (pokemon?.item?.id == 'magmaStone') e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, pokemon);
+                    else if (pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, pokemon);
+                    else e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 10 }, pokemon);
                 }
             }
         }
@@ -7986,10 +8237,12 @@ export class SpikeZone {
         const fadeIn = Math.min(1, elapsedRatio / 0.15);
         const fadeOut = lifeRatio > 0.1 ? 1.0 : lifeRatio / 0.1;
         const alpha = Math.min(fadeIn, fadeOut);
+        const effectOpacity = this.tower?.getEffectOpacity('special') ?? 1;
 
         const now = Date.now();
 
         this.ctx.save();
+        this.ctx.globalAlpha *= effectOpacity;
         this.ctx.translate(this.x, this.y);
 
         if (!this.smoke) {
@@ -7999,7 +8252,7 @@ export class SpikeZone {
         }
 
         if (this.slow && this.smoke) {
-            this._drawSmoke(alpha, now);
+            this._drawSmoke(alpha * effectOpacity, now);
         } else if (this.slow) {
             this._drawWeb(alpha, now);
         } else if (this.magma) {
@@ -8064,32 +8317,17 @@ export class SpikeZone {
 
         const time = now * 0.001;
 
-        const seed =
-            Math.abs(
-                Math.sin(
-                    this.x * 12.9898 +
-                    this.y * 78.233
-                ) * 43758.5453
-            ) % 1000;
-
         const puffs = 6;
 
         const globalFadeIn = Math.min(1, lifeProgress * 6);
 
         for (let i = 0; i < puffs; i++) {
-            const s = seed + i * 17.31;
+            const puff = this.smokePuffs[i];
+            const { seed: s, angle } = puff;
 
-            const angle =
-                (i / puffs) * Math.PI * 2 +
-                Math.sin(s) * 0.5;
+            const baseDistance = currentRadius * puff.distanceFactor;
 
-            const baseDistance =
-                currentRadius *
-                (0.10 + (Math.sin(s * 4.1) * 0.5 + 0.5) * 0.35);
-
-            const phase =
-                time * (0.7 + (Math.sin(s * 2.7) * 0.5 + 0.5) * 0.5) +
-                s;
+            const phase = time * puff.phaseSpeed + s;
 
             const rise =
                 (Math.sin(phase) * 0.5 + 0.5) *
@@ -8121,13 +8359,7 @@ export class SpikeZone {
                 rise +
                 driftY;
 
-            const sizeFactor =
-                0.55 +
-                (Math.sin(s * 5.3) * 0.5 + 0.5) * 0.35;
-
-            const puffSize =
-                currentRadius *
-                (0.28 + sizeFactor * 0.18);
+            const puffSize = currentRadius * (0.28 + puff.sizeFactor * 0.18);
 
             const pulse =
                 0.92 +
@@ -8215,7 +8447,6 @@ export class SpikeZone {
         const pulse = 0.5 + 0.5 * Math.sin(now / 500);
 
         this.ctx.save();
-        this.ctx.globalAlpha *= this.tower?.getEffectOpacity('special') ?? 1;
         this.ctx.globalCompositeOperation = 'lighter';
 
         const numTriangles = 20;

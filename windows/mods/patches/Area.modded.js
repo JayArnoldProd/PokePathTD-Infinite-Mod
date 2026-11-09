@@ -1042,6 +1042,7 @@ export class Area {
 		}
 
 		if (this.waveNumber === 100 && this.map.id === 21) return waypoints[0];
+		if (this.waveNumber === 100 && this.map.id === 40) return waypoints[1];
 		if (this.waveNumber === 100 && this.map.id === 44) return waypoints[1];
 
 		return waypoints[Math.floor(Math.random() * waypoints.length)];

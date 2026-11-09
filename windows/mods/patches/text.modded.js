@@ -78,6 +78,18 @@ export const text = {
 		  	"正在协助",
 			"POMAGA",
 		],
+		suffering: [
+			`IT'S SUFFERING`, // inglés
+			`ESTÁ SUFRIENDO`, // español
+			`ÇA SOUFFRE`, // francés
+			`TÁ SOFRENDO`, // portugués
+			`STA SOFFRENDO`, // italiano
+			`ES LEIDET`, // alemán
+			`苦しんでる`, // japonés
+			`고통받고 있어`, // coreano
+			`它正在受苦`, // chino
+			`ONO CIERPI` // polaco
+		],
 		waveManager: [
 			"wave manager",
 			"gestor oleadas",
@@ -2756,16 +2768,16 @@ export const text = {
 				`Eksplozja Magmy` // polaco
 		    ],
 		    text: [
-				`Nearby enemies are burned and take damage equal to 10% of the detonated enemy's maximum HP.`, // inglés
-				`Los enemigos cercanos se queman y sufren daño igual al 10% de la vida máxima del enemigo detonado.`, // español
-				`Les ennemis proches sont brûlés et subissent des dégâts égaux à 10 % des PV max de l'ennemi ayant explosé.`, // francés
-				`Os inimigos próximos são queimados e sofrem dano igual a 10% da vida máxima do inimigo detonado.`, // portugués
-				`I nemici vicini vengono bruciati e subiscono danni pari al 10% degli HP massimi del nemico detonante.`, // italiano
-				`Nahe Gegner werden verbrannt und erleiden Schaden in Höhe von 10 % der maximalen KP des detonierten Gegners.`, // alemán
-				`近くの敵をやけど状態にし、爆発した敵の最大HPの10%に相当するダメージを与える。`, // japonés
-				`주변 적이 화상을 입고 폭발한 적의 최대 HP의 10%에 해당하는 피해를 받습니다.`, // coreano
-				`附近的敌人会被灼伤，并受到相当于被引爆敌人最大HP 10%的伤害。`, // chino
-				`Poblisc wrogowie zostają podpaleni i otrzymują obrażenia równe 10% maksymalnego HP detonowanego wroga.` // polaco
+				`Nearby enemies are burned and take damage equal to 6% of the detonated enemy's maximum HP.`, // inglés
+				`Los enemigos cercanos se queman y sufren daño igual al 6% de la vida máxima del enemigo detonado.`, // español
+				`Les ennemis proches sont brûlés et subissent des dégâts égaux à 6 % des PV max de l'ennemi ayant explosé.`, // francés
+				`Os inimigos próximos são queimados e sofrem dano igual a 6% da vida máxima do inimigo detonado.`, // portugués
+				`I nemici vicini vengono bruciati e subiscono danni pari al 6% degli HP massimi del nemico detonante.`, // italiano
+				`Nahe Gegner werden verbrannt und erleiden Schaden in Höhe von 6 % der maximalen KP des detonierten Gegners.`, // alemán
+				`近くの敵をやけど状態にし、爆発した敵の最大HPの6%に相当するダメージを与える。`, // japonés
+				`주변 적이 화상을 입고 폭발한 적의 최대 HP의 6%에 해당하는 피해를 받습니다.`, // coreano
+				`附近的敌人会被灼伤，并受到相当于被引爆敌人最大HP 6%的伤害。`, // chino
+				`Poblisc wrogowie zostają podpaleni i otrzymują obrażenia równe 6% maksymalnego HP detonowanego wroga.` // polaco
 			],
 		},
 		sandAvalanche: {
@@ -2912,17 +2924,43 @@ export const text = {
 				`Para` // polaco
 			],
 			text: [
-				`Smoke that slowly expands, reducing movement speed by 50%. This effect does not count as a slow.`, // inglés
-				`Humo que se expande lentamente y reduce la velocidad de movimiento un 50%. Este efecto no cuenta como ralentización.`, // español
-				`Une fumée qui s'étend lentement et réduit la vitesse de déplacement de 50 %. Cet effet ne compte pas comme un ralentissement.`, // francés
-				`Fumaça que se expande lentamente, reduzindo a velocidade de movimento em 50%. Este efeito não conta como lentidão.`, // portugués
-				`Fumo che si espande lentamente, riducendo la velocità di movimento del 50%. Questo effetto non conta come rallentamento.`, // italiano
-				`Rauch, der sich langsam ausbreitet und die Bewegungsgeschwindigkeit um 50 % reduziert. Dieser Effekt zählt nicht als Verlangsamung.`, // alemán
-				`ゆっくりと広がる煙で、移動速度を50%低下させる。この効果は「遅くする」効果として扱われない。`, // japonés
-				`천천히 퍼지는 연기로 이동 속도를 50% 감소시킵니다. 이 효과는 느려짐으로 취급되지 않습니다.`, // coreano
-				`缓慢扩散的烟雾，使移动速度降低50%。此效果不计为减速。`, // chino
-				`Dym, który powoli się rozprzestrzenia, zmniejszając prędkość ruchu o 50%. Ten efekt nie jest uznawany za spowolnienie.` // polaco
+				`Smoke that slowly expands, reducing movement speed by 20%. This effect does not count as a slow.`, // inglés
+				`Humo que se expande lentamente y reduce la velocidad de movimiento un 20%. Este efecto no cuenta como ralentización.`, // español
+				`Une fumée qui s'étend lentement et réduit la vitesse de déplacement de 20 %. Cet effet ne compte pas comme un ralentissement.`, // francés
+				`Fumaça que se expande lentamente, reduzindo a velocidade de movimento em 20%. Este efeito não conta como lentidão.`, // portugués
+				`Fumo che si espande lentamente, riducendo la velocità di movimento del 20%. Questo effetto non conta come rallentamento.`, // italiano
+				`Rauch, der sich langsam ausbreitet und die Bewegungsgeschwindigkeit um 20 % reduziert. Dieser Effekt zählt nicht als Verlangsamung.`, // alemán
+				`ゆっくりと広がる煙で、移動速度を20%低下させる。この効果は「遅くする」効果として扱われない。`, // japonés
+				`천천히 퍼지는 연기로 이동 속도를 20% 감소시킵니다. 이 효과는 느려짐으로 취급되지 않습니다.`, // coreano
+				`缓慢扩散的烟雾，使移动速度降低20%。此效果不计为减速。`, // chino
+				`Dym, który powoli się rozprzestrzenia, zmniejszając prędkość ruchu o 20%. Ten efekt nie jest uznawany za spowolnienie.` // polaco
 			],
+		},
+		web: {
+			title: [
+				`Web`, // inglés
+				`Telaraña`, // español
+				`Toile d'araignée`, // francés
+				`Teia de aranha`, // portugués
+				`Ragnatela`, // italiano
+				`Spinnennetz`, // alemán
+				`クモの巣`, // japonés
+				`거미줄`, // coreano
+				`蛛网`, // chino
+				`Pajęczyna` // polaco
+			],
+			text: [
+				`Web that deals damage every 0.5 seconds and reduces movement speed by 50%. This effect does not count as slow.`, // inglés
+				`Telaraña que causa daño cada 0.5 s y reduce la velocidad de movimiento un 50%. Este efecto no cuenta como ralentización.`, // español
+				`Toile d'araignée qui inflige des dégâts toutes les 0,5 secondes et réduit la vitesse de déplacement de 50 %. Cet effet ne compte pas comme un ralentissement.`, // francés
+				`Teia de aranha que causa dano a cada 0,5 segundos e reduz a velocidade de movimento em 50%. Este efeito não conta como abrandamento.`, // portugués
+				`Ragnatela che infligge danni ogni 0,5 secondi e riduce la velocità di movimento del 50%. Questo effetto non conta come rallentamento.`, // italiano
+				`Spinnennetz, das alle 0,5 Sekunden Schaden verursacht und die Bewegungsgeschwindigkeit um 50 % verringert. Dieser Effekt zählt nicht als Verlangsamung.`, // alemán
+				`0.5秒ごとにダメージを与え、移動速度を50%低下させるクモの巣。この効果はスロウとして扱われない。`, // japonés
+				`0.5초마다 피해를 주고 이동 속도를 50% 감소시키는 거미줄. 이 효과는 둔화로 취급되지 않는다.`, // coreano
+				`每0.5秒造成伤害并使移动速度降低50%的蛛网。此效果不视为减速。`, // chino
+				`Pajęczyna zadająca obrażenia co 0,5 sekundy i zmniejszająca prędkość ruchu o 50%. Ten efekt nie liczy się jako spowolnienie.` // polaco
+			]
 		}, 
 		honey: {
 			title: [
@@ -3637,6 +3675,32 @@ export const text = {
 			]
 		},
 		samurottHisui: {
+			title: [
+				`Secret Pokémon`, // inglés
+				`Pokémon secreto`, // español
+				`Pokémon secret`, // francés
+				`Pokémon secreto`, // portugués
+				`Pokémon segreto`, // italiano
+				`Geheimes Pokémon`, // alemán
+				`ひみつのポケモン`, // japonés
+				`비밀 포켓몬`, // coreano
+				`秘密宝可梦`, // chino
+				`Sekretny Pokémon` // polaco
+			],
+			text: [
+				`Hidden behind an item.`, // inglés
+				`Escondido tras un objeto.`, // español
+				`Caché derrière un item.`, // francés
+				`Escondido atrás de um item.`, // portugués
+				`Nascosto dietro un oggetto.`, // italiano
+				`Hinter einem Item versteckt.`, // alemán
+				`アイテムの後ろに隠されている。`, // japonés
+				`아이템 뒤에 숨겨져 있다.`, // coreano
+				`隐藏在一个道具后面。`, // chino
+				`Ukryty za przedmiotem.` // polaco
+			]
+		},
+		sandshrewAlola: {
 			title: [
 				`Secret Pokémon`, // inglés
 				`Pokémon secreto`, // español

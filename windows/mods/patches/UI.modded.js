@@ -1358,9 +1358,14 @@ export class UI {
 	}
 
 	getAttackStyleSymbol(pokemon) {
+		const abilityId = pokemon?.ability?.id;
+		if (['icyWind', 'dazzlingGleam'].includes(abilityId)) return 'C';
+		if (['secretSword', 'ancientSword'].includes(abilityId) || pokemon?.item?.id === 'ancientSword') return 'S';
+		if (['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId)) return 'W';
 		if (pokemon?.attackType === 'area') return 'A';
 		if (pokemon?.attackType === 'aura') return '~';
 		if (pokemon?.attackType === 'bombardment') return 'B';
+		if (pokemon?.attackType === 'stream') return '>';
 		switch (pokemon?.rangeType) {
 			case 'cross': return '+';
 			case 'xShape': return 'X';
@@ -1374,6 +1379,16 @@ export class UI {
 	}
 
 	getAttackStyleTooltip(pokemon) {
+		const abilityId = pokemon?.ability?.id;
+		let specialShape;
+		if (['icyWind', 'dazzlingGleam'].includes(abilityId)) {
+			specialShape = ['Cone', 'Cono', 'Cône', 'Cone', 'Cono', 'Kegel', '円錐', '원뿔', '锥形', 'Stożek'];
+		} else if (['secretSword', 'ancientSword'].includes(abilityId) || pokemon?.item?.id === 'ancientSword') {
+			specialShape = ['Sweep', 'Barrido', 'Balayage', 'Varredura', 'Spazzata', 'Schwertstreich', '斬撃', '휘두르기', '横扫', 'Cięcie'];
+		} else if (['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId)) {
+			specialShape = ['Waves', 'Ondas', 'Vagues', 'Ondas', 'Onde', 'Wellen', '波', '파동', '波', 'Fale'];
+		}
+
 		const shapeNames = {
 			circle: ['Circle range', 'En círculo', 'En cercle', 'Em círculo', 'A cerchio', 'Kreisbereich', '円形', '원형', '圓形', 'Kołowy'],
 			donut: ['Ring range', 'En anillo', 'En anneau', 'Em anel', 'A anello', 'Ringbereich', 'ドーナツ型', '도넛형', '環状', 'Pierścieniowy'],
@@ -1385,13 +1400,16 @@ export class UI {
 		};
 		const targetNames = {
 			single: ['single target', 'monobjetivo', 'cible unique', 'alvo único', 'bersaglio singolo', 'einzelziel', '単体', '단일 대상', '單體', 'pojedynczy cel'],
+			stream: ['stream attack', 'ataque de chorro', 'attaque en jet', 'ataque de jato', 'attacco a getto', 'Strahlenangriff', '噴射攻撃', '분사 공격', '噴射攻擊', 'atak strumieniowy'],
 			area: ['area target', 'en area', 'en zone', 'em área', 'ad area', 'flächenschaden', '範囲', '광역', '範疇', 'obszarowy'],
 			aura: ['aura', 'aura', 'aura', 'aura', 'aura', 'aura', 'オーラ', '오라', '氣場', 'aura'],
 			orbital: ['orbital', 'orbital', 'orbitale', 'orbital', 'orbitale', 'orbital', '軌道', '궤도', '軌道', 'orbital'],
 			bombardment: ['Bombardment', 'Bombardeo', 'Bombardement', 'Bombardeio', 'Bombardamento', 'Bombardement', 'じゅうたん爆撃', '융단폭격', '轰炸', 'Bombardowanie'],
 		};
-		const shape = shapeNames[pokemon?.rangeType][this.main.lang] || 'Circle range';
-		const target = targetNames[pokemon?.attackType][this.main.lang] || pokemon?.attackType || 'target';
+		const shape = specialShape?.[this.main.lang] || shapeNames[pokemon?.rangeType][this.main.lang] || 'Circle range';
+		const target = specialShape
+			? targetNames.area[this.main.lang]
+			: targetNames[pokemon?.attackType][this.main.lang] || pokemon?.attackType || 'target';
 		return `${shape}, ${target}.`;
 	}
 
@@ -1691,7 +1709,12 @@ export class UI {
 			this.pokemon[i].style.backgroundColor = `${pokemon.specie.color}33`
 			this.pokemon[i].attackStyle.style.display = (this.main.indicatorShape) ? 'revert-layer' : 'none';
 			this.pokemon[i].attackStyle.innerText = this.getAttackStyleSymbol(pokemon);
-			if (pokemon.rangeType === 'circle') {
+			const abilityId = pokemon.ability?.id;
+			this.pokemon[i].attackStyle.classList.toggle('is-cone', ['icyWind', 'dazzlingGleam'].includes(abilityId));
+			this.pokemon[i].attackStyle.classList.toggle('is-sweep', ['secretSword', 'ancientSword'].includes(abilityId) || pokemon.item?.id === 'ancientSword');
+			this.pokemon[i].attackStyle.classList.toggle('is-waves', ['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId));
+			this.pokemon[i].attackStyle.classList.toggle('is-stream', pokemon.attackType === 'stream');
+			if (pokemon.rangeType === 'circle' && pokemon.attackType !== 'stream') {
 				switch(pokemon.attackType) {
 				case 'area':
 					this.pokemon[i].attackStyle.classList.toggle('is-area', true);
@@ -2246,6 +2269,9 @@ export class UI {
 	        clone.style.opacity = '0.9';
 	        clone.style.pointerEvents = 'none'; // importante para elementFromPoint
 	        clone.classList.add('dragging');
+	        if (draggedPokemon.item?.id === 'inverter') {
+	            clone.style.transform = 'scale(1.2, -1.2)';
+	        }
 	        document.body.appendChild(clone);
 
 	        spriteEl.style.opacity = '0%';
@@ -2538,6 +2564,8 @@ export class UI {
 			}
 			if ([19, 83, 101, 111, 144, 173].includes(pokemon.id)) {
 				this.damageDealtUnit[i].number.innerHTML = `${text.ui.helping[this.main.lang]} <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">:)</span>`;
+			} else if ([252].includes(pokemon.id)) {
+				this.damageDealtUnit[i].number.innerHTML = `${text.ui.suffering[this.main.lang]} <span style="position: absolute; right: 0px; top: 2px; font-size: 8px; text-align: right">:)</span>`;
 			}
 		});
 	}

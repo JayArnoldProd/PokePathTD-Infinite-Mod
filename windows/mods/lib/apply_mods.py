@@ -81,13 +81,13 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
     "src/js/game/Game.js":                  70430,
-    "src/js/game/component/Pokemon.js":     35981,
-    "src/js/game/scenes/PokemonScene.js":   83459,
-    "src/js/game/core/Area.js":             36624,
-    "src/js/game/core/Team.js":             2849,
+    "src/js/game/component/Pokemon.js":     36984,
+    "src/js/game/scenes/PokemonScene.js":   84242,
+    "src/js/game/core/Area.js":             36699,
+    "src/js/game/core/Team.js":             2909,
     "src/js/game/core/Box.js":              859,
-    "src/js/game/component/Tower.js":       358934,
-    "src/js/game/component/Enemy.js":        101642,
+    "src/js/game/component/Tower.js":       368205,
+    "src/js/game/component/Enemy.js":        101733,
     "src/js/game/scenes/MenuScene.js":       57783,
 }
 

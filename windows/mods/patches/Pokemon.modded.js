@@ -1,4 +1,5 @@
 import { pokemonData, pokemonDataById } from '../data/pokemonData.js';
+import { projectileData } from '../data/projectileData.js';
 import { playSound } from '../../file/audio.js';
 
 export class Pokemon {
@@ -26,13 +27,13 @@ export class Pokemon {
 		this.skin = skin;
 		this.extra = extra;
 		this.sprite = JSON.parse(JSON.stringify((this.skin == null || this.isMega) ? specie.sprite : this.skin));
-		if (this.hasCustomSkin) this.setCustomSkin();
 		this.name = specie.name;
 		this.alias = alias;
 		this.unownForm = unownForm;
 		this.ability = specie.ability;
 		this.tiles = specie.tiles;
 		this.projectile = specie.projectile;
+		if (this.hasCustomSkin) this.setCustomSkin();
 		this.rangeType = specie.rangeType;
 		this.attackType = specie.attackType;
 
@@ -624,20 +625,19 @@ export class Pokemon {
 	}
 
 	equipItem(item) {
-    if (item?.equipedBy != undefined && this.main.game.stopped) {
-        console.log(item?.equipedBy);
-        playSound('pop0', 'ui');
-        return;
-    }
+	    if (item?.equipedBy != undefined && this.main.game.stopped) {
+	        playSound('pop0', 'ui');
+	        return;
+	    }
 
-    // Comprobar si el objeto puede equiparse en la forma base
-    // antes de retirar la megapiedra.
-    if (this.isMega && this.item?.megaStone && !item?.megaStone) {
-        const baseSpecie = this.baseSpecie ??  pokemonData[this.specie?.base];
+		this.ensureMegaStone();
+
+	    // comprobar si el objeto puede equiparse en la forma base ntes de retirar la megapiedra.
+	    if (this.isMega && this.item?.megaStone && !item?.megaStone) {
+	        const baseSpecie = this.baseSpecie ??  pokemonData[this.specie?.base];
 
 	        if (baseSpecie && this.main?.itemController) {
-	            // Crear una representación temporal del Pokémon
-	            // en su forma normal, sin modificar el Pokémon real.
+	            // Crear una representación temporal del mon en su forma normal, sin modificar el Pokémon real.
 	            const basePokemon = Object.create(this);
 
 	            Object.assign(basePokemon, {
@@ -689,6 +689,11 @@ export class Pokemon {
 		if (item.id == 'poisonBarb' && this.specie.key === 'weavile' && !this.main.player.secrets.sneaselHisui) {
 			this.main.player.secrets.sneaselHisui = true;
 			this.main.UI.getSecret('sneaselHisui');
+		}
+
+		if (item.id == 'icyRock' && this.specie.key === 'sandslash' && !this.main.player.secrets.sandshrewAlola) {
+			this.main.player.secrets.sandshrewAlola = true;
+			this.main.UI.getSecret('sandshrewAlola');
 		}
 
 		if (item.id == 'ancientSword' && this.specie.key === 'samurott' && !this.main.player.secrets.samurottHisui) {
@@ -848,9 +853,32 @@ export class Pokemon {
         }
 	}
 
+	ensureMegaStone() {
+		const baseSpecie = pokemonData[this.specie?.base];
+		const isMegaForm = baseSpecie?.mega?.includes(this.specie?.key) ?? false;
+		if (!this.isMega && !isMegaForm) return true;
+
+		const hasMatchingMegaStone =
+			this.item?.megaStone === true &&
+			baseSpecie?.mega?.[this.item.megaPos] === this.specie.key;
+
+		if (hasMatchingMegaStone) {
+			this.isMega = true;
+			this.baseSpecie = baseSpecie;
+			this.main.player.megaInTeam = true;
+			return true;
+		}
+
+		this.removeMegaStone();
+		if (this.item?.megaStone) this.retireItem();
+
+		return false;
+	}
+
 	findMega() {
 		let pokemon = [...this.main.team.pokemon, ...this.main.box.pokemon];
 		pokemon.forEach(poke => {
+			poke.ensureMegaStone();
 			if (poke.isMega) poke.retireItem();
 		})
 	}
@@ -946,6 +974,8 @@ export class Pokemon {
 			if (!Object.prototype.hasOwnProperty.call(this.sprite, key)) continue;
 			if (typeof this.sprite[key] === 'string') this.sprite[key] = replacePath(this.sprite[key]);
 		}
+
+		if (this.id === 249) this.projectile = this.specie.projectile;
 
 		if (this.isDeployed) {
 			const tower = this.main.area.towers.find(t => t.pokemon === this);

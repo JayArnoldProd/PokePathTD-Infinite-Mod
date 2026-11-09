@@ -25,8 +25,8 @@ assert len(namespace['get_star_route_options'](SimpleNamespace(route_options=rou
 assert len(namespace['_load_route_reward_pokemon_keys']()) == 40
 eggs = namespace['_load_egg_list_keys']()
 catalog = json.loads((mods / 'dev/egg_catalog.json').read_text(encoding='utf8'))
-assert eggs == catalog['eggKeys'] and len(eggs) == 146
+assert eggs == catalog['eggKeys'] and len(eggs) == 150
 items = namespace['_load_item_catalog_from_data']()
 assert len(items) == 197 and all(len(item['name']) == 10 for item in items.values())
 assert items['ruby']['name'][0] == 'Ruby' and items['garchompite']['id'] == 'garchompite'
-print('PASS editor: 47 routes, 40 normal routes, 146 ordinary eggs, 197 localized item definitions')
+print('PASS editor: 47 routes, 40 normal routes, 150 ordinary eggs, 197 localized item definitions')

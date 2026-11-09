@@ -737,7 +737,7 @@ export class MenuScene extends SectionScene {
 		this.importData = this.makeButton(content, 'menu-scene-import-data stroke', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.1` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.2` }).element;
 	}
 
 	syncExportDataButtonState() {

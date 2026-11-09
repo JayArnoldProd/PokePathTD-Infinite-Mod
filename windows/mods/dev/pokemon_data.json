@@ -61,6 +61,7 @@
     "carvanha",
     "castform",
     "celebi",
+    "centiscorch",
     "ceruledge",
     "charcadet",
     "charizard",
@@ -255,6 +256,8 @@
     "malamar",
     "manaphy",
     "mankey",
+    "mantine",
+    "mantyke",
     "maractus",
     "mareep",
     "marowak",
@@ -332,6 +335,7 @@
     "palossand",
     "paras",
     "parasect",
+    "passimian",
     "patrat",
     "pawniard",
     "pelipper",
@@ -383,7 +387,9 @@
     "samurottHisui",
     "sandile",
     "sandshrew",
+    "sandshrewAlola",
     "sandslash",
+    "sandslashAlola",
     "sandygast",
     "sandyShocks",
     "sceptile",
@@ -407,6 +413,7 @@
     "shroomish",
     "shuckle",
     "sirfetchd",
+    "sizzlipede",
     "skarmory",
     "skeledirge",
     "skiploom",
@@ -499,7 +506,9 @@
     "whiscash",
     "wimpod",
     "wingull",
+    "wobbuffet",
     "wooper",
+    "wynaut",
     "xatu",
     "yamask",
     "zangoose",
@@ -963,6 +972,10 @@
       "evolves_to": "primeape",
       "level": 28
     },
+    "mantyke": {
+      "evolves_to": "mantine",
+      "level": 30
+    },
     "mareep": {
       "evolves_to": "flaaffy",
       "level": 15
@@ -1143,6 +1156,10 @@
       "evolves_to": "sandslash",
       "level": 22
     },
+    "sandshrewAlola": {
+      "evolves_to": "sandslashAlola",
+      "level": 22
+    },
     "sandygast": {
       "evolves_to": "palossand",
       "level": 42
@@ -1182,6 +1199,10 @@
     "shroomish": {
       "evolves_to": "breloom",
       "level": 23
+    },
+    "sizzlipede": {
+      "evolves_to": "centiscorch",
+      "level": 28
     },
     "skiploom": {
       "evolves_to": "jumpluff",
@@ -1347,6 +1368,10 @@
       "evolves_to": "quagsire",
       "level": 20
     },
+    "wynaut": {
+      "evolves_to": "wobbuffet",
+      "level": 15
+    },
     "yamask": {
       "evolves_to": "cofagrigus",
       "level": 34
@@ -1488,6 +1513,7 @@
     "makuhita",
     "manaphy",
     "mankey",
+    "mantyke",
     "maractus",
     "mareep",
     "marshadow",
@@ -1547,6 +1573,7 @@
     "onix",
     "oshawott",
     "paras",
+    "passimian",
     "patrat",
     "pawniard",
     "petilil",
@@ -1576,6 +1603,7 @@
     "samurottHisui",
     "sandile",
     "sandshrew",
+    "sandshrewAlola",
     "sandygast",
     "sandyShocks",
     "scizor",
@@ -1590,6 +1618,7 @@
     "shieldon",
     "shroomish",
     "shuckle",
+    "sizzlipede",
     "skarmory",
     "skrelp",
     "slowpoke",
@@ -1647,6 +1676,7 @@
     "wimpod",
     "wingull",
     "wooper",
+    "wynaut",
     "yamask",
     "zangoose",
     "zapdos"
@@ -1688,6 +1718,7 @@
     "carracosta",
     "castform",
     "celebi",
+    "centiscorch",
     "ceruledge",
     "charizard",
     "chatot",
@@ -1793,6 +1824,7 @@
     "magnezone",
     "malamar",
     "manaphy",
+    "mantine",
     "maractus",
     "marowak",
     "marshadow",
@@ -1853,6 +1885,7 @@
     "omastar",
     "palossand",
     "parasect",
+    "passimian",
     "pelipper",
     "persian",
     "pheromosa",
@@ -1877,6 +1910,7 @@
     "samurott",
     "samurottHisui",
     "sandslash",
+    "sandslashAlola",
     "sandyShocks",
     "sceptile",
     "scizor",
@@ -1942,6 +1976,7 @@
     "weezing",
     "whimsicott",
     "whiscash",
+    "wobbuffet",
     "xatu",
     "zangoose",
     "zapdos"
@@ -2453,6 +2488,10 @@
       "primeape",
       "annihilape"
     ],
+    "mantyke": [
+      "mantyke",
+      "mantine"
+    ],
     "maractus": [
       "maractus"
     ],
@@ -2647,6 +2686,9 @@
       "paras",
       "parasect"
     ],
+    "passimian": [
+      "passimian"
+    ],
     "patrat": [
       "patrat",
       "watchog"
@@ -2761,6 +2803,10 @@
       "sandshrew",
       "sandslash"
     ],
+    "sandshrewAlola": [
+      "sandshrewAlola",
+      "sandslashAlola"
+    ],
     "sandygast": [
       "sandygast",
       "palossand"
@@ -2810,6 +2856,10 @@
     ],
     "shuckle": [
       "shuckle"
+    ],
+    "sizzlipede": [
+      "sizzlipede",
+      "centiscorch"
     ],
     "skarmory": [
       "skarmory"
@@ -3028,6 +3078,10 @@
       "wooper",
       "quagsire"
     ],
+    "wynaut": [
+      "wynaut",
+      "wobbuffet"
+    ],
     "yamask": [
       "yamask",
       "cofagrigus"
@@ -3101,6 +3155,7 @@
     "carvanha": "carvanha.png",
     "castform": "castform.png",
     "celebi": "celebi.png",
+    "centiscorch": "centiscorch.png",
     "ceruledge": "ceruledge.png",
     "charcadet": "charcadet.png",
     "charizard": "charizard.png",
@@ -3295,6 +3350,8 @@
     "malamar": "malamar.png",
     "manaphy": "manaphy.png",
     "mankey": "mankey.png",
+    "mantine": "mantine.png",
+    "mantyke": "mantyke.png",
     "maractus": "maractus.png",
     "mareep": "mareep.png",
     "marowak": "marowak.png",
@@ -3372,6 +3429,7 @@
     "palossand": "palossand.png",
     "paras": "paras.png",
     "parasect": "parasect.png",
+    "passimian": "passimian.png",
     "patrat": "patrat.png",
     "pawniard": "pawniard.png",
     "pelipper": "pelipper.png",
@@ -3423,7 +3481,9 @@
     "samurottHisui": "samurottHisui.png",
     "sandile": "sandile.png",
     "sandshrew": "sandshrew.png",
+    "sandshrewAlola": "sandshrewAlola.png",
     "sandslash": "sandslash.png",
+    "sandslashAlola": "sandslashAlola.png",
     "sandygast": "sandygast.png",
     "sandyShocks": "sandyShocks.png",
     "sceptile": "sceptile.png",
@@ -3447,6 +3507,7 @@
     "shroomish": "shroomish.png",
     "shuckle": "shuckle.png",
     "sirfetchd": "sirfetchd.png",
+    "sizzlipede": "sizzlipede.png",
     "skarmory": "skarmory.png",
     "skeledirge": "skeledirge.png",
     "skiploom": "skiploom.png",
@@ -3539,7 +3600,9 @@
     "whiscash": "whiscash.png",
     "wimpod": "wimpod.png",
     "wingull": "wingull.png",
+    "wobbuffet": "wobbuffet.png",
     "wooper": "wooper.png",
+    "wynaut": "wynaut.png",
     "xatu": "xatu.png",
     "yamask": "yamask.png",
     "zangoose": "zangoose.png",
@@ -3693,6 +3756,10 @@
     "onix",
     "drampa",
     "slowpoke",
+    "mantyke",
+    "sizzlipede",
+    "wynaut",
+    "passimian",
     "bidoof",
     "hoothoot",
     "nincada",
@@ -3786,6 +3853,7 @@
     "corsolaGalar",
     "sneaselHisui",
     "samurottHisui",
+    "sandshrewAlola",
     "wooper",
     "minior",
     "mew",

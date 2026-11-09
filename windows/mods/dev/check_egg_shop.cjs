@@ -28,13 +28,15 @@ const allowDupes = process.argv.includes('--allow-dupes');
             assert.equal(JSON.stringify(shop.eggList),stable,'not idempotent');checks++;
         }
     }
-    const oldOwned=eggs.filter(k=>!['piplup','grookey','weedle'].includes(k)).map(k=>({specie:p[k]}));
+    const oldOwned=eggs.filter(k=>!['mantyke','sizzlipede','wynaut','passimian'].includes(k)).map(k=>({specie:p[k]}));
     const upgrade=makeShop(oldOwned,[]);safety.reconcileEggList(upgrade);
-    assert.deepEqual([...upgrade.eggList].sort(),['grookey','piplup','weedle']);
+    assert.deepEqual([...upgrade.eggList].sort(),['mantyke','passimian','sizzlipede','wynaut']);
     class Pokemon {
         constructor(specie,lvl,item,main){Object.assign(this,{specie,id:specie.id,lvl,main});}
         static fromOriginalData(data,main){return Object.assign(new Pokemon(p[data.specieKey],data.lvl,null,main),data);}
         setShiny(){}
+        // Egg fixtures contain ordinary forms with no held items; Mega validation is a no-op.
+        ensureMegaStone(){assert(!this.item && !this.isMega);return true;}
     }
     const main={player:{teamSlots:10,gold:1e9,stats:{pokemonOwned:0,totalPokemonLevel:0},changeGold(n){this.gold+=n;}},
         area:{heavyMetal:false,inChallenge:false,waveActive:false},UI:{update(){},fastScene:{isOpen:false}},
