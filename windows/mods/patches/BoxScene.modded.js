@@ -218,7 +218,7 @@ export class BoxScene extends SectionScene {
 				this.units[i].shape.style.display = (this.main.indicatorShape) ? 'block' : 'none';
 				const abilityId = poke.ability?.id;
 				unit.classList.toggle('shape-cone', ['icyWind', 'dazzlingGleam'].includes(abilityId));
-				unit.classList.toggle('shape-sweep', ['secretSword', 'ancientSword'].includes(abilityId) || poke.item?.id === 'ancientSword');
+				unit.classList.toggle('shape-sweep', ['secretSword', 'intrepidSword'].includes(abilityId) || poke.specie?.key === 'samurottHisui');
 				unit.classList.toggle('shape-waves', ['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId));
 				unit.classList.toggle('shape-stream', poke.attackType === 'stream');
 				if (poke.rangeType === 'circle' && poke.attackType !== 'stream') {
@@ -1066,7 +1066,7 @@ export class BoxScene extends SectionScene {
 	getBoxAttackShapeSymbol(pokemon) {
 		const abilityId = pokemon?.ability?.id;
 		if (['icyWind', 'dazzlingGleam'].includes(abilityId)) return 'C';
-		if (['secretSword', 'ancientSword'].includes(abilityId) || pokemon?.item?.id === 'ancientSword') return 'S';
+		if (['secretSword', 'intrepidSword'].includes(abilityId) || pokemon?.specie?.key === 'samurottHisui') return 'S';
 		if (['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId)) return 'W';
 		if (pokemon?.attackType === 'area') return 'A';
 		if (pokemon?.attackType === 'aura') return '~';
@@ -1092,12 +1092,9 @@ export class BoxScene extends SectionScene {
     }
 
 	updateCollectionStats() {
-
+		this.main.checkShinyCount();
 		this.pokedexStats.innerText = `POKEDEX: ${this.main.player.stats.pokemonOwned}/${allPokemon.length-1}`;
 		this.shinyStats.innerText = `SHINYDEX: ${this.main.player.shinyAmount}/${allPokemon.length-1}`;
-
-		// this.main.player.stats.pokemonOwned
-		// this.main.player.shinyAmount
 	}
 
 	changeView() {

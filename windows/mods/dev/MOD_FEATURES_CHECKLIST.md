@@ -1,6 +1,6 @@
-# Windows 1.7.2 feature and compatibility checklist
+# Windows 1.7.3 feature and compatibility checklist
 
-This is a behavior checklist for the verified 1.7.2 baseline. Historical implementation details are available in Git history. Do not restore obsolete patches merely to match an older checklist: compare clean upstream source first, preserve selected user behavior, and test the resulting combinations.
+This is a behavior checklist for the verified 1.7.3 baseline. Historical implementation details are available in Git history. Do not restore obsolete patches merely to match an older checklist: compare clean upstream source first, preserve selected user behavior, and test the resulting combinations.
 
 ## Installation and saves
 - [ ] Verify the downloaded runtime version, clean ASAR hash, all skipped official devlogs and source differences.
@@ -34,7 +34,7 @@ This is a behavior checklist for the verified 1.7.2 baseline. Historical impleme
 ## Shiny and egg behavior
 - [ ] Selected shiny feature rolls 1/30 for eggs, starters, challenge rewards and hidden acquisitions.
 - [ ] Reveal animation uses the Pokémon shiny state and preserves upstream reward text.
-- [ ] All 514 species/form keys resolve normal and shiny art, using official assets where available.
+- [ ] All 517 species/form keys resolve normal and shiny art, using official assets where available.
 - [ ] Shiny enemies: 1/1000 roll, doubled HP/armor, two-heart damage, 1000x gold and defeat tracking.
 - [ ] Sprite and skin objects remain isolated between Pokémon, catalog definitions and Ditto transformations.
 - [ ] Egg shop uses exactly the 150 ordinary egg entries, excludes owned evolution lines and rejects secret/challenge entries.
@@ -48,7 +48,7 @@ This is a behavior checklist for the verified 1.7.2 baseline. Historical impleme
 - [ ] Keep vanilla inventory sorting/tier indicators, cosmetic controls, portrait picker, settings and tooltip content.
 - [ ] Save/load labels, position persistence, gold limits/abbreviations, map hover counts and live Profile stats remain available.
 - [ ] Profile collection counts remain duplicate-aware; evolved forms count toward their obtainable line.
-- [ ] Unlockables includes 64 secret Pokémon, seven maps, two hidden items, the gift and 160 challenge rewards.
+- [ ] Unlockables includes 67 secret Pokémon, seven maps, two hidden items, the gift and 160 challenge rewards.
 - [ ] Conditions and progress derive from real achievements/rewards/puzzle/save state. Do not grant future content.
 - [ ] New strings, fallback strings, button labels and shape/type labels cover all ten languages.
 
@@ -86,3 +86,9 @@ This is a behavior checklist for the verified 1.7.2 baseline. Historical impleme
 - [ ] Box Enter transfer, Cone/Mega filters and shape indicators coexist with mod sorting and extra slots.
 - [ ] Squishy Toy, Spirit Shackle, Defiant items, Mega validation, cosmetics and passenger teleport preserve upstream behavior.
 - [ ] Retain special-attack opacity, smoke optimization, weather damage, enemy defeat tracking and uncapped mod Profile totals.
+
+## Windows 1.7.3 regressions
+
+- [ ] Check Mimikyu’s route trigger and the two boss achievement rewards in all ten languages.
+- [ ] Verify held-item sprites, shiny state, valid Mega loading and rejection of unrelated stones.
+- [ ] Check bonus MissingNo. and duplicate collection counts together with the collectible item total.

@@ -1811,6 +1811,16 @@ export class PokemonScene extends GameScene {
 	            if (tower.criticalAura) {
 	                flatCritical += 20;
 	            }
+
+	            if (tower.intrepidSwordBuffTimer > 0) {
+	                mulRange *= 1.25;
+	                flatCritical += 100;
+	            }
+
+	            if (tower.dauntlessShieldBuffTimer > 0) {
+	                mulSpeed *= 0.5;
+	                mulPower *= 2;
+	            }
 	        }
 	    }
 

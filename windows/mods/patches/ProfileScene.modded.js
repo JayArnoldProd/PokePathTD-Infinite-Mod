@@ -7,25 +7,25 @@ import { text } from '../../file/text.js';
 import { playSound } from '../../file/audio.js';
 
 import { pokemonData, eggListData } from '../data/pokemonData.js';
-import { itemData } from '../data/itemData.js';
+import { itemData, itemCollectionTotal } from '../data/itemData.js';
 import { routeData } from '../data/routeData.js';
 import { achievementReworkData } from '../data/achievementReworkData.js';
 
 
 const CHALLENGE_REWARD_RIBBON_COSTS = [2, 3, 5, 1];
-// Every obtainable secret line in the 1.7.2 pokemonData secretPokemon export.
+// Every obtainable secret line in the 1.7.3 pokemonData secretPokemon export.
 // Cacturne is represented by its unlock-time base form, Cacnea.
 const SECRET_POKEMON_KEYS = [
 	//achievements
 	'shaymin', 'celebi', 'lunala', 'zapdos', 'moltres', 'articuno', 'regirock', 'groudon', 'hooh', 'registeel', 'regice', 'regigigas', 
 	'kyogre', 'thundurus', 'tapuFini', 'nihilego', 'tapuKoko', 'tapuBulu', 'tapuLele', 'keldeo', 'heatran', 'landorus', 'volcanion', 'pheromosa', 
-	'cobalion', 'stakataka', 'tornadus', 'magearna', 'diancie', 'terrakion', 'virizion', 
+	'cobalion', 'stakataka', 'tornadus', 'magearna', 'diancie', 'terrakion', 'zamazenta', 'zacian', 'virizion',
 
 	'shedinja', 'gholdengo', 'unown',
 
 	'greavard', 'cacnea', 'dhelmise', 'manaphy', 'phione', 'marshadow', 'ducklett', 'sandygast', 'victini', 'bronzor', 'spiritomb', 'farfetchdGalar', 'calyrex',
 
-	'chatot', 'luvdisc', 'tyrunt', 
+	'chatot', 'luvdisc', 'tyrunt', 'mimikyu',
 	'corsolaGalar', 'sneaselHisui', 'samurottHisui', 'sandshrewAlola', 'wooper', 'minior', 'mew',
 
 	'pumpkaboo', 'spectrier', 
@@ -73,6 +73,7 @@ const PROFILE_STAT_FALLBACK_TEXT = {
 };
 
 const PROFILE_UNLOCKABLE_TEXT = {
+	findMimikyu: ["On {route}, defeat Mimikyu on wave 50 with Pikachu or Raichu deployed, then click the darkened tower. Use the normal route outside challenges.", "En {route}, derrota a Mimikyu en la oleada 50 con Pikachu o Raichu desplegado y pulsa la torre oscurecida. Usa la ruta normal fuera de los desafíos.", "Sur {route}, bats Mimiqui à la vague 50 avec Pikachu ou Raichu déployé, puis clique sur la tour assombrie. Joue sur la route normale hors défi.", "Em {route}, derrote Mimikyu na onda 50 com Pikachu ou Raichu em campo e clique na torre escurecida. Jogue na rota normal, fora dos desafios.", "Su {route}, sconfiggi Mimikyu all’ondata 50 con Pikachu o Raichu in campo, poi clicca sulla torre oscurata. Usa il percorso normale fuori dalle sfide.", "Besiege auf {route} in Welle 50 Mimigma mit einem eingesetzten Pikachu oder Raichu und klicke auf den verdunkelten Turm. Spiele auf der normalen Route außerhalb von Herausforderungen.", "{route}の通常ルートで、チャレンジ以外のときにピカチュウかライチュウを配置してウェーブ50のミミッキュを倒し、暗くなったタワーをクリックする。", "{route} 일반 루트에서 도전 모드가 아닐 때 피카츄나 라이츄를 배치하고 50웨이브의 따라큐를 쓰러뜨린 뒤 어두워진 타워를 누르세요.", "在{route}的普通路线（非挑战）部署皮卡丘或雷丘，击败第50波的谜拟丘，然后点击变暗的塔。", "Na zwykłej trasie {route}, poza wyzwaniem, pokonaj Mimikyu w fali 50 z wystawionym Pikachu lub Raichu, a potem kliknij przyciemnioną wieżę."],
 	findHiddenItem: ["Click the hidden item on {route}, outside challenges with no wave active.","Haz clic en el objeto oculto de {route}, fuera de desafíos y sin oleadas activas.","Cliquez sur l’objet caché de {route}, hors défi et sans vague active.","Clique no item escondido em {route}, fora de desafios e sem onda ativa.","Clicca sull’oggetto nascosto in {route}, fuori dalle sfide e senza ondate attive.","Klicke auf das versteckte Item auf {route}, außerhalb von Herausforderungen und ohne aktive Welle.","チャレンジ外でウェーブがない時に、{route}の隠された道具をクリックする。","챌린지 밖에서 웨이브가 없을 때 {route}의 숨겨진 도구를 클릭하세요.","在非挑战模式且没有波次进行时，点击{route}的隐藏道具。","Kliknij ukryty przedmiot na {route}, poza wyzwaniem i bez aktywnej fali."],
 	wooperExplosion: ["Let an Explosion user reduce your health to zero (or trigger the auto-reset threshold).","Deja que un usuario de Explosión reduzca tu salud a cero (o active el reinicio automático).","Laissez un utilisateur d’Explosion réduire vos PV à zéro (ou déclencher le redémarrage automatique).","Deixe um usuário de Explosão reduzir sua vida a zero (ou acionar o reinício automático).","Lascia che un utilizzatore di Esplosione riduca la salute a zero (o attivi il riavvio automatico).","Lass einen Explosions-Nutzer deine Gesundheit auf null senken (oder den automatischen Neustart auslösen).","だいばくはつで体力を0にする（または自動リセットの条件を満たす）。","대폭발로 체력을 0으로 만들거나 자동 재시작 조건을 발동시키세요.","让大爆炸使用者将生命降至零，或触发自动重置阈值。","Pozwól użytkownikowi Eksplozji obniżyć zdrowie do zera lub uruchomić automatyczny reset."],
 	unownConversation: ["Open Unown’s Compendium entry and answer its five questions using the search box. Progress: {count}/5.","Abre la entrada de Unown en el compendio y responde sus cinco preguntas en el buscador. Progreso: {count}/5.","Ouvrez la fiche d’Unown dans le compendium et répondez aux cinq questions dans la recherche. Progression : {count}/5.","Abra a entrada de Unown no compêndio e responda às cinco perguntas na busca. Progresso: {count}/5.","Apri la voce di Unown nel compendio e rispondi alle cinque domande nella ricerca. Progresso: {count}/5.","Öffne Unowns Kompendium-Eintrag und beantworte die fünf Fragen im Suchfeld. Fortschritt: {count}/5.","図鑑のアンノーンの項目を開き、検索欄で5つの質問に答える。進行度：{count}/5。","도감에서 안농 항목을 열고 검색창으로 다섯 질문에 답하세요. 진행: {count}/5.","打开图鉴的未知图腾条目，在搜索框回答五个问题。进度：{count}/5。","Otwórz wpis Unowna w kompendium i odpowiedz na pięć pytań w polu wyszukiwania. Postęp: {count}/5."],
@@ -555,7 +556,7 @@ export class ProfileScene extends SectionScene {
 		const missingKeys = [...obtainable].filter((key) => !owned.has(key)).sort();
 		return {
 			ownedCount: owned.size,
-			totalCount: obtainable.size,
+			totalCount: obtainable.size - Number(obtainable.has('missingNo')),
 			missingKeys,
 		};
 	}
@@ -1079,6 +1080,27 @@ export class ProfileScene extends SectionScene {
 
         entries.push({id: 'secret-sandshrew-alola', order: 10429, name: localized(pokemonData.sandshrewAlola.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: formatTemplate(getProfileUnlockableText('equipItemToPokemon', lang), {item: localized(itemData.icyRock.name, lang), pokemon: localized(pokemonData.sandslash.name, lang)}), icon: pokemonData.sandshrewAlola.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.secrets?.sandshrewAlola || this.hasPokemonKey('sandshrewAlola') });
 
+        for (const {key, id, achievement, threshold} of [
+            {key: 'zamazenta', id: 'secret-zamazenta', achievement: 29, threshold: '> −10%'},
+            {key: 'zacian', id: 'secret-zacian', achievement: 30, threshold: '< −90%'},
+        ]) {
+            entries.push({
+                id, order: 10430 + achievement - 29, name: localized(pokemonData[key].name, lang),
+                lockedName: getProfileUnlockableText('hiddenName', lang),
+                unlockText: achievementRequirement(achievement, '') + ' (' + threshold + ') ' + getProfileUnlockableText('achievementReward', lang) + ' ' +
+                    formatTemplate(getProfileUnlockableText('achievementState', lang), {count: Number(!!this.main.player?.achievementsRework?.[achievement]?.status)}),
+                icon: pokemonData[key].sprite.base, secretLevel: 'normal',
+                isUnlocked: () => !!this.main.player?.secrets?.[key] || this.hasPokemonKey(key),
+            });
+        }
+        entries.push({
+            id: 'secret-mimikyu', order: 10432, name: localized(pokemonData.mimikyu.name, lang),
+            lockedName: getProfileUnlockableText('hiddenName', lang),
+            unlockText: formatTemplate(getProfileUnlockableText('findMimikyu', lang), {route: this.getRouteName(17)}),
+            icon: pokemonData.mimikyu.sprite.base, secretLevel: 'normal',
+            isUnlocked: () => !!this.main.player?.secrets?.mimikyu || this.hasPokemonKey('mimikyu'),
+        });
+
         entries.push({id: 'secret-iron-bundle', order: 10429, name: localized(pokemonData.ironBundle.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('solveWebPuzzle', lang), icon: pokemonData.ironBundle.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('ironBundle') || this.hasPokemonKey('ironBundle') });
 
         entries.push({id: 'secret-flutter-mane', order: 10430, name: localized(pokemonData.flutterMane.name, lang), lockedName: getProfileUnlockableText('hiddenName', lang), unlockText: getProfileUnlockableText('solveWebPuzzle', lang), icon: pokemonData.flutterMane.sprite.base, secretLevel: 'normal', isUnlocked: () => !!this.main.player?.hasRedeemedReward?.('flutterMane') || this.hasPokemonKey('flutterMane') });
@@ -1170,6 +1192,7 @@ export class ProfileScene extends SectionScene {
 			this.stats[i].label.innerText = statLabel.toUpperCase();
 		}
 
+		this.main.checkShinyCount();
 		this.stats[0].value.innerText = this.main.utility.minutsToTime(this.main.player.stats.timePlayed);
 		this.stats[1].value.innerText = `${this.main.utility.numberDot(this.main.player.stars, this.main.lang)}`;
 		const ownershipDebug = this.getOwnershipDebugSnapshot();
@@ -1181,7 +1204,7 @@ export class ProfileScene extends SectionScene {
 		this.stats[4].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestPokemonLevel, this.main.lang)}`;
 		this.stats[5].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.totalPokemonLevel, this.main.lang)}`;
 		this.stats[6].value.innerText = `$${this.main.utility.numberDot(this.main.player.stats.totalGold, this.main.lang)}`;
-		this.stats[7].value.innerText = `${this.main.player.itemAmount}/177`;
+		this.stats[7].value.innerText = `${this.main.player.itemAmount}/${itemCollectionTotal}`;
 		this.stats[8].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.wavesCompleted, this.main.lang)}`;
 		this.stats[9].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.highestHit, this.main.lang)}`;
 		this.stats[10].value.innerText = `${this.main.utility.numberDot(this.main.player.stats.defeatedEnemies, this.main.lang)}`;

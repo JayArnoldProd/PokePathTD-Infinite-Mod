@@ -1,5 +1,5 @@
 {
-  "gameVersion": "1.7.2",
+  "gameVersion": "1.7.3",
   "items": {
     "ringTarget": {
       "id": "ringTarget",
@@ -515,6 +515,7 @@
           "ceaselessEdge",
           "psybeam",
           "icyWind",
+          "intrepidSword",
           "boomburst",
           "liquidVoice",
           "drumBeating",
@@ -1324,7 +1325,8 @@
           "zapCannon",
           "boomburst",
           "icicleSpear",
-          "machBolt"
+          "machBolt",
+          "triAttack"
         ]
       },
       "restriction": {
@@ -1886,7 +1888,8 @@
           "icyWind",
           "dazzlingGleam",
           "fireLash",
-          "precipiceBlades"
+          "precipiceBlades",
+          "intrepidSword"
         ]
       }
     },
@@ -2006,6 +2009,7 @@
           "signalBeam",
           "cryogenicCannon",
           "moongeistBeam",
+          "shadowClaw",
           "boomburst",
           "machBolt",
           "liquidVoice",
@@ -3011,7 +3015,8 @@
           "liquidVoice",
           "drumBeating",
           "originPulse",
-          "emptyLight"
+          "emptyLight",
+          "intrepidSword"
         ],
         "attackType": [
           "area",
@@ -3442,7 +3447,8 @@
           "icyWind",
           "psychoCut",
           "psychoCutMega",
-          "uTurn"
+          "uTurn",
+          "shadowClaw"
         ],
         "attackType": "aura"
       }
@@ -3624,7 +3630,8 @@
         "key": [
           "aegislashSword",
           "samurott",
-          "samurottHisui"
+          "samurottHisui",
+          "zacian"
         ]
       }
     },
@@ -3664,7 +3671,10 @@
         "Przedmiot dla [POKEMON]Aegislasha w Formie Tarczy[/POKEMON]. Zwiększa [POWER]moc[/POWER] i [RANGE]zasięg[/RANGE] o 20%."
       ],
       "condition": {
-        "key": "aegislash"
+        "key": [
+          "aegislash",
+          "zamazenta"
+        ]
       }
     },
     "wrestlingMask": {
@@ -4154,6 +4164,7 @@
           "uTurn",
           "moongeistBeam",
           "machBolt",
+          "intrepidSword",
           "solarBeam",
           "hydroCannon",
           "zapCannon",
@@ -4169,7 +4180,8 @@
           "originPulse",
           "emptyLight",
           "soulHeartReactor",
-          "burnRicochet"
+          "burnRicochet",
+          "shadowClaw"
         ],
         "id": [
           19,
@@ -4267,7 +4279,9 @@
           "liquidVoice",
           "drumBeating",
           "originPulse",
-          "emptyLight"
+          "emptyLight",
+          "shadowClaw",
+          "intrepidSword"
         ],
         "attackType": "aura"
       }
@@ -4337,6 +4351,8 @@
           "fireLash",
           "precipiceBlades",
           "machBolt",
+          "shadowClaw",
+          "intrepidSword",
           "solarBeam",
           "hydroCannon",
           "zapCannon",
@@ -4789,7 +4805,9 @@
           "emptyLight",
           "signalBeam",
           "cryogenicCannon",
-          "dazzlingGleam"
+          "dazzlingGleam",
+          "shadowClaw",
+          "intrepidSword"
         ],
         "attackType": "aura"
       }
@@ -6867,7 +6885,8 @@
           "drumBeating",
           "originPulse",
           "charmedCharm",
-          "emptyLight"
+          "emptyLight",
+          "shadowClaw"
         ],
         "orbital": true,
         "attackType": [

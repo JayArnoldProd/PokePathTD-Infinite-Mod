@@ -1,5 +1,5 @@
 {
-  "gameVersion": "1.7.2",
+  "gameVersion": "1.7.3",
   "eggKeys": [
     "charmander",
     "treecko",
@@ -666,6 +666,9 @@
     "sandslashAlola": 251,
     "wynaut": 252,
     "wobbuffet": 252,
-    "passimian": 253
+    "passimian": 253,
+    "mimikyu": 254,
+    "zacian": 255,
+    "zamazenta": 256
   }
 }

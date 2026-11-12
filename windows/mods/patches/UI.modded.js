@@ -1360,7 +1360,7 @@ export class UI {
 	getAttackStyleSymbol(pokemon) {
 		const abilityId = pokemon?.ability?.id;
 		if (['icyWind', 'dazzlingGleam'].includes(abilityId)) return 'C';
-		if (['secretSword', 'ancientSword'].includes(abilityId) || pokemon?.item?.id === 'ancientSword') return 'S';
+		if (['secretSword', 'intrepidSword'].includes(abilityId) || pokemon?.specie?.key === 'samurottHisui') return 'S';
 		if (['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId)) return 'W';
 		if (pokemon?.attackType === 'area') return 'A';
 		if (pokemon?.attackType === 'aura') return '~';
@@ -1383,7 +1383,7 @@ export class UI {
 		let specialShape;
 		if (['icyWind', 'dazzlingGleam'].includes(abilityId)) {
 			specialShape = ['Cone', 'Cono', 'Cône', 'Cone', 'Cono', 'Kegel', '円錐', '원뿔', '锥形', 'Stożek'];
-		} else if (['secretSword', 'ancientSword'].includes(abilityId) || pokemon?.item?.id === 'ancientSword') {
+		} else if (['secretSword', 'intrepidSword'].includes(abilityId) || pokemon?.specie?.key === 'samurottHisui') {
 			specialShape = ['Sweep', 'Barrido', 'Balayage', 'Varredura', 'Spazzata', 'Schwertstreich', '斬撃', '휘두르기', '横扫', 'Cięcie'];
 		} else if (['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId)) {
 			specialShape = ['Waves', 'Ondas', 'Vagues', 'Ondas', 'Onde', 'Wellen', '波', '파동', '波', 'Fale'];
@@ -1711,7 +1711,7 @@ export class UI {
 			this.pokemon[i].attackStyle.innerText = this.getAttackStyleSymbol(pokemon);
 			const abilityId = pokemon.ability?.id;
 			this.pokemon[i].attackStyle.classList.toggle('is-cone', ['icyWind', 'dazzlingGleam'].includes(abilityId));
-			this.pokemon[i].attackStyle.classList.toggle('is-sweep', ['secretSword', 'ancientSword'].includes(abilityId) || pokemon.item?.id === 'ancientSword');
+			this.pokemon[i].attackStyle.classList.toggle('is-sweep', ['secretSword', 'intrepidSword'].includes(abilityId) || pokemon.specie?.key === 'samurottHisui');
 			this.pokemon[i].attackStyle.classList.toggle('is-waves', ['boomburst', 'liquidVoice', 'drumBeating', 'originPulse', 'charmedCharm', 'emptyLight'].includes(abilityId));
 			this.pokemon[i].attackStyle.classList.toggle('is-stream', pokemon.attackType === 'stream');
 			if (pokemon.rangeType === 'circle' && pokemon.attackType !== 'stream') {
@@ -2726,8 +2726,7 @@ export class UI {
 	getSecret(poke) {
 		let txt = " ";
 		const pokemon = pokemonData[poke];
-		const isShiny = Math.random() < (1 / 30);
-		const reward = new Pokemon(pokemon, 1, null, this.main, undefined, false, null, undefined, isShiny);
+		const reward = new Pokemon(pokemon, 1, null, this.main);
 
 		if (pokemon?.key === 'wooper') txt = text.shop.wooper;
 		if (pokemon?.key === 'tyrunt') txt = text.shop.tyrunt;

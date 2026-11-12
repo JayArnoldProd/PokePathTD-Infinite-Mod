@@ -1,12 +1,11 @@
 {
-    "version": "1.7.2",
-    "game_version": "1.7.2",
-    "release_date": "2026-11-08",
+    "version": "1.7.3",
+    "game_version": "1.7.3",
+    "release_date": "2026-11-12",
     "changes": [
-        "Rebased onto verified Windows 1.7.2",
-        "Added five collection lines with official normal/shiny art including pre-evolutions",
-        "Added localized Alolan Sandshrew unlock condition and refreshed editor catalogs",
-        "Preserved upstream keyboard, filters, combat, item and visual fixes",
-        "Retained selected mod features and uncapped live Profile totals"
+        "Supports the verified Windows 1.7.3 runtime",
+        "Adds Mimikyu, Zacian and Zamazenta to Unlockables with ten-language guidance",
+        "Updates shiny art, held-item forms and save editor catalogs",
+        "Preserves vanilla Mega loading, combat and collection-count fixes"
     ]
 }

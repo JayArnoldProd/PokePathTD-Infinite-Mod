@@ -308,6 +308,7 @@
     "metang",
     "mew",
     "milotic",
+    "mimikyu",
     "minior",
     "minun",
     "missingNo",
@@ -511,6 +512,8 @@
     "wynaut",
     "xatu",
     "yamask",
+    "zacian",
+    "zamazenta",
     "zangoose",
     "zapdos",
     "zweilous"
@@ -1556,6 +1559,7 @@
     "megaTyranitar",
     "meowth",
     "mew",
+    "mimikyu",
     "minior",
     "minun",
     "missingNo",
@@ -1678,6 +1682,8 @@
     "wooper",
     "wynaut",
     "yamask",
+    "zacian",
+    "zamazenta",
     "zangoose",
     "zapdos"
   ],
@@ -1871,6 +1877,7 @@
     "metagross",
     "mew",
     "milotic",
+    "mimikyu",
     "minior",
     "minun",
     "missingNo",
@@ -1978,6 +1985,8 @@
     "whiscash",
     "wobbuffet",
     "xatu",
+    "zacian",
+    "zamazenta",
     "zangoose",
     "zapdos"
   ],
@@ -2621,6 +2630,9 @@
     "mew": [
       "mew"
     ],
+    "mimikyu": [
+      "mimikyu"
+    ],
     "minior": [
       "minior"
     ],
@@ -3086,6 +3098,12 @@
       "yamask",
       "cofagrigus"
     ],
+    "zacian": [
+      "zacian"
+    ],
+    "zamazenta": [
+      "zamazenta"
+    ],
     "zangoose": [
       "zangoose"
     ],
@@ -3402,6 +3420,7 @@
     "metang": "metang.png",
     "mew": "mew.png",
     "milotic": "milotic.png",
+    "mimikyu": "mimikyu.png",
     "minior": "minior.png",
     "minun": "minun.png",
     "missingNo": "missingNo.png",
@@ -3605,6 +3624,8 @@
     "wynaut": "wynaut.png",
     "xatu": "xatu.png",
     "yamask": "yamask.png",
+    "zacian": "zacian.png",
+    "zamazenta": "zamazenta.png",
     "zangoose": "zangoose.png",
     "zapdos": "zapdos.png",
     "zweilous": "zweilous.png"
@@ -3830,6 +3851,8 @@
     "magearna",
     "diancie",
     "terrakion",
+    "zamazenta",
+    "zacian",
     "virizion",
     "shedinja",
     "gholdengo",
@@ -3850,6 +3873,7 @@
     "chatot",
     "luvdisc",
     "tyrunt",
+    "mimikyu",
     "corsolaGalar",
     "sneaselHisui",
     "samurottHisui",

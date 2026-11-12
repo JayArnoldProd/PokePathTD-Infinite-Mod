@@ -1285,6 +1285,32 @@ export class Game {
 			const clickX = this._clientToCanvasX(event.clientX);
 			const clickY = this._clientToCanvasY(event.clientY);
 
+			if (!this.deployingUnit) {
+				const mimikyuSecretTower = this.main.area.towers.find(tower => {
+					if (
+						!tower.mimikyuSecretReady ||
+						!['pikachu', 'raichu'].includes(tower.pokemon?.specie?.key) ||
+						this.main.area.map?.id !== 17 ||
+						this.main.area.inChallenge ||
+						this.main.area.isCustom
+					) return false;
+
+					const halfSize = (tower.tile?.size ?? 24) / 2;
+					return (
+						Math.abs(clickX - tower.center.x) <= halfSize &&
+						Math.abs(clickY - tower.center.y) <= halfSize
+					);
+				});
+
+				if (mimikyuSecretTower) {
+					this.main.player.secrets.mimikyu = true;
+					this.main.area.towers.forEach(tower => {
+						tower.mimikyuSecretReady = false;
+					});
+					this.main.UI.getSecret('mimikyu');
+					return;
+				}
+			}
 
 			const skateTower = this.main.area.towers.find(t => {
 			    if (t.pokemon?.item?.id !== 'pokeSkates') return false;

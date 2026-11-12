@@ -1316,16 +1316,16 @@ export class Enemy extends Sprite {
 	    		this.passiveCharges = 0;
 	    		const waypointEnemy = this.waypoints.slice(this.waypointIndex);
 
-		    	this.main.area.enemies.push(
-					new Enemy(
-						this.center.x + (Math.random()*30)-20,
-						this.center.y + (Math.random()*30)-20,
-						enemyData.exeggcute,
-						waypointEnemy,
-						this.main,
-						this.main.game.ctx,
-					)
-				)
+				const exeggcute = new Enemy(
+					this.center.x + (Math.random()*30)-20,
+					this.center.y + (Math.random()*30)-20,
+					enemyData.exeggcute,
+					waypointEnemy,
+					this.main,
+					this.main.game.ctx,
+				);
+				exeggcute.hp = Math.max(1, Math.floor(exeggcute.hpMax * 0.25));
+				this.main.area.enemies.push(exeggcute);
 	    	}
 	    }
 
@@ -1945,6 +1945,21 @@ export class Enemy extends Sprite {
 	        this.main.player.changeGold(this.gold);
 	        this.main.player.recordEnemyDefeated(this.enemy.id);
 	        this.main.player.stats.defeatedEnemies++;
+
+			if (
+				this.enemy.id === 'mimikyu' &&
+				this.main.area.map?.id === 17 &&
+				this.main.area.waveNumber === 50 &&
+				!this.main.area.inChallenge &&
+				!this.main.player.secrets.mimikyu &&
+				!this.main.area.isCustom
+			) {
+				for (const tower of this.main.area.towers) {
+					if (['pikachu', 'raichu'].includes(tower.pokemon?.specie?.key)) {
+						tower.mimikyuSecretReady = true;
+					}
+				}
+			}
 
 	        if (pokemon) pokemon.stadistics['defeated'] = (pokemon.stadistics['defeated'] ?? 0) + 1;
 
@@ -2751,6 +2766,24 @@ export class Enemy extends Sprite {
 	        		this.main.player.secrets.diancie = true;
 	        		this.main.UI.getSecret('diancie');
 	        	}
+			break;
+			case 'zamazenta':
+				if (this.passiveCharges > -10) {
+					this.main.player.unlockAchievement(29);
+				}
+				if (!this.main.player.secrets.zamazenta && this.main.player.achievementsRework[29].status) {
+					this.main.player.secrets.zamazenta = true;
+					this.main.UI.getSecret('zamazenta');
+				}
+			break;
+			case 'zacian':
+				if (this.passiveCharges < -90) {
+					this.main.player.unlockAchievement(30);
+				}
+				if (!this.main.player.secrets.zacian && this.main.player.achievementsRework[30].status) {
+					this.main.player.secrets.zacian = true;
+					this.main.UI.getSecret('zacian');
+				}
 			break;
 			case 'virizion':
 				if (!this.passiveActivated) {

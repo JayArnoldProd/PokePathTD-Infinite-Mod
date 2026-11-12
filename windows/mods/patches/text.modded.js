@@ -593,6 +593,7 @@ export const text = {
 
 		wooperExplosion: ["Let an Explosion user reduce your health to zero (or trigger the auto-reset threshold).","Deja que un usuario de Explosión reduzca tu salud a cero (o active el reinicio automático).","Laissez un utilisateur d’Explosion réduire vos PV à zéro (ou déclencher le redémarrage automatique).","Deixe um usuário de Explosão reduzir sua vida a zero (ou acionar o reinício automático).","Lascia che un utilizzatore di Esplosione riduca la salute a zero (o attivi il riavvio automatico).","Lass einen Explosions-Nutzer deine Gesundheit auf null senken (oder den automatischen Neustart auslösen).","だいばくはつで体力を0にする（または自動リセットの条件を満たす）。","대폭발로 체력을 0으로 만들거나 자동 재시작 조건을 발동시키세요.","让大爆炸使用者将生命降至零，或触发自动重置阈值。","Pozwól użytkownikowi Eksplozji obniżyć zdrowie do zera lub uruchomić automatyczny reset."],
 
+		findMimikyu: ["On {route}, defeat Mimikyu on wave 50 with Pikachu or Raichu deployed, then click the darkened tower. Use the normal route outside challenges.", "En {route}, derrota a Mimikyu en la oleada 50 con Pikachu o Raichu desplegado y pulsa la torre oscurecida. Usa la ruta normal fuera de los desafíos.", "Sur {route}, bats Mimiqui à la vague 50 avec Pikachu ou Raichu déployé, puis clique sur la tour assombrie. Joue sur la route normale hors défi.", "Em {route}, derrote Mimikyu na onda 50 com Pikachu ou Raichu em campo e clique na torre escurecida. Jogue na rota normal, fora dos desafios.", "Su {route}, sconfiggi Mimikyu all’ondata 50 con Pikachu o Raichu in campo, poi clicca sulla torre oscurata. Usa il percorso normale fuori dalle sfide.", "Besiege auf {route} in Welle 50 Mimigma mit einem eingesetzten Pikachu oder Raichu und klicke auf den verdunkelten Turm. Spiele auf der normalen Route außerhalb von Herausforderungen.", "{route}の通常ルートで、チャレンジ以外のときにピカチュウかライチュウを配置してウェーブ50のミミッキュを倒し、暗くなったタワーをクリックする。", "{route} 일반 루트에서 도전 모드가 아닐 때 피카츄나 라이츄를 배치하고 50웨이브의 따라큐를 쓰러뜨린 뒤 어두워진 타워를 누르세요.", "在{route}的普通路线（非挑战）部署皮卡丘或雷丘，击败第50波的谜拟丘，然后点击变暗的塔。", "Na zwykłej trasie {route}, poza wyzwaniem, pokonaj Mimikyu w fali 50 z wystawionym Pikachu lub Raichu, a potem kliknij przyciemnioną wieżę."],
 		findHiddenItem: ["Click the hidden item on {route}, outside challenges with no wave active.","Haz clic en el objeto oculto de {route}, fuera de desafíos y sin oleadas activas.","Cliquez sur l’objet caché de {route}, hors défi et sans vague active.","Clique no item escondido em {route}, fora de desafios e sem onda ativa.","Clicca sull’oggetto nascosto in {route}, fuori dalle sfide e senza ondate attive.","Klicke auf das versteckte Item auf {route}, außerhalb von Herausforderungen und ohne aktive Welle.","チャレンジ外でウェーブがない時に、{route}の隠された道具をクリックする。","챌린지 밖에서 웨이브가 없을 때 {route}의 숨겨진 도구를 클릭하세요.","在非挑战模式且没有波次进行时，点击{route}的隐藏道具。","Kliknij ukryty przedmiot na {route}, poza wyzwaniem i bez aktywnej fali."],
 },
 },
@@ -3303,6 +3304,32 @@ export const text = {
 			]
 		},
 		sandygast: {
+			title: [
+				`Secret Pokémon`, // inglés
+				`Pokémon secreto`, // español
+				`Pokémon secret`, // francés
+				`Pokémon secreto`, // portugués
+				`Pokémon segreto`, // italiano
+				`Geheimes Pokémon`, // alemán
+				`ひみつのポケモン`, // japonés
+				`비밀 포켓몬`, // coreano
+				`秘密宝可梦`, // chino
+				`Sekretny Pokémon` // polaco
+			],
+			text: [
+				`Hidden in Route 5.`, // inglés
+				`Escondido en la ruta 5.`, // español
+				`Caché sur la route 5.`, // francés
+				`Escondido na rota 5.`, // portugués
+				`Nascosto nel percorso 5.`, // italiano
+				`Versteckt auf Route 5.`, // alemán
+				`ルート5に隠されている。`, // japonés
+				`루트 5에 숨겨져 있다.`, // coreano
+				`隐藏在路线5中。`, // chino
+				`Ukryty na trasie 5.` // polaco
+			]
+		},
+		mimikyu: {
 			title: [
 				`Secret Pokémon`, // inglés
 				`Pokémon secreto`, // español

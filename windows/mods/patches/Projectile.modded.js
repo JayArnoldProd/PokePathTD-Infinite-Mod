@@ -1929,8 +1929,21 @@ export class Projectile extends Sprite {
         }
 
         if (this.extra?.multPower) finalDamage = Math.ceil(finalDamage * this.extra?.multPower);
+        finalDamage = this.tower?.getShadowClawDamage(this.enemy, finalDamage) ?? finalDamage;
         
-        this.enemy.getDamaged(finalDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower, false, false, this.specialEffect);
+        this.enemy.getDamaged(
+            this.tower?.getDauntlessShieldDamage(this.enemy, finalDamage) ?? finalDamage,
+            'physical',
+            this.tower?.pokemon?.ability,
+            isCritical,
+            new Set(),
+            this.tower.pokemon,
+            this.tower,
+            false,
+            false,
+            this.specialEffect
+        );
+        this.tower?.registerDauntlessShieldHit();
         if (this.spiritShackleShot && !this.spiritShackleSplit) {
             this.spiritShackleSplit = true;
             if (!this.tower.main.mute[0]) playSound('hit4', 'effect');
@@ -2020,7 +2033,16 @@ export class Projectile extends Sprite {
 
                 if (!next) break;
 
-                next.getDamaged(finalDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower);
+                next.getDamaged(
+                    this.tower?.getDauntlessShieldDamage(next, finalDamage) ?? finalDamage,
+                    'physical',
+                    this.tower?.pokemon?.ability,
+                    isCritical,
+                    new Set(),
+                    this.tower.pokemon,
+                    this.tower
+                );
+                this.tower?.registerDauntlessShieldHit();
                 chainHits.push(next);
             }
 
@@ -2218,7 +2240,16 @@ export class Projectile extends Sprite {
                     if (dist <= splashRadius) {
 
                         let splashDamage = (this.tower?.pokemon?.item?.id == 'muscleBand' || this.tower?.ability?.id === 'auraSphere') ? finalDamage : Math.ceil(finalDamage * 0.5);
-                        e.getDamaged(splashDamage, 'physical', this.tower?.pokemon?.ability, isCritical, new Set(), this.tower.pokemon, this.tower);
+                        e.getDamaged(
+                            this.tower?.getDauntlessShieldDamage(e, splashDamage) ?? splashDamage,
+                            'physical',
+                            this.tower?.pokemon?.ability,
+                            isCritical,
+                            new Set(),
+                            this.tower.pokemon,
+                            this.tower
+                        );
+                        this.tower?.registerDauntlessShieldHit();
                         if (this.tower?.ability?.id === 'fireBlast' || (e.canBurn && (this.tower?.ability?.id === 'burnSplash' || this.tower?.ability?.id === 'magmaStorm'))) {
                             if (this.tower?.pokemon?.item?.id == 'magmaStone') e.applyStatusEffect({ type: 'burn', damagePercent: 0.005, duration: 20 }, this.tower.pokemon);
                             else if (this.tower?.pokemon?.item?.id == 'falmeOrb') e.applyStatusEffect({ type: 'burn', damagePercent: 0.0075, duration: 10 }, this.tower.pokemon);

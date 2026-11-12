@@ -114,6 +114,7 @@ export class Pokemon {
 			if (!this.hideShiny) this.setShiny();
 			this.main.player.shinyAmount++;
 		}
+		this.updateItemFormSprite();
 	}
 
 	// MOD: Asymptotic speed scaling - speed approaches minimum but never reaches 0
@@ -535,6 +536,7 @@ export class Pokemon {
 		if (this.item && !this.item?.megaStone && this.main?.itemController && !this.main.itemController.canEquip(this.item, this)) this.retireItem();
 		if (this.isShiny) this.setShiny();
 		if (this.hasCustomSkin) this.setCustomSkin();
+		this.updateItemFormSprite();
 		if (this.main.boxScene.isOpen) this.main.boxScene.update();
 		if (this.main.area.map.id === 35) this.main.area.updateChessPieces();
 		if (this.isDeployed) {
@@ -680,6 +682,7 @@ export class Pokemon {
 		this.item = item;
 
 		if (this.ability.id != 'magician') this.item.equipedBy = this.id;
+		this.updateItemFormSprite();
 
 		if (item.id == 'strangeIdol' && this.specie.key === 'corsola' && !this.main.player.secrets.corsolaGalar) {
 			this.main.player.secrets.corsolaGalar = true;
@@ -785,12 +788,46 @@ export class Pokemon {
 			}
 			if (this.item.id === 'ringTarget' || this.id == 53) this.targetMode = 'random';
 			this.item = null;
+			this.updateItemFormSprite();
 
 			if (['roomService', 'dampRock', 'smoothRock', 'icyRock', 'heatRockWeather'].includes(oldItemID)) {
 				this.main.area.checkWeather();
 			}
 
 			this.main.UI.update();
+		}
+	}
+
+	updateItemFormSprite() {
+		const speciesKey = this.specie?.key;
+		if (speciesKey !== 'zacian' && speciesKey !== 'zamazenta') return;
+
+		let formName = null;
+		if (speciesKey === 'zacian' && this.item?.id === 'ancientSword') formName = 'zacianSword';
+		if (speciesKey === 'zamazenta' && this.item?.id === 'ancientShield') formName = 'zamazentaShield';
+
+		const spriteSource = formName || this.skin == null || this.isMega
+			? this.specie.sprite
+			: this.skin;
+		this.sprite = JSON.parse(JSON.stringify(spriteSource));
+
+		if (formName) {
+			this.sprite.base = this.sprite.base.replace(
+				/\/(?:zacian|zamazenta)\.png$/,
+				`/${formName}.png`
+			);
+			this.sprite.image = this.sprite.image.replace(
+				/\/(?:zacian|zamazenta)-idle\.png$/,
+				`/${formName}-idle.png`
+			);
+		}
+
+		if (this.isShiny && !this.hideShiny) this.setShiny();
+		if (this.hasCustomSkin && !formName) this.setCustomSkin();
+
+		if (this.isDeployed) {
+			const tower = this.main.area.towers.find(t => t.pokemon === this);
+			if (tower) tower.updateTowerSprite();
 		}
 	}
 
@@ -961,6 +998,10 @@ export class Pokemon {
 					this.main.area.recalculateAuras();
 				}
 			}
+		}
+		if ((this.specie?.key === 'zacian' && this.item?.id === 'ancientSword') ||
+			(this.specie?.key === 'zamazenta' && this.item?.id === 'ancientShield')) {
+			this.updateItemFormSprite();
 		}
 	}
 

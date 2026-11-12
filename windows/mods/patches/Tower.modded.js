@@ -73,6 +73,12 @@ export class Tower extends Sprite {
 
         this.secretSwordSide = 1;
         this.secretSwordEffects = [];
+        this.shadowClawEffects = [];
+        this.shadowClawAttackCount = 0;
+        this.intrepidSwordCharge = 0;
+        this.intrepidSwordBuffTimer = 0;
+        this.dauntlessShieldCharge = 0;
+        this.dauntlessShieldBuffTimer = 0;
         this.directionalAreaEffects  = [];
         this.damageBoost = 0;
 
@@ -752,6 +758,7 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'starCandy') this.range += Math.min(140, this.main.player.stars * 0.035);
         if (this.pokemon?.item?.id == 'prismScale') this.range += this.main.player.ribbons * 0.5;
         if ([165, 175, 176, 233].includes(this.pokemon.id) && this.main.area.sacredSword) this.range = this.range * 1.2;
+
     }
 
     recalculatePower() {
@@ -1128,6 +1135,10 @@ export class Tower extends Sprite {
         if (this.pokemon?.item?.id == 'starCandy') this.range += Math.min(140, this.main.player.stars * 0.035);
         if (this.pokemon?.item?.id == 'prismScale') this.range += this.main.player.ribbons * 0.5;
         if ([165, 175, 176, 233].includes(this.pokemon.id) && this.main.area.sacredSword) this.range = this.range * 1.2;
+
+        if (this.ability?.id === 'intrepidSword' && this.intrepidSwordBuffTimer > 0) {
+            this.range *= 1.25;
+        }
 
         const nearbyPowerAuras = this.main.area.towers.filter(t =>
             t.ability?.id === 'powerAura' &&
@@ -2201,15 +2212,20 @@ export class Tower extends Sprite {
                 };
 
                 const isCeaselessEdge = effect.ability === 'ceaselessEdge';
-                const primaryColor = isCeaselessEdge ? '#2b4347' : '#ffffff';
-                const transparentColor = isCeaselessEdge  ? 'rgba(154, 32, 53, 0)'  : 'rgba(120, 200, 255, 0)';
+                const isIntrepidSword = effect.ability === 'intrepidSword';
+                const primaryColor = isCeaselessEdge ? '#2b4347' : isIntrepidSword ? '#fff2a6' : '#ffffff';
+                const transparentColor = isCeaselessEdge
+                    ? 'rgba(154, 32, 53, 0)'
+                    : isIntrepidSword
+                        ? 'rgba(255, 140, 0, 0)'
+                        : 'rgba(120, 200, 255, 0)';
 
                 this.ctx.save();
 
                 this.ctx.globalAlpha = alpha;
                 this.ctx.lineJoin = 'round';
 
-                this.ctx.shadowColor = isCeaselessEdge ? '#2b4347' : '#b8f8ff';
+                this.ctx.shadowColor = isCeaselessEdge ? '#2b4347' : isIntrepidSword ? '#ff9d00' : '#b8f8ff';
                 this.ctx.shadowBlur = 4;
 
                 // Hoja
@@ -2220,8 +2236,16 @@ export class Tower extends Sprite {
                     endLeft.y
                 );
 
-                grad.addColorStop(0, isCeaselessEdge ? 'rgba(43, 67, 71, 0.95)' : 'rgba(255, 255, 255, 0.95)');
-                grad.addColorStop(0.5, isCeaselessEdge  ? 'rgba(154, 32, 53, 0.85)' : 'rgba(170, 235, 255, 0.75)');
+                grad.addColorStop(0, isCeaselessEdge
+                    ? 'rgba(43, 67, 71, 0.95)'
+                    : isIntrepidSword
+                        ? 'rgba(255, 245, 180, 0.98)'
+                        : 'rgba(255, 255, 255, 0.95)');
+                grad.addColorStop(0.5, isCeaselessEdge
+                    ? 'rgba(154, 32, 53, 0.85)'
+                    : isIntrepidSword
+                        ? 'rgba(255, 157, 0, 0.85)'
+                        : 'rgba(170, 235, 255, 0.75)');
                 grad.addColorStop(1, transparentColor);
 
                 this.ctx.fillStyle = grad;
@@ -2257,6 +2281,89 @@ export class Tower extends Sprite {
                 this.ctx.lineTo(this.center.x + dirX * (outer + 12), this.center.y + dirY * (outer + 12));
                 this.ctx.lineTo(endRight.x, endRight.y);
                 this.ctx.stroke();
+                this.ctx.restore();
+            }
+        }
+
+        if (this.shadowClawEffects.length > 0) {
+            const now = Date.now();
+
+            for (let i = this.shadowClawEffects.length - 1; i >= 0; i--) {
+                const effect = this.shadowClawEffects[i];
+                const progress = (now - effect.start) / effect.duration;
+
+                if (progress >= 1) {
+                    this.shadowClawEffects.splice(i, 1);
+                    continue;
+                }
+
+                const opacity = this.getEffectOpacity('special') ?? 1;
+                const length = effect.radius * 2;
+                const color = effect.empowered ? '#d93432' : '#b9a5d6';
+                const highlight = effect.empowered ? '#f08b78' : '#e5dcf2';
+
+                this.ctx.save();
+                this.ctx.translate(effect.x, effect.y);
+                this.ctx.rotate(effect.angle);
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+
+                if (effect.empowered && progress < 0.42) {
+                    const ringProgress = progress / 0.42;
+                    const ringRadius = effect.radius * (0.2 + ringProgress * 0.8);
+                    this.ctx.globalAlpha = (1 - ringProgress) * 0.4 * opacity;
+                    this.ctx.strokeStyle = '#c95b4b';
+                    this.ctx.lineWidth = 1.5 * (1 - ringProgress) + 0.5;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+
+                for (let claw = -1; claw <= 1; claw++) {
+                    const stagger = (claw + 1) * 0.075;
+                    const slashProgress = Math.max(0, Math.min(1, (progress - stagger) / 0.42));
+                    if (slashProgress === 0) continue;
+
+                    const easedProgress = 1 - Math.pow(1 - slashProgress, 2);
+                    const offset = claw * effect.radius * 0.38;
+                    const startX = -length * 0.5;
+                    const startY = offset - 10 * effect.scale;
+                    const controlX = 0;
+                    const controlY = offset + (claw === 0 ? 4 : 7) * effect.scale;
+                    const endX = length * 0.5;
+                    const endY = offset + 10 * effect.scale;
+                    const partialControlX = startX + (controlX - startX) * easedProgress;
+                    const partialControlY = startY + (controlY - startY) * easedProgress;
+                    const partialEndX = (1 - easedProgress) ** 2 * startX +
+                        2 * (1 - easedProgress) * easedProgress * controlX +
+                        easedProgress ** 2 * endX;
+                    const partialEndY = (1 - easedProgress) ** 2 * startY +
+                        2 * (1 - easedProgress) * easedProgress * controlY +
+                        easedProgress ** 2 * endY;
+                    const slashFade = Math.min(1, slashProgress * 5, (1 - progress) * 2.2);
+                    const gradient = this.ctx.createLinearGradient(startX, startY, endX, endY);
+                    gradient.addColorStop(0, effect.empowered ? '#a93d39' : '#827095');
+                    gradient.addColorStop(0.55, color);
+                    gradient.addColorStop(1, highlight);
+
+                    this.ctx.globalAlpha = slashFade * opacity;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX, startY);
+                    this.ctx.quadraticCurveTo(partialControlX, partialControlY, partialEndX, partialEndY);
+                    this.ctx.strokeStyle = effect.empowered ? '#732b2c' : '#6e5d80';
+                    this.ctx.lineWidth = 9 * effect.scale;
+                    this.ctx.stroke();
+
+                    this.ctx.strokeStyle = gradient;
+                    this.ctx.lineWidth = 5 * effect.scale;
+                    this.ctx.stroke();
+
+                    this.ctx.strokeStyle = highlight;
+                    this.ctx.globalAlpha = slashFade * opacity * 0.65;
+                    this.ctx.lineWidth = 1 * effect.scale;
+                    this.ctx.stroke();
+                }
+
                 this.ctx.restore();
             }
         }
@@ -2649,6 +2756,7 @@ export class Tower extends Sprite {
 
             this.ctx.imageSmoothingEnabled = false;
             this.ctx.imageSmoothingQuality = 'low';
+            if (this.mimikyuSecretReady) this.ctx.filter = 'brightness(0.35)';
 
             this.ctx.drawImage(
                 this.sprite,
@@ -2668,6 +2776,7 @@ export class Tower extends Sprite {
 
             this.ctx.imageSmoothingEnabled = false;
             this.ctx.imageSmoothingQuality = 'low';
+            if (this.mimikyuSecretReady) this.ctx.filter = 'brightness(0.35)';
 
             if (this.relicSongSpin > 0) {
                 this.ctx.translate(this.center.x, this.center.y);
@@ -2683,6 +2792,30 @@ export class Tower extends Sprite {
                 drawWidth, drawHeight
             );
 
+            this.ctx.restore();
+        }
+
+        if (['intrepidSword', 'dauntlessShield'].includes(this.ability?.id)) {
+            const isDauntlessShield = this.ability.id === 'dauntlessShield';
+            const buffTimer = isDauntlessShield ? this.dauntlessShieldBuffTimer : this.intrepidSwordBuffTimer;
+            const charge = isDauntlessShield ? this.dauntlessShieldCharge : this.intrepidSwordCharge;
+            const active = buffTimer > 0;
+            const progress = active
+                ? buffTimer / 11500
+                : charge / 100;
+            const barWidth = 28;
+            const barHeight = 4;
+            const barX = this.center.x - barWidth / 2;
+            const barY = this.position.y + offsetY - barHeight - 2 + passengerOffset;
+
+            this.ctx.save();
+            this.ctx.fillStyle = '#222';
+            this.ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+            this.ctx.fillStyle = active ? '#f6d365' : '#78d9ff';
+            this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeStyle = '#000';
+            this.ctx.strokeRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
             this.ctx.restore();
         }   
 
@@ -3412,6 +3545,22 @@ export class Tower extends Sprite {
         const simDelta = deltaTime;
         const realDelta = simDelta / this.main.game.speedFactor;
         const frameFactor = simDelta / (1000 / 60);
+
+        if (this.intrepidSwordBuffTimer > 0) {
+            this.intrepidSwordBuffTimer = Math.max(0, this.intrepidSwordBuffTimer - simDelta);
+            if (this.intrepidSwordBuffTimer === 0) {
+                this.intrepidSwordCharge = 0;
+                this.setTowerStats();
+            }
+        }
+
+        if (this.dauntlessShieldBuffTimer > 0) {
+            this.dauntlessShieldBuffTimer = Math.max(0, this.dauntlessShieldBuffTimer - simDelta);
+            if (this.dauntlessShieldBuffTimer === 0) {
+                this.dauntlessShieldCharge = 0;
+                this.setTowerStats();
+            }
+        }
 
         const movementAbility = this.pokemon?.ability?.id;
 
@@ -4272,7 +4421,7 @@ export class Tower extends Sprite {
 
         if (!this.attackCooldown && this.attackCooldown !== 0) this.attackCooldown = 0;
         // cds usan simDelta 
-        this.attackCooldown -= simDelta;
+        this.attackCooldown -= simDelta * (this.dauntlessShieldBuffTimer > 0 ? 2 : 1);
 
         if (this.pokemon.id == 70 && this.pokemon.adn.id == 70) return;
 
@@ -5095,7 +5244,16 @@ export class Tower extends Sprite {
                         finalDamage += Math.ceil((finalDamage * ovalCharmMultiplier) / 100);
                     }
 
-                    enemy.getDamaged(finalDamage, 'physical', this.pokemon.ability, isCritical, new Set(), this.pokemon, this);
+                    enemy.getDamaged(
+                        this.getDauntlessShieldDamage(enemy, finalDamage),
+                        'physical',
+                        this.pokemon.ability,
+                        isCritical,
+                        new Set(),
+                        this.pokemon,
+                        this
+                    );
+                    this.registerDauntlessShieldHit();
 
                     if (isCritical && this.pokemon?.item?.id == 'razorClaw' && enemy.canSlow) enemy.applyStatusEffect({ type: 'slow', duration: 0.2, slowPercent: 0.5 })
 
@@ -5298,7 +5456,11 @@ export class Tower extends Sprite {
                 let soundActivated = false;
                 targets.forEach(tgt => {
                     if (!tgt) return;
-                    if (["secretSword", "ceaselessEdge"].includes(this.ability?.id)) {
+                    if (this.ability?.id === 'shadowClaw') {
+                        this.shadowClawAttack(tgt);
+                        return;
+                    }
+                    if (["secretSword", "ceaselessEdge", "intrepidSword"].includes(this.ability?.id)) {
                         this.secretSwordAttack(tgt);
                         return;
                     }
@@ -6113,6 +6275,7 @@ export class Tower extends Sprite {
         }
 
         if (this.ability?.id === 'ceaselessEdge') critical = Math.min(90, critical);
+        if (this.ability?.id === 'intrepidSword' && this.intrepidSwordBuffTimer > 0) return true;
 
         if ((Math.random() * 100) < critical && this.pokemon?.item?.id != 'blueBandana') {
             return true;
@@ -6120,7 +6283,78 @@ export class Tower extends Sprite {
         return false;
     }
 
-    dealDirectDamage(enemy, source = 'physical', forcedCritical = null, damageMultiplier = 1) { 
+    getDauntlessShieldDamage(enemy, damage) {
+        return this.ability?.id === 'dauntlessShield' &&
+            this.dauntlessShieldBuffTimer > 0 &&
+            enemy?.armor > 0
+            ? damage * 2
+            : damage;
+    }
+
+    registerDauntlessShieldHit() {
+        if (this.ability?.id !== 'dauntlessShield' || this.dauntlessShieldBuffTimer > 0) return;
+
+        this.dauntlessShieldCharge = Math.min(100, this.dauntlessShieldCharge + 2);
+        if (this.dauntlessShieldCharge === 100) {
+            this.dauntlessShieldBuffTimer = 10000;
+            this.setTowerStats();
+            this.recalculatePower();
+        }
+    }
+
+    getShadowClawDamage(enemy, damage, nightmareMultiplier = 2) {
+        if (this.ability?.id !== 'shadowClaw') return damage;
+
+        const nightmare = enemy?.statusEffects?.find(effect => effect.type === 'nightmare');
+        return nightmare ? damage * nightmareMultiplier : damage;
+    }
+
+    shadowClawAttack(target) {
+        if (!target || target.hp <= 0 || target.invulnerable) return;
+
+        this.shadowClawAttackCount++;
+        const targetNightmare = target.statusEffects?.find(effect => effect.type === 'nightmare');
+        const empowered = this.shadowClawAttackCount % 5 === 0 || (targetNightmare?.stacks ?? 0) >= 10;
+        const scale = empowered ? 1.5 : 1;
+        const radius = 52 * scale;
+        const angle = Math.atan2(
+            target.center.y - this.center.y,
+            target.center.x - this.center.x
+        );
+
+        this.shadowClawEffects.push({
+            x: target.center.x,
+            y: target.center.y,
+            angle,
+            radius,
+            scale,
+            empowered,
+            start: Date.now(),
+            duration: 340
+        });
+
+        for (const enemy of this.main.area.enemies) {
+            if (
+                !enemy ||
+                enemy.hp <= 0 ||
+                enemy.dead ||
+                enemy.escaped ||
+                enemy.invulnerable ||
+                (enemy.invisible && !this.revealInvisible && this.targetMode !== 'invisible')
+            ) continue;
+
+            const distance = Math.hypot(
+                enemy.center.x - target.center.x,
+                enemy.center.y - target.center.y
+            );
+            const enemyRadius = Math.max(enemy.width ?? 12, enemy.height ?? 12) * 0.5;
+            if (distance > radius + enemyRadius) continue;
+
+            this.dealDirectDamage(enemy, 'physical', null, empowered ? 2 : 1, 2);
+        }
+    }
+
+    dealDirectDamage(enemy, source = 'physical', forcedCritical = null, damageMultiplier = 1, nightmareMultiplier = 2) {
         if (!enemy || enemy.hp <= 0) return;
 
         let finalDamage = this.projectile.power;
@@ -6190,7 +6424,10 @@ export class Tower extends Sprite {
             finalDamage = Math.ceil(finalDamage * multiplier);
         }
 
-        if (this.pokemon?.item?.id === 'blueBandana') {
+        if (
+            this.pokemon?.item?.id === 'blueBandana' &&
+            !(this.ability?.id === 'intrepidSword' && this.intrepidSwordBuffTimer > 0)
+        ) {
             isCritical = false;
             finalDamage = Math.ceil(finalDamage * (1 + this.critical * 0.01));
         }
@@ -6339,8 +6576,11 @@ export class Tower extends Sprite {
         if (this.pokemon?.ability?.id === 'meteorBeam' && this.isOrbitingSolrock) finalDamage *= 2
 
         if (damageMultiplier != 1) finalDamage = Math.floor(finalDamage * damageMultiplier)
+
         // aplicar daño con el método del enemigo
-        enemy.getDamaged(finalDamage, source, this.pokemon.ability, isCritical, new Set(), this.pokemon, this);
+        finalDamage = this.getShadowClawDamage(enemy, finalDamage, nightmareMultiplier);
+        enemy.getDamaged(this.getDauntlessShieldDamage(enemy, finalDamage), source, this.pokemon.ability, isCritical, new Set(), this.pokemon, this);
+        this.registerDauntlessShieldHit();
 
         if (!this.main.mute[0] && this.pokemon.ability?.id === 'sacredFire') playSound(this.projectile.effect, 'effect');
     }
@@ -6921,8 +7161,10 @@ export class Tower extends Sprite {
 
             if (
                 enemy.dead ||
+                enemy.hp <= 0 ||
                 enemy.invisible ||
-                enemy.escaped
+                enemy.escaped ||
+                (this.ability?.id === 'intrepidSword' && enemy.invulnerable)
             ) continue;
 
             const dx = enemy.center.x - this.center.x;
@@ -6944,6 +7186,13 @@ export class Tower extends Sprite {
                 continue;
 
             this.dealDirectDamage(enemy, 'physical', slashCritical);
+            if (this.ability?.id === 'intrepidSword' && this.intrepidSwordBuffTimer === 0) {
+                this.intrepidSwordCharge = Math.min(100, this.intrepidSwordCharge + 2);
+                if (this.intrepidSwordCharge === 100) {
+                    this.intrepidSwordBuffTimer = 11500;
+                    this.setTowerStats();
+                }
+            }
 
             if (slashCritical === null && typeof hitCritical === 'boolean') slashCritical = hitCritical;
                

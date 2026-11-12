@@ -1,22 +1,22 @@
 <img width="1845" height="566" alt="pokeinfinite2" src="https://github.com/user-attachments/assets/7be40fa2-48fb-459d-8e8a-b1d2fd3de027" />
 
-# PokePath TD: INFINITE - Enhanced Mod Pack v1.7.2
+# PokePath TD: INFINITE - Enhanced Mod Pack v1.7.3
 
-**For PokéPath TD v1.7.2 on Windows.** macOS remains on its older release track.
+**For PokéPath TD v1.7.3 on Windows.** macOS remains on its older release track.
 
 Endless waves, optional 10x speed, paused micromanagement, shiny improvements and save tools, rebased onto the new game.
 
-**Windows refresh — November 8, 2026**
-- Adds the five new collection lines, including official shiny art for their earlier evolutions.
-- Adds the Alolan Sandshrew unlock condition in all ten languages and refreshes editor metadata.
-- Preserves vanilla's Box Enter shortcut, Cone/Mega filters, combat fixes and special-attack opacity changes.
-- Keeps existing Pokémon, selected features and uncapped live Profile totals.
+**Windows refresh — November 12, 2026**
 
-**Updating:** Close the game and back up both save profiles and your current installation. Install the official Windows 1.7.2 build, then copy this release's `mods/` folder into it, retaining your `installed_features.json`. The installer needs a **clean 1.7.2** `app.asar.vanilla`; archive the previous version's backup separately. Rerun the installer with your remembered selections. No save reset is needed.
+- Find the unlock conditions for Mimikyu, Zacian and Zamazenta in all ten languages.
+- Use the new Pokémon in the save editor and see their official shiny art, including Zacian’s sword and Zamazenta’s shield forms.
+- Retains upstream Mega loading, item restrictions and combat changes.
+
+**Updating:** Close the game and back up both save profiles and your current installation. Install the official Windows 1.7.3 build, then copy this release's `mods/` folder into it, retaining your `installed_features.json`. The installer needs a **clean 1.7.3** `app.asar.vanilla`; archive the previous version's backup separately. Rerun the installer with your remembered selections. No save reset is needed.
 
 **Egg safety:** Loading the editor does not restock eggs. Ordinary eggs exclude owned evolution lines and secret/challenge rewards. Existing duplicates stay intact, even when new duplicate acquisitions are disabled. Fresh installs default duplicate permission off.
 
-**Vanilla overlap:** Version 1.7.2 removes the old 24,200 Profile total-level ceiling, but still limits that display to owned Pokémon × 100. INFINITE keeps uncapped live totals and duplicate-aware collection counts. The new Box Enter shortcut, Cone/Mega filters, corrected shape indicators and smoke/opacity improvements are upstream features. Attack-type/range-shape sorting, extra-copy storage, localized Unlockables, endless scaling, paused controls and readable gold names remain mod features. This tracks functionality overlap; it does not establish inspiration or copied code.
+**Collection counts.** Vanilla refreshes owned and shiny counts when you open the Box or Profile and counts collectible items from game data. INFINITE’s Profile counts each evolution line once across duplicate Pokémon and displays uncapped live level totals. MissingNo. counts as a bonus when owned.
 
 ---
 
@@ -57,9 +57,9 @@ Endless waves, optional 10x speed, paused micromanagement, shiny improvements an
 - **Profile Tracking** - Shiny enemy defeats are recorded in Profile
 
 ### 🔧 Quality of Life
-- **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.7.2
-- **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.7.2 provides its own attack/field indicators and target-mode guards
-- **Unlockables Profile Tab** - Track every challenge reward, all 64 secret Pokémon, all 7 secret maps, two hidden items, and the welcome gift with verified unlock conditions
+- **Save/Load Button Labels** - Quick labels for the team save/load buttons; saved-team Pokémon/item sprite tooltips are provided by vanilla 1.7.3
+- **Attack Type/Shape Sorting** - Sort your box by attack type or attack shape; vanilla 1.7.3 provides its own attack/field indicators and target-mode guards
+- **Unlockables Profile Tab** - Track every challenge reward, all 67 secret Pokémon, all 7 secret maps, two hidden items, and the welcome gift with verified unlock conditions
 - **Live Profile Updates** - Stats in profile update while the menu is open
 - **Built-in Language Support** - Mod-added UI text supports all built-in game languages
 - **Tower Placement Persistence** - When you close and open the game, your Tower Placement and Party Remains
@@ -73,7 +73,7 @@ Endless waves, optional 10x speed, paused micromanagement, shiny improvements an
 - **Squared Distance Checks**
 - **Optimized Game Loop**
 - **Sub-Step Draw Skipping**
-- **Power Recalculation** - Retains vanilla 1.7.2’s simulation-time throttling
+- **Power Recalculation** - Retains vanilla 1.7.3’s simulation-time throttling
 
 ---
 
@@ -110,13 +110,13 @@ Your save data is kept separate and is not overwritten by the installer.
 ## 📥 Downloads
 
 **Latest + fallback releases:**
-- **Windows (latest 1.7.2):** [PokePath-TD-INFINITE-Windows-v1.7.2.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.7.2/PokePath-TD-INFINITE-Windows-v1.7.2.zip)
+- **Windows (latest 1.7.3):** [PokePath-TD-INFINITE-Windows-v1.7.3.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.7.3/PokePath-TD-INFINITE-Windows-v1.7.3.zip)
 - **Windows (older 1.6.1):** [PokePath-TD-INFINITE-Windows-v1.6.1.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.6.1/PokePath-TD-INFINITE-Windows-v1.6.1.zip)
 - **Windows (older):** [PokePath-TD-INFINITE-Windows-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Windows-v1.4.4.zip)
 - **macOS ZIP (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.zip](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.zip)
 - **macOS DMG (older 1.4.4):** [PokePath-TD-INFINITE-Mac-v1.4.4.dmg](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/download/v1.4.4/PokePath-TD-INFINITE-Mac-v1.4.4.dmg)
 
-> 💡 **Match your game version.** Windows v1.7.2 targets **PokePath TD 1.7.2**.
+> 💡 **Match your game version.** Windows v1.7.3 targets **PokePath TD 1.7.3**.
 > macOS is still on the older **1.4.4** release track for now.
 
 ---
@@ -140,7 +140,7 @@ Your save data is kept separate and is not overwritten by the installer.
 
 ### Windows
 
-1. Download **`PokePath-TD-INFINITE-Windows-v1.7.2.zip`** from the [v1.7.2 release](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.7.2).
+1. Download **`PokePath-TD-INFINITE-Windows-v1.7.3.zip`** from the [v1.7.3 release](https://github.com/JayArnoldProd/PokePathTD-Infinite-Mod/releases/tag/v1.7.3).
 2. Extract it anywhere.
 3. Copy the included **`mods`** folder into your game directory:
    ```
@@ -206,7 +206,7 @@ If something breaks, restore vanilla first, then reinstall the mod fresh.
   - `windows/mods/`
   - `mac/PokePath-TD-INFINITE-Mac/`
 - The Windows release intentionally includes a top-level **`mods`** folder so users can drop it directly into the game directory.
-- Recommended for Windows: **v1.7.2**.
+- Recommended for Windows: **v1.7.3**.
 - Older fallback release: **v1.4.4 (older)**.
 
 ---

@@ -312,6 +312,10 @@ export class Area {
 	}
 
 	loadArea(routeNumber, wave, keepTowers = false, challenge = false, custom = false, customData = {}) {
+		this.towers?.forEach(tower => {
+			tower.mimikyuSecretReady = false;
+		});
+
 		this.repeat = false;
 		this.mirrorWM = false;
 		this.isCustom = custom;

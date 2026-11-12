@@ -61,7 +61,7 @@ const CREDITS = {
 	},
 	testers: {
 		label: ['Testers', 'Testers', 'Testeurs', 'Testadores', 'Tester', 'Tester', 'テスター', '테스터', '测试员', 'Testerzy'],
-		content: '<a href="https://www.youtube.com/@KhytrayerDofus/videos" target="_blank" class="link-red">KHYTRAYER</a><br> SINGA <br> Juiz <br> Schmu <br> Cipo'
+		content: '<a href="https://www.youtube.com/@KhytrayerDofus/videos" target="_blank" class="link-red">KHYTRAYER</a><br> SINGA <br> Juiz <br> Schmu <br> AmIBatman <br> Cipo'
 	},
 	traductions: {
 		title: ["translations", "traducciones", "traductions", "traduções", "traduzioni", "Übersetzungen", "翻訳", "번역", '翻译', 'tłumaczenia'],
@@ -737,7 +737,7 @@ export class MenuScene extends SectionScene {
 		this.importData = this.makeButton(content, 'menu-scene-import-data stroke', () => this.importScene.open());
 		this.syncExportDataButtonState();
 
-		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.2` }).element;
+		this.version = new Element(section, { className: 'menu-scene-version stroke', text: `v 1.7.3` }).element;
 	}
 
 	syncExportDataButtonState() {

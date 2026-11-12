@@ -80,15 +80,15 @@ JS_ROOT = APP_EXTRACTED / "src" / "js"
 # If these don't match, the user likely has a different game version and
 # full-file-replacement patches (.modded.js) will break core gameplay.
 EXPECTED_VANILLA_FILES = {
-    "src/js/game/Game.js":                  70430,
-    "src/js/game/component/Pokemon.js":     36984,
-    "src/js/game/scenes/PokemonScene.js":   84242,
-    "src/js/game/core/Area.js":             36699,
+    "src/js/game/Game.js":                  71221,
+    "src/js/game/component/Pokemon.js":     38397,
+    "src/js/game/scenes/PokemonScene.js":   84531,
+    "src/js/game/core/Area.js":             36781,
     "src/js/game/core/Team.js":             2909,
     "src/js/game/core/Box.js":              859,
-    "src/js/game/component/Tower.js":       368205,
-    "src/js/game/component/Enemy.js":        101733,
-    "src/js/game/scenes/MenuScene.js":       57783,
+    "src/js/game/component/Tower.js":       379387,
+    "src/js/game/component/Enemy.js":        102943,
+    "src/js/game/scenes/MenuScene.js":       57798,
 }
 
 def check_game_version_compatibility():
@@ -2163,30 +2163,22 @@ def apply_challenge_party_preserve():
         log_fail("ChallengeScene.js: Challenge party preserve", "removeAllItems/removeAllButton pattern not found")
         return False
 
-    content = content.replace(old_start, new_start)
+    content = content.replace(old_start, new_start, 1)
 
     # After loadArea + UI.update + getHealed, restore team (but not for draft)
-    old_post = """this.main.player.getHealed(14);
-		this.main.teamManager.teamChallenge = [[], [], [], [], []];
-		if (this.challenges.draft) this.main.draftScene.open();"""
-    old_post_156 = """this.main.player.getHealed(14);
-		if (this.challenges.draft) this.main.teamManager.clearDraftTeams();
-		if (this.challenges.draft) this.main.draftScene.open();"""
-
-    new_post = """this.main.player.getHealed(14);
-		this.main.teamManager.teamChallenge = [[], [], [], [], []];
-
-		// MOD: Restore team lineup after challenge wipe (skip for draft)
+    draft_open = "if (this.challenges.draft) this.main.draftScene.open();"
+    new_post = """// MOD: Restore team lineup after challenge wipe (skip for draft)
 		if (!this.challenges.draft && this._savedTeamForChallenge && this._savedTeamForChallenge.length > 0) {
-			for (const saved of this._savedTeamForChallenge) {
+			for (const saved of this._savedTeamForChallenge.slice(0, this.challenges.slotLimit || this._savedTeamForChallenge.length)) {
 				const poke = saved.pokemon;
 				// Move from box back to team
 				if (this.main.box.pokemon.includes(poke)) {
-					this.main.box.removePokemon(poke);
 					this.main.team.addPokemon(poke);
+					if (!this.main.team.pokemon.includes(poke)) continue;
+					this.main.box.removePokemon(poke);
 				}
 				// Re-equip item
-				if (saved.item) {
+				if (saved.item && !this.challenges.noItems) {
 					poke.equipItem(saved.item);
 				}
 				// Redeploy to tile if position was saved
@@ -2207,17 +2199,10 @@ def apply_challenge_party_preserve():
 
 		if (this.challenges.draft) this.main.draftScene.open();"""
 
-    if old_post in content:
-        content = content.replace(old_post, new_post)
-    elif old_post_156 in content:
-        new_post_156 = new_post.replace(
-            "this.main.teamManager.teamChallenge = [[], [], [], [], []];",
-            "if (this.challenges.draft) this.main.teamManager.clearDraftTeams();",
-        )
-        content = content.replace(old_post_156, new_post_156)
-    else:
-        log_fail("ChallengeScene.js: Challenge party preserve", "post-loadArea pattern not found")
+    if content.count(draft_open) != 1:
+        log_fail("ChallengeScene.js: Challenge party preserve", "draft opening anchor missing or ambiguous")
         return False
+    content = content.replace(draft_open, new_post, 1)
 
     # Patch cancelChallenge (surrender) to also restore team
     old_cancel = """this.main.boxScene.removeAllItems();
@@ -2236,8 +2221,9 @@ def apply_challenge_party_preserve():
 			for (const saved of this._savedTeamForChallenge) {
 				const poke = saved.pokemon;
 				if (this.main.box.pokemon.includes(poke)) {
-					this.main.box.removePokemon(poke);
 					this.main.team.addPokemon(poke);
+					if (!this.main.team.pokemon.includes(poke)) continue;
+					this.main.box.removePokemon(poke);
 				}
 				if (saved.item) {
 					poke.equipItem(saved.item);
@@ -2901,6 +2887,11 @@ def apply_selected_mods(selected_features: list, progress_callback=None):
     for feature_key in MOD_FEATURES:
         if feature_key in selected_set:
             functions_to_call.extend(MOD_FEATURES[feature_key]['functions'])
+
+    # Apply the secret reward roll after every selected full-file UI replacement.
+    if "apply_secret_shiny" in functions_to_call:
+        functions_to_call.remove("apply_secret_shiny")
+        functions_to_call.append("apply_secret_shiny")
 
     # Remove duplicates while preserving order
     seen = set()
